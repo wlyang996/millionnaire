@@ -188,7 +188,7 @@ class ConfigValidatorTest {
                 t.bankruptcyModeCapMinutes(), t.decisionWindowMs(), t.responseWindowMs(), t.discardWindowMs(),
                 t.tradeResponseMs(), t.toothPickMs(), t.auctionDurationMs(), t.auctionExtendMs(), t.auctionMaxMs(),
                 t.debtSegmentMs(), t.heartbeatMs(), t.suspectAfterMs(), t.offlineAfterMs(), t.allOfflineCloseMs(),
-                t.downtimeBudgetMs(), t.recoveryPrepMs());
+                t.downtimeBudgetMs(), t.recoveryPrepMs(), t.animDiceMs(), t.animPerStepMs(), t.autoActDelayMs());
         assertError(new RuleConfig(base.ruleVersion(), base.boards(), base.tiers(), base.station(), base.economy(),
                 base.ratios(), base.cardWeights(), base.eventWeights(), longRoll, base.room()),
                 "timing.rollSecondsOptions must be strictly increasing within 1..3600");

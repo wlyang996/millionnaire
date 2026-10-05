@@ -28,6 +28,7 @@ import com.millionnaire.engine.testkit.DemoDomain;
 import com.millionnaire.engine.testkit.DemoEvent;
 import com.millionnaire.engine.testkit.DemoRound;
 import com.millionnaire.engine.testkit.DemoState;
+import com.millionnaire.engine.testkit.RogueDomain;
 import com.millionnaire.engine.testkit.ScriptedRandom;
 import com.millionnaire.engine.time.Window;
 import java.util.List;
@@ -94,11 +95,10 @@ class KernelTest {
         assertEquals(1, r.events().size());
         KernelEvent.InputRejected rej = (KernelEvent.InputRejected) r.events().get(0);
         assertEquals("b", rej.recipient());
-        assertEquals(before.rng(), state.rng());
-        assertEquals(before.now(), state.now());
         assertEquals(200, state.lastReceivedAt());
-        assertEquals(before.domain(), state.domain());
-        assertEquals(before.timers(), state.timers());
+        // 完整状态比较：只有游标、水位、摘要与事件数允许变化
+        assertEquals(before.withInputCursor(state.lastSeq(), state.lastReceivedAt(), state.lastInputDigest())
+                .withEventCount(state.eventCount()), state);
     }
 
     @Test
@@ -224,9 +224,9 @@ class KernelTest {
                 new Roll("a", 1), new OpenRound("a", "a", 0))) {
             s = scripted.step(s, new Input(++n, n * 10, c)).state();
         }
-        assertEquals(1, script.consumed(), "the rejected second roll must not consume a scripted draw");
+        assertEquals(1, ScriptedRandom.cursor(s.rng()), "the rejected second roll must not consume a scripted draw");
         s = scripted.step(s, new Input(++n, 100_000, new Tick())).state();   // 超时代掷
-        script.assertExhausted();
+        script.assertExhausted(s);
         assertEquals(List.of(1, 6), ((DemoState) s.domain()).rolls());
         assertThrows(StateValidationException.class, () -> engine.step(scripted.create("r", 1, 0).state(),
                 new Input(1, 1, new Tick())), "a production engine refuses a scripted-protocol game");
@@ -235,7 +235,7 @@ class KernelTest {
     @Test
     void decisionContextExposesWorkingStateAfterEachEmit() {
         seat("a");
-        DecisionContext<DemoState> ctx = new DecisionContext<>(state, new Evolver<>(DemoDomain.INSTANCE),
+        DecisionContext<DemoState> ctx = new DecisionContext<>(state, new Evolver<>(DemoDomain.INSTANCE, engine.config()),
                 DemoState.class, com.millionnaire.engine.random.XoshiroLemireV1.INSTANCE, engine.config());
         long taskId = ctx.schedule(5000, com.millionnaire.engine.time.TaskKind.GLOBAL_END, 0);
         assertEquals(taskId + 1, ctx.engineState().nextTaskId());
@@ -246,6 +246,29 @@ class KernelTest {
         assertTrue(v >= 0 && v < 6);
         assertEquals(state.domain(), engine.step(state, new Input(seq + 1, 10, new Tick())).state().domain(),
                 "the original state is untouched by the working copy");
+    }
+
+    @Test
+    void acceptedWithoutConsumingDrawIsKernelFault() {
+        Engine<DemoState> rogue = new Engine<>(RuleConfigs.defaultV1(), new RogueDomain(RogueDomain.Mode.DRAW_WITHOUT_CONSUMING));
+        EngineState s = rogue.step(rogue.create("r", 1, 0).state(), new Input(1, 1, new Sit("a"))).state();
+        KernelFaultException e = assertThrows(KernelFaultException.class, () -> rogue.step(s, new Input(2, 2, new Peek("a"))));
+        assertTrue(e.getMessage().contains("without consuming"), e.getMessage());
+    }
+
+    @Test
+    void drawThenRejectIsKernelFault() {
+        Engine<DemoState> rogue = new Engine<>(RuleConfigs.defaultV1(), new RogueDomain(RogueDomain.Mode.DRAW_THEN_REJECT));
+        EngineState s = rogue.step(rogue.create("r", 1, 0).state(), new Input(1, 1, new Sit("a"))).state();
+        assertThrows(KernelFaultException.class, () -> rogue.step(s, new Input(2, 2, new Peek("a"))));
+        assertEquals(Outcome.ACCEPTED, rogue.step(s, new Input(2, 2, new Sit("b"))).outcome(), "nothing was committed");
+    }
+
+    @Test
+    void inconsistentDomainEventIsKernelFault() {
+        Engine<DemoState> rogue = new Engine<>(RuleConfigs.defaultV1(), new RogueDomain(RogueDomain.Mode.INCONSISTENT_EVENT));
+        EngineState s = rogue.step(rogue.create("r", 1, 0).state(), new Input(1, 1, new Sit("a"))).state();
+        assertThrows(KernelFaultException.class, () -> rogue.step(s, new Input(2, 2, new Peek("a"))));
     }
 
     // ------------------------------------------------------------ 投影

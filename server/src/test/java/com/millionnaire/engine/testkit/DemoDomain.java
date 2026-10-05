@@ -210,7 +210,7 @@ public final class DemoDomain implements Domain<DemoState> {
     }
 
     @Override
-    public DemoState evolve(DemoState s, Event event, Draws draws) {
+    public DemoState evolve(DemoState s, Event event, Draws draws, RuleConfig rules) {
         if (!(event instanceof DemoEvent e)) {
             throw new IllegalStateException("not a demo event: " + event);
         }
@@ -263,7 +263,7 @@ public final class DemoDomain implements Domain<DemoState> {
     }
 
     @Override
-    public void validate(EngineState engine, DemoState s, RuleConfig config) {
+    public void validate(EngineState engine, DemoState s, RuleConfig config, boolean full) {
         expect(s.players() != null && s.rolls() != null, "fields missing");
         expect(s.players().stream().noneMatch(p -> p == null || p.isBlank())
                 && new TreeSet<>(s.players()).size() == s.players().size(), "players must be unique and non-blank");

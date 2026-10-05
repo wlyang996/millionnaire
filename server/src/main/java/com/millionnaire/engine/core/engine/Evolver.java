@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.config.RuleConfig;
 import com.millionnaire.engine.core.event.Event;
 import com.millionnaire.engine.core.event.KernelEvent;
 import com.millionnaire.engine.core.event.KernelEvent.Genesis;
@@ -21,14 +22,17 @@ import java.util.List;
  * evolve：纯函数 (状态, 事件) → 新状态。内核事件在此处理，领域事件交给 {@link Domain#evolve}。
  * 不做规则判定，只做一致性断言；断言失败说明日志与状态不匹配，抛 {@link IllegalStateException}。
  */
-public final class Evolver<S extends DomainState> {
+final class Evolver<S extends DomainState> {
     private final Domain<S> domain;
+    private final RuleConfig rules;
 
-    public Evolver(Domain<S> domain) {
+    /** rules：本局绑定的不可变规则（引擎以配置哈希保证与状态一致）。 */
+    Evolver(Domain<S> domain, RuleConfig rules) {
         this.domain = domain;
+        this.rules = rules;
     }
 
-    public EngineState evolveAll(EngineState state, List<Event> events) {
+    EngineState evolveAll(EngineState state, List<Event> events) {
         EngineState s = state;
         for (Event e : events) {
             s = evolve(s, e);
@@ -36,7 +40,7 @@ public final class Evolver<S extends DomainState> {
         return s;
     }
 
-    public EngineState evolve(EngineState s, Event event) {
+    EngineState evolve(EngineState s, Event event) {
         if (event instanceof Genesis g) {
             check(s == null, "Genesis must be the first event");
             check(domain.id().equals(g.domainId()) && domain.stateType().isInstance(g.initial()),
@@ -88,7 +92,7 @@ public final class Evolver<S extends DomainState> {
 
     private EngineState domainEvent(EngineState s, Event event) {
         Draws draws = new Draws(s.pendingDraws());
-        S next = domain.evolve(domain.stateType().cast(s.domain()), event, draws);
+        S next = domain.evolve(domain.stateType().cast(s.domain()), event, draws, rules);
         check(next != null, "domain returned no state");
         return s.withDomain(next).withRandom(s.rng(), draws.remaining());
     }

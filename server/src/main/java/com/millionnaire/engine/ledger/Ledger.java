@@ -168,6 +168,32 @@ public record Ledger(
         }
     }
 
+    /**
+     * 轻量不变量（每步提交边界使用）：账户集合一致、非负、0 ≤ 冻结 ≤ 现金、守恒、日志编号连续。
+     * 不重放历史；完整校验用 {@link #verifyInvariants()}（恢复与审计入口）。
+     */
+    public void verifyBalances() {
+        if (opening == null || cash == null || frozen == null || journal == null
+                || !frozen.keySet().equals(cash.keySet()) || !opening.keySet().equals(cash.keySet())) {
+            throw new LedgerException("account sets differ");
+        }
+        long total = systemNet;
+        for (Map.Entry<String, Long> e : cash.entrySet()) {
+            Long f = frozen.get(e.getKey());
+            if (!validPlayerAccount(e.getKey()) || e.getValue() == null || e.getValue() < 0 || f == null || f < 0
+                    || f > e.getValue()) {
+                throw new LedgerException("balance out of range for " + e.getKey());
+            }
+            total = Money.add(total, e.getValue());
+        }
+        if (total != baseline) {
+            throw new LedgerException("conservation broken: total " + total + " != baseline " + baseline);
+        }
+        if (!journal.isEmpty() && journal.get(journal.size() - 1).entryNo() != journal.size()) {
+            throw new LedgerException("journal numbering broken");
+        }
+    }
+
     /** 校验并应用一笔分录到余额表，返回新的系统净额。 */
     private static long apply(TreeMap<String, Long> balances, long system, JournalEntry entry, long expectedNo) {
         if (entry == null || entry.entryNo() != expectedNo) {

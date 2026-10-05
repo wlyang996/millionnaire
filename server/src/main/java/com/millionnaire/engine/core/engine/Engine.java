@@ -5,6 +5,7 @@ import com.millionnaire.engine.config.ConfigValidator;
 import com.millionnaire.engine.config.RuleConfig;
 import com.millionnaire.engine.core.command.Command;
 import com.millionnaire.engine.core.command.Input;
+import com.millionnaire.engine.core.command.SystemCommand;
 import com.millionnaire.engine.core.command.Tick;
 import com.millionnaire.engine.core.event.Event;
 import com.millionnaire.engine.core.event.EventLog;
@@ -56,7 +57,7 @@ public final class Engine<S extends DomainState> {
         this.configHash = config.contentHash();
         this.domain = domain;
         this.random = random;
-        this.evolver = new Evolver<>(domain);
+        this.evolver = new Evolver<>(domain, config);
         this.codec = new Codec(TypeRegistry.builder()
                 .add(Command.class, Tick.class)
                 .add(Event.class, KernelEvent.class)
@@ -84,17 +85,55 @@ public final class Engine<S extends DomainState> {
     /** 创世：种子由外层（SecureRandom）生成并只保存在服务端。 */
     public StepResult create(String roomId, long seed, long at) {
         if (roomId == null || roomId.isBlank()) {
-            throw new IllegalArgumentException("roomId missing");
+            throw new InvalidInputException("roomId missing", null);
+        }
+        try {
+            Canonical.bytes(roomId);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidInputException("roomId cannot be canonically encoded: " + e.getMessage(), e);
         }
         Event genesis = new KernelEvent.Genesis(roomId, configHash, EngineVersion.VALUE, domain.id(),
                 random.protocolId(), random.seed(seed), at, domain.initialState(config));
-        return new StepResult(evolver.evolve(null, genesis), List.of(genesis), StepResult.Outcome.ACCEPTED, null);
+        EngineState s;
+        try {
+            s = evolver.evolve(null, genesis);
+        } catch (RuntimeException e) {
+            throw new StateValidationException("invalid genesis: " + e.getMessage(), e);
+        }
+        // 创世也必须保证"接受的状态可持久化且合法"
+        validate(s);
+        try {
+            codec.bytes(s);
+        } catch (IllegalArgumentException e) {
+            throw new StateValidationException("genesis state cannot be encoded: " + e.getMessage(), e);
+        }
+        return new StepResult(s, List.of(genesis), StepResult.Outcome.ACCEPTED, null);
     }
 
     /**
-     * 外层在分配接收序号之前调用：命令无法规范编码（孤立代理字符、未登记的类型等）时抛 {@link InvalidInputException}。
+     * 外层在分配接收序号之前调用，用于来自客户端的命令（actor 必须取自认证上下文）：
+     * null、系统命令、无法规范编码（孤立代理字符、未登记的类型等）都抛 {@link InvalidInputException}。
      */
-    public void admit(Command command) {
+    public void admitClient(Command command) {
+        if (command instanceof SystemCommand) {
+            throw new InvalidInputException("system command " + command.getClass().getSimpleName()
+                    + " cannot come from a client", null);
+        }
+        admitAny(command);
+    }
+
+    /** 外层在分配接收序号之前调用，用于服务端内部产生的可信系统命令。 */
+    public void admitSystem(Command command) {
+        if (command != null && !(command instanceof SystemCommand)) {
+            throw new InvalidInputException(command.getClass().getSimpleName() + " is not a system command", null);
+        }
+        admitAny(command);
+    }
+
+    private void admitAny(Command command) {
+        if (command == null) {
+            throw new InvalidInputException("command missing", null);
+        }
         digest(new Input(1, 0, command));
     }
 
@@ -109,7 +148,10 @@ public final class Engine<S extends DomainState> {
      * </ul>
      */
     public StepResult step(EngineState state, Input input) {
-        validate(state);
+        if (input == null) {
+            throw new InvalidInputException("input missing", null);
+        }
+        validate(state, false);
         String digest = digest(input);
         if (input.seq() < state.lastSeq()) {
             return new StepResult(state, List.of(), StepResult.Outcome.STALE, null);
@@ -125,12 +167,13 @@ public final class Engine<S extends DomainState> {
         }
         try {
             StepResult result = process(state, input, digest);
-            validate(result.state());
+            validate(result.state(), false);
             return result;
-        } catch (KernelFaultException e) {
-            throw e;
         } catch (RuntimeException e) {
-            throw new KernelFaultException("step seq " + input.seq() + " failed: " + e.getMessage(), e);
+            FaultReport report = new FaultReport(input.seq(), input.serverTime(), input.command().getClass().getName(),
+                    digest, EngineVersion.VALUE, configHash, stateHash(state), e.getClass().getName(), e.getMessage());
+            throw new KernelFaultException("step seq " + input.seq() + " failed: " + e.getMessage(),
+                    e instanceof KernelFaultException k && k.getCause() != null ? k.getCause() : e, report);
         }
     }
 
@@ -190,10 +233,15 @@ public final class Engine<S extends DomainState> {
     /** 恢复快照：先按信封版本选择解码器，再完整校验状态（版本绑定、内核一致性、领域一致性）。 */
     public EngineState restore(String text) {
         Envelope env = Envelope.parse(text, SNAPSHOT_KIND);
-        EngineState s = switch (env.formatVersion()) {
-            case 1 -> codec.decode(env.body(), EngineState.class);
-            default -> throw new Envelope.UnsupportedFormatException("unsupported formatVersion " + env.formatVersion());
-        };
+        if (env.formatVersion() != 1) {
+            throw new Envelope.UnsupportedFormatException("unsupported formatVersion " + env.formatVersion());
+        }
+        EngineState s;
+        try {
+            s = codec.decode(env.body(), EngineState.class);
+        } catch (IllegalArgumentException e) {
+            throw new StateValidationException("corrupt snapshot: " + e.getMessage(), e);
+        }
         validate(s);
         return s;
     }
@@ -216,7 +264,14 @@ public final class Engine<S extends DomainState> {
             throw new StateValidationException("event log must start with Genesis");
         }
         requireCompatible(g.engineVersion(), g.configHash(), g.domainId(), g.rngProtocol());
-        EngineState s = evolver.evolveAll(null, events);
+        EngineState s = null;
+        for (int i = 0; i < events.size(); i++) {
+            try {
+                s = evolver.evolve(s, events.get(i));
+            } catch (RuntimeException e) {
+                throw new StateValidationException("corrupt event log at event " + i + ": " + e.getMessage(), e);
+            }
+        }
         validate(s);
         return s;
     }
@@ -226,6 +281,27 @@ public final class Engine<S extends DomainState> {
      * 只含内核与领域的轻量检查（≤ 8 人）；账本全量重放只在恢复/审计入口执行。
      */
     public void validate(EngineState s) {
+        validate(s, true);
+    }
+
+    /** full = false 时为每步入口与出口使用的轻量校验（不重放账本历史等）。 */
+    void validate(EngineState s, boolean full) {
+        if (s == null) {
+            throw new StateValidationException("state missing");
+        }
+        try {
+            validateUnchecked(s, full);
+        } catch (StateValidationException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new StateValidationException("invalid state: " + e, e);
+        }
+    }
+
+    /** 固定顺序：版本绑定 → 输入游标与时间线 → 定时任务 → 随机 → 领域（大厅 → 对局 → 跨模块）。 */
+    private void validateUnchecked(EngineState s, boolean full) {
+        expect(s.pendingDraws() != null && s.timers() != null && s.rng() != null && s.domain() != null,
+                "kernel fields missing");
         requireCompatible(s);
         expect(s.roomId() != null && !s.roomId().isBlank(), "roomId missing");
         // 每个已处理输入恰好产生一条 InputAccepted/InputRejected，另有创世事件，故 eventCount > lastSeq
@@ -242,7 +318,7 @@ public final class Engine<S extends DomainState> {
         }
         expect(s.pendingDraws().isEmpty(), "unconsumed random draws at step boundary");
         expect(domain.stateType().isInstance(s.domain()), "domain state of wrong type");
-        domain.validate(s, domain.stateType().cast(s.domain()), config);
+        domain.validate(s, domain.stateType().cast(s.domain()), config, full);
     }
 
     // ------------------------------------------------------------ internals

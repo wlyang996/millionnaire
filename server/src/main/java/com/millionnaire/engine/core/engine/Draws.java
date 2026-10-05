@@ -25,6 +25,15 @@ public final class Draws {
         return d.value();
     }
 
+    /** 取出下一个待消费抽取（只核对抽取点），由调用方核对上界与派生值。 */
+    public Draw take(DrawPoint point) {
+        Draw d = pending.pollFirst();
+        if (d == null || d.point() != point) {
+            throw new IllegalStateException("expected pending draw " + point + " but found " + d);
+        }
+        return d;
+    }
+
     List<Draw> remaining() {
         return List.copyOf(pending);
     }

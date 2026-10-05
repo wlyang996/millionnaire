@@ -156,7 +156,9 @@ class Round7ReviewTest {
         }
         List<Event> tampered = log.stream().map(e -> e instanceof DemoEvent.DieRolled d
                 ? new DemoEvent.DieRolled(d.playerId(), d.windowId(), 999, d.auto()) : e).toList();
-        assertThrows(IllegalStateException.class, () -> engine.rebuild(tampered));
+        // J5：重建遇到不一致统一为 StateValidationException，原始断言失败保留为 cause
+        StateValidationException e = assertThrows(StateValidationException.class, () -> engine.rebuild(tampered));
+        assertInstanceOf(IllegalStateException.class, e.getCause());
 
         KernelEvent.Genesis gen = (KernelEvent.Genesis) log.get(0);
         List<Event> oldVersion = new ArrayList<>(log);
@@ -169,7 +171,7 @@ class Round7ReviewTest {
     @Test
     void r9ScriptedRandomAndWorkingStateContract() {
         DecisionContext<SessionState> ctx = new DecisionContext<>(new Engine<>(config, SessionDomain.INSTANCE).create("r", 1, 0).state(),
-                new Evolver<>(SessionDomain.INSTANCE), SessionState.class, XoshiroLemireV1.INSTANCE, config);
+                new Evolver<>(SessionDomain.INSTANCE, config), SessionState.class, XoshiroLemireV1.INSTANCE, config);
         ctx.emit(new RoomEvent.PlayerJoined("a", "A"));
         assertTrue(ctx.state().lobby().isMember("a"), "emit must be visible to later reads");
 

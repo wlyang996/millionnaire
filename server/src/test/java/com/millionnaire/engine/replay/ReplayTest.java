@@ -24,15 +24,18 @@ import com.millionnaire.engine.testkit.DemoState;
 import com.millionnaire.engine.testkit.GoldenMain;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class ReplayTest {
     /** 黄金值：锁定引擎行为 + 规范格式 + 随机协议。有意修改时同步更新，并提升 EngineVersion。 */
-    static final String GOLDEN_FINAL_HASH = "5148b25d487bc684c8d57f18e2d127ef2359c6f643aa8e1452a65efe21fad994";
+    static final String GOLDEN_FINAL_HASH = "e0ddbdfaa5bfddaa0f1b029e098266b447dd11f4cd1937c960c7769861499181";
     private static final String GOLDEN_SNAPSHOT_RESOURCE = "/golden/demo-final.snapshot";
 
     private final Scenario scenario = DemoScenarios.full();
@@ -77,20 +80,31 @@ class ReplayTest {
     }
 
     @Test
-    void separateJvmProcessWithOtherLocaleTimezoneAndEncodingAgrees() throws Exception {
+    void separateJvmProcessWithOtherLocaleTimezoneAndEncodingAgrees(@TempDir Path dir) throws Exception {
         String java = ProcessHandle.current().info().command().orElseThrow();
-        Process p = new ProcessBuilder(java,
+        Path out = dir.resolve("stdout.txt");
+        Path err = dir.resolve("stderr.txt");
+        ProcessBuilder pb = new ProcessBuilder(java,
                 "-Duser.language=tr", "-Duser.country=TR", "-Duser.timezone=Pacific/Kiritimati",
                 "-Dfile.encoding=ISO-8859-1", "-Dsun.jnu.encoding=ISO-8859-1",
                 "-cp", System.getProperty("java.class.path"), GoldenMain.class.getName())
-                .redirectErrorStream(true).start();
-        assertTrue(p.waitFor(60, TimeUnit.SECONDS), "child JVM timed out");
-        String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.US_ASCII).trim();
-        assertEquals(0, p.exitValue(), out);
-        String expected = full.finalHash() + " "
-                + Canonical.sha256Hex(engine.snapshot(full.state()).getBytes(StandardCharsets.UTF_8)) + " "
-                + Canonical.sha256Hex(engine.encodeEvents(full.events()).getBytes(StandardCharsets.UTF_8));
-        assertEquals(expected, out);
+                .redirectOutput(out.toFile()).redirectError(err.toFile());
+        pb.environment().remove("JAVA_TOOL_OPTIONS");
+        Process p = pb.start();
+        try {
+            assertTrue(p.waitFor(60, TimeUnit.SECONDS), "child JVM timed out");
+            List<String> lines = Files.readAllLines(out, StandardCharsets.US_ASCII);
+            assertEquals(0, p.exitValue(), lines + " / " + Files.readString(err, StandardCharsets.ISO_8859_1));
+            String env = lines.stream().filter(l -> l.startsWith("ENV ")).findFirst().orElseThrow();
+            assertEquals("ENV locale=tr-TR tz=Pacific/Kiritimati charset=ISO-8859-1", env, "child settings took effect");
+            String result = lines.stream().filter(l -> l.startsWith("RESULT ")).findFirst().orElseThrow();
+            String expected = "RESULT " + full.finalHash() + " "
+                    + Canonical.sha256Hex(engine.snapshot(full.state()).getBytes(StandardCharsets.UTF_8)) + " "
+                    + Canonical.sha256Hex(engine.encodeEvents(full.events()).getBytes(StandardCharsets.UTF_8));
+            assertEquals(expected, result);
+        } finally {
+            p.destroyForcibly();
+        }
     }
 
     @Test
@@ -148,7 +162,9 @@ class ReplayTest {
     void drawsFromAnotherRandomProtocolAreRefused() {
         List<Event> events = full.events().stream().map(e -> e instanceof KernelEvent.RandomDrawn d
                 ? new KernelEvent.RandomDrawn("xoshiro256ss-lemire64-v0", d.point(), d.bound(), d.value(), d.after()) : e).toList();
-        assertThrows(IllegalStateException.class, () -> engine.rebuild(events), "game is bound to its genesis protocol");
+        StateValidationException e = assertThrows(StateValidationException.class, () -> engine.rebuild(events),
+                "game is bound to its genesis protocol");
+        assertTrue(e.getCause() instanceof IllegalStateException && e.getCause().getMessage().contains("protocol"));
         assertThrows(IllegalStateException.class, () -> RandomAudit.verify(events), "audit needs the old implementation");
         assertThrows(IllegalStateException.class, () -> RandomAudit.verify(full.events(), id -> java.util.Optional.empty()));
     }

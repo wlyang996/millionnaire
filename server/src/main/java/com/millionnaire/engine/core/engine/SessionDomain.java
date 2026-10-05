@@ -2,6 +2,7 @@ package com.millionnaire.engine.core.engine;
 
 import com.millionnaire.engine.config.RuleConfig;
 import com.millionnaire.engine.core.command.Command;
+import com.millionnaire.engine.core.command.GameCommand;
 import com.millionnaire.engine.core.command.RoomCommand;
 import com.millionnaire.engine.core.command.SessionCommand;
 import com.millionnaire.engine.core.event.Event;
@@ -16,6 +17,7 @@ import com.millionnaire.engine.core.state.SessionView;
 import com.millionnaire.engine.core.state.View;
 import com.millionnaire.engine.serialize.TypeRegistry;
 import com.millionnaire.engine.time.ScheduledTask;
+import java.util.List;
 
 /**
  * 唯一的生产领域：房间会话 = 大厅 + 可选对局。大厅 → 开局 → 回房在同一状态链上进行，
@@ -27,7 +29,7 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     public static final SessionDomain INSTANCE = new SessionDomain();
 
     private static final TypeRegistry TYPES = TypeRegistry.builder()
-            .add(Command.class, RoomCommand.class, SessionCommand.class)
+            .add(Command.class, RoomCommand.class, SessionCommand.class, GameCommand.class)
             .add(Event.class, RoomEvent.class, GameEvent.class)
             .add(DomainState.class, SessionState.class)
             .build();
@@ -52,7 +54,7 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
 
     @Override
     public SessionState initialState(RuleConfig config) {
-        return new SessionState(RoomState.initial(config), null, 0);
+        return new SessionState(RoomState.initial(config), null, 0, 1, null);
     }
 
     @Override
@@ -60,36 +62,51 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
         return switch (command) {
             case RoomCommand c -> LobbyModule.decide(ctx, c);
             case SessionCommand c -> GameModule.decide(ctx, c);
+            case GameCommand c -> TurnModule.decide(ctx, c);
             default -> RejectionCode.UNSUPPORTED_COMMAND;
         };
     }
 
     @Override
     public void onTask(DecisionContext<SessionState> ctx, ScheduledTask task) {
-        // M0/M1 骨架尚无会话任务；validate 保证不存在挂起任务
+        // 按任务所属模块分派：覆盖窗口到期 → 覆盖流程模块；全局到时、自动动作、回合窗口到期 → 回合模块
+        if (task.kind() == com.millionnaire.engine.time.TaskKind.FLOW) {
+            OverlayModule.onTask(ctx, task);
+        } else {
+            TurnModule.onTask(ctx, task);
+        }
     }
 
     @Override
-    public SessionState evolve(SessionState state, Event event, Draws draws) {
+    public SessionState evolve(SessionState state, Event event, Draws draws, RuleConfig rules) {
         return switch (event) {
             case RoomEvent e -> state.withLobby(LobbyModule.evolve(state.lobby(), e));
-            case GameEvent e -> GameModule.evolve(state, e);
+            case GameEvent e -> GameModule.evolve(state, e, draws, rules);
             default -> throw new IllegalStateException("not a session event: " + event);
         };
     }
 
+    /**
+     * 固定顺序的校验清单（内核部分已由 Engine 先行完成）：大厅 → 对局（局号/时间、设置、玩家、棋盘、回合、流程）
+     * → 跨模块（全部定时任务都必须被某个模块认领，且认领与任务双向一致）。只在步的入口与出口执行，不在每次 emit 后执行。
+     */
     @Override
-    public void validate(EngineState engine, SessionState state, RuleConfig config) {
+    public void validate(EngineState engine, SessionState state, RuleConfig config, boolean full) {
         LobbyModule.expect(state != null, "session state missing");
         LobbyModule.validate(state.lobby(), config);
-        GameModule.validate(state, config);
-        LobbyModule.expect(engine.timers().isEmpty(), "session skeleton never schedules tasks");
+        List<FlowCoordinator.TaskClaim> claims = GameModule.validate(engine, state, config, full);
+        for (ScheduledTask t : engine.timers().tasks()) {
+            LobbyModule.expect(claims.contains(new FlowCoordinator.TaskClaim(t.kind(), t.ref())),
+                    "task " + t.taskId() + " (" + t.kind() + " ref " + t.ref() + ") is not claimed by any module");
+        }
+        LobbyModule.expect(claims.size() == engine.timers().tasks().size(), "every claim must have exactly one task");
     }
 
     @Override
     public SessionView project(EngineState state, String viewerId) {
         SessionState s = (SessionState) state.domain();
         RoomState l = s.lobby();
-        return new SessionView(state.roomId(), l.status(), l.hostId(), l.members(), l.settings(), s.game(), s.gamesPlayed());
+        return new SessionView(state.roomId(), l.status(), l.hostId(), l.members(), l.settings(),
+                s.game() == null ? null : GameModule.view(s.game(), viewerId), s.gamesPlayed(), s.lastResult());
     }
 }

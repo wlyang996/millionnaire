@@ -22,7 +22,11 @@ public final class RogueDomain implements Domain<DemoState> {
         /** 抽随机后接受命令，但没有领域事件消费该结果。 */
         DRAW_WITHOUT_CONSUMING,
         /** 发出一个演化时必然断言失败的领域事件。 */
-        INCONSISTENT_EVENT
+        INCONSISTENT_EVENT,
+        /** 发出能正常演化、但使状态违反校验的事件（空白玩家入座），由提交前出口校验拦截。 */
+        INVALID_RESULT,
+        /** 初始状态即不合法（有房主却没有玩家）。 */
+        BAD_INITIAL
     }
 
     private final Mode mode;
@@ -48,6 +52,9 @@ public final class RogueDomain implements Domain<DemoState> {
 
     @Override
     public DemoState initialState(RuleConfig config) {
+        if (mode == Mode.BAD_INITIAL) {
+            return new DemoState("ghost", java.util.List.of(), null, 1, java.util.List.of());
+        }
         return DemoDomain.INSTANCE.initialState(config);
     }
 
@@ -66,6 +73,10 @@ public final class RogueDomain implements Domain<DemoState> {
                 ctx.emit(new DemoEvent.Peeked(p.actor(), ctx.state().rolls().size()));
                 return null;
             }
+            case INVALID_RESULT -> {
+                ctx.emit(new DemoEvent.Sat(" "));
+                return null;
+            }
             default -> {
                 ctx.emit(new DemoEvent.Stood("nobody-seated"));
                 return null;
@@ -79,12 +90,12 @@ public final class RogueDomain implements Domain<DemoState> {
     }
 
     @Override
-    public DemoState evolve(DemoState state, Event event, Draws draws) {
-        return DemoDomain.INSTANCE.evolve(state, event, draws);
+    public DemoState evolve(DemoState state, Event event, Draws draws, RuleConfig rules) {
+        return DemoDomain.INSTANCE.evolve(state, event, draws, rules);
     }
 
     @Override
-    public void validate(EngineState engine, DemoState state, RuleConfig config) {
-        DemoDomain.INSTANCE.validate(engine, state, config);
+    public void validate(EngineState engine, DemoState state, RuleConfig config, boolean full) {
+        DemoDomain.INSTANCE.validate(engine, state, config, full);
     }
 }

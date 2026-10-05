@@ -158,7 +158,7 @@ class Round8ReviewTest {
         Engine<SessionState> engine = new Engine<>(base, SessionDomain.INSTANCE);
         EngineState s = engine.create("r", 1, 0).state();
         RoomCommand bad = new RoomCommand.Join("a", "x\uD800");
-        assertThrows(InvalidInputException.class, () -> engine.admit(bad));
+        assertThrows(InvalidInputException.class, () -> engine.admitClient(bad));
         assertThrows(InvalidInputException.class, () -> engine.step(s, new Input(1, 1, bad)));
         StepResult next = engine.step(s, new Input(1, 2, new RoomCommand.Join("a", "A")));
         assertEquals(StepResult.Outcome.ACCEPTED, next.outcome(), "seq 1 was never consumed, so no gap");
@@ -176,7 +176,7 @@ class Round8ReviewTest {
     void contractEmitRejectsKernelEvents() {
         Engine<SessionState> engine = new Engine<>(base, SessionDomain.INSTANCE);
         DecisionContext<SessionState> ctx = new DecisionContext<>(engine.create("r", 1, 0).state(),
-                new Evolver<>(SessionDomain.INSTANCE), SessionState.class, XoshiroLemireV1.INSTANCE, base);
+                new Evolver<>(SessionDomain.INSTANCE, base), SessionState.class, XoshiroLemireV1.INSTANCE, base);
         assertThrows(IllegalArgumentException.class, () -> ctx.emit(new KernelEvent.TaskScheduled(
                 new ScheduledTask(1, 99, TaskKind.FLOW, 0))));
         assertThrows(IllegalArgumentException.class, () -> ctx.emit(new KernelEvent.InputAccepted(1, 1, "x")));

@@ -27,6 +27,9 @@ public final class RulesV1Spec {
             new BoardSpec(RuleConfigs.BOARD_50, 50, 2, 8,
                     counts(1, 28, 9, 2, 1, 1, 2, 6), tiers(10, 10, 8), tiers(2, 2, 1)));
 
+    /** 开局抽数上限（requirements 第 4 节"1～100"）。 */
+    public static final int ORDER_NUMBER_MAX = 100;
+
     /** 开局最少人数（requirements 第 2 节"至少 2 人"）。 */
     public static final int MIN_PLAYERS_TO_START = 2;
 
@@ -69,6 +72,10 @@ public final class RulesV1Spec {
         }
         if (c.room().minPlayersToStart() != MIN_PLAYERS_TO_START) {
             errors.add("rules-v1 room.minPlayersToStart must be " + MIN_PLAYERS_TO_START);
+        }
+        // requirements 第 4 节：开局数字为 1～100；更小的上限可能让同分重抽永不结束（T1）
+        if (c.economy().orderNumberMax() != ORDER_NUMBER_MAX) {
+            errors.add("rules-v1 economy.orderNumberMax must be " + ORDER_NUMBER_MAX);
         }
         return errors;
     }

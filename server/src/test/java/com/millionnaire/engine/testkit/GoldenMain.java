@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 /**
  * 在独立 JVM 进程中运行演示场景并输出规范结果（供跨进程一致性测试调用）。
- * 用法：无参数时打印 "状态哈希 快照字节SHA-256 事件日志字节SHA-256"；{@code write <file>} 写出黄金快照文件。
+ * 用法：无参数时打印 "ENV ..." 与 "RESULT 状态哈希 快照字节SHA-256 事件日志字节SHA-256" 两行；{@code write <file>} 写出黄金快照文件。
  */
 public final class GoldenMain {
     private GoldenMain() {
@@ -24,7 +24,9 @@ public final class GoldenMain {
             Files.write(Path.of(args[1]), snapshot.getBytes(StandardCharsets.UTF_8));
             return;
         }
-        System.out.println(r.finalHash() + " " + Canonical.sha256Hex(snapshot.getBytes(StandardCharsets.UTF_8))
+        System.out.println("ENV locale=" + java.util.Locale.getDefault().toLanguageTag()
+                + " tz=" + java.util.TimeZone.getDefault().getID() + " charset=" + java.nio.charset.Charset.defaultCharset().name());
+        System.out.println("RESULT " + r.finalHash() + " " + Canonical.sha256Hex(snapshot.getBytes(StandardCharsets.UTF_8))
                 + " " + Canonical.sha256Hex(runner.engine().encodeEvents(r.events()).getBytes(StandardCharsets.UTF_8)));
     }
 }

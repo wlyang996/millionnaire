@@ -34,9 +34,15 @@ public interface Domain<S extends DomainState> {
     /** 定时任务到期（TaskFired 已发出）。 */
     void onTask(DecisionContext<S> ctx, ScheduledTask task);
 
-    /** 纯函数演化领域事件；消费随机结果须通过 draws，不一致时抛 {@link IllegalStateException}。 */
-    S evolve(S state, Event event, Draws draws);
+    /**
+     * 纯函数演化领域事件；消费随机结果须通过 draws，不一致时抛 {@link IllegalStateException}。
+     * rules 为本局绑定的不可变规则配置（其内容哈希写在创世事件里），用于核对事件中的金额、上界等派生值。
+     */
+    S evolve(S state, Event event, Draws draws, RuleConfig rules);
 
-    /** 恢复入口的一致性校验；不一致时抛 {@link StateValidationException}。 */
-    void validate(EngineState engine, S state, RuleConfig config);
+    /**
+     * 一致性校验；不一致时抛 {@link StateValidationException}。full 为 true 时（恢复、重建、创世）执行完整检查
+     * （如账本历史逐笔重放），false 时（每步入口与出口）只做轻量检查。
+     */
+    void validate(EngineState engine, S state, RuleConfig config, boolean full);
 }

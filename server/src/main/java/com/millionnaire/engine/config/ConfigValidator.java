@@ -356,6 +356,12 @@ public final class ConfigValidator {
         duration("timing.allOfflineCloseMs", t.allOfflineCloseMs());
         duration("timing.downtimeBudgetMs", t.downtimeBudgetMs());
         duration("timing.recoveryPrepMs", t.recoveryPrepMs());
+        if (t.animDiceMs() < 0 || t.animDiceMs() > 10_000 || t.animPerStepMs() < 0 || t.animPerStepMs() > 2_000) {
+            fail("timing animation buffers must be within 0..10000 ms (dice) and 0..2000 ms (per step)");
+        }
+        if (t.autoActDelayMs() < 1 || t.autoActDelayMs() > 60_000) {
+            fail("timing.autoActDelayMs must be in 1..60000");
+        }
         if (t.auctionMaxMs() < t.auctionDurationMs()) {
             fail("timing.auctionMaxMs < auctionDurationMs");
         }
