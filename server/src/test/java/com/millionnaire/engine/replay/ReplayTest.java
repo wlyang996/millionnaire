@@ -1,0 +1,200 @@
+package com.millionnaire.engine.replay;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.millionnaire.engine.config.EconomyConfig;
+import com.millionnaire.engine.config.RuleConfig;
+import com.millionnaire.engine.core.command.Input;
+import com.millionnaire.engine.core.command.Tick;
+import com.millionnaire.engine.core.engine.Engine;
+import com.millionnaire.engine.core.engine.StateValidationException;
+import com.millionnaire.engine.core.event.Event;
+import com.millionnaire.engine.core.event.KernelEvent;
+import com.millionnaire.engine.core.state.EngineState;
+import com.millionnaire.engine.serialize.Canonical;
+import com.millionnaire.engine.serialize.Envelope;
+import com.millionnaire.engine.testkit.DemoDomain;
+import com.millionnaire.engine.testkit.DemoScenarios;
+import com.millionnaire.engine.testkit.DemoState;
+import com.millionnaire.engine.testkit.GoldenMain;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Test;
+
+class ReplayTest {
+    /** 黄金值：锁定引擎行为 + 规范格式 + 随机协议。有意修改时同步更新，并提升 EngineVersion。 */
+    static final String GOLDEN_FINAL_HASH = "5148b25d487bc684c8d57f18e2d127ef2359c6f643aa8e1452a65efe21fad994";
+    private static final String GOLDEN_SNAPSHOT_RESOURCE = "/golden/demo-final.snapshot";
+
+    private final Scenario scenario = DemoScenarios.full();
+    private final ScenarioRunner<DemoState> runner = new ScenarioRunner<>(scenario, DemoDomain.INSTANCE);
+    private final Engine<DemoState> engine = runner.engine();
+    private final RunResult full = runner.run();
+
+    @Test
+    void scenarioProducesExpectedOutcomes() {
+        assertEquals(DemoScenarios.FULL_OUTCOMES, full.outcomes());
+        DemoState s = (DemoState) full.state().domain();
+        assertEquals(List.of("b"), s.players());
+        assertEquals(2, s.rolls().size(), "one manual roll + one timeout auto-roll");
+        assertEquals(2, full.events().stream().filter(e -> e instanceof KernelEvent.RandomDrawn).count());
+        assertEquals(full.events().size(), full.state().eventCount());
+        assertEquals(28, full.state().lastSeq());
+        assertEquals(60_000, full.state().lastReceivedAt());
+    }
+
+    @Test
+    void sameInputsGiveByteIdenticalEventLogAndState() {
+        RunResult again = new ScenarioRunner<>(DemoScenarios.full(), DemoDomain.INSTANCE).run();
+        assertEquals(engine.encodeEvents(full.events()), engine.encodeEvents(again.events()));
+        assertEquals(engine.snapshot(full.state()), engine.snapshot(again.state()));
+        assertEquals(full.stepHashes(), again.stepHashes());
+    }
+
+    @Test
+    void goldenFinalHash() {
+        assertEquals(GOLDEN_FINAL_HASH, full.finalHash());
+    }
+
+    @Test
+    void goldenSnapshotFileMatchesByteForByte() throws IOException {
+        byte[] expected;
+        try (InputStream in = ReplayTest.class.getResourceAsStream(GOLDEN_SNAPSHOT_RESOURCE)) {
+            assertTrue(in != null, "golden file missing: run GoldenMain write src/test/resources" + GOLDEN_SNAPSHOT_RESOURCE);
+            expected = in.readAllBytes();
+        }
+        assertArrayEquals(expected, engine.snapshot(full.state()).getBytes(StandardCharsets.UTF_8));
+        assertEquals(full.state(), engine.restore(new String(expected, StandardCharsets.UTF_8)));
+    }
+
+    @Test
+    void separateJvmProcessWithOtherLocaleTimezoneAndEncodingAgrees() throws Exception {
+        String java = ProcessHandle.current().info().command().orElseThrow();
+        Process p = new ProcessBuilder(java,
+                "-Duser.language=tr", "-Duser.country=TR", "-Duser.timezone=Pacific/Kiritimati",
+                "-Dfile.encoding=ISO-8859-1", "-Dsun.jnu.encoding=ISO-8859-1",
+                "-cp", System.getProperty("java.class.path"), GoldenMain.class.getName())
+                .redirectErrorStream(true).start();
+        assertTrue(p.waitFor(60, TimeUnit.SECONDS), "child JVM timed out");
+        String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.US_ASCII).trim();
+        assertEquals(0, p.exitValue(), out);
+        String expected = full.finalHash() + " "
+                + Canonical.sha256Hex(engine.snapshot(full.state()).getBytes(StandardCharsets.UTF_8)) + " "
+                + Canonical.sha256Hex(engine.encodeEvents(full.events()).getBytes(StandardCharsets.UTF_8));
+        assertEquals(expected, out);
+    }
+
+    @Test
+    void snapshotResumeAtEveryCutMatchesUninterruptedRun() {
+        int n = scenario.inputs().size();
+        for (int cut = 0; cut <= n; cut++) {
+            RunResult prefix = runner.runPrefix(cut);
+            EngineState restored = engine.restore(engine.snapshot(prefix.state()));
+            assertEquals(prefix.state(), restored);
+            RunResult rest = runner.resume(restored, cut);
+            List<Event> stitched = new ArrayList<>(prefix.events());
+            stitched.addAll(rest.events());
+            assertEquals(full.events(), stitched, "events differ at cut " + cut);
+            assertEquals(full.finalHash(), rest.finalHash(), "final hash differs at cut " + cut);
+            assertEquals(full.stepHashes().subList(cut, n), rest.stepHashes(), "step hashes differ at cut " + cut);
+        }
+    }
+
+    @Test
+    void snapshotResumeAtSelectedInterestingCuts() {
+        // 3：普通状态；8：窗口缓冲期；13：暂停中；18：两个同刻任务挂起；27：刚被时间倒退拒绝
+        for (int cut : new int[] {3, 8, 13, 18, 27}) {
+            EngineState restored = engine.restore(engine.snapshot(runner.runPrefix(cut).state()));
+            assertEquals(full.finalHash(), runner.resume(restored, cut).finalHash());
+        }
+        assertEquals(2, runner.runPrefix(18).state().timers().tasks().size());
+        assertEquals(14_000, ((DemoState) runner.runPrefix(13).state().domain()).round().window().pausedRemainingMs());
+    }
+
+    @Test
+    void rebuildFromEventLogEqualsCommandReplayAndPassesAudit() {
+        EngineState rebuilt = engine.rebuild(full.events());
+        assertEquals(full.state(), rebuilt);
+        List<Event> decoded = engine.decodeEvents(engine.encodeEvents(full.events()));
+        assertEquals(full.events(), decoded);
+        assertEquals(full.finalHash(), engine.stateHash(engine.rebuild(decoded)));
+        assertDoesNotThrow(() -> RandomAudit.verify(full.events()));
+    }
+
+    @Test
+    void tamperedRandomStateIsAcceptedByRebuildButCaughtByAudit() {
+        List<Event> events = new ArrayList<>(full.events());
+        for (int i = 0; i < events.size(); i++) {
+            if (events.get(i) instanceof KernelEvent.RandomDrawn d) {
+                events.set(i, new KernelEvent.RandomDrawn(d.protocol(), d.point(), d.bound(), d.value(),
+                        new com.millionnaire.engine.random.RngState(1, 2, 3, 4)));
+                break;
+            }
+        }
+        assertDoesNotThrow(() -> engine.rebuild(events), "normal rebuild trusts the recorded state");
+        assertThrows(IllegalStateException.class, () -> RandomAudit.verify(events));
+    }
+
+    @Test
+    void drawsFromAnotherRandomProtocolAreRefused() {
+        List<Event> events = full.events().stream().map(e -> e instanceof KernelEvent.RandomDrawn d
+                ? new KernelEvent.RandomDrawn("xoshiro256ss-lemire64-v0", d.point(), d.bound(), d.value(), d.after()) : e).toList();
+        assertThrows(IllegalStateException.class, () -> engine.rebuild(events), "game is bound to its genesis protocol");
+        assertThrows(IllegalStateException.class, () -> RandomAudit.verify(events), "audit needs the old implementation");
+        assertThrows(IllegalStateException.class, () -> RandomAudit.verify(full.events(), id -> java.util.Optional.empty()));
+    }
+
+    @Test
+    void envelopeVersionIsCheckedBeforeBody() {
+        String snap = engine.snapshot(full.state());
+        assertTrue(snap.startsWith("millionnaire-engine/1/snapshot\n"));
+        String v2 = snap.replaceFirst("/1/", "/2/") + "garbage that is not even JSON";
+        Envelope.UnsupportedFormatException e = assertThrows(Envelope.UnsupportedFormatException.class,
+                () -> engine.restore(v2));
+        assertTrue(e.getMessage().contains("formatVersion 2"));
+        assertThrows(Envelope.UnsupportedFormatException.class, () -> engine.decodeEvents(snap), "kind mismatch");
+        assertThrows(Envelope.UnsupportedFormatException.class, () -> engine.restore("{}"));
+    }
+
+    @Test
+    void scenarioItselfRoundTrips() {
+        String text = engine.codec().encode(scenario);
+        Scenario back = engine.codec().decode(text, Scenario.class);
+        assertEquals(scenario, back);
+        assertEquals(full.finalHash(), new ScenarioRunner<>(back, DemoDomain.INSTANCE).run().finalHash());
+    }
+
+    @Test
+    void differentSeedChangesRandomOutcomeOnly() {
+        Scenario other = new Scenario(scenario.config(), scenario.roomId(), scenario.seed() + 1,
+                scenario.createdAt(), scenario.inputs());
+        RunResult r = new ScenarioRunner<>(other, DemoDomain.INSTANCE).run();
+        assertEquals(full.outcomes(), r.outcomes());
+        assertNotEquals(full.finalHash(), r.finalHash());
+    }
+
+    @Test
+    void stateFromAnotherConfigOrDomainIsRefused() {
+        RuleConfig c = scenario.config();
+        EconomyConfig e = c.economy();
+        RuleConfig changed = new RuleConfig(c.ruleVersion(), c.boards(), c.tiers(), c.station(),
+                new EconomyConfig(e.startReward() + 50, e.miniGameWinReward(), e.bailCost(), e.eventCashMin(),
+                        e.eventCashMax(), e.eventCashStep(), e.eventMoveMinSteps(), e.eventMoveMaxSteps(), e.dieFaces(),
+                        e.maxLevel(), e.handLimit(), e.initialHandSize(), e.orderNumberMax()),
+                c.ratios(), c.cardWeights(), c.eventWeights(), c.timing(), c.room());
+        EngineState s = runner.runPrefix(5).state();
+        Engine<DemoState> other = new Engine<>(changed, DemoDomain.INSTANCE);
+        assertThrows(StateValidationException.class, () -> other.step(s, new Input(6, 9999, new Tick())));
+        assertThrows(StateValidationException.class, () -> other.restore(engine.snapshot(s)));
+        assertThrows(StateValidationException.class, () -> other.rebuild(full.events()));
+    }
+}

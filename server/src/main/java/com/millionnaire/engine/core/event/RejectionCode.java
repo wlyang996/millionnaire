@@ -1,0 +1,30 @@
+package com.millionnaire.engine.core.event;
+
+/** 命令拒绝原因。拒绝不改变业务状态（只消耗序号、推进接收水位）、不消耗随机数。 */
+public enum RejectionCode {
+    TIME_REGRESSION,
+    UNSUPPORTED_COMMAND,
+    INVALID_ARGUMENT,
+    ROOM_CLOSED,
+    ALREADY_MEMBER,
+    NOT_MEMBER,
+    ROOM_FULL,
+    INVALID_NICKNAME,
+    NOT_HOST,
+    CANNOT_KICK_SELF,
+    INVALID_SETTINGS,
+    CAPACITY_EXCEEDED,
+    UNCHANGED,
+    GAME_IN_PROGRESS,
+    NOT_IN_GAME,
+    NOT_ALL_READY,
+    NOT_ENOUGH_PLAYERS,
+    NOT_ALLOWED,
+    NO_ACTIVE_WINDOW,
+    WINDOW_MISMATCH,
+    WINDOW_NOT_OPEN,
+    WINDOW_PAUSED,
+    WINDOW_ALREADY_ACTIVE,
+    NOT_PAUSED,
+    NOT_YOUR_WINDOW
+}
