@@ -1,5 +1,6 @@
 package com.millionnaire.engine.config;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,7 +14,7 @@ import java.util.function.UnaryOperator;
 import org.junit.jupiter.api.Test;
 
 class ConfigValidatorTest {
-    private final RuleConfig base = RuleConfigs.defaultV1();
+    private final RuleConfig base = TestBoards.legacyV1();
 
     @Test
     void acceptsDefault() {
@@ -88,11 +89,11 @@ class ConfigValidatorTest {
 
     @Test
     void rejectsBrokenBoards() {
-        String noJail = RuleConfigs.LAYOUT_30.replace(" J ", " R ");
+        String noJail = TestBoards.LEGACY_30.replace(" J ", " R ");
         assertError(withBoards(RuleConfigs.board("x", 2, 4, noJail)), "exactly one JAIL");
-        String startMoved = "L S" + RuleConfigs.LAYOUT_30.substring(3);
+        String startMoved = "L S" + TestBoards.LEGACY_30.substring(3);
         assertError(withBoards(RuleConfigs.board("x", 2, 4, startMoved)), "exactly one START at index 0");
-        assertError(withBoards(RuleConfigs.board("x", 2, 9, RuleConfigs.LAYOUT_30)), "player capacity");
+        assertError(withBoards(RuleConfigs.board("x", 2, 9, TestBoards.LEGACY_30)), "player capacity");
         assertError(withBoards(RuleConfigs.board("x", 2, 4, "S L E J T M L R B")), "too small for max forward chain");
 
         List<Tile> tiles = new ArrayList<>(base.board(RuleConfigs.BOARD_30).orElseThrow().tiles());
@@ -205,19 +206,19 @@ class ConfigValidatorTest {
 
     @Test
     void rulesV1SpecChecksBoardComposition() {
-        String moreStations = RuleConfigs.LAYOUT_30.replaceFirst(" E ", " T ");
+        String moreStations = TestBoards.LEGACY_30.replaceFirst(" E ", " T ");
         RuleConfig c = new RuleConfig(base.ruleVersion(),
                 List.of(RuleConfigs.board(RuleConfigs.BOARD_30, 2, 4, moreStations), base.boards().get(1)),
                 base.tiers(), base.station(), base.economy(), base.ratios(), base.cardWeights(), base.eventWeights(),
                 base.timing(), base.room());
         assertError(c, "rules-v1 board classic-30 must have 4 STATION, got 5");
-        String noDesignation = RuleConfigs.LAYOUT_30.replace("M*", "M");
+        String noDesignation = TestBoards.LEGACY_30.replace("M*", "M");
         assertError(new RuleConfig(base.ruleVersion(),
                 List.of(RuleConfigs.board(RuleConfigs.BOARD_30, 2, 4, noDesignation), base.boards().get(1)),
                 base.tiers(), base.station(), base.economy(), base.ratios(), base.cardWeights(), base.eventWeights(),
                 base.timing(), base.room()), "designated MID auction properties, got 0");
         assertError(new RuleConfig(base.ruleVersion(),
-                List.of(RuleConfigs.board(RuleConfigs.BOARD_30, 2, 3, RuleConfigs.LAYOUT_30), base.boards().get(1)),
+                List.of(RuleConfigs.board(RuleConfigs.BOARD_30, 2, 3, TestBoards.LEGACY_30), base.boards().get(1)),
                 base.tiers(), base.station(), base.economy(), base.ratios(), base.cardWeights(), base.eventWeights(),
                 base.timing(), base.room()), "rules-v1 board classic-30 capacity must be 2..4");
         assertError(new RuleConfig("rules-v9", base.boards(), base.tiers(), base.station(), base.economy(),

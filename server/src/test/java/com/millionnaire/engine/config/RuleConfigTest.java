@@ -1,5 +1,6 @@
 package com.millionnaire.engine.config;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,7 +14,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class RuleConfigTest {
-    private final RuleConfig config = RuleConfigs.defaultV1();
+    private final RuleConfig config = TestBoards.legacyV1();
 
     @Test
     void defaultConfigIsValid() {
@@ -52,7 +53,7 @@ class RuleConfigTest {
         String h = config.contentHash();
         assertEquals(64, h.length());
         assertTrue(h.matches("[0-9a-f]{64}"));
-        assertEquals(h, RuleConfigs.defaultV1().contentHash());
+        assertEquals(h, TestBoards.legacyV1().contentHash());
 
         // 同内容、不同插入顺序的 Map → 同哈希
         List<Map.Entry<CardType, Integer>> entries = new ArrayList<>(config.cardWeights().entrySet());

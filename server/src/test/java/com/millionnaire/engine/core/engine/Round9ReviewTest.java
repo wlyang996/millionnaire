@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -43,7 +44,7 @@ import org.junit.jupiter.api.Test;
 
 /** 第 9 轮评审 J1–J6 与故障停房的回归（J1/J2/J3/J5/J6 的反例在修复前全部失败，见 m1a-report）。 */
 class Round9ReviewTest {
-    private final RuleConfig base = RuleConfigs.defaultV1();
+    private final RuleConfig base = TestBoards.legacyV1();
     private final Engine<SessionState> engine = new Engine<>(base, SessionDomain.INSTANCE);
 
     static List<Input> threePlayersStart(long firstSeq) {

@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -53,7 +54,7 @@ import org.junit.jupiter.api.Test;
  * 第 7 轮评审 R1–R13 的反例回归（修复前全部失败，见 m0-fix-report）。细粒度测试在各模块测试类中。
  */
 class Round7ReviewTest {
-    private final RuleConfig config = RuleConfigs.defaultV1();
+    private final RuleConfig config = TestBoards.legacyV1();
 
     @Test
     void r1LoneSurrogateRejectedAndEmojiLossless() {
@@ -133,7 +134,7 @@ class Round7ReviewTest {
 
     @Test
     void r7EventTileReplacedByRestFailsRulesV1Spec() {
-        String layout = RuleConfigs.LAYOUT_30.replaceFirst(" E ", " R ");
+        String layout = TestBoards.LEGACY_30.replaceFirst(" E ", " R ");
         RuleConfig bad = new RuleConfig(config.ruleVersion(),
                 List.of(RuleConfigs.board(RuleConfigs.BOARD_30, 2, 4, layout), config.boards().get(1)),
                 config.tiers(), config.station(), config.economy(), config.ratios(), config.cardWeights(),

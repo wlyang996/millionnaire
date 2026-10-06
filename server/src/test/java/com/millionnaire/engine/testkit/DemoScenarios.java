@@ -56,7 +56,7 @@ public final class DemoScenarios {
         add(in, 27, 53000, new Peek("b"));                       // 水位未被拉低，等于水位可接受
         add(in, 10, 60000, new Tick());                          // 过期序号 → STALE
         add(in, 28, 60000, new Tick());
-        return new Scenario(RuleConfigs.defaultV1(), "room-1", SEED, 0, in);
+        return new Scenario(TestBoards.legacyV1(), "room-1", SEED, 0, in);
     }
 
     public static final List<Outcome> FULL_OUTCOMES = List.of(

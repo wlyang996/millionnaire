@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -37,7 +38,7 @@ import org.junit.jupiter.api.Test;
 
 /** 内核行为（借助演示领域）：输入契约、时间线、定时任务、随机消费、窗口、投影。 */
 class KernelTest {
-    private final Engine<DemoState> engine = new Engine<>(RuleConfigs.defaultV1(), DemoDomain.INSTANCE);
+    private final Engine<DemoState> engine = new Engine<>(TestBoards.legacyV1(), DemoDomain.INSTANCE);
     private EngineState state;
     private long seq;
 
@@ -217,7 +218,7 @@ class KernelTest {
         ScriptedRandom script = ScriptedRandom.withEventCards(List.of(
                 ScriptedRandom.step(DrawPoint.MOVE_DIE, 6, 0),
                 ScriptedRandom.step(DrawPoint.MOVE_DIE, 6, 5)));
-        Engine<DemoState> scripted = new Engine<>(RuleConfigs.defaultV1(), DemoDomain.INSTANCE, script);
+        Engine<DemoState> scripted = new Engine<>(TestBoards.legacyV1(), DemoDomain.INSTANCE, script);
         EngineState s = scripted.create("r", 1, 0).state();
         long n = 0;
         for (Command c : List.of(new Sit("a"), new OpenRound("a", "a", 0), new Roll("a", 1),
@@ -250,7 +251,7 @@ class KernelTest {
 
     @Test
     void acceptedWithoutConsumingDrawIsKernelFault() {
-        Engine<DemoState> rogue = new Engine<>(RuleConfigs.defaultV1(), new RogueDomain(RogueDomain.Mode.DRAW_WITHOUT_CONSUMING));
+        Engine<DemoState> rogue = new Engine<>(TestBoards.legacyV1(), new RogueDomain(RogueDomain.Mode.DRAW_WITHOUT_CONSUMING));
         EngineState s = rogue.step(rogue.create("r", 1, 0).state(), new Input(1, 1, new Sit("a"))).state();
         KernelFaultException e = assertThrows(KernelFaultException.class, () -> rogue.step(s, new Input(2, 2, new Peek("a"))));
         assertTrue(e.getMessage().contains("without consuming"), e.getMessage());
@@ -258,7 +259,7 @@ class KernelTest {
 
     @Test
     void drawThenRejectIsKernelFault() {
-        Engine<DemoState> rogue = new Engine<>(RuleConfigs.defaultV1(), new RogueDomain(RogueDomain.Mode.DRAW_THEN_REJECT));
+        Engine<DemoState> rogue = new Engine<>(TestBoards.legacyV1(), new RogueDomain(RogueDomain.Mode.DRAW_THEN_REJECT));
         EngineState s = rogue.step(rogue.create("r", 1, 0).state(), new Input(1, 1, new Sit("a"))).state();
         assertThrows(KernelFaultException.class, () -> rogue.step(s, new Input(2, 2, new Peek("a"))));
         assertEquals(Outcome.ACCEPTED, rogue.step(s, new Input(2, 2, new Sit("b"))).outcome(), "nothing was committed");
@@ -266,7 +267,7 @@ class KernelTest {
 
     @Test
     void inconsistentDomainEventIsKernelFault() {
-        Engine<DemoState> rogue = new Engine<>(RuleConfigs.defaultV1(), new RogueDomain(RogueDomain.Mode.INCONSISTENT_EVENT));
+        Engine<DemoState> rogue = new Engine<>(TestBoards.legacyV1(), new RogueDomain(RogueDomain.Mode.INCONSISTENT_EVENT));
         EngineState s = rogue.step(rogue.create("r", 1, 0).state(), new Input(1, 1, new Sit("a"))).state();
         assertThrows(KernelFaultException.class, () -> rogue.step(s, new Input(2, 2, new Peek("a"))));
     }

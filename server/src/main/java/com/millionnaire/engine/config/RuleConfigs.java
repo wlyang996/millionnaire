@@ -14,17 +14,24 @@ public final class RuleConfigs {
     public static final String BOARD_30 = "classic-30";
     public static final String BOARD_50 = "classic-50";
 
-    /** 记号：S 起点，L/M/H 普通地产（* = 指定拍卖地），E 事件，T 车站，B 银行，J 监狱，R 休息，G 游戏区。 */
+    /** 布局与美术设计稿 design/ui/board-v6（客户端 BoardNames.ts 的 DESIGN_30/50）逐格一致。
+     * 记号：S 起点，L/M/H 普通地产（* = 指定拍卖地），E 事件，T 车站，B 银行，J 监狱，R 休息，G 游戏区。 */
     public static final String LAYOUT_30 =
-            "S L E L T M L* M J L E B T M* H R L E M T H E M G L H* E T M H";
+            "S L E M T H L J M E L T H* M* B G L* E M T H L R M E L T M H E";
     public static final String LAYOUT_50 =
-            "S L M E L M T L H E B M L* J H T M* L E G H E T M L R H M E L "
-            + "H* T M E L* B H M G L E T H M* E L H T E M";
+            "S M E L T H B L M* E H J M E L* T H L E M H* T M E L G H L E T "
+            + "M* B H E M L* R H E L T M H E G M L T L M";
 
     private RuleConfigs() {
     }
 
+    /** 正式配置：rules-v1 数值 + 美术设计稿布局。 */
     public static RuleConfig defaultV1() {
+        return v1(LAYOUT_30, LAYOUT_50);
+    }
+
+    /** rules-v1 数值 + 指定的 30 / 50 格布局（测试夹具可用别的合规布局）。 */
+    public static RuleConfig v1(String layout30, String layout50) {
         Map<CardType, Integer> cards = new TreeMap<>();
         cards.put(CardType.ROADBLOCK, 120);
         cards.put(CardType.RENT_WAIVER, 120);
@@ -50,7 +57,7 @@ public final class RuleConfigs {
 
         return new RuleConfig(
                 RULE_VERSION,
-                List.of(board(BOARD_30, 2, 4, LAYOUT_30), board(BOARD_50, 2, 8, LAYOUT_50)),
+                List.of(board(BOARD_30, 2, 4, layout30), board(BOARD_50, 2, 8, layout50)),
                 List.of(
                         new TierPricing(Tier.LOW, 500, 300, List.of(100L, 250L, 450L, 700L), Ratio.percent(80)),
                         new TierPricing(Tier.MID, 1000, 600, List.of(200L, 500L, 900L, 1400L), Ratio.percent(70)),

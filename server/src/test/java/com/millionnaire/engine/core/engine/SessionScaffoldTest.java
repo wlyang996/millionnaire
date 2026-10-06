@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,7 +30,7 @@ import org.junit.jupiter.api.Test;
 
 /** M1 第一批脚手架在生产会话上的接线：窗口 ID、随机贯通、流程在对局状态中的校验与性能基线。 */
 class SessionScaffoldTest {
-    private final RuleConfig config = RuleConfigs.defaultV1();
+    private final RuleConfig config = TestBoards.legacyV1();
 
     private static List<Command> lobby(int players, boolean fiftyTiles) {
         List<Command> cs = new ArrayList<>();

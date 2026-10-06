@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -39,7 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class SessionDomainTest {
-    private final Engine<SessionState> engine = new Engine<>(RuleConfigs.defaultV1(), SessionDomain.INSTANCE);
+    private final Engine<SessionState> engine = new Engine<>(TestBoards.legacyV1(), SessionDomain.INSTANCE);
     private EngineState state;
     private long seq;
 

@@ -36,7 +36,7 @@ public final class Table {
     public final List<Event> log = new ArrayList<>();
     public final List<Input> inputs = new ArrayList<>();
     public Table(RandomSourceFactory random, long seed) {
-        this(RuleConfigs.defaultV1(), random, seed);
+        this(TestBoards.legacyV1(), random, seed);
     }
 
     public Table(RuleConfig config, RandomSourceFactory random, long seed) {

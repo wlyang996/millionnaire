@@ -1,5 +1,6 @@
 package com.millionnaire.engine.config;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,7 +24,7 @@ class ConfigPropertyTest {
     @Test
     void validatedConfigsAlwaysHashAndBuildAnEngine() {
         SplittableRandom rnd = new SplittableRandom(20261005);
-        RuleConfig base = RuleConfigs.defaultV1();
+        RuleConfig base = TestBoards.legacyV1();
         int passed = 0;
         int failed = 0;
         for (int i = 0; i < 3000; i++) {

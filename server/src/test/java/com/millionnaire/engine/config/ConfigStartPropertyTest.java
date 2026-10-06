@@ -1,5 +1,6 @@
 package com.millionnaire.engine.config;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -77,7 +78,7 @@ class ConfigStartPropertyTest {
 
     @Test
     void orderNumberMaxOfOneIsRejected() {
-        RuleConfig b = RuleConfigs.defaultV1();
+        RuleConfig b = TestBoards.legacyV1();
         List<String> errors = ConfigValidator.validate(withEconomy(b, orderMax(b.economy(), 1)));
         assertFalse(errors.isEmpty(), "orderNumberMax = 1 can never separate two players");
         assertTrue(errors.stream().anyMatch(x -> x.contains("orderNumberMax")), errors.toString());
@@ -86,7 +87,7 @@ class ConfigStartPropertyTest {
     @Test
     void everyValidatedConfigActuallyStartsAGame() {
         SplittableRandom rnd = new SplittableRandom(1005);
-        RuleConfig b = RuleConfigs.defaultV1();
+        RuleConfig b = TestBoards.legacyV1();
         int started = 0;
         for (int i = 0; i < 60; i++) {
             EconomyConfig e = b.economy();

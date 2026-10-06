@@ -1,12 +1,13 @@
 package com.millionnaire.engine.config;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
 /** opus-analysis 4.11 价格与取整表逐项核对。 */
 class PricingTest {
-    private final Pricing p = new Pricing(RuleConfigs.defaultV1());
+    private final Pricing p = new Pricing(TestBoards.legacyV1());
 
     @Test
     void standardValues() {

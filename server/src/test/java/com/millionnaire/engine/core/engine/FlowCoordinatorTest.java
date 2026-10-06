@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,7 +34,7 @@ import org.junit.jupiter.api.Test;
 
 /** FlowCoordinator 与两个假模块（回合、申请）的集成测试：跨模块时钟、互斥与恢复。 */
 class FlowCoordinatorTest {
-    private final Engine<FlowTestState> engine = new Engine<>(RuleConfigs.defaultV1(), FlowTestDomain.INSTANCE);
+    private final Engine<FlowTestState> engine = new Engine<>(TestBoards.legacyV1(), FlowTestDomain.INSTANCE);
     private EngineState state;
     private long seq;
 

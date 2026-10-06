@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static com.millionnaire.engine.testkit.Table.dice;
 import static com.millionnaire.engine.testkit.Table.order;
 import static com.millionnaire.engine.testkit.Table.script;
@@ -386,7 +387,7 @@ class GameRulesTest {
                                 .orElseThrow().taskId()))));
         assertThrows(StateValidationException.class, () -> t.engine.restore(t.engine.snapshot(wrongClock)));
         // 已有的地块类型核对：50 格棋盘的监狱位置
-        assertEquals(13, TurnModule.jailIndex(RuleConfigs.defaultV1().board(RuleConfigs.BOARD_50).orElseThrow()));
-        assertEquals(TileType.JAIL, RuleConfigs.defaultV1().board(RuleConfigs.BOARD_30).orElseThrow().tiles().get(8).type());
+        assertEquals(13, TurnModule.jailIndex(TestBoards.legacyV1().board(RuleConfigs.BOARD_50).orElseThrow()));
+        assertEquals(TileType.JAIL, TestBoards.legacyV1().board(RuleConfigs.BOARD_30).orElseThrow().tiles().get(8).type());
     }
 }

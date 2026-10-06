@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.*;
 import com.millionnaire.engine.config.*;
 import com.millionnaire.engine.random.DrawPoint;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 class M3bProbabilityTest {
     @Test void everyCardWeightBoundaryMapsToThePrivateReceiptField() {
-        var c = RuleConfigs.defaultV1(); int begin = 0;
+        var c = TestBoards.legacyV1(); int begin = 0;
         for (var type : CardType.values()) {
             int end = begin + c.cardWeights().get(type);
             for (int value : new int[] {begin, end - 1}) {
@@ -25,7 +26,7 @@ class M3bProbabilityTest {
         }
     }
     @Test void exactEventAndCardIntervalsMatchEveryConfiguredWeight() {
-        var c = RuleConfigs.defaultV1();
+        var c = TestBoards.legacyV1();
         var events = new EnumMap<EventKind, Integer>(EventKind.class);
         for (int i = 0; i < 100; i++) { events.merge(EventModule.pick(c, i), 1, Integer::sum); }
         assertEquals(c.eventWeights(), events);

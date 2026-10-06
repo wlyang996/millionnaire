@@ -1,5 +1,6 @@
 package com.millionnaire.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -30,7 +31,7 @@ class ImmutabilityTest {
 
     @Test
     void configCopiesItsInputsAndExposesUnmodifiableViews() {
-        RuleConfig base = RuleConfigs.defaultV1();
+        RuleConfig base = TestBoards.legacyV1();
         List<TierPricing> tiers = new ArrayList<>(base.tiers());
         Map<CardType, Integer> cards = new TreeMap<>(base.cardWeights());
         RuleConfig c = new RuleConfig(base.ruleVersion(), base.boards(), tiers, base.station(), base.economy(),
@@ -49,7 +50,7 @@ class ImmutabilityTest {
 
     @Test
     void stateCollectionsAreUnmodifiableIncludingAfterRestore() {
-        Engine<SessionState> engine = new Engine<>(RuleConfigs.defaultV1(), SessionDomain.INSTANCE);
+        Engine<SessionState> engine = new Engine<>(TestBoards.legacyV1(), SessionDomain.INSTANCE);
         EngineState s = engine.step(engine.create("r", 1, 0).state(), new Input(1, 1, new RoomCommand.Join("a", "A"))).state();
         for (EngineState st : List.of(s, engine.restore(engine.snapshot(s)))) {
             RoomState room = ((SessionState) st.domain()).lobby();

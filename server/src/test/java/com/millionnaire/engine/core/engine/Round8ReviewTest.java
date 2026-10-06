@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.engine;
 
+import com.millionnaire.engine.testkit.TestBoards;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -45,7 +46,7 @@ import org.junit.jupiter.api.Test;
 
 /** 第 8 轮评审 N1–N8 与新增契约的反例回归（修复前全部失败，见 m0-fix2-report）。 */
 class Round8ReviewTest {
-    private final RuleConfig base = RuleConfigs.defaultV1();
+    private final RuleConfig base = TestBoards.legacyV1();
 
     @Test
     void n1NullOrDuplicateCashOptionIsAnError() {
