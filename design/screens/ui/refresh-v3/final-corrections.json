@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-06",
+  "jobs": [
+    {
+      "id": "property_layout_final",
+      "file": "ui/refresh-v3/购买地产-升级-租金响应-交易确认-v3.png",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/04-property-popups.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/01-board.png"
+      ],
+      "prompt": "Reference1 is COMPOSITION TARGET: keep EXACT its equal4columns fullfourportraits allfullyvisible canvasaspect, no columns expanded or cropped. Reference2 is CURRENT BOARD STYLE only. Regenerate reference1 FOUR EQUAL width completeportraitpanels (购买地产,升级地产,支付租金,交易确认). Exactly8players4columns2rows smallcompact on EACHscreen; topplayerbarMUST showall8 on fourthscreen too. Match currenttownnamedmap andupperleftfandeck fromref2 behindpopup. Keep reference1 allcentral Chinese ruletext numbers/timers/buttons:buy1000rent200,upgrade600rent500→900,rentresponse500,trade1200,std1000range500–2500availablecash3000. Ownblueboy统一糖糖 instead小林,owncash3000 inALLtopandbottominstances. Footercash3000 thenred认输 then我的资产 mic/chat. All4panels equalwidth e.g425px each; visualdensityfits phones; NO clipping; NO 3columns playerbar on fourthscreen; outerwhitegaps preserved. Fiveicons ONE ROW optionalhandwith slimright6/6arrowtrack ifshown, not requiredtoexpandbeyondscreen. No rulechanges, fullfourpaneldesignsheet."
+    },
+    {
+      "id": "auction_numbers_clock",
+      "file": "ui/refresh-v3/拍卖竞价-应急抵押-欠款第二阶段-v3.png",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/refresh-v3/拍卖竞价-应急抵押-欠款第二阶段-v3.png"
+      ],
+      "prompt": "Edit this current 3panel auction/debtUI sheet ONLY the headercolors and owncashnumbers. TopMATCHTIME '剩余23:46' is >10minutes so ALLTHREEclockiconsANDtimeletters must be DEEP BLUE #1F3F7A (currentlyredwrong); popup20秒30秒 timersunchangedred. FIRSTscreen own糖糖cash topbadge3000 andbottomfooter3000 (currently2800wrong) matchingpopup cash3000/frozen800/available2200. SECONDscreenown糖糖cash topbadge0 matchingpopupcash0 andfooter0; THIRDscreenown糖糖cash topbadge400 matchingraised400andfooter400. Keep ALL others' values and ALL centralpopups prices,costs,ruletext,buttons exactlyunchanged; no newgameplay, no extralabels. Keep3complete equalportraitpanels,layoutandart unchanged. Footer认输locationunchanged."
+    }
+  ],
+  "connectionClockPrompt": "Correct only TOP MATCH CLOCKS of this threepanel UI sheet: middleandright '剩余23:46' clocks currentlyRED buttimeisabove10minutes. SetBOTHclockiconsANDALLtimelettersDEEP BLUE #1F3F7A, includingrightunderexistingdimoverlay. Preserveeveryotherpixel/layout/Chinesevalue andcentralred15秒 exactly. Lefttop externalcaption '好友房间 v2' change '好友房间' withoutversion. Do notchange roomsettings,cash,time digits,avatars,statuslabels,handtray,deck,die,footer,resyncpopup. This is colorconsistency correction only. Outputsame3completepanels."
+}

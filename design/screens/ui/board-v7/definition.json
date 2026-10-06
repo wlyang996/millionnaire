@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-06",
+  "status": "design specification; not applied",
+  "viewport": {
+    "width": 720,
+    "height": 1280
+  },
+  "hand": {
+    "visibleItems": 5,
+    "groupSameType": true,
+    "total": "real count / 6",
+    "utilityRail": {
+      "top": "total counter",
+      "middle": "horizontal scroll arrow",
+      "bottom": "short scroll position track"
+    },
+    "capacityBar": false,
+    "emptyHand": "no dummy owned cards"
+  },
+  "turn": {
+    "mine": [
+      "轮到你了",
+      "剩余操作秒数",
+      "投骰子 enabled"
+    ],
+    "other": [
+      "玩家名的回合",
+      "等待该玩家投骰",
+      "投骰子 disabled"
+    ]
+  },
+  "surrender": {
+    "location": "own footer between cash and My Assets",
+    "confirmationRequired": true
+  },
+  "clock": {
+    "normal": "#1F3F7A",
+    "warning": "#E5303A",
+    "normalAtSeconds": 600,
+    "blinkBelowSeconds": 180,
+    "blinkPeriodMs": 1000,
+    "opacity": [
+      1,
+      0.35
+    ],
+    "zero": "red steady; final result governed by rules"
+  },
+  "events": {
+    "idle": "large unfolded 3-card fan at upper-left inside board",
+    "dice": "center stays fixed",
+    "draw": "triggering player only: central card back, tap card",
+    "separateDrawButton": false,
+    "newDrawTimeout": null
+  },
+  "rulesSources": [
+    "requirements.md",
+    "open-decisions.md"
+  ]
+}

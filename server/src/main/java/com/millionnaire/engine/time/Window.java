@@ -10,7 +10,8 @@ package com.millionnaire.engine.time;
 public record Window(long windowId, long opensAt, long deadline, boolean paused, long pausedLeadMs, long pausedRemainingMs) {
 
     public Window {
-        if (deadline < opensAt || !paused && deadline == opensAt) {
+        if (deadline <= opensAt) {
+            // 暂停窗口同样必须有正长度；"剩余为 0"只能表达为正长度窗口上的 pausedRemainingMs = 0（恢复时即耗尽）
             throw new IllegalArgumentException("window must have positive length");
         }
         if (!paused && (pausedLeadMs != 0 || pausedRemainingMs != 0)) {

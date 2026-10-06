@@ -1,0 +1,344 @@
+{
+  "date": "2026-10-06",
+  "tool": "built-in image_gen",
+  "status": "design candidates; not applied to game",
+  "jobs": [
+    {
+      "id": "board",
+      "file": "ui/board-v7/对局棋盘-普通回合-v7.png",
+      "prompt": "Edit only this full portrait board screenshot. Preserve named50 tile ring, river-town, EIGHT players4x2, large unfolded three blue-gold question-mark cards in upper-left INSIDE map, center die/轮到你了/15秒 and 投骰子, red match08:46. Make bottom hand tray exactly FIVE complete item cells, no wrap. Reserve narrow fixed RIGHT utility rail separate from item cells: 6/6 at TOP of rail, light right chevron in MIDDLE, short horizontal blue/gray scroll-position track at BOTTOM of same rail. Track is scroll location, not capacity. Same-type quantity badge on item upper-right retained. Keep assets/voice/chat footer; insert subtle small plain red-text 认输 button BETWEEN own cash text and 我的资产 button, no icon, no overlap, secondary emphasis. Same position used in all board states. No right-side zoom buttons. No draw-event button. All other elements same. One complete portrait screenshot.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "states",
+      "file": "ui/board-v7/道具栏-回合提示-时间警示规范-v7.png",
+      "prompt": "Create a polished readable design board for the SAME cheerful 2.5D riverside-town Chinese mobile board game in the reference. Warm ivory panels, blue sky, grass, moderate soft bevels, same eight character identities. All exact Chinese text legible. Full portrait mobile views arranged side by side when specified, with small external captions. No prototype debug buttons. UI is a candidate visual, never invent rule mechanics or costs. One landscape UI specification board with 3 clearly separated sections. TOP: exact normal clock #1F3F7A 深蓝 ≥10:00, warning #E5303A 红色 03:00–09:59, and two identical red02:59 badges at opacity100% and35% showing blinking1secondcycle, numeric HEX values rendered beside swatches. MIDDLE: two SINGLE-ROW hand trays with 5 items each (免租,建造,拍卖,定点移动,路障) then (建造,拍卖,定点移动,路障,出狱). In BOTH, a separate narrow RIGHT utility rail: 6/6 at TOP, right-chevron MIDDLE, short scroll track BOTTOM. Absolutely NO track below the five cards, NO count below cards. Caption 五项视口 · 同类角标保留 · 横滑位置条. BOTTOM: small central turn panels comparing 轮到你了 / 剩余15秒 / enabled投骰子 and 可可的回合 / 等待可可投骰 / disabled投骰子. Also show own footer cash2800, small red text认输 BETWEEN cash and 我的资产, microphone/chat right. No changes to game rules. Keep style in references.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/09-ui-states.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "events",
+      "file": "ui/supplement-v1/事件卡-五类卡面与问号卡背-v1.png",
+      "prompt": "Create a polished readable design board for the SAME cheerful 2.5D riverside-town Chinese mobile board game in the reference. Warm ivory panels, blue sky, grass, moderate soft bevels, same eight character identities. All exact Chinese text legible. Full portrait mobile views arranged side by side when specified, with small external captions. No prototype debug buttons. UI is a candidate visual, never invent rule mechanics or costs. Landscape board of SIX large matching blue-gold rounded event cards arranged3 columns2rows. First FIVE front faces, sixth back with question mark. Titles and representative outcome text exactly: 奖励 / +300金币 (coin purse illustration), 罚款 / -200金币 (receipt and coin illustration), 道具 / 获得建造卡 ×1 (house tool card illustration), 位移 / 后退2格 (blue backward path arrow), 入狱 / 前往监狱 (friendly barred gate, not scary), 事件卡 / ? for back. Each front simple tasteful icon, exact large outcome and tiny explanatory line respectively 系统奖励, 金额不足按欠款流程处理, 手牌满时进入弃牌, 按落点规则结算 · 不连抽事件, 本回合结束. Small header 事件卡卡面 · 数值为示例, footer 奖励/罚款100–500，每50一档；位移前后1–3格. No extra card prizes or invented probabilities.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "target1",
+      "file": "ui/supplement-v1/路障放置-定点移动-查询目标与结果-v1.png",
+      "prompt": "Create a polished readable design board for the SAME cheerful 2.5D riverside-town Chinese mobile board game in the reference. Warm ivory panels, blue sky, grass, moderate soft bevels, same eight character identities. All exact Chinese text legible. Full portrait mobile views arranged side by side when specified, with small external captions. No prototype debug buttons. UI is a candidate visual, never invent rule mechanics or costs. Three full portrait mobile screens side by side. LEFT 路障: player on 青麦路, ONLY CURRENT tile outlined; ivory confirmation panel 在当前位置放置路障 / 青麦路 / 取消 / 放置路障; tiny line 不能选择其他格子 · 监狱不能放置. MIDDLE 定点移动: board visible, own青麦路 marker and forward reachable path with6 cells highlighted/numbered1..6; choose 第3格; bottom selected information 前进3格 / 星湖路; actions 取消 / 确认移动; helper 替代投骰 · 忽略沿途路障. RIGHT 查询: eight player avatars fourbytwo; self gray disabled, 可可 selected blue outline; lowerpanel 查询可可的手牌 / 取消 / 使用查询; private hand result compact card strip with label 仅你可见 · 使用时快照. No picking arbitrary tile for roadblock, no farther than6 for fixedmove. Same five-item tray right utilityrail as board. No draw-event button.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "target2",
+      "file": "ui/supplement-v1/强制购房-降级-拆楼-清地-v1.png",
+      "prompt": "Create a polished readable design board for the SAME cheerful 2.5D riverside-town Chinese mobile board game in the reference. Warm ivory panels, blue sky, grass, moderate soft bevels, same eight character identities. All exact Chinese text legible. Full portrait mobile views arranged side by side when specified, with small external captions. No prototype debug buttons. UI is a candidate visual, never invent rule mechanics or costs. Four complete portrait BOARD-overlay mobile views in a wide comparison board. All on CURRENT other-owned un-mortgaged low-tier青麦路, owner可可, level2, original500 and standard value800. Highlight ONLY own CURRENT landing cell, do not show freely selectable whole map. Panels: 强制购房 / 标准价值800 / 购买价1200 / 原主可用拒绝购买 / 取消 / 确认强购; 降级 / 青麦路 2级→1级 / 租金450→250 / 取消 / 使用降级; 拆楼 / 青麦路 2级→0级 / 所有者仍是可可 / 取消 / 确认拆楼; 清地 / 清除等级与所有权 / 青麦路变为无主 / 取消 / 确认清地. Tiny footer on three attack panels 房屋保护可抵挡 · 已抵押不可用. Yellow primary buttons, muted cancel; soft red riskwarning only clearland. No freely selecting unrelated land, no new cost for attack cards.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "bank",
+      "file": "ui/supplement-v1/银行抵押与赎回-监狱操作-v1.png",
+      "prompt": "Create a polished readable design board for the SAME cheerful 2.5D riverside-town Chinese mobile board game in the reference. Warm ivory panels, blue sky, grass, moderate soft bevels, same eight character identities. All exact Chinese text legible. Full portrait mobile views arranged side by side when specified, with small external captions. No prototype debug buttons. UI is a candidate visual, never invent rule mechanics or costs. Three complete portrait mobile overlays side by side. LEFT 银行抵押 tab active 抵押, inactive赎回: your资产 rows 青麦路 低价1级 原价500 可得500, 木匠街 中价0级 原价1000 可得1000, 星湖路 高价2级 原价1500 可得1500. First selected; bottom本次可得500 / 确认抵押; caption 银行按原价100% · 保留等级与所有权 · 抵押期间不收租. MIDDLE 赎回: selected青麦路已抵押本金500, 手续费0, 应付500, 现金2800, 确认赎回; helper 银行免费赎回 · 其他位置手续费10%; tab赎回active and 可用现金 sufficient; no upgraded fee added to bank mortgage. RIGHT 监狱: friendly iron bars illustration and ownavatar; 已关押 / 已失败1次; buttons 掷出狱骰, 支付500出狱, 使用出狱卡 (×1); caption 偶数释放 · 连续3次失败自动释放 / 出狱后另投一次移动骰. Small lowerlink 查询手牌 for legalprisonquery, do not allow固定移动逃狱. No invented prison rent penalties.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "results",
+      "file": "ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png",
+      "prompt": "Create a polished readable design board for the SAME cheerful 2.5D riverside-town Chinese mobile board game in the reference. Warm ivory panels, blue sky, grass, moderate soft bevels, same eight character identities. All exact Chinese text legible. Full portrait mobile views arranged side by side when specified, with small external captions. No prototype debug buttons. UI is a candidate visual, never invent rule mechanics or costs. Four portrait UI panels side by side. First 虎口拔牙结果: friendly smiling CLOSED-mouth greencroc, 可可触发闭合, other seven participants avatarrows with各+500 including ownblueboy, 你的奖励+500, 返回棋盘; second private LOSER view sameclosedcroc, 你触发了闭合 / 本次奖励0 / 其他参与玩家各+500 / 返回棋盘; no deduction. Third 卡牌详情 定点移动: large red location-pin card, 仅正常投骰前使用 / 选前进1–6格，替代投骰 / 忽略沿途路障 / 落起点可领奖，经过不领奖 / 消耗本回合主动用卡机会; buttons关闭 / 选择落点. Fourth 卡牌详情 房屋保护: house-shield art / 抵挡一次降级、拆楼或清地 / 响应时使用，不占主动用卡机会 / 关闭. Matchcroc character fromref, no extra reward to loser or fictionalshop.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "required",
+      "file": "ui/supplement-v1/弃牌-认输二次确认-本人战绩-v1.png",
+      "prompt": "Create a polished readable design board for the SAME cheerful 2.5D riverside-town Chinese mobile board game in the reference. Warm ivory panels, blue sky, grass, moderate soft bevels, same eight character identities. All exact Chinese text legible. Full portrait mobile views arranged side by side when specified, with small external captions. No prototype debug buttons. UI is a candidate visual, never invent rule mechanics or costs. Three full portrait screen/modal designs side by side. LEFT 弃牌: 手牌已满7/6, countdown15秒, seven individual card tiles grid3/3/1, lastQUERY card 新 badge; currently选择查询新卡redoutline; caption 选一张弃掉 · 超时放弃新卡, button 弃掉查询; seven actualcards roadblock/free-rent/build/fixedmove/auction/release/query. MIDDLE 认输 confirmation modal on dimboard: 确认认输？ / 现金和资产由系统回收，之后可观战和聊天 / 继续游戏 (primaryblue) / 确认认输 (secondaryred), no reward to others; ownfooter small认输 betweencash andassets visible behindmodal. RIGHT 我的战绩: 最近20局 · 仅本人, list with columns 模式 人数 时长 排名 净资产; rows 限时 8人30分第2名6800,破产4人46分第1名9200,限时6人15分第3名4300; dates small; no publicleaderboard no win/losscolumn. Userbaselineexplicitlysupports these3.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "derived",
+      "file": "ui/supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png",
+      "prompt": "Create a polished readable design board for the SAME cheerful 2.5D riverside-town Chinese mobile board game in the reference. Warm ivory panels, blue sky, grass, moderate soft bevels, same eight character identities. All exact Chinese text legible. Full portrait mobile views arranged side by side when specified, with small external captions. No prototype debug buttons. UI is a candidate visual, never invent rule mechanics or costs. Three portrait candidate designs with EXTERNAL header 展示/输入方式候选 · 未新增玩法. LEFT 我的资产: cash2800 frozen0 netassets4100, property rows青麦路low1级标准650 and木匠街mid1级标准1300已抵押本金650; math net =2800+650+(1300-650)=4100, two assetrows, actions关闭, no bankactions enabledoutsidebank. MIDDLE 格子详情 青麦路 / 可可 · 2级 · 未抵押, 原价500, 升级费300, renttable未升级100/1级250/2级450/3级700, 关闭; no arbitrarybuyactionwhenjustbrowsing. RIGHT 输入房间号: six digitboxes826315, numeric keys1..9 then清空0退格; 取消/加入房间, tinyhelper 输满房号后加入; exact6digits currentlyimplementationconvention, no passwordorapprovalnewrule. Header outsideUIlabels distinguishescandidate fromruleapproved.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": false,
+      "grid": null,
+      "names": []
+    },
+    {
+      "id": "avatars",
+      "file": "assets-supplement-v1/atlases/avatars.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. Eight round portrait badges in4columns2rows, SAME identities in order: brown messyhair boy blue hoodie 糖糖; brown bobgirl yellow cardigan 可可; boy green backward cap and roundglasses 阿杰; longbrownhair girl pinkknitcap 奶茶; blackhairboy blackwhitehoodie 阿凯; purplehairgirl lavender dress 圆圆; sandbucketcap brownhairchild yellowshirt 豆豆; blackhairgirl creamshirt/bluebow 毛毛. Colored round filled background and thinivoryrim INSIDE eachbadge, outsidecircletransparent. Keepidentityexactlysame upperboardfaces. Uniform badge diameters.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": true,
+      "grid": [
+        4,
+        2
+      ],
+      "names": [
+        "avatar_tangtang",
+        "avatar_keke",
+        "avatar_ajie",
+        "avatar_naicha",
+        "avatar_akai",
+        "avatar_yuanyuan",
+        "avatar_doudou",
+        "avatar_maomao"
+      ]
+    },
+    {
+      "id": "pawns",
+      "file": "assets-supplement-v1/atlases/pawns.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. Eight FULL BODY standing chibi pawn figures in4columns2rows samecharacters EXACTorder referencefaces: bluehoodiebrownhairedboy; yellowcardiganbrownbobgirl; greencaproundglassesboy; pinkcaplongbrownhairgirl; blackhairwhiteblackhoodieboy; purplehairlavendergirl; sandbucketcapyellowshirtchild; blackhaircreamshirtbluebowgirl. Friendly active stance, feet andsmall colored roundbases fullyvisible, top-downfriendlyslightperspective. No namebubbles. Uniform sameheight.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png"
+      ],
+      "alpha": true,
+      "grid": [
+        4,
+        2
+      ],
+      "names": [
+        "pawn_tangtang",
+        "pawn_keke",
+        "pawn_ajie",
+        "pawn_naicha",
+        "pawn_akai",
+        "pawn_yuanyuan",
+        "pawn_doudou",
+        "pawn_maomao"
+      ]
+    },
+    {
+      "id": "houses",
+      "file": "assets-supplement-v1/atlases/houses.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. Exactly FOUR property art sprites in2columns2rows, standardized lightisometricfrontsameground footprint: vacant grassy gardenplot withtiny fence NOhouse (level0), simple smallone-storyivoryredroofcottage(level1), larger TWO-storyivoryblue-roofcottage(level2), generous THREE-storyivorywarmredroof townvilla(level3). Distinct numberofstorieslegible atsmallscale, eachfully isolatedwithtinygrass/fenceground island, no text or actualnumeric badges.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": true,
+      "grid": [
+        2,
+        2
+      ],
+      "names": [
+        "house_lv0",
+        "house_lv1",
+        "house_lv2",
+        "house_lv3"
+      ]
+    },
+    {
+      "id": "town",
+      "file": "assets-supplement-v1/atlases/town.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. ONE large pristine BACKGROUND illustration: vertical rectangular miniature RIVERSIDE TOWN interior, lushgreenstreets, bluewindingriver, littleducks, stoneandwoodbridges, warmcottages, trees, lamp posts, smallboats. Large open circular sandstone plaza in exactCENTER deliberatelyEMPTY for UI die placement. Upperleftinnerlawnclearspacefor deck. No surroundingboardtiles, no UI, no people, no die, no buttons, no text. Fillmostportraitcanvaswith scene, edgessoftgarden silhouetteovertruealpha, center remainsrenderedgroundnottransparent.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": true,
+      "grid": [
+        1,
+        1
+      ],
+      "names": [
+        "board_town"
+      ]
+    },
+    {
+      "id": "buttons",
+      "file": "assets-supplement-v1/atlases/buttons.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. Exactly SIX wide horizontal round-corner button skins in2columns3rows, identicalgeometry/largecleanemptycenter forlatertext: yellowprimary, skybluesecondary, grassgreensuccess, ivoryneutral, softredwarning, coolgraydisabled. Restrainedthin darkerbottomedge gives2.5Ddepth, evenoutline, no labelsoricons. Roundedrect sidesstraight enough for9slice horizontal stretching.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": true,
+      "grid": [
+        2,
+        3
+      ],
+      "names": [
+        "button_yellow",
+        "button_blue",
+        "button_green",
+        "button_ivory",
+        "button_red",
+        "button_disabled"
+      ]
+    },
+    {
+      "id": "icons",
+      "file": "assets-supplement-v1/atlases/icons.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. ExactlyTWENTY clear icons in5columns4rows orderedrowmajor: goldcoin; whitemicrophoneonbluecircle; whitechatbubbleonbluecircle; deepblueclock #1F3F7A; redclock #E5303A; navybackchevron; bluegear; bluecopytwopapers; bluesharethreeconnectednodes; redroofivoryhouse; browngavel; redlocationpin; redwhitebarrier; goldkey; bluemagnifyingglass; blueshieldwhitecheck; blueforwardchevron; greencheckmark; warmgoldbankbuilding; grayfriendlyjailgate. Uniformiconopticalsize, no '+' and '-' or locatecontrols needed. Clockfaces samegeometry justcolor.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png"
+      ],
+      "alpha": true,
+      "grid": [
+        5,
+        4
+      ],
+      "names": [
+        "icon_coin",
+        "icon_mic",
+        "icon_chat",
+        "icon_clock_normal",
+        "icon_clock_warning",
+        "icon_back",
+        "icon_settings",
+        "icon_copy",
+        "icon_share",
+        "icon_house",
+        "icon_auction",
+        "icon_move",
+        "icon_roadblock",
+        "icon_key",
+        "icon_query",
+        "icon_shield",
+        "icon_chevron",
+        "icon_check",
+        "icon_bank",
+        "icon_jail"
+      ]
+    },
+    {
+      "id": "cards",
+      "file": "assets-supplement-v1/atlases/cards.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. Exactly SIXTEEN portrait card tiles in4columns4rows, each hasroundedivoryface,pastelthemeborder, a largemeaningfulicon inupper60percent and BLANK ivorylower30percent reserved forliveCocos text. Rowmajoricons: roadblockredwhitebarrier; freerentblueshieldcheck; buildhousehammer; downgradehousedownarrow; fixedmoveredpin; jailreleasegoldkey; auctiongavel; tradeexchangebluegreenarrows; refuserefusedhouseinredslash; houseprotectiongreencoveringshieldhouse; querymagnifier; forcedpurchasecoinsarrowhouse; demolishhammerknockingroof; clearlandbroomsweepingemptygrassplot; BLUE/GOLD questionmarkeventcardBACK; plainivoryEMPTYgenericcardface. No written titlesoramounts. Allcards identicalsizeorientations and moderatewarmdepth.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": true,
+      "grid": [
+        4,
+        4
+      ],
+      "names": [
+        "card_roadblock",
+        "card_free_rent",
+        "card_build",
+        "card_downgrade",
+        "card_fixed_move",
+        "card_jail_release",
+        "card_auction",
+        "card_trade",
+        "card_refuse_purchase",
+        "card_house_protection",
+        "card_query",
+        "card_forced_purchase",
+        "card_demolish",
+        "card_clear_land",
+        "event_card_back",
+        "card_face_blank"
+      ]
+    },
+    {
+      "id": "dice",
+      "file": "assets-supplement-v1/atlases/dice.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. Exactly NINE singleivorydice sprites in3columns3rows. FirstSIX cleanrestingisometricviews onecubeeach topfaceblackroundpips count EXACTLY 1,2,3,4,5,6 rowmajor. Physicallycorrectregularcubewithoppositefaces sum7 and noimpossiblepipcounts. LAST THREE samecube atconsecutivechangingtumblingorientations (notghostmultidice) withveryrestrainedmotioncurveandshadow attached. Standardivoryroundedbeveledcube, correctsixfaces, sameopticalsize. No numbersunder sprites.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+      ],
+      "alpha": true,
+      "grid": [
+        3,
+        3
+      ],
+      "names": [
+        "dice_1",
+        "dice_2",
+        "dice_3",
+        "dice_4",
+        "dice_5",
+        "dice_6",
+        "dice_roll_a",
+        "dice_roll_b",
+        "dice_roll_c"
+      ]
+    },
+    {
+      "id": "croc",
+      "file": "assets-supplement-v1/atlases/croc.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. ExactlyTHREE matchingfriendlygreenCROCODILE HEAD sprites in3columns1row: jawWIDEOPEN facingfrontat slighttopview with expressivebigeeyes and coralinside cavity/tongue, NO TEETH baked anywhere; jawHALF-CLOSING samecharacterwithNO TEETH; jawFULLYCLOSEDsamecharactercheerfulnotaggressive. Greenelongatedsnoutwithnostrils recognizablecroc notfrog. No body andnoUI, mouthcavityopaqueinsides forlatertoothsprites. Uniformcanvasscale/anchor.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png"
+      ],
+      "alpha": true,
+      "grid": [
+        3,
+        1
+      ],
+      "names": [
+        "croc_open",
+        "croc_half",
+        "croc_closed"
+      ]
+    },
+    {
+      "id": "teeth",
+      "file": "assets-supplement-v1/atlases/teeth.png",
+      "prompt": "Native TRANSPARENT background game bitmap atlas. Cheerful refined 2.5D cartoon riverside-town look precisely matching supplied style: warm moderate bevel, crisp readable silhouettes, restrained highlights, NO glossy plastic toy exaggeration. Separate sprites arranged in uniform equal-size grid cells with generous transparent gutters and at least12% empty margin in every cell, no overlap/cutoffs. Flat front or light isometric view matching ref. No text, names, numbers, slot labels, frame borders, checkerboard painted background, magenta or watermark. Only requested sprites. True alpha outside sprites. ExactlyTWO separateTOOTH sprites in2columns1row: ivoryroundedshortconicalcrocgametooth normal raised; same tooth pressedlower withsubtlecoolgray tint andlowerappearance. Not humansmolarnor fangweapon. Gentle2.5Dlighting, entiretoothincludingrootvisible, bottomcenterconsistent. No dangerouslabel/outline, one reusabletooth design, alphaoutside. Teethlarge enough crisp512pxeach.",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png"
+      ],
+      "alpha": true,
+      "grid": [
+        2,
+        1
+      ],
+      "names": [
+        "tooth_normal",
+        "tooth_pressed"
+      ]
+    }
+  ]
+}

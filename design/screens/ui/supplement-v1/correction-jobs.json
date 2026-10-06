@@ -1,0 +1,29 @@
+[
+  {
+    "id": "pawns_clean",
+    "file": "assets-supplement-v1/atlases/pawns.png",
+    "refs": [
+      "F:/work/millionnaire/design/screens/assets-supplement-v1/atlases/pawns.png"
+    ],
+    "alpha": true,
+    "prompt": "Background removal ONLY. Preserve exactly these8fullbody characters andtheircoloredcircularbases in SAME4x2grid,sameposes/faces/outfits,size/positions. DELETE all blurrycoloredgradient backdrop betweenfigures and outsidebases. Everyemptyspaceincludinggutters MUST be FULLY TRANSPARENT alpha0, not a partiallyopaque fog or darkbackground. No scenery, no coloredglow, no softbackdrop, no contactshadow beyondbases, no noiseor straypixels. Keepantialiased crispcleanedges only1-2pixelsaroundsolidfigurecontours. No repaintingfigures. This is a TRUE transparent game sprite atlas. Return with transparent background."
+  },
+  {
+    "id": "avatars_clean",
+    "file": "assets-supplement-v1/atlases/avatars.png",
+    "refs": [
+      "F:/work/millionnaire/design/screens/assets-supplement-v1/atlases/avatars.png"
+    ],
+    "alpha": true,
+    "prompt": "Clean alpha mask ONLY. Preserve eightidentical roundavatarbadges4x2grid andallfaces EXACTLYunchanged. Remove ALL straygold/white/noisespeckles betweenbadges/outsidecirclecontours. Everyemptyspaceandgutters FULLYtransparentalpha0, nofuzzybackdrop. Keepcoloredcircle interiorsandivoryrims, smoothcrispantialiasedroundouteredges (notdithered). No changesnames oridentity, no text. ReturntruePNGtransparency."
+  },
+  {
+    "id": "results_fix",
+    "file": "ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png",
+    "refs": [
+      "F:/work/millionnaire/design/screens/ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png"
+    ],
+    "alpha": false,
+    "prompt": "Edit ONLY rewardnumerals andviewlabels in firstTWO resultpanels of this4panelstoryboard. SAME event is 可可 triggeringclosedjaw. FIRST winnerperspective: 小林蓝boy+500, 阿杰+500,奶茶+500,阿凯+500,圆圆+500,豆豆+500,毛毛+500. 可可alone shows0 and mutedloserlabel, NEVER +500under可可. Ownwinnerbottom+500 unchanged. SECOND loserperspective is explicitly 可可视角, title 你触发了闭合, mainreward0 unchanged. Eightavatargrid 可可mustshow0, allsevenothers+500, noteightwinners. Addexternalcaption 虎口拔牙结果（可可落败视角） above2ndscreen. PreserveALL two rightcarddetailsandcroc/town stylescompletelyunchanged. No new rewardsor moneydeduction. LegibleChinese."
+  }
+]

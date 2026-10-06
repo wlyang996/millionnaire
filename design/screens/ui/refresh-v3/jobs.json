@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-06",
+  "tool": "built-in image_gen",
+  "status": "design candidates; no game code",
+  "jobs": [
+    {
+      "id": "motion",
+      "file": "ui/board-v8/骰子翻滚与人物逐格跳跃-分镜-v8.png",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/02-motion-storyboard.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/01-board.png"
+      ],
+      "prompt": "Edit the motion storyboard firstreference: preserve six die-motion panels, four step-by-step hop panels, six hop pose breakdowns and existing timing captions. Remove ENTIRE obsolete rightbottom circular '定位我'button and itscaption. Keep 我糖糖 badge and ringed pawn. Rightbottom show ONLY a larger sameblueboy on bluebase with 我marker, caption '棋子高亮与我标识'; no new button. Make dice faces physically consistent on all dieposes: oppositeface sums7,threefacesmeetingcorner cannot contain oppositepair; final die TOP4 (other visible faces1and2); one die only. Use reference2 for current town/pawnstyle. No gameplay UI added. Same landscape storyboard."
+    },
+    {
+      "id": "profile",
+      "file": "ui/refresh-v3/登录资料-本局结算-破产观战-v3.png",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/03-profile-result.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/01-board.png"
+      ],
+      "prompt": "Use SAME cheerful polished 2.5D riverside town Chinese mobile game style. Reference2 is current v7 board: 8 player compact FOUR-column TWO-row top bar; named perimeter tiles; big upper-left unfolded blue-gold3card fan INSIDE board; center die; five-item ONE ROW hand with narrow right rail counter top,chevron middle,short positiontrack bottom; secondary red认输 betweencashand我的资产 in footer. NO rightzoom/locateme buttons. Keep all exact Chinese typography crisp and current avatar identities. These are design candidates not new rules. Edit firstreference 3panel sheet. Keep leftloginprofile choices andcenterresults layout,samplevalues and buttons; blueboy name统一糖糖 (not小林),purplegirl圆圆,blackboy阿凯. Remove entire 胜负column incenterresults, only 排名/玩家/净资产 columns; rankandexampleassets unchanged. Refresh right spectatorpanel usingcurrentv7board backdrop withnamedtiles and4x2playerheader, loser糖糖gray0, central '可可的回合' plus '已破产·观战中'; no playable投骰 orcard-use buttons. Chat/voice and返回大厅 atbottom spectator. No zoom/locatebuttons. Portraitpanels sidebyside."
+    },
+    {
+      "id": "property",
+      "file": "ui/refresh-v3/购买地产-升级-租金响应-交易确认-v3.png",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/04-property-popups.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/01-board.png"
+      ],
+      "prompt": "Use SAME cheerful polished 2.5D riverside town Chinese mobile game style. Reference2 is current v7 board: 8 player compact FOUR-column TWO-row top bar; named perimeter tiles; big upper-left unfolded blue-gold3card fan INSIDE board; center die; five-item ONE ROW hand with narrow right rail counter top,chevron middle,short positiontrack bottom; secondary red认输 betweencashand我的资产 in footer. NO rightzoom/locateme buttons. Keep all exact Chinese typography crisp and current avatar identities. These are design candidates not new rules. Refresh firstreference FOUR-panel property sheet's BACKDROP and HEADER/FOOTER ONLY to currentv7namedmap/4x2compactmoneyplayerbar. Keep all four central ivorypopups, prices,costs,rents,timers,actionbuttons and ruletext EXACTLY unchanged. blueboyname糖糖 replaces小林; blackboy阿凯. Firstbuy1000 rent200;upgrade600rent500to900;rentresponse500;trade1200 std1000range500to2500, cash3000. Footerowncash3000 then smallred认输 then我的资产 mic/chat. Do not add/change costs or mechanics. Portrait panels sidebyside."
+    },
+    {
+      "id": "auction",
+      "file": "ui/refresh-v3/拍卖竞价-应急抵押-欠款第二阶段-v3.png",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/05-auction-debt.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/01-board.png"
+      ],
+      "prompt": "Use SAME cheerful polished 2.5D riverside town Chinese mobile game style. Reference2 is current v7 board: 8 player compact FOUR-column TWO-row top bar; named perimeter tiles; big upper-left unfolded blue-gold3card fan INSIDE board; center die; five-item ONE ROW hand with narrow right rail counter top,chevron middle,short positiontrack bottom; secondary red认输 betweencashand我的资产 in footer. NO rightzoom/locateme buttons. Keep all exact Chinese typography crisp and current avatar identities. These are design candidates not new rules. Refresh firstreference THREE-panel auction/debt sheet's boardBACKDROP,roomheader,ownfooter ONLY tocurrentv7. Keep all central popups numbers,captions,buttons,requirements exactlyunchanged:bid900 highest800 froze800 cash3000available2200; emergencylow500gets400(mid1000gets700/high1500gets900/station1000gets700),debt700 cash0;secondstage raised400remaining300. Nameblueboy糖糖 replaces小林. Preserve20sauction,30sdebtstage etc. Underpopups show dimcurrentnamedboardedge instead oldlargesquaretiles; bottomowncash appropriate0/400/3000 then认输 then我的资产 mic/chat, not roomvoicebar. No new taxes or options. Portraitpanels sidebyside."
+    },
+    {
+      "id": "connection",
+      "file": "ui/refresh-v3/好友房间-连接状态-重连同步-v3.png",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/06-room-connection.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/01-board.png"
+      ],
+      "prompt": "Use SAME cheerful polished 2.5D riverside town Chinese mobile game style. Reference2 is current v7 board: 8 player compact FOUR-column TWO-row top bar; named perimeter tiles; big upper-left unfolded blue-gold3card fan INSIDE board; center die; five-item ONE ROW hand with narrow right rail counter top,chevron middle,short positiontrack bottom; secondary red认输 betweencashand我的资产 in footer. NO rightzoom/locateme buttons. Keep all exact Chinese typography crisp and current avatar identities. These are design candidates not new rules. Refresh firstreference3panel sheet. Leftroompanel preserveALL settingsnumbers selected50tiles3000timed30min15sec,8seats4x2,shareandreadybuttons; blueboyname糖糖. Middleconnection andrightresync replace oldboardwithcurrentv7 exactly: namedperimeter,upperleft3cardfan,centerdie,5itemhandandrightcounter/chevron/track,owncash3000 red认输 我的资产 mic/chat. Middleheader keep statusbadges 阿杰疑似断线 奶茶已掉线自动投骰 阿凯托管中 毛毛灰; lowercallout exact 15秒无消息：疑似断线 / 30秒无消息：确认掉线. RightdimthatSAMEcurrentboardandkeepwhite同步popup '正在同步最新状态…' '同步完成后恢复当前操作' '不会补做旧动画', controlsdisabled. No legacy4itemhand. Portraitpanels sidebyside."
+    },
+    {
+      "id": "event_draw",
+      "file": "ui/event-card-preview/事件抽卡-本人中央点击卡背-v4.png",
+      "refs": [
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/10-event-card-preview.png",
+        "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/01-board.png"
+      ],
+      "prompt": "Use SAME cheerful polished 2.5D riverside town Chinese mobile game style. Reference2 is current v7 board: 8 player compact FOUR-column TWO-row top bar; named perimeter tiles; big upper-left unfolded blue-gold3card fan INSIDE board; center die; five-item ONE ROW hand with narrow right rail counter top,chevron middle,short positiontrack bottom; secondary red认输 betweencashand我的资产 in footer. NO rightzoom/locateme buttons. Keep all exact Chinese typography crisp and current avatar identities. These are design candidates not new rules. Make UPDATED eventdraw fullportrait screenshot fromfirstreference using secondreference CURRENTv7board. Preserve exactnamedmapand8players. Replace oldsmallupperleftsinglecard withsecondreference large3bluegoldcardfan atupperleft. Backgroundmap dim duringdraw; central die staysfixedcenter under temporarylargequestioncard overlay. Exactcentraltext '触发事件' above bluegoldcard, '点击卡片翻开' below. No independentdrawbutton,nodrawtimer. 投骰子 disabledbehindoverlay. HandBOTTOM exactlyfiveicons免租建造拍卖定点移动路障 plus separate rightcounter6/6,chevron,positiontrack; footer糖糖2800smallred认输 BETWEENcashand我的资产,mic/chat. Triggeringownpawn on事件1 with我·糖糖badge. Centerdrawonlyshowntriggerplayer. No zoomcontrols. Oneportraitimage."
+    }
+  ]
+}

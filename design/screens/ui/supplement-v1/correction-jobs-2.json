@@ -1,0 +1,38 @@
+[
+  {
+    "id": "required_fix",
+    "file": "ui/supplement-v1/弃牌-认输二次确认-本人战绩-v1.png",
+    "alpha": false,
+    "refs": [
+      "F:/work/millionnaire/design/screens/ui/supplement-v1/弃牌-认输二次确认-本人战绩-v1.png"
+    ],
+    "prompt": "Edit only this3panelUI sheet to correctspecificiconsandfooter. Left7carddiscardpanel: replace sixth '释放' megaphonecard with exact '出狱' and GOLDKEYicon. Bottomnew '查询' card must have BLUEMAGNIFYINGGLASSicon, not questionmark/eventcards. '免租' card use blue shieldcheck nothousewithFREEtext. Preserve7/6,15秒,selectednewquery,弃掉查询 andALLlayout. Middle认输popup unchanged; behindpopup bottomfooter put smallplainredtext 认输 BETWEEN cash2800 and 我的资产. Remove oldflag认输onfar right, usemic/chatthereifspace, no duplicate认输入口. Right 我的战绩 same20private columns/values, no ruleschanges. Allportraitstylespreserve."
+  },
+  {
+    "id": "derived_fix",
+    "file": "ui/supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png",
+    "alpha": false,
+    "refs": [
+      "F:/work/millionnaire/design/screens/ui/supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png"
+    ],
+    "prompt": "Change ONLY firstpanel valuesandlabels of this3candidateUIboard. Middleandrightpanelscompletelyunchanged. Firstcash2800,frozen0,青麦路1级标准价值650,木匠街1级标准价值1300 remain. 木匠街抵押本金 MUST be700 (legal mid-tier emergency70% of1000), NOT650. Top total label MUST '净资产', number MUST4050. Formula2800+650+(1300-700)=4050. Preservecandidateheader/allart/layout. Do not changeothergoldvalues. CrispChinese."
+  },
+  {
+    "id": "buttons_clean",
+    "file": "assets-supplement-v1/atlases/buttons.png",
+    "alpha": true,
+    "refs": [
+      "F:/work/millionnaire/design/screens/assets-supplement-v1/atlases/buttons.png"
+    ],
+    "prompt": "RemoveBACKGROUNDonly. Keep allSIXyellow/blue/green/ivory/red/grayroundedbuttonskins exactlyin SAME2columns3rows withsamegeometryandshading. DELETEallcoloredblurryglows andgradientcanvasbetweenbuttons andoutsideeachshape. Emptybackground/gutters FULLYtransparentalpha0, noopaquegrayfog, no coloredglow orcastshadow beyondbuttonedge. Crispantialias1-2pxedge,noorphanpixels/noise. Do not addtext, do notchangebuttoncolors. TrueRGBA spriteatlas."
+  },
+  {
+    "id": "dice_clean",
+    "file": "assets-supplement-v1/atlases/dice.png",
+    "alpha": true,
+    "refs": [
+      "F:/work/millionnaire/design/screens/assets-supplement-v1/atlases/dice.png"
+    ],
+    "prompt": "Edit this3x3diceatlas. RemoveALL blurrygraygradientbackdrops andoutsideglow, makebackground/gutters FULLYtransparentalpha0. Keepivoryroundedcubes atsamepositions. First6topfaces exact1,2,3,4,5,6. Correctvisible LEFT/RIGHTfaces tostandarddie: top1 left3 right2; top2 left3 right6; top3 left5 right6; top4 left2 right1; top5 left4 right1; top6 left4 right5. Pips blackcirclesonly, nofacewithmore6orimpossibleoppositefacesadjacent. Last3tumblingframeskeepdistinctrotation butensurevaliddie. Preservecrispedges, motionstreaksoptionalsmallbutnocanvasfog. NativeRGBA transparentgameatlas."
+  }
+]

@@ -216,7 +216,7 @@ class SessionDomainTest {
         GameState g = ss.game();
         assertEquals(started, engine.restore(engine.snapshot(started)), "the real table order (by draws) is valid");
         assertInvalid(ss.withGame(new GameState(5, g.startedAt(), g.settings(), g.phase(), g.players(), g.orderDraws(),
-                g.board(), g.turn(), g.flow(), g.ledger(), g.clock())), "game number");
+                g.board(), g.turn(), g.flow(), g.ledger(), g.clock(), g.debt(), g.pendingSurrenders())), "game number");
         assertInvalid(ss.withGame(g.withPlayers(List.of(g.players().get(0), PlayerState.seated("zz")))), "seat not a member");
         assertInvalid(ss.withGame(g.withPlayers(List.of(g.players().get(0)))), "not enough seats");
         assertInvalid(ss.withGame(g.withPlayers(List.of(g.players().get(1), g.players().get(0)))), "order must follow the draws");

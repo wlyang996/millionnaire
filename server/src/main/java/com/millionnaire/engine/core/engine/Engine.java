@@ -278,13 +278,13 @@ public final class Engine<S extends DomainState> {
 
     /**
      * 状态一致性校验：恢复与重建入口、每步输入入口、以及每步提交前（边界）都会执行。
-     * 只含内核与领域的轻量检查（≤ 8 人）；账本全量重放只在恢复/审计入口执行。
+     * 包含内核与领域的全部检查；生产会话领域目前每次都完整重放账本历史（成本见 m1d-report 性能一节）。
      */
     public void validate(EngineState s) {
         validate(s, true);
     }
 
-    /** full = false 时为每步入口与出口使用的轻量校验（不重放账本历史等）。 */
+    /** full = false 用于每步入口与出口；领域可据此选择轻量检查，但生产会话领域目前不区分（每次完整重放账本）。 */
     void validate(EngineState s, boolean full) {
         if (s == null) {
             throw new StateValidationException("state missing");
@@ -327,10 +327,12 @@ public final class Engine<S extends DomainState> {
         return new DecisionContext<>(s, evolver, domain.stateType(), random, config);
     }
 
-    private static EngineState finish(DecisionContext<?> ctx, List<Event> out) {
+    private EngineState finish(DecisionContext<?> ctx, List<Event> out) {
         if (!ctx.engineState().pendingDraws().isEmpty()) {
             throw new KernelFaultException("domain drew randomness without consuming it: " + ctx.engineState().pendingDraws());
         }
+        // 在线决策完成时同样执行领域的步边界检查（C4）
+        domain.checkBoundary(domain.stateType().cast(ctx.engineState().domain()));
         out.addAll(ctx.events());
         return ctx.engineState();
     }

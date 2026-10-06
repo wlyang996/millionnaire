@@ -77,6 +77,14 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
         }
     }
 
+    /** 步边界：对局中回合的步内衔接记录必须为空（C4）。 */
+    @Override
+    public void checkBoundary(SessionState state) {
+        if (state.inGame() && !state.game().turn().track().equals(com.millionnaire.engine.core.state.TurnTrack.NONE)) {
+            throw new IllegalStateException("turn track not empty at a step boundary: " + state.game().turn().track());
+        }
+    }
+
     @Override
     public SessionState evolve(SessionState state, Event event, Draws draws, RuleConfig rules) {
         return switch (event) {

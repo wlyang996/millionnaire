@@ -1,0 +1,22 @@
+{
+  "count": 40,
+  "status": {
+    "可用": 18,
+    "待确认": 22
+  },
+  "stages": {
+    "1": 40
+  },
+  "edge_candidates": 0,
+  "visible_magenta": 0,
+  "border_fail": [],
+  "density_fail": [
+    "button_green_login",
+    "panel_ivory",
+    "panel_section",
+    "panel_warning",
+    "panel_input",
+    "title_wood",
+    "asset_bar"
+  ]
+}

@@ -77,9 +77,9 @@ class Round9ReviewTest {
         RoomSettings richer = new RoomSettings(g.settings().boardId(), 5000, g.settings().endMode(),
                 g.settings().timeLimitMinutes(), g.settings().rollSeconds());
         GameState otherCash = new GameState(g.gameNo(), g.startedAt(), richer, g.phase(), g.players(), g.orderDraws(),
-                g.board(), g.turn(), g.flow(), g.ledger(), g.clock());
+                g.board(), g.turn(), g.flow(), g.ledger(), g.clock(), g.debt(), g.pendingSurrenders());
         GameState future = new GameState(g.gameNo(), s.now() + 1000, g.settings(), g.phase(), g.players(), g.orderDraws(),
-                g.board(), g.turn(), g.flow(), g.ledger(), g.clock());
+                g.board(), g.turn(), g.flow(), g.ledger(), g.clock(), g.debt(), g.pendingSurrenders());
         for (GameState bad : List.of(missingSeat, otherCash, future)) {
             EngineState st = s.withDomain(ss.withGame(bad));
             assertThrows(StateValidationException.class, () -> engine.restore(engine.snapshot(st)), bad.toString());

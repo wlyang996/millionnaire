@@ -34,5 +34,17 @@ public enum RejectionCode {
     WINDOW_PAUSED,
     WINDOW_ALREADY_ACTIVE,
     NOT_PAUSED,
-    NOT_YOUR_WINDOW
+    NOT_YOUR_WINDOW,
+    /** 功能属于后续里程碑（如土地拍卖 M5）。 */
+    NOT_AVAILABLE,
+    INVALID_TILE,
+    NOT_OWNER,
+    ALREADY_OWNED,
+    MORTGAGED,
+    NOT_MORTGAGED,
+    MAX_LEVEL,
+    NOT_AT_BANK,
+    ASSET_LOCKED,
+    NOT_ALIVE,
+    DRAINING
 }

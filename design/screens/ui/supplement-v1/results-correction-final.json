@@ -1,0 +1,8 @@
+{
+  "id": "results_fix2",
+  "file": "ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png",
+  "refs": [
+    "F:/work/millionnaire/design/screens/ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png"
+  ],
+  "prompt": "Correct FIRST PANEL ONLY of this fourpanelimage. Keep all three otherpanels exactlyunchanged. In firstwinnerpanel 可可 is loser; currentfirstpanel rewardgrid wronglygives可可+500. Replace ENTIRE firstpanel eightavatar rewardgrid with a SIMPLE ivorysummary card: small可可avatar beside exacttext '可可本次奖励 0', then exacttext '其余7名参与者各获得 +500'. NO eight-avatar grid and no +500under可可 anywhere. Keepfirstpanelbottom ownblueboylarge '你获得的奖励 +500' and 返回棋盘. Firstheader '可可触发了闭合' unchanged. This must show exactly0 for loser and500forotherseven. Rightside carddetails and secondloserpanelremainidentical. CrispChinese; one4panelstoryboard."
+}

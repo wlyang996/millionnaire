@@ -159,7 +159,7 @@ class GameRulesTest {
     @Test
     void releaseWithZeroRemainingTimeMovesImmediatelyWithoutAZeroLengthWindow() {
         Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1),
-                dice(DrawPoint.JAIL_DIE, 2), dice(DrawPoint.MOVE_DIE, 3))), 1).start(2);
+                dice(DrawPoint.JAIL_DIE, 2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
         for (int i = 0; i < 4; i++) {
             t.roll();
         }
@@ -167,10 +167,10 @@ class GameRulesTest {
         long deadline = t.window().window().deadline();
         StepResult r = t.tick(deadline);                                  // 超时：自动判定，偶数释放，剩余 0 → 立即自动移动
         assertTrue(r.events().stream().anyMatch(e -> e instanceof GameEvent.JailRolled j && j.auto()));
-        assertTrue(r.events().stream().anyMatch(e -> e instanceof GameEvent.DiceRolled d && d.auto() && d.value() == 3));
+        assertTrue(r.events().stream().anyMatch(e -> e instanceof GameEvent.DiceRolled d && d.auto() && d.value() == 2));
         assertFalse(r.events().stream().anyMatch(e -> e instanceof GameEvent.WindowOpened o && o.frame().owner().equals("p1")),
                 "no window for p1 was opened");
-        assertEquals(11, t.position("p1"));
+        assertEquals(10, t.position("p1"), "M2: lands on an event tile (no landing window)");
         assertEquals("p2", t.current());
     }
 
@@ -206,18 +206,18 @@ class GameRulesTest {
 
     @Test
     void timeoutRollsAutomaticallyAndTheNextWindowStartsAfterTheAnimation() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 4))), 1).start(2);
+        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
         long deadline = t.window().window().deadline();
         StepResult r = t.tick(deadline);
         assertTrue(r.events().stream().anyMatch(e -> e instanceof GameEvent.DiceRolled d && d.auto()));
         assertEquals("p2", t.current());
-        assertEquals(deadline + DICE_ANIM + 4 * STEP_ANIM, t.window().window().opensAt());
+        assertEquals(deadline + DICE_ANIM + 2 * STEP_ANIM, t.window().window().opensAt());
         assertEquals(t.window().window().opensAt() + ROLL_MS, t.window().window().deadline());
     }
 
     @Test
     void duplicateExpiredAndForeignCommandsHaveNoEffectAndConsumeNoRandomness() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 3, 2))), 1).start(2);
+        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 2))), 1).start(2);
         long w1 = t.windowId();
         assertEquals(RejectionCode.NOT_YOUR_TURN, t.send(new GameCommand.RollDice("p2", w1)).rejection());
         assertEquals(RejectionCode.NOT_MEMBER, t.send(new GameCommand.RollDice("zz", w1)).rejection());
@@ -238,7 +238,7 @@ class GameRulesTest {
 
     @Test
     void awayAndConfirmedOfflinePlayersRollAutomaticallyAndModeChangesCancelOldTasks() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 6, 6, 6, 6))), 1).start(2);
+        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 2, 6, 6))), 1).start(2);
         long s = t.now;
         t.send(s + 100, new GameCommand.SetControl(1, "p1", ControlMode.AWAY));
         long autoTask = t.game().turn().autoTaskId();
@@ -339,7 +339,7 @@ class GameRulesTest {
         Table t = new Table(XoshiroLemireV1.INSTANCE, 9).start(3);
         GameState g = t.game();
         Ledger l = g.ledger().transfer(Ledger.SYSTEM, "p1", 500, "TEST", null).transfer(Ledger.SYSTEM, "p2", 500, "TEST", null);
-        List<Standing> s = TurnModule.standings(g.withLedger(l));
+        List<Standing> s = TurnModule.standings(g.withLedger(l), t.config);
         assertEquals(List.of(1, 1, 3), s.stream().map(Standing::rank).toList());
         assertEquals("p3", s.get(2).playerId());
     }

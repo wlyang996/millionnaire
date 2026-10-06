@@ -3,6 +3,11 @@ package com.millionnaire.engine.core.event;
 import com.millionnaire.engine.config.CardType;
 import com.millionnaire.engine.config.TileType;
 import com.millionnaire.engine.core.state.ConnState;
+import com.millionnaire.engine.core.state.Continuation;
+import com.millionnaire.engine.core.state.DebtState;
+import com.millionnaire.engine.core.state.Elimination;
+import com.millionnaire.engine.core.state.LandingStep;
+import com.millionnaire.engine.core.state.LifeState;
 import com.millionnaire.engine.core.state.ControlMode;
 import com.millionnaire.engine.core.state.FlowFrame;
 import com.millionnaire.engine.core.state.FlowRequest;
@@ -26,6 +31,13 @@ public sealed interface GameEvent extends Event {
             implements GameEvent, PublicEvent {
         public GameStarted {
             seats = Immutable.list(seats);
+        }
+    }
+
+    /** 开局抽数的一轮：本轮依次应抽数的玩家（首抽为全体座位顺序；重抽为各同分组按名次、组内按座位展开）。 */
+    record OrderRoundStarted(List<String> drawers) implements GameEvent, PublicEvent {
+        public OrderRoundStarted {
+            drawers = Immutable.list(drawers);
         }
     }
 
@@ -57,8 +69,12 @@ public sealed interface GameEvent extends Event {
     record TurnStarted(long turnNo, String playerId) implements GameEvent, PublicEvent {
     }
 
-    /** 回合进入某阶段：绑定该阶段的 TURN 窗口（AWAITING_FLOW 为 0），并记录结束后的继续位置。 */
-    record TurnStageEntered(TurnStage stage, long windowId, String continuation) implements GameEvent, PublicEvent {
+    /**
+     * 回合进入某阶段：绑定该阶段的 TURN 窗口（AWAITING_FLOW 为 0），记录结束后的继续位置，
+     * 以及 AWAITING_FLOW 时继续位置的最早开放时刻 notBefore（其他阶段为 0）。
+     */
+    record TurnStageEntered(TurnStage stage, long windowId, Continuation continuation, long notBefore)
+            implements GameEvent, PublicEvent {
     }
 
     /** 开局发牌（R2，加权抽取）：牌面只发给本人。 */
@@ -88,8 +104,107 @@ public sealed interface GameEvent extends Event {
     record StartRewardPaid(String playerId, long amount, long turnNo) implements GameEvent, PublicEvent {
     }
 
-    /** 落点；placeholder 为 true 表示该格效果尚未接入（M2 起）。 */
+    /** 落点；placeholder 为 true 表示该格效果尚未接入（事件格 M3、游戏区 M6）。 */
     record Landed(String playerId, int tile, TileType type, boolean placeholder) implements GameEvent, PublicEvent {
+    }
+
+    // ------------------------------------------------------------ 落点推进器与经济（M2）
+
+    /** 落点推进器开始：分配落点编号（整局单调递增）。 */
+    record LandingStarted(long landingId, String playerId, int tile) implements GameEvent, PublicEvent {
+    }
+
+    /** 落点进入一个需要等待的子阶段；payment 为 DEBT 时的欠款，其余为 0。 */
+    record LandingStepEntered(long landingId, LandingStep step, long payment) implements GameEvent, PublicEvent {
+    }
+
+    /** 落点结算完成：必须没有待处理的必要步骤、决策已消费、费用已结清（E1）。 */
+    record LandingFinished(long landingId) implements GameEvent, PublicEvent {
+    }
+
+    /** 落点因当前玩家被淘汰而中止（不要求必要步骤完成）。 */
+    record LandingAborted(long landingId) implements GameEvent, PublicEvent {
+    }
+
+    record PropertyBought(String playerId, int tile, long price) implements GameEvent, PublicEvent {
+    }
+
+    record PurchaseDeclined(String playerId, int tile, boolean auto) implements GameEvent, PublicEvent {
+    }
+
+    record PropertyUpgraded(String playerId, int tile, int level, long cost) implements GameEvent, PublicEvent {
+    }
+
+    record UpgradeSkipped(String playerId, int tile, boolean auto) implements GameEvent, PublicEvent {
+    }
+
+    /** 费用成立（M4 免租响应在此之前；M2 无卡效果）。 */
+    record RentCharged(String payer, String owner, int tile, long amount) implements GameEvent, PublicEvent {
+    }
+
+    record RentPaid(String payer, String owner, int tile, long amount) implements GameEvent, PublicEvent {
+    }
+
+    /** 抵押：银行 100%（emergency = false）或应急比例（emergency = true）；principal 为实得金额（赎回本金）。 */
+    record AssetMortgaged(String playerId, int tile, long principal, boolean emergency) implements GameEvent, PublicEvent {
+    }
+
+    /** 赎回：归还本金，另付手续费（银行内为 0）。 */
+    record AssetRedeemed(String playerId, int tile, long principal, long fee) implements GameEvent, PublicEvent {
+    }
+
+    record BankFinished(String playerId, boolean auto) implements GameEvent, PublicEvent {
+    }
+
+    /** 债务成立（处理路径锁定为手动抵押，第一段窗口随后开启）。 */
+    record DebtCreated(DebtState debt) implements GameEvent, PublicEvent {
+    }
+
+    /** 债务窗口进入第 segment 段（第二段即"继续抵押 / 确认破产"弹窗，默认继续）。 */
+    record DebtSegmentStarted(long debtId, int segment, long windowId) implements GameEvent, PublicEvent {
+    }
+
+    /** 第二段弹窗选择"继续"（不延长计时）。 */
+    record DebtContinued(long debtId) implements GameEvent, PublicEvent {
+    }
+
+    /** 筹足即付：一次付清全部欠款。 */
+    record DebtPaid(long debtId, long amount) implements GameEvent, PublicEvent {
+    }
+
+    /** 开始破产清算（debtId 为 0 表示无欠款的认输清算）。 */
+    record LiquidationStarted(String playerId, long debtId, LifeState outcome) implements GameEvent, PublicEvent {
+    }
+
+    /** 未抵押资产按应急比例变现（O5+O6 产品决定）。 */
+    record AssetLiquidated(String playerId, int tile, long proceeds) implements GameEvent, PublicEvent {
+    }
+
+    /** 资产由系统回收（已抵押资产、或认输时的全部资产）：产权、等级、抵押清空，变为无主。 */
+    record AssetReclaimed(String playerId, int tile) implements GameEvent, PublicEvent {
+    }
+
+    /** 偿债：有多少给多少，不超过欠款。 */
+    record DebtSettled(long debtId, String creditor, long paid) implements GameEvent, PublicEvent {
+    }
+
+    /** 剩余现金由系统回收（金额可为 0）；清算结束。 */
+    record CashReclaimed(String playerId, long amount) implements GameEvent, PublicEvent {
+    }
+
+    /** 淘汰（破产或认输）：记录淘汰序号、批次与批次前净资产。 */
+    record PlayerEliminated(String playerId, LifeState life, Elimination elimination) implements GameEvent, PublicEvent {
+    }
+
+    /** 认输延后到当前流程结束后处理（O7）。 */
+    record SurrenderDeferred(String playerId) implements GameEvent, PublicEvent {
+    }
+
+    /** 开始处理一批延后认输（批次编号）。 */
+    record SurrenderBatchStarted(long batch) implements GameEvent, PublicEvent {
+    }
+
+    record SurrenderBatchEnded(long batch) implements GameEvent, PublicEvent {
     }
 
     // ------------------------------------------------------------ 监狱

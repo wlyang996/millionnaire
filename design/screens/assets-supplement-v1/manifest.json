@@ -1,0 +1,1591 @@
+{
+  "date": "2026-10-06",
+  "source": "built-in image_gen; no raster edits",
+  "applied_to_game": false,
+  "atlas_count": 11,
+  "region_count": 85,
+  "missing": [],
+  "coordinate_origin": "top-left; integer pixels",
+  "atlases": [
+    {
+      "id": "avatars",
+      "png": "atlases/avatars.png",
+      "size": [
+        1774,
+        887
+      ],
+      "mode": "RGBA",
+      "sha256": "c9a3c1fee79bade540c02647126a336cf4358786e61b66ffdac1e98845a3c15e",
+      "transparent_pixels": 598911,
+      "partial_alpha_pixels": 974499,
+      "native_alpha_present": true,
+      "grid": [
+        4,
+        2
+      ],
+      "frames": [
+        {
+          "name": "avatar_tangtang",
+          "cell_rect_xywh": [
+            0,
+            0,
+            443,
+            443
+          ],
+          "alpha_bbox_in_cell": [
+            33,
+            21,
+            443,
+            442
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "avatar_keke",
+          "cell_rect_xywh": [
+            443,
+            0,
+            444,
+            443
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            444,
+            443
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "avatar_ajie",
+          "cell_rect_xywh": [
+            887,
+            0,
+            443,
+            443
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            23,
+            443,
+            439
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "avatar_naicha",
+          "cell_rect_xywh": [
+            1330,
+            0,
+            444,
+            443
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            19,
+            430,
+            443
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "avatar_akai",
+          "cell_rect_xywh": [
+            0,
+            443,
+            443,
+            444
+          ],
+          "alpha_bbox_in_cell": [
+            33,
+            14,
+            443,
+            410
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "avatar_yuanyuan",
+          "cell_rect_xywh": [
+            443,
+            443,
+            444,
+            444
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            444,
+            422
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "avatar_doudou",
+          "cell_rect_xywh": [
+            887,
+            443,
+            443,
+            444
+          ],
+          "alpha_bbox_in_cell": [
+            1,
+            1,
+            443,
+            444
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "avatar_maomao",
+          "cell_rect_xywh": [
+            1330,
+            443,
+            444,
+            444
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            424,
+            420
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "pawns",
+      "png": "atlases/pawns.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "1006b931e612625c1ad048cb9608ecbb4aaa1d1fc82163849f1bc3915c1ac32d",
+      "transparent_pixels": 742685,
+      "partial_alpha_pixels": 830179,
+      "native_alpha_present": true,
+      "grid": [
+        4,
+        2
+      ],
+      "frames": [
+        {
+          "name": "pawn_tangtang",
+          "cell_rect_xywh": [
+            0,
+            0,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            78,
+            16,
+            367,
+            512
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "pawn_keke",
+          "cell_rect_xywh": [
+            384,
+            0,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            50,
+            44,
+            353,
+            512
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "pawn_ajie",
+          "cell_rect_xywh": [
+            768,
+            0,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            47,
+            33,
+            320,
+            512
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "pawn_naicha",
+          "cell_rect_xywh": [
+            1152,
+            0,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            22,
+            352,
+            512
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "pawn_akai",
+          "cell_rect_xywh": [
+            0,
+            512,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            62,
+            0,
+            380,
+            495
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "pawn_yuanyuan",
+          "cell_rect_xywh": [
+            384,
+            512,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            21,
+            0,
+            384,
+            512
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "pawn_doudou",
+          "cell_rect_xywh": [
+            768,
+            512,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            350,
+            496
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "pawn_maomao",
+          "cell_rect_xywh": [
+            1152,
+            512,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            2,
+            0,
+            354,
+            496
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "houses",
+      "png": "atlases/houses.png",
+      "size": [
+        1364,
+        1153
+      ],
+      "mode": "RGBA",
+      "sha256": "7ef80580cc70cb0b6fce6e346cc56091e7e57a73b5dba07a903004d1adf0539e",
+      "transparent_pixels": 768268,
+      "partial_alpha_pixels": 803765,
+      "native_alpha_present": true,
+      "grid": [
+        2,
+        2
+      ],
+      "frames": [
+        {
+          "name": "house_lv0",
+          "cell_rect_xywh": [
+            0,
+            0,
+            682,
+            576
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            19,
+            682,
+            576
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "house_lv1",
+          "cell_rect_xywh": [
+            682,
+            0,
+            682,
+            576
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            17,
+            662,
+            576
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "house_lv2",
+          "cell_rect_xywh": [
+            0,
+            576,
+            682,
+            577
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            682,
+            577
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "house_lv3",
+          "cell_rect_xywh": [
+            682,
+            576,
+            682,
+            577
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            662,
+            577
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "town",
+      "png": "atlases/town.png",
+      "size": [
+        941,
+        1671
+      ],
+      "mode": "RGBA",
+      "sha256": "f784592e84f91f8a0371e96dff1319fa8bc1587a914ef4cfacd55c1409680f5b",
+      "transparent_pixels": 332664,
+      "partial_alpha_pixels": 1239732,
+      "native_alpha_present": true,
+      "grid": [
+        1,
+        1
+      ],
+      "frames": [
+        {
+          "name": "board_town",
+          "cell_rect_xywh": [
+            0,
+            0,
+            941,
+            1671
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            941,
+            1671
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "buttons",
+      "png": "atlases/buttons.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "eae2b9f4540db269d11ad8700c3216246068c9fe778818afc40a919b9509df7f",
+      "transparent_pixels": 721664,
+      "partial_alpha_pixels": 851200,
+      "native_alpha_present": true,
+      "grid": [
+        2,
+        3
+      ],
+      "frames": [
+        {
+          "name": "button_yellow",
+          "cell_rect_xywh": [
+            0,
+            0,
+            768,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            35,
+            29,
+            756,
+            338
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "button_blue",
+          "cell_rect_xywh": [
+            768,
+            0,
+            768,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            11,
+            127,
+            737,
+            337
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "button_green",
+          "cell_rect_xywh": [
+            0,
+            341,
+            768,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            33,
+            24,
+            756,
+            283
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "button_ivory",
+          "cell_rect_xywh": [
+            768,
+            341,
+            768,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            12,
+            60,
+            737,
+            284
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "button_red",
+          "cell_rect_xywh": [
+            0,
+            682,
+            768,
+            342
+          ],
+          "alpha_bbox_in_cell": [
+            34,
+            6,
+            756,
+            262
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "button_disabled",
+          "cell_rect_xywh": [
+            768,
+            682,
+            768,
+            342
+          ],
+          "alpha_bbox_in_cell": [
+            12,
+            6,
+            736,
+            214
+          ],
+          "touches_cell_edge": false
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "icons",
+      "png": "atlases/icons.png",
+      "size": [
+        1402,
+        1122
+      ],
+      "mode": "RGBA",
+      "sha256": "6bb2dff315bd89fd655e36e013af2f13438912fa5fe249217fe8802aabddcdcb",
+      "transparent_pixels": 946417,
+      "partial_alpha_pixels": 623178,
+      "native_alpha_present": true,
+      "grid": [
+        5,
+        4
+      ],
+      "frames": [
+        {
+          "name": "icon_coin",
+          "cell_rect_xywh": [
+            0,
+            0,
+            280,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            15,
+            268,
+            279
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_mic",
+          "cell_rect_xywh": [
+            280,
+            0,
+            280,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            25,
+            9,
+            280,
+            280
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_chat",
+          "cell_rect_xywh": [
+            560,
+            0,
+            281,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            9,
+            264,
+            279
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_clock_normal",
+          "cell_rect_xywh": [
+            841,
+            0,
+            280,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            6,
+            52,
+            243,
+            276
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "icon_clock_warning",
+          "cell_rect_xywh": [
+            1121,
+            0,
+            281,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            35,
+            49,
+            249,
+            276
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "icon_back",
+          "cell_rect_xywh": [
+            0,
+            280,
+            280,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            65,
+            39,
+            280,
+            268
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_settings",
+          "cell_rect_xywh": [
+            280,
+            280,
+            280,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            1,
+            0,
+            280,
+            279
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_copy",
+          "cell_rect_xywh": [
+            560,
+            280,
+            281,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            7,
+            3,
+            278,
+            267
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "icon_share",
+          "cell_rect_xywh": [
+            841,
+            280,
+            280,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            6,
+            11,
+            239,
+            279
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "icon_house",
+          "cell_rect_xywh": [
+            1121,
+            280,
+            281,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            21,
+            15,
+            253,
+            281
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_auction",
+          "cell_rect_xywh": [
+            0,
+            561,
+            280,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            24,
+            17,
+            269,
+            280
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_move",
+          "cell_rect_xywh": [
+            280,
+            561,
+            280,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            56,
+            38,
+            280,
+            259
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_roadblock",
+          "cell_rect_xywh": [
+            560,
+            561,
+            281,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            14,
+            1,
+            280,
+            279
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "icon_key",
+          "cell_rect_xywh": [
+            841,
+            561,
+            280,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            13,
+            279,
+            280
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_query",
+          "cell_rect_xywh": [
+            1121,
+            561,
+            281,
+            280
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            277,
+            279
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_shield",
+          "cell_rect_xywh": [
+            0,
+            841,
+            280,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            33,
+            0,
+            260,
+            239
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_chevron",
+          "cell_rect_xywh": [
+            280,
+            841,
+            280,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            9,
+            35,
+            207,
+            227
+          ],
+          "touches_cell_edge": false
+        },
+        {
+          "name": "icon_check",
+          "cell_rect_xywh": [
+            560,
+            841,
+            281,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            34,
+            29,
+            278,
+            281
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_bank",
+          "cell_rect_xywh": [
+            841,
+            841,
+            280,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            19,
+            0,
+            253,
+            234
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "icon_jail",
+          "cell_rect_xywh": [
+            1121,
+            841,
+            281,
+            281
+          ],
+          "alpha_bbox_in_cell": [
+            35,
+            34,
+            234,
+            229
+          ],
+          "touches_cell_edge": false
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "cards",
+      "png": "atlases/cards.png",
+      "size": [
+        1223,
+        1286
+      ],
+      "mode": "RGBA",
+      "sha256": "7b4498c9b2b5a723a5a7ebd23418980b19d8eac1978f76f3e500a6d4f6a716a6",
+      "transparent_pixels": 364008,
+      "partial_alpha_pixels": 1205000,
+      "native_alpha_present": true,
+      "grid": [
+        4,
+        4
+      ],
+      "frames": [
+        {
+          "name": "card_roadblock",
+          "cell_rect_xywh": [
+            0,
+            0,
+            305,
+            321
+          ],
+          "alpha_bbox_in_cell": [
+            45,
+            31,
+            305,
+            321
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_free_rent",
+          "cell_rect_xywh": [
+            305,
+            0,
+            306,
+            321
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            31,
+            304,
+            321
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_build",
+          "cell_rect_xywh": [
+            611,
+            0,
+            306,
+            321
+          ],
+          "alpha_bbox_in_cell": [
+            14,
+            31,
+            306,
+            321
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_downgrade",
+          "cell_rect_xywh": [
+            917,
+            0,
+            306,
+            321
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            31,
+            262,
+            321
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_fixed_move",
+          "cell_rect_xywh": [
+            0,
+            321,
+            305,
+            322
+          ],
+          "alpha_bbox_in_cell": [
+            48,
+            0,
+            305,
+            322
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_jail_release",
+          "cell_rect_xywh": [
+            305,
+            321,
+            306,
+            322
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            302,
+            322
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_auction",
+          "cell_rect_xywh": [
+            611,
+            321,
+            306,
+            322
+          ],
+          "alpha_bbox_in_cell": [
+            12,
+            0,
+            306,
+            322
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_trade",
+          "cell_rect_xywh": [
+            917,
+            321,
+            306,
+            322
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            264,
+            322
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_refuse_purchase",
+          "cell_rect_xywh": [
+            0,
+            643,
+            305,
+            321
+          ],
+          "alpha_bbox_in_cell": [
+            46,
+            0,
+            305,
+            321
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_house_protection",
+          "cell_rect_xywh": [
+            305,
+            643,
+            306,
+            321
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            304,
+            321
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_query",
+          "cell_rect_xywh": [
+            611,
+            643,
+            306,
+            321
+          ],
+          "alpha_bbox_in_cell": [
+            11,
+            0,
+            306,
+            321
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_forced_purchase",
+          "cell_rect_xywh": [
+            917,
+            643,
+            306,
+            321
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            261,
+            321
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_demolish",
+          "cell_rect_xywh": [
+            0,
+            964,
+            305,
+            322
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            305,
+            274
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_clear_land",
+          "cell_rect_xywh": [
+            305,
+            964,
+            306,
+            322
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            305,
+            274
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "event_card_back",
+          "cell_rect_xywh": [
+            611,
+            964,
+            306,
+            322
+          ],
+          "alpha_bbox_in_cell": [
+            14,
+            0,
+            306,
+            272
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "card_face_blank",
+          "cell_rect_xywh": [
+            917,
+            964,
+            306,
+            322
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            264,
+            272
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "dice",
+      "png": "atlases/dice.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "37f48e5ef9a096b4c12bdb150e2aa07e10256a37f259055bec516445f463f801",
+      "transparent_pixels": 1011562,
+      "partial_alpha_pixels": 561302,
+      "native_alpha_present": true,
+      "grid": [
+        3,
+        3
+      ],
+      "frames": [
+        {
+          "name": "dice_1",
+          "cell_rect_xywh": [
+            0,
+            0,
+            512,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            39,
+            0,
+            512,
+            341
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "dice_2",
+          "cell_rect_xywh": [
+            512,
+            0,
+            512,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            1,
+            0,
+            502,
+            341
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "dice_3",
+          "cell_rect_xywh": [
+            1024,
+            0,
+            512,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            1,
+            9,
+            498,
+            341
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "dice_4",
+          "cell_rect_xywh": [
+            0,
+            341,
+            512,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            512,
+            341
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "dice_5",
+          "cell_rect_xywh": [
+            512,
+            341,
+            512,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            7,
+            0,
+            512,
+            341
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "dice_6",
+          "cell_rect_xywh": [
+            1024,
+            341,
+            512,
+            341
+          ],
+          "alpha_bbox_in_cell": [
+            1,
+            0,
+            494,
+            341
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "dice_roll_a",
+          "cell_rect_xywh": [
+            0,
+            682,
+            512,
+            342
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            512,
+            342
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "dice_roll_b",
+          "cell_rect_xywh": [
+            512,
+            682,
+            512,
+            342
+          ],
+          "alpha_bbox_in_cell": [
+            1,
+            0,
+            512,
+            342
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "dice_roll_c",
+          "cell_rect_xywh": [
+            1024,
+            682,
+            512,
+            342
+          ],
+          "alpha_bbox_in_cell": [
+            1,
+            0,
+            511,
+            342
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "croc",
+      "png": "atlases/croc.png",
+      "size": [
+        2172,
+        724
+      ],
+      "mode": "RGBA",
+      "sha256": "1051679e225773a5164f2f0c18ab2edc97ca194adf7e7d4cadc8580ad2977f48",
+      "transparent_pixels": 727319,
+      "partial_alpha_pixels": 844247,
+      "native_alpha_present": true,
+      "grid": [
+        3,
+        1
+      ],
+      "frames": [
+        {
+          "name": "croc_open",
+          "cell_rect_xywh": [
+            0,
+            0,
+            724,
+            724
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            32,
+            695,
+            706
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "croc_half",
+          "cell_rect_xywh": [
+            724,
+            0,
+            724,
+            724
+          ],
+          "alpha_bbox_in_cell": [
+            1,
+            24,
+            724,
+            700
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "croc_closed",
+          "cell_rect_xywh": [
+            1448,
+            0,
+            724,
+            724
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            39,
+            721,
+            704
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "teeth",
+      "png": "atlases/teeth.png",
+      "size": [
+        1774,
+        887
+      ],
+      "mode": "RGBA",
+      "sha256": "e64a9679bbd58bace68902c5c4b566d59eb254a6cde951ad42cd1b3dcea434e5",
+      "transparent_pixels": 1139675,
+      "partial_alpha_pixels": 433117,
+      "native_alpha_present": true,
+      "grid": [
+        2,
+        1
+      ],
+      "frames": [
+        {
+          "name": "tooth_normal",
+          "cell_rect_xywh": [
+            0,
+            0,
+            887,
+            887
+          ],
+          "alpha_bbox_in_cell": [
+            80,
+            104,
+            887,
+            821
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "tooth_pressed",
+          "cell_rect_xywh": [
+            887,
+            0,
+            887,
+            887
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            158,
+            835,
+            831
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    },
+    {
+      "id": "event_art",
+      "png": "atlases/events.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "146a52a3490b9bc94a17c18bf461f99403b4caee7c14be9aa0e8f67c6920d905",
+      "transparent_pixels": 390227,
+      "partial_alpha_pixels": 1182637,
+      "native_alpha_present": true,
+      "grid": [
+        4,
+        2
+      ],
+      "frames": [
+        {
+          "name": "event_reward",
+          "cell_rect_xywh": [
+            0,
+            0,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            27,
+            30,
+            384,
+            512
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "event_fine",
+          "cell_rect_xywh": [
+            384,
+            0,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            31,
+            384,
+            498
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "event_tool",
+          "cell_rect_xywh": [
+            768,
+            0,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            29,
+            384,
+            496
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "event_move",
+          "cell_rect_xywh": [
+            1152,
+            0,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            29,
+            357,
+            512
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "event_jail",
+          "cell_rect_xywh": [
+            0,
+            512,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            27,
+            0,
+            384,
+            468
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "event_card_back",
+          "cell_rect_xywh": [
+            384,
+            512,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            13,
+            384,
+            468
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "event_card_fan",
+          "cell_rect_xywh": [
+            768,
+            512,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            34,
+            384,
+            484
+          ],
+          "touches_cell_edge": true
+        },
+        {
+          "name": "event_card_highlight",
+          "cell_rect_xywh": [
+            1152,
+            512,
+            384,
+            512
+          ],
+          "alpha_bbox_in_cell": [
+            0,
+            0,
+            384,
+            498
+          ],
+          "touches_cell_edge": true
+        }
+      ],
+      "status": "candidate; inspect before import; frame cells include transparent margins"
+    }
+  ]
+}

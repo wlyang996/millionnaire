@@ -41,8 +41,15 @@ public interface Domain<S extends DomainState> {
     S evolve(S state, Event event, Draws draws, RuleConfig rules);
 
     /**
-     * 一致性校验；不一致时抛 {@link StateValidationException}。full 为 true 时（恢复、重建、创世）执行完整检查
-     * （如账本历史逐笔重放），false 时（每步入口与出口）只做轻量检查。
+     * 步边界的轻量检查（C4）：在新输入或新任务开始、在线决策完成时调用，领域在此断言"步内衔接状态已清空"等。
+     * 不一致时抛 {@link IllegalStateException}（决策中视为内核故障，重建中视为日志损坏）。
+     */
+    default void checkBoundary(S state) {
+    }
+
+    /**
+     * 一致性校验；不一致时抛 {@link StateValidationException}。full 为 true 表示恢复、重建、创世入口，false 表示每步入口与出口；
+     * 领域可借此区分检查强度。生产会话领域目前两种情况都完整重放账本（正确优先，增量校验待后续优化）。
      */
     void validate(EngineState engine, S state, RuleConfig config, boolean full);
 }

@@ -1,5 +1,7 @@
 # 高保真界面概念图 v1
 
+统一查看入口：[整理后的设计图](../screens/README.md)。最新棋盘与各页面已集中到 `../screens/`，本目录保留版本原稿、提示词和历史说明。原图有更新后，运行 `../screens/records/update.ps1` 同步查看目录；当前实际来源见 `../screens/records/sources.json`。
+
 日期：2026-10-05。
 生成方式：内置 image_gen，ui-mockup。完整提示词见 prompts-v1.txt。
 

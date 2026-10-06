@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-06",
+  "tool": "built-in image_gen",
+  "prompt": "Edit this current v7 board screenshot ONLY to show another player's turn. Preserve ALL geometry,namedtile ring,8players FOURcolumnsTWOrows,upperleftlarge3cardfan,centerdie,5itemhandandright6/6chevronpositiontrack, ownfooter糖糖2800smallred认输betweencashand我的资产mic/chat. Switch gold activeplayerheaderhighlight from糖糖 to可可. Own我·糖糖pawn stayshighlightbluebase. Central ivoryturnpanel EXACT '可可的回合' then '等待可可投骰'; no15secondown countdown. Centerdie samefixedposition, 投骰子 button graydisabled. NO central eventcard in this otheruserinterface. No new controls. Matchtime08:46red. Oneportraitcandidate. Use same Chineselettering andrenderstyle.",
+  "refs": [
+    "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/01-board.png"
+  ],
+  "file": "对局棋盘-他人回合等待-v7.png",
+  "status": "design candidate"
+}

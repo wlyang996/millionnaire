@@ -1,0 +1,392 @@
+[
+  {
+    "name": "avatar_1",
+    "size": [
+      318,
+      432
+    ],
+    "use": "小林：蓝帽衫男孩",
+    "display": "96×96（大厅可用112×112）",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "avatar_2",
+    "size": [
+      373,
+      410
+    ],
+    "use": "可可：棕发女孩",
+    "display": "96×96（大厅可用112×112）",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "avatar_3",
+    "size": [
+      335,
+      426
+    ],
+    "use": "阿杰：绿帽眼镜男孩",
+    "display": "96×96（大厅可用112×112）",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 4,
+    "upscaled": false
+  },
+  {
+    "name": "avatar_4",
+    "size": [
+      373,
+      438
+    ],
+    "use": "奶茶：粉帽女孩",
+    "display": "96×96（大厅可用112×112）",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "avatar_5",
+    "size": [
+      372,
+      439
+    ],
+    "use": "阿凯：黑发男孩",
+    "display": "96×96（大厅可用112×112）",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "avatar_6",
+    "size": [
+      378,
+      419
+    ],
+    "use": "圆圆：紫发女孩",
+    "display": "96×96（大厅可用112×112）",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 31,
+    "upscaled": false
+  },
+  {
+    "name": "avatar_7",
+    "size": [
+      365,
+      429
+    ],
+    "use": "豆豆：卡其帽男孩",
+    "display": "96×96（大厅可用112×112）",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "avatar_8",
+    "size": [
+      417,
+      421
+    ],
+    "use": "毛毛：黑长发女孩",
+    "display": "96×96（大厅可用112×112）",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "btn_primary_yellow",
+    "size": [
+      576,
+      171
+    ],
+    "use": "黄色主按钮",
+    "display": "600×140",
+    "slices": [
+      72,
+      38,
+      72,
+      48
+    ],
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "btn_secondary_blue",
+    "size": [
+      580,
+      172
+    ],
+    "use": "蓝色次按钮",
+    "display": "600×140",
+    "slices": [
+      72,
+      38,
+      72,
+      48
+    ],
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "btn_secondary_gray",
+    "size": [
+      576,
+      175
+    ],
+    "use": "灰蓝次按钮",
+    "display": "600×140",
+    "slices": [
+      72,
+      38,
+      72,
+      48
+    ],
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "btn_small_green",
+    "size": [
+      580,
+      175
+    ],
+    "use": "绿色小按钮",
+    "display": "220×64",
+    "slices": [
+      72,
+      38,
+      72,
+      48
+    ],
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "panel_ivory",
+    "size": [
+      640,
+      640
+    ],
+    "use": "暖象牙大面板",
+    "display": "640×640",
+    "slices": [
+      80,
+      80,
+      80,
+      90
+    ],
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": true
+  },
+  {
+    "name": "panel_ivory_inner",
+    "size": [
+      560,
+      200
+    ],
+    "use": "浅色分区面板",
+    "display": "560×200",
+    "slices": [
+      56,
+      44,
+      56,
+      52
+    ],
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": true
+  },
+  {
+    "name": "chip_ready_green",
+    "size": [
+      220,
+      93
+    ],
+    "use": "准备状态空白胶囊",
+    "display": "120×36",
+    "slices": [
+      48,
+      22,
+      48,
+      30
+    ],
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "chip_gray",
+    "size": [
+      220,
+      93
+    ],
+    "use": "灰色状态空白胶囊",
+    "display": "120×36",
+    "slices": [
+      48,
+      22,
+      48,
+      30
+    ],
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_close",
+    "size": [
+      96,
+      96
+    ],
+    "use": "关闭",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_back",
+    "size": [
+      96,
+      96
+    ],
+    "use": "返回",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_coin",
+    "size": [
+      96,
+      95
+    ],
+    "use": "金币",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_mic",
+    "size": [
+      85,
+      88
+    ],
+    "use": "麦克风",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_chat",
+    "size": [
+      86,
+      89
+    ],
+    "use": "聊天",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_share",
+    "size": [
+      87,
+      89
+    ],
+    "use": "分享",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_copy",
+    "size": [
+      96,
+      96
+    ],
+    "use": "复制",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_settings",
+    "size": [
+      96,
+      96
+    ],
+    "use": "设置",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "icon_sound",
+    "size": [
+      96,
+      96
+    ],
+    "use": "声音",
+    "display": "48×48；金币可用32×32",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "logo_title",
+    "size": [
+      800,
+      366
+    ],
+    "use": "空白木质标题牌，代码叠加文字",
+    "display": "580×290",
+    "slices": null,
+    "edge_magenta": 0,
+    "magenta_candidates": 0,
+    "upscaled": false
+  },
+  {
+    "name": "bg_lobby",
+    "size": [
+      1080,
+      1920
+    ],
+    "use": "大厅不透明背景",
+    "display": "720×1280",
+    "slices": null,
+    "edge_magenta": null,
+    "upscaled": true
+  }
+]

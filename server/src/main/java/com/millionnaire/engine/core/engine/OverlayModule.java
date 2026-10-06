@@ -16,9 +16,9 @@ final class OverlayModule {
     private OverlayModule() {
     }
 
-    /** 在安全点启动一个排队申请（覆盖窗口位于栈底，回合处于 AWAITING_FLOW）。 */
-    static void start(DecisionContext<SessionState> ctx, FlowRequest request) {
-        GameModule.openOverlay(ctx, request.kind(), request.applicant(), 0, durationMs(ctx.config(), request.kind()), "RETURN");
+    /** 在安全点启动一个排队申请（覆盖窗口位于栈底，回合处于 AWAITING_FLOW）；leadMs 为尚未播完的动画缓冲（C6）。 */
+    static void start(DecisionContext<SessionState> ctx, FlowRequest request, long leadMs) {
+        GameModule.openOverlay(ctx, request.kind(), request.applicant(), leadMs, durationMs(ctx.config(), request.kind()), "RETURN");
     }
 
     /** 覆盖窗口到期：确认是当前窗口的截止任务后，按所属模块关闭（M1 占位：无结果关闭）。 */
@@ -28,7 +28,14 @@ final class OverlayModule {
         }
         FlowCoordinator.expiredFrame(ctx.state().game().flow(), task)
                 .filter(f -> f.kind() != FlowKind.TURN)
-                .ifPresent(f -> GameModule.closeOverlay(ctx, f.windowId(), CloseReason.EXPIRED));
+                .ifPresent(f -> {
+                    if (f.kind() == FlowKind.DEBT) {
+                        // 债务两段（M2 P5）：第一段到期 → 第二段弹窗；第二段到期 → 破产
+                        EconomyModule.onDebtExpired(ctx, f);
+                    } else {
+                        GameModule.closeOverlay(ctx, f.windowId(), CloseReason.EXPIRED);
+                    }
+                });
     }
 
     static long durationMs(RuleConfig config, FlowKind kind) {

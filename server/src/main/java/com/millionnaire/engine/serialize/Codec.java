@@ -33,6 +33,8 @@ public final class Codec {
     public static final Codec DEFAULT = new Codec(TypeRegistry.EMPTY);
 
     private static final String TYPE_TAG = "@type";
+    /** 解析时对象 / 数组的最大嵌套深度；超过即视为非法输入（避免栈溢出）。引擎自身的数据结构嵌套远小于此值。 */
+    static final int MAX_DEPTH = 64;
     private static final String HEX = "0123456789abcdef";
 
     private final TypeRegistry registry;
@@ -225,7 +227,11 @@ public final class Codec {
             return expect(node, Long.class);
         }
         if (raw == int.class || raw == Integer.class) {
-            return Math.toIntExact(expect(node, Long.class));
+            try {
+                return Math.toIntExact(expect(node, Long.class));
+            } catch (ArithmeticException e) {
+                throw new IllegalArgumentException("int out of range: " + node, e);
+            }
         }
         if (raw == boolean.class || raw == Boolean.class) {
             return expect(node, Boolean.class);
@@ -253,7 +259,11 @@ public final class Codec {
                 if (pair.size() != 2) {
                     throw new IllegalArgumentException("map entry must be [k,v]");
                 }
-                out.put(bind(pair.get(0), kt), bind(pair.get(1), vt));
+                Object key = bind(pair.get(0), kt);
+                if (key == null) {
+                    throw new IllegalArgumentException("null map key");
+                }
+                out.put(key, bind(pair.get(1), vt));
             }
             return Collections.unmodifiableSortedMap(out);
         }
@@ -357,6 +367,7 @@ public final class Codec {
     private static final class Parser {
         private final String s;
         private int i;
+        private int depth;
 
         Parser(String s) {
             this.s = s;
@@ -388,6 +399,12 @@ public final class Codec {
             }
         }
 
+        private void enter() {
+            if (++depth > MAX_DEPTH) {
+                throw error("nesting deeper than " + MAX_DEPTH);
+            }
+        }
+
         void end() {
             if (i != s.length()) {
                 throw error("trailing data");
@@ -395,10 +412,12 @@ public final class Codec {
         }
 
         private JObject object() {
+            enter();
             i++;
             List<JField> fields = new ArrayList<>();
             if (peek() == '}') {
                 i++;
+                depth--;
                 return new JObject(fields);
             }
             while (true) {
@@ -407,6 +426,7 @@ public final class Codec {
                 fields.add(new JField(name, value()));
                 char c = next();
                 if (c == '}') {
+                    depth--;
                     return new JObject(fields);
                 }
                 if (c != ',') {
@@ -416,16 +436,19 @@ public final class Codec {
         }
 
         private List<Object> array() {
+            enter();
             i++;
             List<Object> items = new ArrayList<>();
             if (peek() == ']') {
                 i++;
+                depth--;
                 return items;
             }
             while (true) {
                 items.add(value());
                 char c = next();
                 if (c == ']') {
+                    depth--;
                     return items;
                 }
                 if (c != ',') {

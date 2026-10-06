@@ -1,0 +1,6266 @@
+[
+  {
+    "key": "avatar_xiaolin",
+    "name": "小林/糖糖头像",
+    "category": "avatars",
+    "source": "03-profile-result.png",
+    "bbox": [
+      40,
+      831,
+      117,
+      907
+    ],
+    "native": [
+      77,
+      76
+    ],
+    "display": [
+      72,
+      72
+    ],
+    "target": [
+      160,
+      160
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "资料页网格中的头像；名字单独渲染。小林与糖糖使用同一蓝衣男孩造型。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Widgets.ts; screens/ProfileScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "avatar_keke",
+    "name": "可可头像",
+    "category": "avatars",
+    "source": "03-profile-result.png",
+    "bbox": [
+      136,
+      832,
+      205,
+      907
+    ],
+    "native": [
+      69,
+      75
+    ],
+    "display": [
+      72,
+      72
+    ],
+    "target": [
+      160,
+      160
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "资料页网格中的头像；名字单独渲染。小林与糖糖使用同一蓝衣男孩造型。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Widgets.ts; screens/ProfileScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "avatar_ajie",
+    "name": "阿杰头像",
+    "category": "avatars",
+    "source": "03-profile-result.png",
+    "bbox": [
+      224,
+      832,
+      295,
+      907
+    ],
+    "native": [
+      71,
+      75
+    ],
+    "display": [
+      72,
+      72
+    ],
+    "target": [
+      160,
+      160
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "资料页网格中的头像；名字单独渲染。小林与糖糖使用同一蓝衣男孩造型。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Widgets.ts; screens/ProfileScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "avatar_naicha",
+    "name": "奶茶头像",
+    "category": "avatars",
+    "source": "03-profile-result.png",
+    "bbox": [
+      319,
+      832,
+      387,
+      907
+    ],
+    "native": [
+      68,
+      75
+    ],
+    "display": [
+      72,
+      72
+    ],
+    "target": [
+      160,
+      160
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "资料页网格中的头像；名字单独渲染。小林与糖糖使用同一蓝衣男孩造型。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Widgets.ts; screens/ProfileScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "avatar_akai",
+    "name": "阿凯头像",
+    "category": "avatars",
+    "source": "03-profile-result.png",
+    "bbox": [
+      40,
+      951,
+      117,
+      1031
+    ],
+    "native": [
+      77,
+      80
+    ],
+    "display": [
+      72,
+      72
+    ],
+    "target": [
+      160,
+      160
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "资料页网格中的头像；名字单独渲染。小林与糖糖使用同一蓝衣男孩造型。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Widgets.ts; screens/ProfileScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "avatar_yuanyuan",
+    "name": "圆圆头像",
+    "category": "avatars",
+    "source": "03-profile-result.png",
+    "bbox": [
+      136,
+      951,
+      205,
+      1031
+    ],
+    "native": [
+      69,
+      80
+    ],
+    "display": [
+      72,
+      72
+    ],
+    "target": [
+      160,
+      160
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "资料页网格中的头像；名字单独渲染。小林与糖糖使用同一蓝衣男孩造型。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Widgets.ts; screens/ProfileScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "avatar_doudou",
+    "name": "豆豆头像",
+    "category": "avatars",
+    "source": "03-profile-result.png",
+    "bbox": [
+      224,
+      951,
+      295,
+      1031
+    ],
+    "native": [
+      71,
+      80
+    ],
+    "display": [
+      72,
+      72
+    ],
+    "target": [
+      160,
+      160
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "资料页网格中的头像；名字单独渲染。小林与糖糖使用同一蓝衣男孩造型。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Widgets.ts; screens/ProfileScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "avatar_maomao",
+    "name": "毛毛头像",
+    "category": "avatars",
+    "source": "03-profile-result.png",
+    "bbox": [
+      319,
+      951,
+      387,
+      1031
+    ],
+    "native": [
+      68,
+      80
+    ],
+    "display": [
+      72,
+      72
+    ],
+    "target": [
+      160,
+      160
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "资料页网格中的头像；名字单独渲染。小林与糖糖使用同一蓝衣男孩造型。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Widgets.ts; screens/ProfileScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "button_primary",
+    "name": "黄色主按钮",
+    "category": "ui",
+    "source": "04-property-popups.png",
+    "bbox": [
+      190,
+      715,
+      398,
+      787
+    ],
+    "native": [
+      208,
+      72
+    ],
+    "display": [
+      280,
+      90
+    ],
+    "target": [
+      576,
+      196
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "button_secondary",
+    "name": "蓝色次按钮",
+    "category": "ui",
+    "source": "05-auction-debt.png",
+    "bbox": [
+      1070,
+      536,
+      1415,
+      601
+    ],
+    "native": [
+      345,
+      65
+    ],
+    "display": [
+      280,
+      90
+    ],
+    "target": [
+      576,
+      196
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "button_disabled",
+    "name": "灰蓝禁用按钮",
+    "category": "ui",
+    "source": "06-room-connection.png",
+    "bbox": [
+      28,
+      950,
+      334,
+      1021
+    ],
+    "native": [
+      306,
+      71
+    ],
+    "display": [
+      280,
+      90
+    ],
+    "target": [
+      576,
+      196
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "button_success",
+    "name": "绿色小按钮",
+    "category": "ui",
+    "source": "03-profile-result.png",
+    "bbox": [
+      714,
+      475,
+      770,
+      509
+    ],
+    "native": [
+      56,
+      34
+    ],
+    "display": [
+      96,
+      48
+    ],
+    "target": [
+      208,
+      112
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "button_ghost",
+    "name": "灰蓝幽灵按钮",
+    "category": "ui",
+    "source": "04-property-popups.png",
+    "bbox": [
+      47,
+      718,
+      183,
+      787
+    ],
+    "native": [
+      136,
+      69
+    ],
+    "display": [
+      200,
+      80
+    ],
+    "target": [
+      416,
+      176
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "button_green_login",
+    "name": "绿色登录按钮",
+    "category": "ui",
+    "source": "03-profile-result.png",
+    "bbox": [
+      29,
+      518,
+      397,
+      596
+    ],
+    "native": [
+      368,
+      78
+    ],
+    "display": [
+      592,
+      92
+    ],
+    "target": [
+      1200,
+      200
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "panel_ivory",
+    "name": "象牙色弹窗面板",
+    "category": "ui",
+    "source": "04-property-popups.png",
+    "bbox": [
+      35,
+      263,
+      410,
+      806
+    ],
+    "native": [
+      375,
+      543
+    ],
+    "display": [
+      640,
+      800
+    ],
+    "target": [
+      1296,
+      1616
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "panel_section",
+    "name": "内部分区块",
+    "category": "ui",
+    "source": "04-property-popups.png",
+    "bbox": [
+      59,
+      522,
+      389,
+      595
+    ],
+    "native": [
+      330,
+      73
+    ],
+    "display": [
+      560,
+      108
+    ],
+    "target": [
+      1136,
+      232
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "panel_warning",
+    "name": "红色欠款分区",
+    "category": "ui",
+    "source": "05-auction-debt.png",
+    "bbox": [
+      549,
+      335,
+      951,
+      421
+    ],
+    "native": [
+      402,
+      86
+    ],
+    "display": [
+      580,
+      112
+    ],
+    "target": [
+      1176,
+      240
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "panel_input",
+    "name": "昵称输入框",
+    "category": "ui",
+    "source": "03-profile-result.png",
+    "bbox": [
+      32,
+      698,
+      386,
+      746
+    ],
+    "native": [
+      354,
+      48
+    ],
+    "display": [
+      560,
+      76
+    ],
+    "target": [
+      1136,
+      168
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "capsule_ready",
+    "name": "绿色准备胶囊",
+    "category": "ui",
+    "source": "06-room-connection.png",
+    "bbox": [
+      42,
+      347,
+      128,
+      375
+    ],
+    "native": [
+      86,
+      28
+    ],
+    "display": [
+      120,
+      38
+    ],
+    "target": [
+      256,
+      92
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "capsule_idle",
+    "name": "灰色未准备胶囊",
+    "category": "ui",
+    "source": "06-room-connection.png",
+    "bbox": [
+      373,
+      506,
+      456,
+      533
+    ],
+    "native": [
+      83,
+      27
+    ],
+    "display": [
+      120,
+      38
+    ],
+    "target": [
+      256,
+      92
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "title_wood",
+    "name": "木质标题牌",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      32,
+      26,
+      438,
+      99
+    ],
+    "native": [
+      406,
+      73
+    ],
+    "display": [
+      340,
+      70
+    ],
+    "target": [
+      696,
+      156
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "player_bar",
+    "name": "玩家状态条底",
+    "category": "ui",
+    "source": "01-board.png",
+    "bbox": [
+      271,
+      97,
+      474,
+      187
+    ],
+    "native": [
+      203,
+      90
+    ],
+    "display": [
+      155,
+      69
+    ],
+    "target": [
+      326,
+      154
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "asset_bar",
+    "name": "底部资产条底",
+    "category": "ui",
+    "source": "01-board.png",
+    "bbox": [
+      25,
+      1575,
+      911,
+      1672
+    ],
+    "native": [
+      886,
+      97
+    ],
+    "display": [
+      696,
+      72
+    ],
+    "target": [
+      1408,
+      160
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "turn_pill",
+    "name": "中央回合药丸",
+    "category": "ui",
+    "source": "01-board.png",
+    "bbox": [
+      328,
+      647,
+      613,
+      760
+    ],
+    "native": [
+      285,
+      113
+    ],
+    "display": [
+      218,
+      86
+    ],
+    "target": [
+      452,
+      188
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "bubble_me",
+    "name": "我气泡",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      272,
+      766,
+      341,
+      826
+    ],
+    "native": [
+      69,
+      60
+    ],
+    "display": [
+      72,
+      50
+    ],
+    "target": [
+      160,
+      116
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "bubble_name",
+    "name": "我与昵称气泡",
+    "category": "ui",
+    "source": "01-board.png",
+    "bbox": [
+      250,
+      1205,
+      362,
+      1264
+    ],
+    "native": [
+      112,
+      59
+    ],
+    "display": [
+      106,
+      46
+    ],
+    "target": [
+      228,
+      108
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "card_base",
+    "name": "统一道具卡底",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      56,
+      431,
+      171,
+      585
+    ],
+    "native": [
+      115,
+      154
+    ],
+    "display": [
+      120,
+      144
+    ],
+    "target": [
+      256,
+      304
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "card_base_green",
+    "name": "绿色道具卡底",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      173,
+      431,
+      281,
+      585
+    ],
+    "native": [
+      108,
+      154
+    ],
+    "display": [
+      120,
+      144
+    ],
+    "target": [
+      256,
+      304
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "card_base_yellow",
+    "name": "黄色道具卡底",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      284,
+      431,
+      397,
+      585
+    ],
+    "native": [
+      113,
+      154
+    ],
+    "display": [
+      120,
+      144
+    ],
+    "target": [
+      256,
+      304
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "card_base_pink",
+    "name": "粉色道具卡底",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      399,
+      431,
+      510,
+      585
+    ],
+    "native": [
+      111,
+      154
+    ],
+    "display": [
+      120,
+      144
+    ],
+    "target": [
+      256,
+      304
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "card_base_purple",
+    "name": "紫色道具卡底",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      512,
+      431,
+      625,
+      585
+    ],
+    "native": [
+      113,
+      154
+    ],
+    "display": [
+      120,
+      144
+    ],
+    "target": [
+      256,
+      304
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "badge_count",
+    "name": "数量角标底",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      1438,
+      410,
+      1483,
+      456
+    ],
+    "native": [
+      45,
+      46
+    ],
+    "display": [
+      30,
+      30
+    ],
+    "target": [
+      76,
+      76
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "scroll_track",
+    "name": "手牌滑动轨道",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      153,
+      600,
+      491,
+      617
+    ],
+    "native": [
+      338,
+      17
+    ],
+    "display": [
+      400,
+      12
+    ],
+    "target": [
+      816,
+      40
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "scroll_thumb",
+    "name": "手牌滑动滑块",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      182,
+      600,
+      221,
+      617
+    ],
+    "native": [
+      39,
+      17
+    ],
+    "display": [
+      48,
+      12
+    ],
+    "target": [
+      112,
+      40
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "selection_frame",
+    "name": "房间选项选中框",
+    "category": "ui",
+    "source": "06-room-connection.png",
+    "bbox": [
+      253,
+      569,
+      355,
+      612
+    ],
+    "native": [
+      102,
+      43
+    ],
+    "display": [
+      130,
+      54
+    ],
+    "target": [
+      276,
+      124
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "选项文字、勾选图标独立叠加。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "hand_tray",
+    "name": "道具栏托盘底",
+    "category": "ui",
+    "source": "09-ui-states.png",
+    "bbox": [
+      33,
+      409,
+      639,
+      638
+    ],
+    "native": [
+      606,
+      229
+    ],
+    "display": [
+      640,
+      160
+    ],
+    "target": [
+      1296,
+      336
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_circle",
+    "name": "圆形图标按钮底",
+    "category": "ui",
+    "source": "01-board.png",
+    "bbox": [
+      690,
+      1579,
+      778,
+      1664
+    ],
+    "native": [
+      88,
+      85
+    ],
+    "display": [
+      68,
+      68
+    ],
+    "target": [
+      152,
+      152
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "asset_button",
+    "name": "我的资产胶囊按钮底",
+    "category": "ui",
+    "source": "01-board.png",
+    "bbox": [
+      430,
+      1593,
+      638,
+      1654
+    ],
+    "native": [
+      208,
+      61
+    ],
+    "display": [
+      168,
+      60
+    ],
+    "target": [
+      352,
+      136
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "去除原图文字与叠加图标，仅生成可复用底板。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      32,
+      32,
+      32,
+      32
+    ],
+    "code": "ui/Buttons.ts; ui/Widgets.ts; ui/Popup.ts; screens/board/*",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_back",
+    "name": "返回图标",
+    "category": "icons",
+    "source": "01-board.png",
+    "bbox": [
+      144,
+      30,
+      165,
+      64
+    ],
+    "native": [
+      21,
+      34
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_close",
+    "name": "关闭图标",
+    "category": "icons",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_coin",
+    "name": "金币图标",
+    "category": "icons",
+    "source": "04-property-popups.png",
+    "bbox": [
+      201,
+      541,
+      235,
+      577
+    ],
+    "native": [
+      34,
+      36
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_mic",
+    "name": "麦克风图标",
+    "category": "icons",
+    "source": "01-board.png",
+    "bbox": [
+      716,
+      1592,
+      752,
+      1655
+    ],
+    "native": [
+      36,
+      63
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_chat",
+    "name": "聊天图标",
+    "category": "icons",
+    "source": "01-board.png",
+    "bbox": [
+      834,
+      1593,
+      885,
+      1645
+    ],
+    "native": [
+      51,
+      52
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_share",
+    "name": "分享图标",
+    "category": "icons",
+    "source": "06-room-connection.png",
+    "bbox": [
+      345,
+      149,
+      372,
+      174
+    ],
+    "native": [
+      27,
+      25
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_copy",
+    "name": "复制图标",
+    "category": "icons",
+    "source": "06-room-connection.png",
+    "bbox": [
+      260,
+      155,
+      283,
+      180
+    ],
+    "native": [
+      23,
+      25
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_settings",
+    "name": "设置图标",
+    "category": "icons",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      269,
+      58,
+      293,
+      81
+    ],
+    "native": [
+      24,
+      23
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_sound",
+    "name": "声音图标",
+    "category": "icons",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      227,
+      58,
+      247,
+      80
+    ],
+    "native": [
+      20,
+      22
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_clock",
+    "name": "本局时钟图标",
+    "category": "icons",
+    "source": "01-board.png",
+    "bbox": [
+      470,
+      31,
+      500,
+      62
+    ],
+    "native": [
+      30,
+      31
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_stopwatch",
+    "name": "回合闹钟图标",
+    "category": "icons",
+    "source": "01-board.png",
+    "bbox": [
+      370,
+      658,
+      420,
+      708
+    ],
+    "native": [
+      50,
+      50
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_check",
+    "name": "勾选图标",
+    "category": "icons",
+    "source": "06-room-connection.png",
+    "bbox": [
+      45,
+      350,
+      66,
+      371
+    ],
+    "native": [
+      21,
+      21
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_chevron",
+    "name": "右箭头图标",
+    "category": "icons",
+    "source": "01-board.png",
+    "bbox": [
+      587,
+      1609,
+      602,
+      1635
+    ],
+    "native": [
+      15,
+      26
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_plus",
+    "name": "加号图标",
+    "category": "icons",
+    "source": "05-auction-debt.png",
+    "bbox": [
+      400,
+      580,
+      424,
+      605
+    ],
+    "native": [
+      24,
+      25
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_minus",
+    "name": "减号图标",
+    "category": "icons",
+    "source": "05-auction-debt.png",
+    "bbox": [
+      89,
+      588,
+      112,
+      597
+    ],
+    "native": [
+      23,
+      9
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_signal",
+    "name": "语音信号图标",
+    "category": "icons",
+    "source": "06-room-connection.png",
+    "bbox": [
+      57,
+      913,
+      88,
+      936
+    ],
+    "native": [
+      31,
+      23
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_home",
+    "name": "房屋首页图标",
+    "category": "icons",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      99,
+      651,
+      136,
+      693
+    ],
+    "native": [
+      37,
+      42
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "主体独立、无文字；未出现的关闭图标参照返回图标的线宽。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "icon_wechat",
+    "name": "微信双气泡图标",
+    "category": "icons",
+    "source": "03-profile-result.png",
+    "bbox": [
+      114,
+      538,
+      170,
+      581
+    ],
+    "native": [
+      56,
+      43
+    ],
+    "display": [
+      36,
+      36
+    ],
+    "target": [
+      88,
+      88
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "微信图标仅作本地视觉候选，微信胶囊本身由平台提供。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; ui/Keypad.ts; ui/Buttons.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_roadblock",
+    "name": "路障道具图标",
+    "category": "cards",
+    "source": "09-ui-states.png",
+    "bbox": [
+      529,
+      457,
+      610,
+      530
+    ],
+    "native": [
+      81,
+      73
+    ],
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "不包含卡底与文字。忠实参考 09 道具卡。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_free_rent",
+    "name": "免租道具图标",
+    "category": "cards",
+    "source": "09-ui-states.png",
+    "bbox": [
+      80,
+      443,
+      152,
+      535
+    ],
+    "native": [
+      72,
+      92
+    ],
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "不包含卡底与文字。忠实参考 09 道具卡。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_build",
+    "name": "建造道具图标",
+    "category": "cards",
+    "source": "09-ui-states.png",
+    "bbox": [
+      186,
+      450,
+      269,
+      532
+    ],
+    "native": [
+      83,
+      82
+    ],
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "不包含卡底与文字。忠实参考 09 道具卡。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_downgrade",
+    "name": "降级道具图标",
+    "category": "cards",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "不包含卡底与文字。设计未覆盖；符号语义取自当前 Icons.ts，造型配色取自 screens。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_fixed_move",
+    "name": "定点移动道具图标",
+    "category": "cards",
+    "source": "09-ui-states.png",
+    "bbox": [
+      427,
+      449,
+      485,
+      536
+    ],
+    "native": [
+      58,
+      87
+    ],
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "不包含卡底与文字。忠实参考 09 道具卡。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_jail_release",
+    "name": "出狱道具图标",
+    "category": "cards",
+    "source": "09-ui-states.png",
+    "bbox": [
+      1179,
+      455,
+      1254,
+      534
+    ],
+    "native": [
+      75,
+      79
+    ],
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "不包含卡底与文字。忠实参考 09 道具卡。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_auction",
+    "name": "拍卖道具图标",
+    "category": "cards",
+    "source": "09-ui-states.png",
+    "bbox": [
+      299,
+      450,
+      384,
+      537
+    ],
+    "native": [
+      85,
+      87
+    ],
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "不包含卡底与文字。忠实参考 09 道具卡。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_trade",
+    "name": "交易道具图标",
+    "category": "cards",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "不包含卡底与文字。设计未覆盖；符号语义取自当前 Icons.ts，造型配色取自 screens。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_refuse_purchase",
+    "name": "拒绝购买道具图标",
+    "category": "cards",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "不包含卡底与文字。设计未覆盖；符号语义取自当前 Icons.ts，造型配色取自 screens。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_house_protection",
+    "name": "房屋保护道具图标",
+    "category": "cards",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "不包含卡底与文字。设计未覆盖；符号语义取自当前 Icons.ts，造型配色取自 screens。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_query",
+    "name": "查询道具图标",
+    "category": "cards",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "不包含卡底与文字。设计未覆盖；符号语义取自当前 Icons.ts，造型配色取自 screens。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_forced_purchase",
+    "name": "强制购房道具图标",
+    "category": "cards",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "不包含卡底与文字。设计未覆盖；符号语义取自当前 Icons.ts，造型配色取自 screens。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_demolish",
+    "name": "拆楼道具图标",
+    "category": "cards",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "不包含卡底与文字。设计未覆盖；符号语义取自当前 Icons.ts，造型配色取自 screens。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "card_clear_land",
+    "name": "清地道具图标",
+    "category": "cards",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      72,
+      84
+    ],
+    "target": [
+      160,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "不包含卡底与文字。设计未覆盖；符号语义取自当前 Icons.ts，造型配色取自 screens。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Icons.ts; core/Models.ts; screens/board/HandBar.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_horizontal",
+    "name": "横向地块底",
+    "category": "tiles",
+    "source": "01-board.png",
+    "bbox": [
+      399,
+      1331,
+      468,
+      1436
+    ],
+    "native": [
+      69,
+      105
+    ],
+    "display": [
+      54,
+      72
+    ],
+    "target": [
+      124,
+      160
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无地名无图标。各方向保持正面阅读，不旋转文字。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      18,
+      18,
+      18,
+      24
+    ],
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_vertical",
+    "name": "竖向地块底",
+    "category": "tiles",
+    "source": "01-board.png",
+    "bbox": [
+      32,
+      554,
+      111,
+      625
+    ],
+    "native": [
+      79,
+      71
+    ],
+    "display": [
+      64,
+      56
+    ],
+    "target": [
+      144,
+      128
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无地名无图标。各方向保持正面阅读，不旋转文字。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      18,
+      18,
+      18,
+      24
+    ],
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_corner",
+    "name": "转角地块底",
+    "category": "tiles",
+    "source": "01-board.png",
+    "bbox": [
+      9,
+      1334,
+      87,
+      1444
+    ],
+    "native": [
+      78,
+      110
+    ],
+    "display": [
+      66,
+      80
+    ],
+    "target": [
+      148,
+      176
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无地名无图标。各方向保持正面阅读，不旋转文字。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      18,
+      18,
+      18,
+      24
+    ],
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_start",
+    "name": "起点绿旗地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      42,
+      1350,
+      81,
+      1402
+    ],
+    "native": [
+      39,
+      52
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_event",
+    "name": "事件问号地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      272,
+      346,
+      314,
+      389
+    ],
+    "native": [
+      42,
+      43
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_bank",
+    "name": "银行地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      411,
+      348,
+      459,
+      389
+    ],
+    "native": [
+      48,
+      41
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_jail",
+    "name": "监狱地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      858,
+      1350,
+      901,
+      1394
+    ],
+    "native": [
+      43,
+      44
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_rest",
+    "name": "休息地块图标",
+    "category": "tile_icons",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1136,
+      473,
+      1187,
+      519
+    ],
+    "native": [
+      51,
+      46
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_game_zone",
+    "name": "游乐广场摩天轮地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      835,
+      345,
+      894,
+      391
+    ],
+    "native": [
+      59,
+      46
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_station",
+    "name": "车站地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      564,
+      347,
+      596,
+      386
+    ],
+    "native": [
+      32,
+      39
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_park",
+    "name": "公园地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      54,
+      345,
+      106,
+      388
+    ],
+    "native": [
+      52,
+      43
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_theater",
+    "name": "剧场地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      29,
+      909,
+      83,
+      950
+    ],
+    "native": [
+      54,
+      41
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_bridge",
+    "name": "石桥地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      858,
+      1277,
+      914,
+      1310
+    ],
+    "native": [
+      56,
+      33
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_boat",
+    "name": "帆船地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      854,
+      699,
+      909,
+      738
+    ],
+    "native": [
+      55,
+      39
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_bread",
+    "name": "面包地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      28,
+      1054,
+      80,
+      1092
+    ],
+    "native": [
+      52,
+      38
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_pottery",
+    "name": "陶艺地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      99,
+      1352,
+      137,
+      1393
+    ],
+    "native": [
+      38,
+      41
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_windmill",
+    "name": "风车地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      550,
+      1346,
+      594,
+      1393
+    ],
+    "native": [
+      44,
+      47
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_lumber",
+    "name": "木匠地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      619,
+      1350,
+      667,
+      1396
+    ],
+    "native": [
+      48,
+      46
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_flower",
+    "name": "花卉地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      20,
+      1272,
+      76,
+      1310
+    ],
+    "native": [
+      56,
+      38
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tile_sunflower",
+    "name": "向日葵地块图标",
+    "category": "tile_icons",
+    "source": "01-board.png",
+    "bbox": [
+      857,
+      909,
+      910,
+      949
+    ],
+    "native": [
+      53,
+      40
+    ],
+    "display": [
+      38,
+      38
+    ],
+    "target": [
+      92,
+      92
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅图标，保留地名文字由客户端叠加；休息参考 07 咖啡杯。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "property_strip_low",
+    "name": "低档绿色地产色条",
+    "category": "tiles",
+    "source": "01-board.png",
+    "bbox": [
+      473,
+      414,
+      540,
+      434
+    ],
+    "native": [
+      67,
+      20
+    ],
+    "display": [
+      54,
+      12
+    ],
+    "target": [
+      124,
+      40
+    ],
+    "extraction": "可用",
+    "note": "色档与当前 Theme.ts 一致；顶、底、侧方向由客户端旋转色条。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      10,
+      6,
+      10,
+      6
+    ],
+    "code": "core/Theme.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "property_strip_mid",
+    "name": "中档蓝色地产色条",
+    "category": "tiles",
+    "source": "01-board.png",
+    "bbox": [
+      543,
+      415,
+      608,
+      435
+    ],
+    "native": [
+      65,
+      20
+    ],
+    "display": [
+      54,
+      12
+    ],
+    "target": [
+      124,
+      40
+    ],
+    "extraction": "可用",
+    "note": "色档与当前 Theme.ts 一致；顶、底、侧方向由客户端旋转色条。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      10,
+      6,
+      10,
+      6
+    ],
+    "code": "core/Theme.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "property_strip_high",
+    "name": "高档紫色地产色条",
+    "category": "tiles",
+    "source": "01-board.png",
+    "bbox": [
+      259,
+      416,
+      326,
+      435
+    ],
+    "native": [
+      67,
+      19
+    ],
+    "display": [
+      54,
+      12
+    ],
+    "target": [
+      124,
+      40
+    ],
+    "extraction": "可用",
+    "note": "色档与当前 Theme.ts 一致；顶、底、侧方向由客户端旋转色条。",
+    "stage": 1,
+    "nine_slice": true,
+    "slice_margin": [
+      10,
+      6,
+      10,
+      6
+    ],
+    "code": "core/Theme.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "house_lv0",
+    "name": "房屋 0 级",
+    "category": "houses",
+    "source": "09-ui-states.png",
+    "bbox": [
+      496,
+      828,
+      621,
+      946
+    ],
+    "native": [
+      125,
+      118
+    ],
+    "display": [
+      80,
+      84
+    ],
+    "target": [
+      176,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "0 级采用未升级小屋；等级轮廓参考 04 升级序列，但小图信息不足，需要补全；不凭屋顶颜色定义等级。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "house_lv1",
+    "name": "房屋 1 级",
+    "category": "houses",
+    "source": "04-property-popups.png",
+    "bbox": [
+      523,
+      639,
+      578,
+      687
+    ],
+    "native": [
+      55,
+      48
+    ],
+    "display": [
+      80,
+      84
+    ],
+    "target": [
+      176,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "0 级采用未升级小屋；等级轮廓参考 04 升级序列，但小图信息不足，需要补全；不凭屋顶颜色定义等级。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "house_lv2",
+    "name": "房屋 2 级",
+    "category": "houses",
+    "source": "04-property-popups.png",
+    "bbox": [
+      623,
+      636,
+      678,
+      686
+    ],
+    "native": [
+      55,
+      50
+    ],
+    "display": [
+      80,
+      84
+    ],
+    "target": [
+      176,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "0 级采用未升级小屋；等级轮廓参考 04 升级序列，但小图信息不足，需要补全；不凭屋顶颜色定义等级。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "house_lv3",
+    "name": "房屋 3 级",
+    "category": "houses",
+    "source": "04-property-popups.png",
+    "bbox": [
+      726,
+      639,
+      781,
+      686
+    ],
+    "native": [
+      55,
+      47
+    ],
+    "display": [
+      80,
+      84
+    ],
+    "target": [
+      176,
+      184
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "0 级采用未升级小屋；等级轮廓参考 04 升级序列，但小图信息不足，需要补全；不凭屋顶颜色定义等级。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "mark_mortgage",
+    "name": "抵押标记",
+    "category": "tiles",
+    "source": "05-auction-debt.png",
+    "bbox": [
+      618,
+      488,
+      664,
+      512
+    ],
+    "native": [
+      46,
+      24
+    ],
+    "display": [
+      36,
+      28
+    ],
+    "target": [
+      88,
+      72
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "设计图只有文字说明，没有独立标记；生成锁扣图标，押字由文本叠加。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "mark_owner",
+    "name": "归属标记",
+    "category": "tiles",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      18,
+      18
+    ],
+    "target": [
+      52,
+      52
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "设计未覆盖；白边圆形底，客户端以玩家色染色。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "board_roadblock",
+    "name": "棋盘路障",
+    "category": "tiles",
+    "source": "09-ui-states.png",
+    "bbox": [
+      529,
+      457,
+      610,
+      530
+    ],
+    "native": [
+      81,
+      73
+    ],
+    "display": [
+      48,
+      44
+    ],
+    "target": [
+      112,
+      104
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "参考道具路障，缩小摆在格子上。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_xiaolin",
+    "name": "小林/糖糖棋子与底座",
+    "category": "pawns",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      1054,
+      774,
+      1196,
+      975
+    ],
+    "native": [
+      142,
+      201
+    ],
+    "display": [
+      64,
+      110
+    ],
+    "target": [
+      144,
+      236
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "参考位置背景复杂，先裁参考再忠实还原。统一发光蓝底座；我方通过显示尺寸 1.3 倍与独立气泡强调。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_keke",
+    "name": "可可棋子与底座",
+    "category": "pawns",
+    "source": "03-profile-result.png",
+    "bbox": [
+      136,
+      832,
+      205,
+      907
+    ],
+    "native": [
+      69,
+      75
+    ],
+    "display": [
+      64,
+      110
+    ],
+    "target": [
+      144,
+      236
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "参考位置仅为头像，原图没有该角色完整棋子。统一发光蓝底座；我方通过显示尺寸 1.3 倍与独立气泡强调。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_ajie",
+    "name": "阿杰棋子与底座",
+    "category": "pawns",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      838,
+      460,
+      891,
+      529
+    ],
+    "native": [
+      53,
+      69
+    ],
+    "display": [
+      64,
+      110
+    ],
+    "target": [
+      144,
+      236
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "参考位置背景复杂，先裁参考再忠实还原。统一发光蓝底座；我方通过显示尺寸 1.3 倍与独立气泡强调。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_naicha",
+    "name": "奶茶棋子与底座",
+    "category": "pawns",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      858,
+      257,
+      897,
+      311
+    ],
+    "native": [
+      39,
+      54
+    ],
+    "display": [
+      64,
+      110
+    ],
+    "target": [
+      144,
+      236
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "参考位置背景复杂，先裁参考再忠实还原。统一发光蓝底座；我方通过显示尺寸 1.3 倍与独立气泡强调。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_akai",
+    "name": "阿凯棋子与底座",
+    "category": "pawns",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1126,
+      295,
+      1176,
+      355
+    ],
+    "native": [
+      50,
+      60
+    ],
+    "display": [
+      64,
+      110
+    ],
+    "target": [
+      144,
+      236
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "参考位置背景复杂，先裁参考再忠实还原。统一发光蓝底座；我方通过显示尺寸 1.3 倍与独立气泡强调。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_yuanyuan",
+    "name": "圆圆棋子与底座",
+    "category": "pawns",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1138,
+      548,
+      1184,
+      610
+    ],
+    "native": [
+      46,
+      62
+    ],
+    "display": [
+      64,
+      110
+    ],
+    "target": [
+      144,
+      236
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "参考位置背景复杂，先裁参考再忠实还原。统一发光蓝底座；我方通过显示尺寸 1.3 倍与独立气泡强调。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_doudou",
+    "name": "豆豆棋子与底座",
+    "category": "pawns",
+    "source": "03-profile-result.png",
+    "bbox": [
+      224,
+      951,
+      295,
+      1031
+    ],
+    "native": [
+      71,
+      80
+    ],
+    "display": [
+      64,
+      110
+    ],
+    "target": [
+      144,
+      236
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "参考位置仅为头像，原图没有该角色完整棋子。统一发光蓝底座；我方通过显示尺寸 1.3 倍与独立气泡强调。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_maomao",
+    "name": "毛毛棋子与底座",
+    "category": "pawns",
+    "source": "03-profile-result.png",
+    "bbox": [
+      319,
+      951,
+      387,
+      1031
+    ],
+    "native": [
+      68,
+      80
+    ],
+    "display": [
+      64,
+      110
+    ],
+    "target": [
+      144,
+      236
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "参考位置仅为头像，原图没有该角色完整棋子。统一发光蓝底座；我方通过显示尺寸 1.3 倍与独立气泡强调。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_face_1",
+    "name": "1点骰子",
+    "category": "dice",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      95,
+      215,
+      203,
+      321
+    ],
+    "native": [
+      108,
+      106
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "点数指朝上的结果面；三可见面必须符合标准骰子对面和为7；2/3/5/6没有独立结果设计。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_face_2",
+    "name": "2点骰子",
+    "category": "dice",
+    "source": "01-board.png",
+    "bbox": [
+      390,
+      778,
+      548,
+      944
+    ],
+    "native": [
+      158,
+      166
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "点数指朝上的结果面；三可见面必须符合标准骰子对面和为7；2/3/5/6没有独立结果设计。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_face_3",
+    "name": "3点骰子",
+    "category": "dice",
+    "source": "01-board.png",
+    "bbox": [
+      390,
+      778,
+      548,
+      944
+    ],
+    "native": [
+      158,
+      166
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "点数指朝上的结果面；三可见面必须符合标准骰子对面和为7；2/3/5/6没有独立结果设计。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_face_4",
+    "name": "4点骰子",
+    "category": "dice",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      1329,
+      186,
+      1464,
+      321
+    ],
+    "native": [
+      135,
+      135
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "点数指朝上的结果面；三可见面必须符合标准骰子对面和为7；2/3/5/6没有独立结果设计。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_face_5",
+    "name": "5点骰子",
+    "category": "dice",
+    "source": "01-board.png",
+    "bbox": [
+      390,
+      778,
+      548,
+      944
+    ],
+    "native": [
+      158,
+      166
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "点数指朝上的结果面；三可见面必须符合标准骰子对面和为7；2/3/5/6没有独立结果设计。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_face_6",
+    "name": "6点骰子",
+    "category": "dice",
+    "source": "01-board.png",
+    "bbox": [
+      390,
+      778,
+      548,
+      944
+    ],
+    "native": [
+      158,
+      166
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "点数指朝上的结果面；三可见面必须符合标准骰子对面和为7；2/3/5/6没有独立结果设计。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_roll_1",
+    "name": "骰子翻滚帧 1",
+    "category": "dice",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      336,
+      147,
+      456,
+      275
+    ],
+    "native": [
+      120,
+      128
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅用于翻滚表现，不决定对局结果。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_roll_2",
+    "name": "骰子翻滚帧 2",
+    "category": "dice",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      577,
+      168,
+      704,
+      282
+    ],
+    "native": [
+      127,
+      114
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅用于翻滚表现，不决定对局结果。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "dice_roll_3",
+    "name": "骰子翻滚帧 3",
+    "category": "dice",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      1082,
+      156,
+      1205,
+      279
+    ],
+    "native": [
+      123,
+      123
+    ],
+    "display": [
+      128,
+      128
+    ],
+    "target": [
+      272,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "仅用于翻滚表现，不决定对局结果。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/DiceView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_hop_1",
+    "name": "蓄力跳跃帧",
+    "category": "motion",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      67,
+      828,
+      155,
+      934
+    ],
+    "native": [
+      88,
+      106
+    ],
+    "display": [
+      92,
+      128
+    ],
+    "target": [
+      200,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "同一蓝衣男孩，底座另行叠加；每步约250ms，不能直接当沿路径滑行。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_hop_2",
+    "name": "起跳跳跃帧",
+    "category": "motion",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      206,
+      801,
+      307,
+      918
+    ],
+    "native": [
+      101,
+      117
+    ],
+    "display": [
+      92,
+      128
+    ],
+    "target": [
+      200,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "同一蓝衣男孩，底座另行叠加；每步约250ms，不能直接当沿路径滑行。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_hop_3",
+    "name": "腾空跳跃帧",
+    "category": "motion",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      365,
+      784,
+      466,
+      901
+    ],
+    "native": [
+      101,
+      117
+    ],
+    "display": [
+      92,
+      128
+    ],
+    "target": [
+      200,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "同一蓝衣男孩，底座另行叠加；每步约250ms，不能直接当沿路径滑行。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_hop_4",
+    "name": "下落跳跃帧",
+    "category": "motion",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      519,
+      808,
+      603,
+      920
+    ],
+    "native": [
+      84,
+      112
+    ],
+    "display": [
+      92,
+      128
+    ],
+    "target": [
+      200,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "同一蓝衣男孩，底座另行叠加；每步约250ms，不能直接当沿路径滑行。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_hop_5",
+    "name": "落地跳跃帧",
+    "category": "motion",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      672,
+      832,
+      759,
+      936
+    ],
+    "native": [
+      87,
+      104
+    ],
+    "display": [
+      92,
+      128
+    ],
+    "target": [
+      200,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "同一蓝衣男孩，底座另行叠加；每步约250ms，不能直接当沿路径滑行。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_hop_6",
+    "name": "回弹跳跃帧",
+    "category": "motion",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      822,
+      803,
+      939,
+      932
+    ],
+    "native": [
+      117,
+      129
+    ],
+    "display": [
+      92,
+      128
+    ],
+    "target": [
+      200,
+      272
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "同一蓝衣男孩，底座另行叠加；每步约250ms，不能直接当沿路径滑行。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "pawn_base_ring",
+    "name": "棋子发光底座环",
+    "category": "pawns",
+    "source": "02-motion-storyboard.png",
+    "bbox": [
+      1064,
+      904,
+      1201,
+      977
+    ],
+    "native": [
+      137,
+      73
+    ],
+    "display": [
+      74,
+      36
+    ],
+    "target": [
+      164,
+      88
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "抽离人物后还原蓝色底盘和青色柔光。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "town_tree",
+    "name": "树",
+    "category": "town",
+    "source": "01-board.png",
+    "bbox": [
+      161,
+      486,
+      293,
+      623
+    ],
+    "native": [
+      132,
+      137
+    ],
+    "display": [
+      112,
+      144
+    ],
+    "target": [
+      240,
+      304
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "原图含背景融合或骰子/按钮遮挡，需补生成；中央整图不含棋盘环、角色、骰子及UI。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "town_bridge",
+    "name": "石桥",
+    "category": "town",
+    "source": "01-board.png",
+    "bbox": [
+      512,
+      526,
+      714,
+      630
+    ],
+    "native": [
+      202,
+      104
+    ],
+    "display": [
+      240,
+      144
+    ],
+    "target": [
+      496,
+      304
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "原图含背景融合或骰子/按钮遮挡，需补生成；中央整图不含棋盘环、角色、骰子及UI。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "town_duck",
+    "name": "鸭子",
+    "category": "town",
+    "source": "01-board.png",
+    "bbox": [
+      563,
+      608,
+      600,
+      643
+    ],
+    "native": [
+      37,
+      35
+    ],
+    "display": [
+      42,
+      42
+    ],
+    "target": [
+      100,
+      100
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "原图含背景融合或骰子/按钮遮挡，需补生成；中央整图不含棋盘环、角色、骰子及UI。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "town_house",
+    "name": "小镇房屋",
+    "category": "town",
+    "source": "01-board.png",
+    "bbox": [
+      663,
+      923,
+      816,
+      1104
+    ],
+    "native": [
+      153,
+      181
+    ],
+    "display": [
+      164,
+      204
+    ],
+    "target": [
+      344,
+      424
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "原图含背景融合或骰子/按钮遮挡，需补生成；中央整图不含棋盘环、角色、骰子及UI。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "town_river",
+    "name": "河湾河流",
+    "category": "town",
+    "source": "01-board.png",
+    "bbox": [
+      439,
+      551,
+      833,
+      1210
+    ],
+    "native": [
+      394,
+      659
+    ],
+    "display": [
+      350,
+      580
+    ],
+    "target": [
+      716,
+      1176
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "原图含背景融合或骰子/按钮遮挡，需补生成；中央整图不含棋盘环、角色、骰子及UI。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "town_boat",
+    "name": "木船",
+    "category": "town",
+    "source": "01-board.png",
+    "bbox": [
+      598,
+      1134,
+      704,
+      1196
+    ],
+    "native": [
+      106,
+      62
+    ],
+    "display": [
+      112,
+      64
+    ],
+    "target": [
+      240,
+      144
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "原图含背景融合或骰子/按钮遮挡，需补生成；中央整图不含棋盘环、角色、骰子及UI。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "town_lamp",
+    "name": "街灯",
+    "category": "town",
+    "source": "01-board.png",
+    "bbox": [
+      578,
+      874,
+      617,
+      1008
+    ],
+    "native": [
+      39,
+      134
+    ],
+    "display": [
+      40,
+      110
+    ],
+    "target": [
+      96,
+      236
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "原图含背景融合或骰子/按钮遮挡，需补生成；中央整图不含棋盘环、角色、骰子及UI。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "board_center",
+    "name": "整块棋盘中央背景",
+    "category": "town",
+    "source": "01-board.png",
+    "bbox": [
+      119,
+      438,
+      818,
+      1328
+    ],
+    "native": [
+      699,
+      890
+    ],
+    "display": [
+      536,
+      682
+    ],
+    "target": [
+      1088,
+      1380
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "原图含背景融合或骰子/按钮遮挡，需补生成；中央整图不含棋盘环、角色、骰子及UI。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/board/BoardView.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "bg_lobby",
+    "name": "大厅背景",
+    "category": "backgrounds",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      7,
+      34,
+      401,
+      963
+    ],
+    "native": [
+      394,
+      929
+    ],
+    "display": [
+      720,
+      1280
+    ],
+    "target": [
+      1456,
+      2576
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "整页被 UI 和人物遮挡；仅作构图参考，重新生成完整背景。背景本身不透明，PNG画布外保留8px透明边。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/*",
+    "status": "待制作"
+  },
+  {
+    "key": "bg_room",
+    "name": "好友房间背景",
+    "category": "backgrounds",
+    "source": "06-room-connection.png",
+    "bbox": [
+      13,
+      40,
+      492,
+      1043
+    ],
+    "native": [
+      479,
+      1003
+    ],
+    "display": [
+      720,
+      1280
+    ],
+    "target": [
+      1456,
+      2576
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "整页被 UI 和人物遮挡；仅作构图参考，重新生成完整背景。背景本身不透明，PNG画布外保留8px透明边。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/*",
+    "status": "待制作"
+  },
+  {
+    "key": "bg_profile",
+    "name": "登录资料背景",
+    "category": "backgrounds",
+    "source": "03-profile-result.png",
+    "bbox": [
+      10,
+      69,
+      410,
+      1254
+    ],
+    "native": [
+      400,
+      1185
+    ],
+    "display": [
+      720,
+      1280
+    ],
+    "target": [
+      1456,
+      2576
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "整页被 UI 和人物遮挡；仅作构图参考，重新生成完整背景。背景本身不透明，PNG画布外保留8px透明边。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/*",
+    "status": "待制作"
+  },
+  {
+    "key": "bg_result",
+    "name": "结算背景",
+    "category": "backgrounds",
+    "source": "03-profile-result.png",
+    "bbox": [
+      416,
+      69,
+      803,
+      1254
+    ],
+    "native": [
+      387,
+      1185
+    ],
+    "display": [
+      720,
+      1280
+    ],
+    "target": [
+      1456,
+      2576
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "整页被 UI 和人物遮挡；仅作构图参考，重新生成完整背景。背景本身不透明，PNG画布外保留8px透明边。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/*",
+    "status": "待制作"
+  },
+  {
+    "key": "bg_board",
+    "name": "对局背景",
+    "category": "backgrounds",
+    "source": "01-board.png",
+    "bbox": [
+      0,
+      0,
+      941,
+      1672
+    ],
+    "native": [
+      941,
+      1672
+    ],
+    "display": [
+      720,
+      1280
+    ],
+    "target": [
+      1456,
+      2576
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "整页被 UI 和人物遮挡；仅作构图参考，重新生成完整背景。背景本身不透明，PNG画布外保留8px透明边。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/*",
+    "status": "待制作"
+  },
+  {
+    "key": "bg_teeth",
+    "name": "小游戏背景",
+    "category": "backgrounds",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1223,
+      34,
+      1620,
+      963
+    ],
+    "native": [
+      397,
+      929
+    ],
+    "display": [
+      720,
+      1280
+    ],
+    "target": [
+      1456,
+      2576
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "整页被 UI 和人物遮挡；仅作构图参考，重新生成完整背景。背景本身不透明，PNG画布外保留8px透明边。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "ui/Backdrop.ts; screens/*",
+    "status": "待制作"
+  },
+  {
+    "key": "croc_open",
+    "name": "张嘴鳄鱼",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1246,
+      329,
+      1603,
+      779
+    ],
+    "native": [
+      357,
+      450
+    ],
+    "display": [
+      600,
+      580
+    ],
+    "target": [
+      1216,
+      1176
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "张嘴造型参考07，闭嘴未覆盖。张嘴本体不得烘焙牙齿；牙齿须独立叠加。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "croc_closed",
+    "name": "闭嘴鳄鱼",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1246,
+      329,
+      1603,
+      779
+    ],
+    "native": [
+      357,
+      450
+    ],
+    "display": [
+      600,
+      580
+    ],
+    "target": [
+      1216,
+      1176
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "张嘴造型参考07，闭嘴未覆盖。张嘴本体不得烘焙牙齿；牙齿须独立叠加。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_1_normal",
+    "name": "上排第1颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_1_pressed",
+    "name": "上排第1颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_2_normal",
+    "name": "上排第2颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_2_pressed",
+    "name": "上排第2颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_3_normal",
+    "name": "上排第3颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_3_pressed",
+    "name": "上排第3颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_4_normal",
+    "name": "上排第4颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_4_pressed",
+    "name": "上排第4颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_5_normal",
+    "name": "上排第5颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_5_pressed",
+    "name": "上排第5颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_6_normal",
+    "name": "上排第6颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_6_pressed",
+    "name": "上排第6颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_7_normal",
+    "name": "上排第7颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_7_pressed",
+    "name": "上排第7颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_8_normal",
+    "name": "上排第8颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_upper_8_pressed",
+    "name": "上排第8颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1305,
+      455,
+      1559,
+      516
+    ],
+    "native": [
+      254,
+      61
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_1_normal",
+    "name": "下排第1颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_1_pressed",
+    "name": "下排第1颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_2_normal",
+    "name": "下排第2颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_2_pressed",
+    "name": "下排第2颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_3_normal",
+    "name": "下排第3颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_3_pressed",
+    "name": "下排第3颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_4_normal",
+    "name": "下排第4颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_4_pressed",
+    "name": "下排第4颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_5_normal",
+    "name": "下排第5颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_5_pressed",
+    "name": "下排第5颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_6_normal",
+    "name": "下排第6颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_6_pressed",
+    "name": "下排第6颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_7_normal",
+    "name": "下排第7颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_7_pressed",
+    "name": "下排第7颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_8_normal",
+    "name": "下排第8颗牙正常",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "tooth_lower_8_pressed",
+    "name": "下排第8颗牙按下",
+    "category": "teeth",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      1276,
+      628,
+      1593,
+      714
+    ],
+    "native": [
+      317,
+      86
+    ],
+    "display": [
+      46,
+      62
+    ],
+    "target": [
+      108,
+      140
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "该位置为整排参考，不是单牙精确轮廓。8颗需逐颗登记；按下态未设计，先提供候选。危险牙外观不得有区别。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/TeethScreen.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "state_turn_highlight",
+    "name": "当前回合高亮框标记",
+    "category": "states",
+    "source": "01-board.png",
+    "bbox": [
+      60,
+      97,
+      265,
+      187
+    ],
+    "native": [
+      205,
+      90
+    ],
+    "display": [
+      155,
+      69
+    ],
+    "target": [
+      326,
+      154
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无文字底；文字与倒计时数字由客户端渲染。框与圆环中心透明。暂离没有页面设计。",
+    "stage": 2,
+    "nine_slice": true,
+    "slice_margin": [
+      24,
+      24,
+      24,
+      24
+    ],
+    "code": "screens/board/PlayerBar.ts; ui/Widgets.ts; popups/ResyncPopup.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "state_suspect",
+    "name": "疑似断线标记",
+    "category": "states",
+    "source": "06-room-connection.png",
+    "bbox": [
+      800,
+      134,
+      853,
+      163
+    ],
+    "native": [
+      53,
+      29
+    ],
+    "display": [
+      86,
+      34
+    ],
+    "target": [
+      188,
+      84
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无文字底；文字与倒计时数字由客户端渲染。框与圆环中心透明。暂离没有页面设计。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/PlayerBar.ts; ui/Widgets.ts; popups/ResyncPopup.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "state_offline",
+    "name": "已掉线标记",
+    "category": "states",
+    "source": "06-room-connection.png",
+    "bbox": [
+      919,
+      134,
+      974,
+      172
+    ],
+    "native": [
+      55,
+      38
+    ],
+    "display": [
+      92,
+      46
+    ],
+    "target": [
+      200,
+      108
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无文字底；文字与倒计时数字由客户端渲染。框与圆环中心透明。暂离没有页面设计。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/PlayerBar.ts; ui/Widgets.ts; popups/ResyncPopup.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "state_hosted",
+    "name": "托管标记",
+    "category": "states",
+    "source": "06-room-connection.png",
+    "bbox": [
+      571,
+      204,
+      624,
+      227
+    ],
+    "native": [
+      53,
+      23
+    ],
+    "display": [
+      86,
+      34
+    ],
+    "target": [
+      188,
+      84
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无文字底；文字与倒计时数字由客户端渲染。框与圆环中心透明。暂离没有页面设计。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/PlayerBar.ts; ui/Widgets.ts; popups/ResyncPopup.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "state_away",
+    "name": "暂离标记",
+    "category": "states",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      86,
+      34
+    ],
+    "target": [
+      188,
+      84
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无文字底；文字与倒计时数字由客户端渲染。框与圆环中心透明。暂离没有页面设计。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/PlayerBar.ts; ui/Widgets.ts; popups/ResyncPopup.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "state_bankrupt",
+    "name": "破产标记",
+    "category": "states",
+    "source": "03-profile-result.png",
+    "bbox": [
+      827,
+      277,
+      900,
+      334
+    ],
+    "native": [
+      73,
+      57
+    ],
+    "display": [
+      86,
+      34
+    ],
+    "target": [
+      188,
+      84
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无文字底；文字与倒计时数字由客户端渲染。框与圆环中心透明。暂离没有页面设计。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/PlayerBar.ts; ui/Widgets.ts; popups/ResyncPopup.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "state_countdown_ring",
+    "name": "倒计时环标记",
+    "category": "states",
+    "source": "04-property-popups.png",
+    "bbox": [
+      327,
+      275,
+      350,
+      302
+    ],
+    "native": [
+      23,
+      27
+    ],
+    "display": [
+      52,
+      52
+    ],
+    "target": [
+      120,
+      120
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无文字底；文字与倒计时数字由客户端渲染。框与圆环中心透明。暂离没有页面设计。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/PlayerBar.ts; ui/Widgets.ts; popups/ResyncPopup.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "state_resync_spinner",
+    "name": "重连同步环标记",
+    "category": "states",
+    "source": "06-room-connection.png",
+    "bbox": [
+      1203,
+      458,
+      1276,
+      532
+    ],
+    "native": [
+      73,
+      74
+    ],
+    "display": [
+      96,
+      96
+    ],
+    "target": [
+      208,
+      208
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "无文字底；文字与倒计时数字由客户端渲染。框与圆环中心透明。暂离没有页面设计。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/board/PlayerBar.ts; ui/Widgets.ts; popups/ResyncPopup.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "decor_ribbon",
+    "name": "结算缎带",
+    "category": "decor",
+    "source": "03-profile-result.png",
+    "bbox": [
+      468,
+      224,
+      751,
+      313
+    ],
+    "native": [
+      283,
+      89
+    ],
+    "display": [
+      420,
+      132
+    ],
+    "target": [
+      856,
+      280
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "标题牌和缎带无文字版；logo保留好友桌游四字。金币堆未出现。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/LobbyScreen.ts; screens/ResultScreen.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "decor_trophy",
+    "name": "奖杯",
+    "category": "decor",
+    "source": "03-profile-result.png",
+    "bbox": [
+      526,
+      150,
+      693,
+      236
+    ],
+    "native": [
+      167,
+      86
+    ],
+    "display": [
+      220,
+      172
+    ],
+    "target": [
+      456,
+      360
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "标题牌和缎带无文字版；logo保留好友桌游四字。金币堆未出现。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/LobbyScreen.ts; screens/ResultScreen.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "decor_coin_pile",
+    "name": "金币堆",
+    "category": "decor",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      160,
+      112
+    ],
+    "target": [
+      336,
+      240
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "标题牌和缎带无文字版；logo保留好友桌游四字。金币堆未出现。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/LobbyScreen.ts; screens/ResultScreen.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "decor_property_buy",
+    "name": "买地房屋插画",
+    "category": "decor",
+    "source": "04-property-popups.png",
+    "bbox": [
+      96,
+      331,
+      352,
+      473
+    ],
+    "native": [
+      256,
+      142
+    ],
+    "display": [
+      440,
+      264
+    ],
+    "target": [
+      896,
+      544
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "标题牌和缎带无文字版；logo保留好友桌游四字。金币堆未出现。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/LobbyScreen.ts; screens/ResultScreen.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "decor_property_upgrade",
+    "name": "升级房屋插画",
+    "category": "decor",
+    "source": "04-property-popups.png",
+    "bbox": [
+      539,
+      327,
+      778,
+      476
+    ],
+    "native": [
+      239,
+      149
+    ],
+    "display": [
+      440,
+      264
+    ],
+    "target": [
+      896,
+      544
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "标题牌和缎带无文字版；logo保留好友桌游四字。金币堆未出现。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/LobbyScreen.ts; screens/ResultScreen.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "decor_laurel",
+    "name": "排名月桂",
+    "category": "decor",
+    "source": "03-profile-result.png",
+    "bbox": [
+      513,
+      370,
+      553,
+      419
+    ],
+    "native": [
+      40,
+      49
+    ],
+    "display": [
+      64,
+      96
+    ],
+    "target": [
+      144,
+      208
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "标题牌和缎带无文字版；logo保留好友桌游四字。金币堆未出现。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/LobbyScreen.ts; screens/ResultScreen.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "decor_logo",
+    "name": "好友桌游标题",
+    "category": "decor",
+    "source": "07-style-reference-a.png",
+    "bbox": [
+      43,
+      128,
+      368,
+      242
+    ],
+    "native": [
+      325,
+      114
+    ],
+    "display": [
+      500,
+      168
+    ],
+    "target": [
+      1016,
+      352
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "标题牌和缎带无文字版；logo保留好友桌游四字。金币堆未出现。",
+    "stage": 2,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "screens/LobbyScreen.ts; screens/ResultScreen.ts; popups/Common.ts",
+    "status": "待制作"
+  },
+  {
+    "key": "event_card_back",
+    "name": "中央点击抽取大卡背",
+    "category": "events",
+    "source": "10-event-card-preview.png",
+    "bbox": [
+      361,
+      619,
+      580,
+      938
+    ],
+    "native": [
+      219,
+      319
+    ],
+    "display": [
+      168,
+      244
+    ],
+    "target": [
+      352,
+      504
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "2026-10-06 用户已决定采用：11为默认，10仅事件触发玩家私有中央直接点击；本次增量取代旧待定说明。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待制作",
+    "previous_decision": {
+      "name": "待定事件卡背",
+      "bbox": [
+        361,
+        619,
+        580,
+        938
+      ],
+      "display": [
+        168,
+        244
+      ],
+      "stage": 2,
+      "note": "待决定候选，不替代01棋盘。"
+    }
+  },
+  {
+    "key": "event_card_stack",
+    "name": "默认左上角三张扇形牌堆",
+    "category": "events",
+    "source": "11-event-idle-preview.png",
+    "bbox": [
+      126,
+      442,
+      452,
+      643
+    ],
+    "native": [
+      326,
+      201
+    ],
+    "display": [
+      250,
+      154
+    ],
+    "target": [
+      516,
+      324
+    ],
+    "extraction": "勉强，放大会糊",
+    "note": "2026-10-06 用户已决定采用：11为默认，10仅事件触发玩家私有中央直接点击；本次增量取代旧待定说明。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待制作",
+    "previous_decision": {
+      "name": "待定事件牌堆",
+      "bbox": [
+        145,
+        444,
+        290,
+        588
+      ],
+      "display": [
+        112,
+        112
+      ],
+      "stage": 2,
+      "note": "待决定候选，不替代01棋盘。"
+    }
+  },
+  {
+    "key": "event_card_back_single",
+    "name": "牌堆可拆单张卡背",
+    "category": "events",
+    "source": "11-event-idle-preview.png",
+    "bbox": [
+      224,
+      441,
+      363,
+      630
+    ],
+    "native": [
+      139,
+      189
+    ],
+    "display": [
+      106,
+      144
+    ],
+    "target": [
+      228,
+      304
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "用户事件交互决定增量；不烘焙点击提示文字。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待制作"
+  },
+  {
+    "key": "event_card_stack_small",
+    "name": "牌堆缩小态",
+    "category": "events",
+    "source": "10-event-card-preview.png",
+    "bbox": [
+      136,
+      442,
+      215,
+      553
+    ],
+    "native": [
+      79,
+      111
+    ],
+    "display": [
+      60,
+      84
+    ],
+    "target": [
+      136,
+      184
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "用户事件交互决定增量；不烘焙点击提示文字。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待制作"
+  },
+  {
+    "key": "event_click_frame",
+    "name": "可点击金色边框",
+    "category": "events",
+    "source": "10-event-card-preview.png",
+    "bbox": [
+      355,
+      613,
+      588,
+      943
+    ],
+    "native": [
+      233,
+      330
+    ],
+    "display": [
+      182,
+      260
+    ],
+    "target": [
+      380,
+      536
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "用户事件交互决定增量；不烘焙点击提示文字。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待制作"
+  },
+  {
+    "key": "event_click_glow",
+    "name": "可点击金色光效",
+    "category": "events",
+    "source": "10-event-card-preview.png",
+    "bbox": [
+      343,
+      600,
+      598,
+      951
+    ],
+    "native": [
+      255,
+      351
+    ],
+    "display": [
+      198,
+      268
+    ],
+    "target": [
+      412,
+      552
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "用户事件交互决定增量；不烘焙点击提示文字。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待制作"
+  },
+  {
+    "key": "event_card_flip_mid",
+    "name": "卡背翻转中间帧（可选）",
+    "category": "events",
+    "source": "10-event-card-preview.png",
+    "bbox": [
+      361,
+      619,
+      580,
+      938
+    ],
+    "native": [
+      219,
+      319
+    ],
+    "display": [
+      36,
+      244
+    ],
+    "target": [
+      88,
+      504
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "用户事件交互决定增量；不烘焙点击提示文字。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待制作"
+  },
+  {
+    "key": "event_stack_label",
+    "name": "牌堆标签木牌空底",
+    "category": "events",
+    "source": "11-event-idle-preview.png",
+    "bbox": [
+      225,
+      629,
+      364,
+      670
+    ],
+    "native": [
+      139,
+      41
+    ],
+    "display": [
+      106,
+      32
+    ],
+    "target": [
+      228,
+      80
+    ],
+    "extraction": "不可用，需要补生成",
+    "note": "用户事件交互决定增量；不烘焙点击提示文字。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待制作"
+  },
+  {
+    "key": "event_face_reward",
+    "name": "事件卡面：奖励",
+    "category": "events",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      168,
+      244
+    ],
+    "target": [
+      352,
+      504
+    ],
+    "extraction": "待用户补设计",
+    "note": "设计图未画出；禁止自行编造文案或图案。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待用户补设计"
+  },
+  {
+    "key": "event_face_fine",
+    "name": "事件卡面：罚款",
+    "category": "events",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      168,
+      244
+    ],
+    "target": [
+      352,
+      504
+    ],
+    "extraction": "待用户补设计",
+    "note": "设计图未画出；禁止自行编造文案或图案。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待用户补设计"
+  },
+  {
+    "key": "event_face_item",
+    "name": "事件卡面：道具",
+    "category": "events",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      168,
+      244
+    ],
+    "target": [
+      352,
+      504
+    ],
+    "extraction": "待用户补设计",
+    "note": "设计图未画出；禁止自行编造文案或图案。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待用户补设计"
+  },
+  {
+    "key": "event_face_move",
+    "name": "事件卡面：位移",
+    "category": "events",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      168,
+      244
+    ],
+    "target": [
+      352,
+      504
+    ],
+    "extraction": "待用户补设计",
+    "note": "设计图未画出；禁止自行编造文案或图案。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待用户补设计"
+  },
+  {
+    "key": "event_face_jail",
+    "name": "事件卡面：入狱",
+    "category": "events",
+    "source": null,
+    "bbox": null,
+    "native": null,
+    "display": [
+      168,
+      244
+    ],
+    "target": [
+      352,
+      504
+    ],
+    "extraction": "待用户补设计",
+    "note": "设计图未画出；禁止自行编造文案或图案。",
+    "stage": 1,
+    "nine_slice": false,
+    "slice_margin": null,
+    "code": "",
+    "status": "待用户补设计"
+  }
+]

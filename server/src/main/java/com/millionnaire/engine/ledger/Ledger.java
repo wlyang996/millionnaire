@@ -169,6 +169,37 @@ public record Ledger(
     }
 
     /**
+     * 增量校验（M2 P7）：以一个<b>已在本进程内完整校验过</b>的账本为前缀（由 {@link TrustedLedgers} 按对象同一性确认，
+     * 不信任 record 自带的任何数据），只重放新增分录，结果与当前余额、系统净额一致，并满足冻结与守恒不变量。
+     */
+    void verifyExtension(Ledger trustedPrefix) {
+        if (opening == null || cash == null || frozen == null || journal == null
+                || baseline != trustedPrefix.baseline || !opening.equals(trustedPrefix.opening)
+                || !opening.keySet().equals(cash.keySet()) || !frozen.keySet().equals(cash.keySet())) {
+            throw new LedgerException("ledger does not extend the trusted prefix");
+        }
+        TreeMap<String, Long> replay = new TreeMap<>(trustedPrefix.cash);
+        long system = trustedPrefix.systemNet;
+        for (int i = trustedPrefix.journal.size(); i < journal.size(); i++) {
+            system = apply(replay, system, journal.get(i), i + 1L);
+        }
+        if (!replay.equals(new TreeMap<>(cash)) || system != systemNet) {
+            throw new LedgerException("balances do not match journal replay");
+        }
+        long total = systemNet;
+        for (Map.Entry<String, Long> e : cash.entrySet()) {
+            Long f = frozen.get(e.getKey());
+            if (f == null || f < 0 || f > e.getValue()) {
+                throw new LedgerException("frozen out of range for " + e.getKey());
+            }
+            total = Money.add(total, e.getValue());
+        }
+        if (total != baseline) {
+            throw new LedgerException("conservation broken: total " + total + " != baseline " + baseline);
+        }
+    }
+
+    /**
      * 轻量不变量（每步提交边界使用）：账户集合一致、非负、0 ≤ 冻结 ≤ 现金、守恒、日志编号连续。
      * 不重放历史；完整校验用 {@link #verifyInvariants()}（恢复与审计入口）。
      */

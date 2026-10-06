@@ -35,7 +35,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 class ReplayTest {
     /** 黄金值：锁定引擎行为 + 规范格式 + 随机协议。有意修改时同步更新，并提升 EngineVersion。 */
-    static final String GOLDEN_FINAL_HASH = "e0ddbdfaa5bfddaa0f1b029e098266b447dd11f4cd1937c960c7769861499181";
+    static final String GOLDEN_FINAL_HASH = "5fbe4bdbc214f8415cf6a56b3a6dddbc38f9eeb806b77f2d3b51e7a88b9a65c2";
     private static final String GOLDEN_SNAPSHOT_RESOURCE = "/golden/demo-final.snapshot";
 
     private final Scenario scenario = DemoScenarios.full();

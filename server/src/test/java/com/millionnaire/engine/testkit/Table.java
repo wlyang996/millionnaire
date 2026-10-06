@@ -35,7 +35,6 @@ public final class Table {
     public long now;
     public final List<Event> log = new ArrayList<>();
     public final List<Input> inputs = new ArrayList<>();
-
     public Table(RandomSourceFactory random, long seed) {
         this(RuleConfigs.defaultV1(), random, seed);
     }
@@ -108,10 +107,66 @@ public final class Table {
         return game().turn().windowId();
     }
 
-    /** 当前玩家在窗口开放后立即投骰（或掷判定骰）。 */
-    public StepResult roll() {
+    /**
+     * <b>严格投骰</b>（M2b E10，经济测试统一使用）：当前必须是投骰 / 狱中判定窗口，否则测试失败；不自动处理任何落点窗口。
+     */
+    public StepResult rollOnly() {
+        var stage = game().turn().stage();
+        if (stage != com.millionnaire.engine.core.state.TurnStage.PRE_ROLL
+                && stage != com.millionnaire.engine.core.state.TurnStage.JAIL_DECISION) {
+            throw new IllegalStateException("rollOnly() in stage " + stage + " (landing " + game().turn().landing() + ")");
+        }
         FlowFrame w = window();
         return send(Math.max(now + 10, w.window().opensAt()), new GameCommand.RollDice(current(), w.windowId()));
+    }
+
+    /** 明确的"先完成当前落点（手动放弃 / 不升级 / 结束银行）再投骰"；不处理投骰后的新落点。 */
+    public StepResult passThenRoll() {
+        while (session().inGame() && game().turn().stage() == com.millionnaire.engine.core.state.TurnStage.LANDING) {
+            pass();
+        }
+        return rollOnly();
+    }
+
+    /**
+     * M1 风格的"走完一个回合"：先完成当前落点，再投骰，再按手动放弃完成投骰产生的落点决策（自动玩家的落点不处理）。
+     * 返回值合并了全部步骤：state 为最终状态（等于 {@link #state}），events 为这些步骤的全部事件，outcome / rejection 取投骰那一步。
+     * 经济规则测试不要用它（会自动放弃落点），改用 {@link #rollOnly()}。
+     */
+    public StepResult roll() {
+        int from = log.size();
+        StepResult r = passThenRoll();
+        while (session().inGame() && game().turn().stage() == com.millionnaire.engine.core.state.TurnStage.LANDING
+                && !game().player(current()).orElseThrow().automated()) {
+            pass();
+        }
+        List<Event> all = new ArrayList<>(log.subList(from, log.size()));
+        return new StepResult(state, all, r.outcome(), r.rejection());
+    }
+
+    /** 当前落点决策窗口的"手动放弃"：放弃购买、不升级、结束银行。 */
+    public StepResult pass() {
+        FlowFrame w = window();
+        long at = Math.max(now + 10, w.window().opensAt());
+        var landing = game().turn().landing();
+        if (game().player(current()).orElseThrow().automated()) {
+            long auto = game().turn().autoTaskId();
+            long due = auto != 0 ? state.timers().find(auto).orElseThrow().dueAt() : w.window().deadline();
+            return tick(Math.max(now, due));
+        }
+        Command c = landing == null ? new Tick() : switch (landing.step()) {
+            case BUY -> new GameCommand.DeclinePurchase(current(), w.windowId());
+            case UPGRADE -> new GameCommand.SkipUpgrade(current(), w.windowId());
+            case BANK -> new GameCommand.FinishBank(current(), w.windowId());
+            default -> throw new IllegalStateException("no decision window for " + landing.step());
+        };
+        return c instanceof Tick ? tick(w.window().deadline()) : send(at, c);
+    }
+
+    /** 在当前回合窗口开放后发送一条带窗口 ID 的命令。 */
+    public StepResult act(java.util.function.LongFunction<Command> command) {
+        FlowFrame w = window();
+        return send(Math.max(now + 10, w.window().opensAt()), command.apply(w.windowId()));
     }
 
     public StepResult tick(long at) {

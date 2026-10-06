@@ -58,12 +58,14 @@ final class Evolver<S extends DomainState> {
             case Genesis g -> throw new IllegalStateException("unreachable");
             case InputAccepted e -> {
                 checkStepBoundary(s);
+                domain.checkBoundary(domain.stateType().cast(s.domain()));
                 check(e.seq() == Math.addExact(s.lastSeq(), 1), "input seq must be lastSeq+1");
                 check(e.at() >= s.lastReceivedAt() && e.at() >= s.now(), "accepted input must not go back in time");
                 yield s.withInputCursor(e.seq(), e.at(), e.digest()).withNow(e.at());
             }
             case InputRejected e -> {
                 checkStepBoundary(s);
+                domain.checkBoundary(domain.stateType().cast(s.domain()));
                 check(e.seq() == Math.addExact(s.lastSeq(), 1) && e.code() != null, "input seq must be lastSeq+1");
                 yield s.withInputCursor(e.seq(), Math.max(s.lastReceivedAt(), e.at()), e.digest());
             }
@@ -76,6 +78,7 @@ final class Evolver<S extends DomainState> {
             case TaskCancelled e -> s.withTimers(s.timers().cancel(e.taskId()), s.nextTaskId());
             case TaskFired e -> {
                 checkStepBoundary(s);
+                domain.checkBoundary(domain.stateType().cast(s.domain()));
                 ScheduledTask head = s.timers().peek().orElseThrow(() -> new IllegalStateException("no task to fire"));
                 check(head.taskId() == e.taskId() && head.dueAt() == e.at() && e.at() >= s.now(),
                         "fired task must be the queue head");

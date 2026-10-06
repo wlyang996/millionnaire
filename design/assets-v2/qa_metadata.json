@@ -1,0 +1,74 @@
+[
+  {
+    "file": "avatars_sheet.png",
+    "size": [
+      1774,
+      887
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 550895,
+    "partially_transparent_pixels": 1020863,
+    "note": "Metadata does not prove clean edges or runtime readiness."
+  },
+  {
+    "file": "bg_lobby.png",
+    "size": [
+      940,
+      1672
+    ],
+    "mode": "RGB",
+    "alpha_extrema": null,
+    "fully_transparent_pixels": 0,
+    "partially_transparent_pixels": 0,
+    "note": "Metadata does not prove clean edges or runtime readiness."
+  },
+  {
+    "file": "icons_sheet.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 809234,
+    "partially_transparent_pixels": 759744,
+    "note": "Metadata does not prove clean edges or runtime readiness."
+  },
+  {
+    "file": "logo_title.png",
+    "size": [
+      1774,
+      887
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 755543,
+    "partially_transparent_pixels": 817025,
+    "note": "Metadata does not prove clean edges or runtime readiness."
+  },
+  {
+    "file": "ui_sheet.png",
+    "size": [
+      887,
+      1774
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "fully_transparent_pixels": 1084151,
+    "partially_transparent_pixels": 485900,
+    "note": "Metadata does not prove clean edges or runtime readiness."
+  }
+]

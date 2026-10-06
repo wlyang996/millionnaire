@@ -1,0 +1,200 @@
+{
+  "date": "2026-10-06",
+  "root_names": {
+    "01-board.png": "01-对局棋盘-普通回合.png",
+    "02-motion-storyboard.png": "02-骰子翻滚与人物逐格跳跃-动作分镜.png",
+    "03-profile-result.png": "03-登录资料-本局结算-破产观战.png",
+    "04-property-popups.png": "04-购买地产-升级-租金响应-交易确认.png",
+    "05-auction-debt.png": "05-拍卖竞价-应急抵押-欠款第二阶段.png",
+    "06-room-connection.png": "06-好友房间-连接状态-重连同步.png",
+    "07-style-reference-a.png": "07-风格参考A-历史四界面总览.png",
+    "08-style-reference-b.png": "08-风格参考B-大厅与好友房间.png",
+    "09-ui-states.png": "09-道具横滑-回合提示-时间警示规范.png",
+    "10-event-card-preview.png": "10-事件抽卡-本人中央点击卡背.png",
+    "11-event-idle-preview.png": "11-对局棋盘-他人回合等待.png",
+    "12-event-faces.png": "12-事件卡-五类卡面与问号卡背.png",
+    "13-target-move-query-roadblock.png": "13-路障放置-定点移动-查询目标与结果.png",
+    "14-current-property-cards.png": "14-强制购房-降级-拆楼-清地.png",
+    "15-bank-jail.png": "15-银行抵押与赎回-监狱操作.png",
+    "16-teeth-card-detail.png": "16-虎口拔牙结果-定点移动与房屋保护详情.png",
+    "17-discard-surrender-history.png": "17-弃牌-认输二次确认-本人战绩.png",
+    "18-information-input-candidates.png": "18-资产总览-格子详情-房间号键盘-候选.png"
+  },
+  "source_names": {
+    "ui/board-v7/board-design-v7.png": "ui/board-v7/对局棋盘-普通回合-v7.png",
+    "ui/board-v7/ui-states-v7.png": "ui/board-v7/道具栏-回合提示-时间警示规范-v7.png",
+    "ui/supplement-v1/12-event-faces.png": "ui/supplement-v1/事件卡-五类卡面与问号卡背-v1.png",
+    "ui/supplement-v1/13-target-move-query-roadblock.png": "ui/supplement-v1/路障放置-定点移动-查询目标与结果-v1.png",
+    "ui/supplement-v1/14-current-property-cards.png": "ui/supplement-v1/强制购房-降级-拆楼-清地-v1.png",
+    "ui/supplement-v1/15-bank-jail.png": "ui/supplement-v1/银行抵押与赎回-监狱操作-v1.png",
+    "ui/supplement-v1/16-teeth-card-detail.png": "ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png",
+    "ui/supplement-v1/17-discard-surrender-history.png": "ui/supplement-v1/弃牌-认输二次确认-本人战绩-v1.png",
+    "ui/supplement-v1/18-information-input-candidates.png": "ui/supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png"
+  },
+  "operations": [
+    {
+      "old": "01-board.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/01-board.png",
+      "role": "historical gallery snapshot",
+      "sha256": "6bc6908e8739fc80ecaf688c7054f1ca01f279992be07aa8c7291c2d7eb270f5"
+    },
+    {
+      "old": "02-motion-storyboard.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/02-motion-storyboard.png",
+      "role": "historical gallery snapshot",
+      "sha256": "12313828f2a5b24d0eb74d93aa3c0d7fa84f5d08beaf4ce2860e9c149c09b6ba"
+    },
+    {
+      "old": "03-profile-result.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/03-profile-result.png",
+      "role": "historical gallery snapshot",
+      "sha256": "5ca1f315584f96d334114a91d29ef7682cc4b4048b7395ae97972f69cd9311d0"
+    },
+    {
+      "old": "04-property-popups.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/04-property-popups.png",
+      "role": "historical gallery snapshot",
+      "sha256": "fb3f8ffc04643799448334578fff97b329c334cc8dec5575d14a835f9b18ad38"
+    },
+    {
+      "old": "05-auction-debt.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/05-auction-debt.png",
+      "role": "historical gallery snapshot",
+      "sha256": "99a180015ea8aaaa8a26ffbfc9cd441f61e3540856353a485713d94356ae44f6"
+    },
+    {
+      "old": "06-room-connection.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/06-room-connection.png",
+      "role": "historical gallery snapshot",
+      "sha256": "131b6db9b6e789d3036d212a335866f8069d9b2ae559594bf5e14f9bd502010f"
+    },
+    {
+      "old": "07-style-reference-a.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/07-style-reference-a.png",
+      "role": "historical gallery snapshot",
+      "sha256": "5b3af725b161149e1459843fe1e455a310ace2cb3932300a37e4e6b5a7d61133"
+    },
+    {
+      "old": "08-style-reference-b.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/08-style-reference-b.png",
+      "role": "historical gallery snapshot",
+      "sha256": "75ed82d85de7d4090c65584b9abd6aebfad4951a17c10467f8216ba1b3c34dfd"
+    },
+    {
+      "old": "09-ui-states.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/09-ui-states.png",
+      "role": "historical gallery snapshot",
+      "sha256": "f5ec7b53b99eddc8e74d17c2fd101c6e51960d161a4bf8992418e1a4b2e7c60c"
+    },
+    {
+      "old": "10-event-card-preview.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/10-event-card-preview.png",
+      "role": "historical gallery snapshot",
+      "sha256": "747a2c76ffbc6ff7b9c3c8560429f3c89fef11b77332df04fdf4674d634f3294"
+    },
+    {
+      "old": "11-event-idle-preview.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png",
+      "role": "historical gallery snapshot",
+      "sha256": "6bc6908e8739fc80ecaf688c7054f1ca01f279992be07aa8c7291c2d7eb270f5"
+    },
+    {
+      "old": "12-event-faces.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/12-event-faces.png",
+      "role": "historical gallery snapshot",
+      "sha256": "fbf9de878de2e01b0c01d36f50bdbcdd6d3568d6e0f426798d6c1956a0e6b502"
+    },
+    {
+      "old": "13-target-move-query-roadblock.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/13-target-move-query-roadblock.png",
+      "role": "historical gallery snapshot",
+      "sha256": "19e45d42d71f05c5c439eab5dce60c889bb6aa6966811494ba6d6253b877aeca"
+    },
+    {
+      "old": "14-current-property-cards.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/14-current-property-cards.png",
+      "role": "historical gallery snapshot",
+      "sha256": "5ac5481eaeb8721047a2d3dea2eda2b3b18c9058a1175f5b358841006a6c0b3a"
+    },
+    {
+      "old": "15-bank-jail.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/15-bank-jail.png",
+      "role": "historical gallery snapshot",
+      "sha256": "d9e2824d8f66957cda630329cd28ccba91cbe9bbd49ae70584b83e318d6839b7"
+    },
+    {
+      "old": "16-teeth-card-detail.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/16-teeth-card-detail.png",
+      "role": "historical gallery snapshot",
+      "sha256": "59a03225f83a88a0d070dd6f406052af238407ec12fed9d8b95de5bf04532410"
+    },
+    {
+      "old": "17-discard-surrender-history.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/17-discard-surrender-history.png",
+      "role": "historical gallery snapshot",
+      "sha256": "72c27eb9a0a2c4da98a59e8eac976c2df075f646e2af0e96a730723094f1d5bb"
+    },
+    {
+      "old": "18-information-input-candidates.png",
+      "new": "ui/history/gallery-before-refresh-2026-10-06/18-information-input-candidates.png",
+      "role": "historical gallery snapshot",
+      "sha256": "b71680df2610d34e87e7f6ae3c0aa4bbb23ff9ebacf41904250f70e0b728e8c0"
+    },
+    {
+      "old": "ui/board-v7/board-design-v7.png",
+      "new": "ui/board-v7/对局棋盘-普通回合-v7.png",
+      "role": "descriptive source filename",
+      "sha256": "6bc6908e8739fc80ecaf688c7054f1ca01f279992be07aa8c7291c2d7eb270f5"
+    },
+    {
+      "old": "ui/board-v7/ui-states-v7.png",
+      "new": "ui/board-v7/道具栏-回合提示-时间警示规范-v7.png",
+      "role": "descriptive source filename",
+      "sha256": "f5ec7b53b99eddc8e74d17c2fd101c6e51960d161a4bf8992418e1a4b2e7c60c"
+    },
+    {
+      "old": "ui/supplement-v1/12-event-faces.png",
+      "new": "ui/supplement-v1/事件卡-五类卡面与问号卡背-v1.png",
+      "role": "descriptive source filename",
+      "sha256": "fbf9de878de2e01b0c01d36f50bdbcdd6d3568d6e0f426798d6c1956a0e6b502"
+    },
+    {
+      "old": "ui/supplement-v1/13-target-move-query-roadblock.png",
+      "new": "ui/supplement-v1/路障放置-定点移动-查询目标与结果-v1.png",
+      "role": "descriptive source filename",
+      "sha256": "19e45d42d71f05c5c439eab5dce60c889bb6aa6966811494ba6d6253b877aeca"
+    },
+    {
+      "old": "ui/supplement-v1/14-current-property-cards.png",
+      "new": "ui/supplement-v1/强制购房-降级-拆楼-清地-v1.png",
+      "role": "descriptive source filename",
+      "sha256": "5ac5481eaeb8721047a2d3dea2eda2b3b18c9058a1175f5b358841006a6c0b3a"
+    },
+    {
+      "old": "ui/supplement-v1/15-bank-jail.png",
+      "new": "ui/supplement-v1/银行抵押与赎回-监狱操作-v1.png",
+      "role": "descriptive source filename",
+      "sha256": "d9e2824d8f66957cda630329cd28ccba91cbe9bbd49ae70584b83e318d6839b7"
+    },
+    {
+      "old": "ui/supplement-v1/16-teeth-card-detail.png",
+      "new": "ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png",
+      "role": "descriptive source filename",
+      "sha256": "59a03225f83a88a0d070dd6f406052af238407ec12fed9d8b95de5bf04532410"
+    },
+    {
+      "old": "ui/supplement-v1/17-discard-surrender-history.png",
+      "new": "ui/supplement-v1/弃牌-认输二次确认-本人战绩-v1.png",
+      "role": "descriptive source filename",
+      "sha256": "72c27eb9a0a2c4da98a59e8eac976c2df075f646e2af0e96a730723094f1d5bb"
+    },
+    {
+      "old": "ui/supplement-v1/18-information-input-candidates.png",
+      "new": "ui/supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png",
+      "role": "descriptive source filename",
+      "sha256": "b71680df2610d34e87e7f6ae3c0aa4bbb23ff9ebacf41904250f70e0b728e8c0"
+    }
+  ],
+  "historical_gallery": "ui/history/gallery-before-refresh-2026-10-06",
+  "note": "Historical references retain exact old images; refreshed gallery published by update.ps1"
+}

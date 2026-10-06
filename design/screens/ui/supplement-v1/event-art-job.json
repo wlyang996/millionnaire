@@ -1,0 +1,24 @@
+{
+  "id": "event_art",
+  "file": "assets-supplement-v1/atlases/events.png",
+  "alpha": true,
+  "refs": [
+    "F:/work/millionnaire/design/screens/ui/supplement-v1/事件卡-五类卡面与问号卡背-v1.png",
+    "F:/work/millionnaire/design/screens/ui/history/gallery-before-refresh-2026-10-06/11-event-idle-preview.png"
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "names": [
+    "event_reward",
+    "event_fine",
+    "event_tool",
+    "event_move",
+    "event_jail",
+    "event_card_back",
+    "event_card_fan",
+    "event_card_highlight"
+  ],
+  "prompt": "Game bitmap atlas on NATIVE TRANSPARENT background. Matchreference2.5Dblue-goldquestioncards and eventillustrations. EIGHT isolated sprites arranged4columns2rows uniformcells, at least10percentemptytransparentgutters nooverlap. FirstFIVE cardFRONT skins withmatchingroundedgoldborder and richblueheader, blankheaderandblankbottomtextregions forlivegametext, eachlargeillustration: rewards goldcoinpurse, fine receipt/exclamation/coin, tool singlehouse/buildcard, movement bluecurvedbackpatharrow, jail friendlybarredstonegate. Sixthsingleportraitblue/goldcardBACKwithONElargecreamquestionmark. Sevenththreeportraitbackcardsfanunfolded as currentupperleftreference; eighthsubtlewarmglowingroundedPORTRAITframe, centertotallytransparent forclickhighlight. No words, amounts, currencyletters, labels, slotborders, magenta, whitebackgroundorpaintedcheckerboard. Moderatebevelnotplastic. Eachspritewhollycontainedincell, sameopticalsizeandroomforalphaedges. This is actualsourceart, not screenshot."
+}

@@ -1,0 +1,153 @@
+/** 页面 3：好友房间（房号分享、8 个座位、房主设置、语音条/聊天片段、准备/开局）。 */
+import { Node } from 'cc';
+import { boardSizeOf, INITIAL_CASH_OPTIONS, maxPlayers, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
+import { EndMode, Member } from '../core/Models';
+import { Theme } from '../core/Theme';
+import { ConfirmPopup } from '../popups/ConfirmPopup';
+import { Button, IconButton, primaryButton, secondaryButton } from '../ui/Buttons';
+import { ctx } from '../ui/Ctx';
+import { drawChat, drawCopy, drawMic } from '../ui/Icons';
+import { fillCircle, fillRR, gfx, line, mk, onTap, strokeCircle, text } from '../ui/Kit';
+import { Screen } from '../ui/Screen';
+import { Toast } from '../ui/Toast';
+import { avatar, chip, roundedPanel, Segmented } from '../ui/Widgets';
+
+export class RoomScreen extends Screen {
+    readonly id = 'room' as const;
+    readonly title = '好友房间';
+
+    protected build(): void {
+        const st = ctx.store;
+        const s = st.session;
+        const isHost = s.hostId === 'p1';
+        const cap = maxPlayers(boardSizeOf(s.settings.boardId));
+        this.backdrop('sky');
+        this.header('好友房间', () => ctx.screens.go('lobby'));
+
+        // 房间号卡
+        const code = roundedPanel(this.root, 24, 96, 672, 130);
+        text(code, '房间号', 28, 12, 200, 34, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
+        text(code, s.roomId, 24, 40, 330, 84, 76, Theme.c.ink, { bold: true, align: 'l' });
+        new IconButton(code, 360, 40, 64, '', () => Toast.show('房间号已复制：' + s.roomId), Theme.c.ivoryDark, Theme.c.ink, (g, z) => drawCopy(g, z / 2, z / 2, z * 0.7, Theme.c.ink));
+        secondaryButton(code, '分享邀请', 450, 28, 198, 76, () => Toast.show('已调起微信分享（演示）'), Theme.font.md);
+
+        // 座位 2×4
+        const seats = roundedPanel(this.root, 24, 238, 672, 372);
+        for (let i = 0; i < 8; i++) {
+            const cx = 12 + (i % 4) * 162;
+            const cy = 14 + Math.floor(i / 4) * 176;
+            const cell = mk(seats, 'Seat' + i, cx, cy, 150, 164);
+            const m: Member | undefined = s.members[i];
+            if (m) this.drawMember(cell, m, isHost);
+            else this.drawEmpty(cell, i >= cap);
+        }
+
+        // 设置
+        const set = roundedPanel(this.root, 24, 622, 672, 408);
+        const rows = 5;
+        const rowH = 78;
+        const lockHint = '仅房主可修改设置';
+        const mk1 = (label: string, i: number) => text(set, label, 24, 14 + i * rowH, 150, rowH - 8, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
+        const segX = 180;
+        const segW = 672 - segX - 20;
+        const n = s.members.length;
+        mk1('地图', 0);
+        const map = new Segmented(set, segX, 20, segW, 56, [
+            { label: '30格', value: 'classic-30', disabled: n > 4, note: '30 格最多 4 人（当前 ' + n + ' 人）' },
+            { label: '50格', value: 'classic-50' },
+        ], s.settings.boardId, (v) => st.setSetting({ boardId: v as 'classic-30' | 'classic-50' }));
+        if (n > 4) text(set, n + ' 人时 30 格不可选', segX, 78, segW, 22, Theme.font.xs, Theme.c.red, { align: 'l' });
+        mk1('初始资金', 1);
+        const cash = new Segmented(set, segX, 20 + rowH, segW, 56, INITIAL_CASH_OPTIONS.map((v) => ({ label: String(v), value: v })), s.settings.initialCash,
+            (v) => st.setSetting({ initialCash: v as number }));
+        mk1('结束模式', 2);
+        const mode = new Segmented(set, segX, 20 + rowH * 2, segW, 56, [{ label: '限时', value: 'TIME_LIMIT' }, { label: '破产', value: 'BANKRUPTCY' }],
+            s.settings.endMode, (v) => st.setSetting({ endMode: v as EndMode }));
+        mk1('游戏时长', 3);
+        const limited = s.settings.endMode === 'TIME_LIMIT';
+        const dur = new Segmented(set, segX, 20 + rowH * 3, segW, 56,
+            TIME_LIMIT_OPTIONS.map((v) => ({ label: v + '分钟', value: v, disabled: !limited, note: '破产模式不限时长（最长 120 分钟）' })),
+            s.settings.timeLimitMinutes, (v) => st.setSetting({ timeLimitMinutes: v as number }));
+        mk1('投骰时间', 4);
+        const roll = new Segmented(set, segX, 20 + rowH * 4, segW, 56, ROLL_SECONDS_OPTIONS.map((v) => ({ label: v + '秒', value: v })),
+            s.settings.rollSeconds, (v) => st.setSetting({ rollSeconds: v as number }), 8, Theme.font.sm);
+        for (const sg of [map, cash, mode, dur, roll]) {
+            sg.locked = !isHost;
+            sg.lockHint = lockHint;
+        }
+        void rows;
+
+        // 语音条 + 聊天片段
+        const voice = roundedPanel(this.root, 24, 1042, 672, 76, { r: 38 });
+        new IconButton(voice, 10, 8, 60, '', () => Toast.show('麦克风已开启（演示，未接入语音服务）'), Theme.c.blueSoft, Theme.c.blueDark,
+            (g, z) => drawMic(g, z / 2, z / 2, z * 0.6, Theme.c.blueDark));
+        s.members.slice(0, 8).forEach((m, i) => {
+            const ax = 84 + i * 46;
+            avatar(voice, ax, 12, 40, m.avatar, m.nickname, { ring: m.speaking ? Theme.c.green : undefined });
+            const bars = gfx(mk(voice, 'Lvl', ax + 10, 56, 24, 14));
+            for (let b = 0; b < 3; b++) fillRR(bars, b * 8, m.speaking ? 2 - b * 2 : 8, 5, m.speaking ? 12 + b * 2 : 5, 2, m.speaking ? Theme.c.green : Theme.c.grayDark);
+        });
+        const last = st.roomChat[st.roomChat.length - 1];
+        const bub = mk(voice, 'Bubble', 460, 10, 200, 56);
+        fillRR(gfx(bub), 0, 0, 200, 56, 28, Theme.c.ivoryDark);
+        text(bub, last ? last.text : '说点什么…', 14, 0, 172, 56, Theme.font.xs, Theme.c.ink, { align: 'l' });
+        onTap(bub, () => Toast.show('聊天输入（演示）'));
+        void drawChat;
+
+        // 底部按钮
+        const me = s.members.find((m) => m.playerId === 'p1') as Member;
+        const ready = st.allReady();
+        let main: Button;
+        if (isHost) {
+            main = primaryButton(this.root, ready ? '开始游戏' : '等待全员准备', 24, 1136, 440, 100, () => {
+                st.patchScenario({ players: s.members.length });
+                Toast.show('对局开始（演示）');
+                ctx.screens.go('board');
+            }, Theme.font.lg);
+            main.setEnabled(ready, s.members.length < 2 ? '至少 2 人才能开局' : '需全员准备后才能开局');
+        } else {
+            main = primaryButton(this.root, me.ready ? '已准备，等待开局' : '准备', 24, 1136, 440, 100, () => st.setReady('p1', true), Theme.font.lg);
+            main.setEnabled(!me.ready, '已准备');
+        }
+        const sec = new Button(this.root, me.ready ? '取消准备' : (isHost ? '准备' : '未准备'), 480, 1136, 216, 100, 'ghost',
+            () => st.setReady('p1', !me.ready), Theme.font.md);
+        sec.setEnabled(isHost || me.ready, '请先点击左侧"准备"');
+    }
+
+    private drawMember(cell: Node, m: Member, isHost: boolean): void {
+        const st = ctx.store;
+        const s = st.session;
+        const isMe = m.playerId === 'p1';
+        avatar(cell, 33, 0, 84, m.avatar, m.nickname, { ring: m.ready ? Theme.c.green : undefined });
+        if (m.playerId === s.hostId) chip(cell, 8, 0, '房主', Theme.c.orange, Theme.c.white, Theme.font.xs);
+        text(cell, m.nickname + (isMe ? '(我)' : ''), 0, 88, 150, 32, Theme.font.sm, Theme.c.ink, { bold: true });
+        const rc = m.ready ? chip(cell, 26, 124, '✓ 已准备', Theme.c.greenSoft, Theme.c.greenDark, Theme.font.xs)
+            : chip(cell, 26, 124, '○ 未准备', '#E9EDF1', Theme.c.inkSoft, Theme.font.xs);
+        // 演示：点别人的准备标签可切换其准备状态（真实环境由对方自己操作）
+        if (!isMe) onTap(rc.node, () => {
+            Toast.show('演示：切换 ' + m.nickname + ' 的准备状态');
+            st.setReady(m.playerId, !m.ready);
+        });
+        if (isHost && !isMe) {
+            const x = mk(cell, 'Kick', 104, 0, 40, 40);
+            const g = gfx(x);
+            fillCircle(g, 20, 20, 17, Theme.c.red);
+            line(g, 13, 13, 27, 27, Theme.c.white, 4);
+            line(g, 27, 13, 13, 27, Theme.c.white, 4);
+            onTap(x, () => ctx.popups.open(new ConfirmPopup({
+                title: '移除成员', message: '确定将「' + m.nickname + '」移出房间吗？开局后将无法再移除玩家。', confirmText: '移除', danger: true,
+                onConfirm: () => {
+                    st.removeMember(m.playerId);
+                    Toast.show('已移除 ' + m.nickname);
+                },
+            }, 'kick')));
+        }
+    }
+
+    private drawEmpty(cell: Node, locked: boolean): void {
+        const g = gfx(cell);
+        strokeCircle(g, 75, 42, 40, locked ? Theme.c.gray : Theme.c.ivoryLine, 3);
+        text(cell, locked ? '×' : '+', 33, 2, 84, 80, Theme.font.xl, Theme.c.inkFaint);
+        text(cell, locked ? '30格不可用' : '空位', 0, 88, 150, 32, Theme.font.sm, Theme.c.inkFaint);
+    }
+}
