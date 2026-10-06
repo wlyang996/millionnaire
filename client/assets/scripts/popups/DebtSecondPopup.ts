@@ -6,7 +6,6 @@ import { dangerButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { fillCircle, fillRR, gfx, mk, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
-import { Toast } from '../ui/Toast';
 import { coinText, tierName } from './Common';
 import { DebtPopup } from './DebtPopup';
 
@@ -57,7 +56,6 @@ export class DebtSecondPopup extends Popup {
     private bankrupt(): void {
         this.close();
         ctx.store.surrender('BANKRUPT');
-        Toast.show('已确认破产，进入观战');
         ctx.screens.go('spectator');
     }
 

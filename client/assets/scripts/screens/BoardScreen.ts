@@ -160,10 +160,8 @@ export class BoardScreen extends Screen {
             this.eventOv = new EventOverlay(this.root);
             const actor = st.eventDraw.actor ? st.player(st.eventDraw.actor) : undefined;
             this.eventOv.build(st.eventDraw, () => st.eventClick(this.myId), !this.spectator && st.eventDraw.actor === this.myId, actor?.nickname ?? '玩家',
-                st.online ? () => st.eventClose(this.myId) : undefined);
-            // Screen22 retains the die below the central card; drawing never enables another roll.
-            this.dice = new DiceView(this.root, Theme.W / 2 - 54, 900);
-            this.dice.setValue(game.lastDice);
+                st.online ? () => st.eventClose(this.myId) : undefined, this.view.innerRect());
+            // 设计稿 10：抽卡时中央只有卡片，不显示骰子
         } else this.buildTurnPanel();
     }
 
@@ -270,10 +268,7 @@ export class BoardScreen extends Screen {
         }
         const v = st.rollValue();
         this.dice.setReady(false);
-        this.dice.play(v, () => {
-            Toast.show('掷出 ' + v + ' 点');
-            this.startMove(this.myId, v, false, true);
-        });
+        this.dice.play(v, () => this.startMove(this.myId, v, false, true));
     }
 
     /** 演示菜单：只播骰子动画，不移动。 */
@@ -473,7 +468,6 @@ export class BoardScreen extends Screen {
                 this.otherAt = Number.MAX_SAFE_INTEGER;
                 this.dice?.play(steps, () => this.startMove(cur.playerId, steps, false, true));
             } else if (cur && cur.playerId === this.myId && this.turnCd.consumeExpire() && st.isMyTurn()) {
-                Toast.show('投骰超时，自动投骰');
                 this.startRoll();
             }
         }
@@ -535,7 +529,7 @@ export class BoardScreen extends Screen {
         if (cue) {
             const who = st.player(cue.playerId);
             if (cue.kind === 'dice') {
-                if (this.dice) this.dice.play(cue.value, () => Toast.show((cue.playerId === this.myId ? '你' : who?.nickname ?? '玩家') + '掷出 ' + cue.value + ' 点'));
+                if (this.dice) this.dice.play(cue.value, () => undefined);
             } else if (cue.kind === 'jail') {
                 this.jail = { name: cue.playerId === this.myId ? '你' : who?.nickname ?? '玩家', start: Date.now() };
                 this.jailOv = new JailOverlay(this.root, this.jail.name, this.jail.start);

@@ -67,7 +67,6 @@ export function drawBottom(root: Node, spectator: boolean): void {
         text(sur, '认输', 0, 0, 56, 40, 24, '#FF5A55', { bold: true });
         onTap(sur, () => ctx.popups.open(surrenderConfirm(() => {
             st.surrender();
-            Toast.show('已认输，进入观战');
             ctx.screens.go('spectator');
         })));
     }

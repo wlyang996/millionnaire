@@ -139,7 +139,6 @@ export class AuctionPopup extends Popup {
             st.spend(this.cap);
             const prop = st.prop(this.tileIndex);
             if (prop) prop.owner = 'p1';
-            Toast.show('一口价成交：' + this.cap);
             this.close();
             st.emit();
             return;
@@ -162,8 +161,7 @@ export class AuctionPopup extends Popup {
             st.spend(this.highBid);
             const prop = st.prop(this.tileIndex);
             if (prop) prop.owner = 'p1';
-            Toast.show('拍卖成交：你以 ' + this.highBid + ' 拍得');
-        } else Toast.show('拍卖结束：' + (st.player(this.highBidder ?? '')?.nickname ?? '无人') + ' 以 ' + this.highBid + ' 成交（演示）');
+        }
         this.close();
         st.emit();
     }

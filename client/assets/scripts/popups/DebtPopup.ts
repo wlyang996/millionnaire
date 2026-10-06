@@ -116,11 +116,9 @@ export class DebtPopup extends Popup {
         const total = this.raisedDone();
         if (debtShortfall(this.amount, me.cash, total) === 0) {
             me.cash = me.cash + total - this.amount;
-            Toast.show('欠款已还清');
             this.close();
             st.emit();
         } else {
-            Toast.show('已抵押，仍差 ' + debtShortfall(this.amount, me.cash, total));
             this.rebuildBody();
         }
     }

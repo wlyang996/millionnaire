@@ -331,6 +331,15 @@ export class BoardView {
         return { w: this.xs[c.col + 1] - this.xs[c.col], h: this.ys[c.row + 1] - this.ys[c.row] };
     }
 
+    /** 棋盘内圈（格子环以内）在父节点坐标中的矩形（事件抽卡时压暗这一块）。 */
+    innerRect(): { x: number; y: number; w: number; h: number } {
+        const s = this.cam.scale;
+        const vp = this.viewport.position;
+        const x0 = vp.x + this.cam.vx + this.xs[1] * s;
+        const y0 = -vp.y + this.cam.vy + this.ys[1] * s;
+        return { x: x0, y: y0, w: (this.xs[this.xs.length - 2] - this.xs[1]) * s, h: (this.ys[this.ys.length - 2] - this.ys[1]) * s };
+    }
+
     tileCenter(index: number): Pt {
         const c = gridCell(index % ringLength(this.g), this.g);
         return { x: (this.xs[c.col] + this.xs[c.col + 1]) / 2,

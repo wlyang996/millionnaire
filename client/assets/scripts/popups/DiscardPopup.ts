@@ -8,7 +8,6 @@ import { ctx } from '../ui/Ctx';
 import { drawCardIcon } from '../ui/Icons';
 import { fillRR, gfx, mk, onTap, strokeRR, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
-import { Toast } from '../ui/Toast';
 
 export class DiscardPopup extends Popup {
     private sel = -1;
@@ -45,14 +44,12 @@ export class DiscardPopup extends Popup {
             }, false);
         });
         const b: Button = primaryButton(p, this.sel >= 0 ? '弃掉「' + CARD_NAMES[hand[this.sel].type] + '」' : '请选择要弃掉的卡', 28, 650, w - 56, 88, () => {
-            Toast.show('已弃掉一张卡');
             this.close();
         }, Theme.font.lg);
         b.setEnabled(this.sel >= 0, '请先点选一张卡');
     }
 
     protected onExpire(): void {
-        Toast.show('超时：放弃新获得的卡');
         this.close();
     }
 }

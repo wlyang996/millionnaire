@@ -6,7 +6,6 @@ import { ctx } from '../ui/Ctx';
 import { fillRR, gfx, mk, setText, strokeRR, text } from '../ui/Kit';
 import { Keypad } from '../ui/Keypad';
 import { Popup } from '../ui/Popup';
-import { Toast } from '../ui/Toast';
 import { describe } from '../net/OnlineSession';
 
 export class JoinRoomPopup extends Popup {
@@ -67,7 +66,6 @@ export class JoinRoomPopup extends Popup {
         if (this.code === '000000') return void setText(this.err, '房间不存在或已关闭');
         if (this.code === '888888') return void setText(this.err, '房间已满');
         this.close();
-        Toast.show('已加入房间 ' + this.code);
         ctx.store.patchScenario({ host: false });
         ctx.screens.push('room');
     }

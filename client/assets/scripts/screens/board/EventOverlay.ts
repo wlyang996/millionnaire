@@ -1,20 +1,32 @@
 /**
- * 中央事件抽卡覆盖层：所有观察者同步观看；仅触发者可点击卡背。
- * 使用已有五类事件卡面；结果展示后由 BoardScreen 自动收起，没有确认/投骰按钮。
+ * 中央事件抽卡覆盖层（设计稿 10 / 12）：棋盘内圈压暗，金色"触发事件"，中央一张发光卡背，下方"点击卡片翻开"
+ * （其他观看者显示"等待某某翻开"，不可点）；翻牌后显示卡面：蓝色题头写类别，中间插画，下方结果与说明。
+ * 没有提示面板、没有类别说明行。结果默认停留后自动收起，也可以点卡片或 × 关闭。
  * 动画由时间戳驱动：等待时轻微呼吸/发光，翻牌时长 Theme.anim.eventFlipMs。
  */
 import { Node } from 'cc';
 import { CARD_NAMES } from '../../core/Models';
-import { EventDrawState, eventResultText } from '../../core/EventDraw';
+import { EventDrawState } from '../../core/EventDraw';
 import { Theme } from '../../core/Theme';
-import { col, fillCircle, gfx, line, mk, onTap, text } from '../../ui/Kit';
+import { col, fillCircle, fillRR, gfx, line, mk, onTap, text } from '../../ui/Kit';
+import { inlineRow, Seg } from '../../popups/Common';
 import { CARD_BACK, centerNode, drawCardBack } from './EventDeck';
 import { art } from '../../ui/Art';
 
 const CX = Theme.W / 2;
-const CARD_W = 330;
-const CARD_H = 360;
-const CARD_CY = 650;
+/** 设计稿 10：卡片 161×237，中心 (360, 620)；标题中心 y≈467；提示中心 y≈766 */
+const CARD_W = 161;
+const CARD_H = 237;
+const CARD_CY = 620;
+
+/** 设计稿 12 的卡面文字：类别、结果（红色数字）、说明。 */
+const FACE: Record<string, { title: string; note: string }> = {
+    CASH_REWARD: { title: '奖励', note: '系统奖励' },
+    CASH_FINE: { title: '罚款', note: '金额不足按欠款流程处理' },
+    CARD: { title: '道具', note: '手牌满时进入弃牌' },
+    MOVE: { title: '位移', note: '按落点规则结算·不连抽事件' },
+    JAIL: { title: '入狱', note: '本回合结束' },
+};
 
 export class EventOverlay {
     readonly root: Node;
@@ -28,68 +40,85 @@ export class EventOverlay {
         this.root = mk(parent, 'EventOverlay', 0, 0, Theme.W, Theme.H);
     }
 
-    /** 状态变化时重建；interactive 仅允许触发者本人点击。 */
-    build(state: EventDrawState, onCard: () => void, interactive: boolean, actorName: string, onClose?: () => void): void {
+    /**
+     * 状态变化时重建；interactive 仅允许触发者本人点击。
+     * @param dim 棋盘内圈（屏幕坐标），设计稿 10 中这一块压暗
+     */
+    build(state: EventDrawState, onCard: () => void, interactive: boolean, actorName: string, onClose?: () => void,
+        dim?: { x: number; y: number; w: number; h: number }): void {
         this.state = state;
-        // 标题（金色，两侧装饰线）
-        text(this.root, '触发事件', CX - 118, 347, 240, 54, 40, '#3A2A0A', { bold: true });
-        text(this.root, '触发事件', CX - 120, 344, 240, 54, 40, CARD_BACK.gold, { bold: true });
-        const dec = gfx(mk(this.root, 'TitleDeco', 0, 344, Theme.W, 54));
-        line(dec, CX - 190, 28, CX - 130, 28, CARD_BACK.gold, 3);
-        line(dec, CX + 130, 28, CX + 190, 28, CARD_BACK.gold, 3);
-        if (state.phase !== 'RESULT') {
-            art(this.root, 'info_asset_panel', CX - 220, 392, 440, 492, 'panel');
-            text(this.root, interactive ? '点击卡背抽取' : actorName + ' 正在抽卡', CX - 200, 410, 400, 52, 32, Theme.c.ink, { bold: true });
-            text(this.root, '奖励 · 罚款 · 道具 · 位移 · 入狱', CX - 208, 832, 416, 36, 22, Theme.c.ink, { bold: true });
-        }
+        if (dim) fillRR(gfx(mk(this.root, 'Dim', dim.x, dim.y, dim.w, dim.h)), 0, 0, dim.w, dim.h, 12, '#0A142873');
+        // 金色标题，两侧装饰线
+        text(this.root, '触发事件', CX - 118, 443, 240, 54, 42, '#3A2A0A', { bold: true });
+        text(this.root, '触发事件', CX - 120, 440, 240, 54, 42, CARD_BACK.gold, { bold: true });
+        const dec = gfx(mk(this.root, 'TitleDeco', 0, 440, Theme.W, 54));
+        line(dec, CX - 196, 28, CX - 132, 28, CARD_BACK.gold, 3);
+        line(dec, CX + 132, 28, CX + 196, 28, CARD_BACK.gold, 3);
+        fillCircle(dec, CX - 200, 28, 5, CARD_BACK.gold);
+        fillCircle(dec, CX + 200, 28, 5, CARD_BACK.gold);
         // 光晕 + 卡片
         this.glow = centerNode(this.root, 'CardGlow', CX, CARD_CY, CARD_W + 40, CARD_H + 40);
         this.card = centerNode(this.root, 'EventCard', CX, CARD_CY, CARD_W, CARD_H);
         this.back = centerNode(this.card, 'Back', 0, 0, CARD_W, CARD_H);
         // centerNode 以父节点左上为参照；卡片内部子节点用中心为原点，需要回到 (0,0)
         this.back.setPosition(0, 0, 0);
-        if (!art(this.back, 'event_card_fan', -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H))
+        art(this.back, 'event_card_highlight', -CARD_W / 2 - 14, -CARD_H / 2 - 14, CARD_W + 28, CARD_H + 28, 'stretch');
+        if (!art(this.back, 'event_card_back', -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 'stretch'))
             drawCardBack(this.back, CARD_W, CARD_H);
         this.face = centerNode(this.card, 'Face', 0, 0, CARD_W, CARD_H);
         this.face.setPosition(0, 0, 0);
         this.drawFace(this.face, state);
         this.face.active = state.phase === 'RESULT';
         this.back.active = state.phase !== 'RESULT';
-        if (state.phase === 'WAITING' && interactive) onTap(this.card, onCard, false);
+        const captionY = CARD_CY + CARD_H / 2 + 14;
+        if (state.phase === 'WAITING') {
+            if (interactive) onTap(this.card, onCard, false);
+            this.caption(interactive ? '点击卡片翻开' : '等待' + actorName + '翻开', captionY);
+        }
         if (state.phase === 'RESULT' && onClose) {
             // 结果默认展示几秒后自动收起；也可以点卡片或右上角 × 立即关闭
             onTap(this.card, onClose, false);
-            const x = mk(this.root, 'CloseResult', CX + CARD_W / 2 - 30, CARD_CY - CARD_H / 2 - 30, 60, 60);
+            const x = mk(this.root, 'CloseResult', CX + CARD_W / 2 - 22, CARD_CY - CARD_H / 2 - 30, 52, 52);
             const xg = gfx(x);
-            fillCircle(xg, 30, 30, 26, '#2D3B4AE6');
-            line(xg, 20, 20, 40, 40, Theme.c.white, 5);
-            line(xg, 40, 20, 20, 40, Theme.c.white, 5);
+            fillCircle(xg, 26, 26, 22, '#2D3B4AE6');
+            line(xg, 18, 18, 34, 34, Theme.c.white, 4);
+            line(xg, 34, 18, 18, 34, Theme.c.white, 4);
             onTap(x, onClose);
-            text(this.root, '点击卡片关闭', CX - 150, CARD_CY + CARD_H / 2 + 14, 300, 40, 24, Theme.c.ink, { bold: true });
+            this.caption('点击卡片关闭', captionY);
         }
-        // 结果无需操作；等待时显示本人点击提示或他人抽卡提示。
         this.tick(Date.now());
     }
 
-    /** 已有事件卡面加动态结果文字。 */
+    private caption(s: string, y: number): void {
+        text(this.root, s, CX - 179, y + 2, 360, 36, 26, '#00000099', { bold: true });
+        text(this.root, s, CX - 180, y, 360, 36, 26, Theme.c.white, { bold: true });
+    }
+
+    /** 卡面（设计稿 12）：卡面图的蓝色题头写类别，下方乳白条写结果（数字红色），底部一行说明。 */
     private drawFace(n: Node, state: EventDrawState): void {
         const g = gfx(n);
         g.clear();
         g.fillColor = col(CARD_BACK.goldDark);
-        g.roundRect(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 18);
+        g.roundRect(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 14);
         g.fill();
         g.fillColor = col('#FFF8E6');
-        g.roundRect(-CARD_W / 2 + 5, -CARD_H / 2 + 5, CARD_W - 10, CARD_H - 10, 14);
+        g.roundRect(-CARD_W / 2 + 4, -CARD_H / 2 + 4, CARD_W - 8, CARD_H - 8, 12);
         g.fill();
         const r = state.result;
         if (!r) return;
-        const t = eventResultText(r);
         const key = { CASH_REWARD: 'event_reward', CASH_FINE: 'event_fine', CARD: 'event_tool', MOVE: 'event_move', JAIL: 'event_jail' }[r.kind];
         if (art(n, key, -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 'stretch')) g.clear();
-        text(n, t.title, -CARD_W / 2 + 10, -CARD_H / 2 + 14, CARD_W - 20, 32, 22, Theme.c.white, { bold: true });
-        const detail = r.kind === 'CARD' && r.card ? CARD_NAMES[r.card] : t.detail;
-        text(n, detail, -CARD_W / 2 + 12, CARD_H / 2 - 58, CARD_W - 24, 44, 24,
-            r.kind === 'CASH_FINE' || r.kind === 'JAIL' ? Theme.c.redDark : Theme.c.greenDark, { bold: true });
+        const f = FACE[r.kind];
+        text(n, f.title, -CARD_W / 2, -CARD_H / 2 + 8, CARD_W, 34, 26, Theme.c.white, { bold: true });
+        const red = Theme.c.payRed;
+        const navy = Theme.c.navy;
+        const segs: Seg[] = r.kind === 'CASH_REWARD' ? [{ t: '+' + r.amount, size: 26, color: red }, { t: '金币', size: 18, color: navy }]
+            : r.kind === 'CASH_FINE' ? [{ t: '-' + r.amount, size: 26, color: red }, { t: '金币', size: 18, color: navy }]
+                : r.kind === 'CARD' ? [{ t: '获得' + (r.card ? CARD_NAMES[r.card] : '道具') + '×1', size: 18, color: navy }]
+                    : r.kind === 'MOVE' ? [{ t: r.steps > 0 ? '前进' : '后退', size: 20, color: navy }, { t: String(Math.abs(r.steps)), size: 24, color: red }, { t: '格', size: 20, color: navy }]
+                        : [{ t: '前往监狱', size: 20, color: navy }];
+        inlineRow(n, 0, CARD_H / 2 - 66, 34, segs, 2);
+        text(n, f.note, -CARD_W / 2 + 6, CARD_H / 2 - 30, CARD_W - 12, 22, 12, Theme.c.noteGray, { bold: true });
     }
 
     /** 每帧：等待时呼吸/发光；翻牌时水平翻转（先背面缩到 0，再正面展开）。 */
