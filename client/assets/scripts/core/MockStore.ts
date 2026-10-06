@@ -19,6 +19,9 @@ import {
 export const NAMES = ['糖糖', '可可', '阿杰', '奶茶', '阿凯', '圆圆', '豆豆', '毛毛'];
 export const ME = 'p1';
 
+/** 事件卡结果默认展示时长（可手动关闭）。 */
+export const EVENT_RESULT_SHOW_MS = 5000;
+
 export type ConnPreset = 'normal' | 'mixed' | 'mySuspect';
 
 /** 演示场景开关（演示面板修改它，store 据此重建数据） */
@@ -341,6 +344,15 @@ export class MockStore {
 
     /** 点击卡片（仅触发者本人有效；重复点击被忽略）。返回是否被接受。 */
     eventClick(viewer: string): boolean {
+        if (this.online) {
+            // 联机：点卡只发命令；结果由服务端 EventDrawn 推回后再翻开
+            const w = this.online.myWindow('TURN');
+            if (viewer !== this.myId || this.eventDraw.phase !== 'WAITING' || this.eventDraw.actor !== viewer || !w) return false;
+            void this.online.act('DrawEventCard', { windowId: w.windowId });
+            this.eventDraw = { ...this.eventDraw, phase: 'FLIPPING', since: Date.now(), result: null };
+            this.emit();
+            return true;
+        }
         const r = clickCard(this.eventDraw, viewer, Date.now(), Math.random);
         if (!r.accepted) return false;
         this.eventDraw = r.state;
@@ -350,6 +362,19 @@ export class MockStore {
 
     /** 每帧推进；到达结果时返回一次结算（并应用到演示数据）。 */
     eventTick(): { actor: string; result: EventResult } | null {
+        if (this.online) {
+            // 联机：不在本地抽取或结算，只按时间推进画面（翻牌 → 结果展示 5 秒 → 收起）
+            const e = this.eventDraw;
+            const now = Date.now();
+            if (e.phase === 'FLIPPING' && e.result && now - e.since >= Theme.anim.eventFlipMs) {
+                this.eventDraw = { ...e, phase: 'RESULT', since: now };
+                this.emit();
+            } else if (e.phase === 'RESULT' && now - e.since >= EVENT_RESULT_SHOW_MS) {
+                this.eventDraw = { ...EVENT_IDLE, settled: e.settled };
+                this.emit();
+            }
+            return null;
+        }
         const r = advanceEvent(this.eventDraw, Date.now(), { flipMs: Theme.anim.eventFlipMs, autoMs: Theme.anim.eventAutoMs }, Math.random);
         if (r.state === this.eventDraw) return null;
         this.eventDraw = r.state;
@@ -360,6 +385,11 @@ export class MockStore {
     }
 
     eventClose(viewer: string | null): void {
+        if (this.online && this.eventDraw.phase === 'RESULT') {
+            this.eventDraw = { ...EVENT_IDLE, settled: this.eventDraw.settled }; // 联机：任何观看者都可以自己关掉结果
+            this.emit();
+            return;
+        }
         const next = closeResult(this.eventDraw, viewer);
         if (next === this.eventDraw) return;
         this.eventDraw = next;

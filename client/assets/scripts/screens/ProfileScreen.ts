@@ -50,7 +50,7 @@ export class ProfileScreen extends Screen {
         new Button(this.root, logged ? '已登录 · 微信用户 ✓' : '微信登录', 36, 500, 648, 92, logged ? 'ghost' : 'success', () => {
             if (st.profile.loggedIn) return;
             st.setProfile({ loggedIn: true });
-            if (!this.nick) this.nick = '微信用户';
+            if (!this.nick && !st.online) this.nick = '微信用户';
             Toast.show(st.online ? '测试登录：填写昵称后保存即可联机（暂未接入微信）' : '微信登录成功（演示，未连接微信）');
             this.rebuild();
         }, Theme.font.lg);

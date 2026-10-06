@@ -139,7 +139,8 @@ export class BoardScreen extends Screen {
         if (st.eventDraw.phase !== 'IDLE') {
             this.eventOv = new EventOverlay(this.root);
             const actor = st.eventDraw.actor ? st.player(st.eventDraw.actor) : undefined;
-            this.eventOv.build(st.eventDraw, () => st.eventClick(this.myId), !this.spectator && st.eventDraw.actor === this.myId, actor?.nickname ?? '玩家');
+            this.eventOv.build(st.eventDraw, () => st.eventClick(this.myId), !this.spectator && st.eventDraw.actor === this.myId, actor?.nickname ?? '玩家',
+                st.online ? () => st.eventClose(this.myId) : undefined);
             // Screen22 retains the die below the central card; drawing never enables another roll.
             this.dice = new DiceView(this.root, Theme.W / 2 - 54, 900);
             this.dice.setValue(game.lastDice);
@@ -470,11 +471,15 @@ export class BoardScreen extends Screen {
             this.view.cam.follow = true;
         }
         this.tickTexts();
+        st.eventTick();
+        this.eventOv?.tick(Date.now());
         if (this.move) {
             this.tickMove();
             return;
         }
         if (this.dice && this.dice.playing) return;
+        // 事件卡翻牌与结果展示期间不播后续走棋（先看清结果再移动）
+        if (st.eventDraw.phase === 'FLIPPING' || st.eventDraw.phase === 'RESULT') return;
         const cue = online.cues.shift();
         if (cue) {
             const who = st.player(cue.playerId);
@@ -504,10 +509,7 @@ export class BoardScreen extends Screen {
                 title: '银行', message: '可以在"我的资产"里抵押（按原价 100%）或赎回（免手续费）。办完后结束银行操作。',
                 confirmText: '结束银行操作', onConfirm: () => void online.act('FinishBank', { windowId: id }),
             }, 'bank'));
-            else if (landing.step === 'EVENT') ctx.popups.open(new ConfirmPopup({
-                title: '事件格', message: '抽一张事件卡：可能获得或支付现金、得到道具、前进后退或入狱。',
-                confirmText: '抽卡', onConfirm: () => void online.act('DrawEventCard', { windowId: id }),
-            }, 'event'));
+            else if (landing.step === 'EVENT') this.openedFor = -1; // 事件格不弹窗：棋盘中央的卡牌由 eventDraw 驱动，点卡即抽
             else this.openedFor = -1; // 其他步骤由服务端自动推进
         } else if (w.kind === 'DEBT' && g.debt && g.debt.debtor === this.myId) {
             this.openedFor = id;

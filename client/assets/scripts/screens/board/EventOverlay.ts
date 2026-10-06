@@ -7,7 +7,7 @@ import { Node } from 'cc';
 import { CARD_NAMES } from '../../core/Models';
 import { EventDrawState, eventResultText } from '../../core/EventDraw';
 import { Theme } from '../../core/Theme';
-import { col, gfx, line, mk, onTap, text } from '../../ui/Kit';
+import { col, fillCircle, gfx, line, mk, onTap, text } from '../../ui/Kit';
 import { CARD_BACK, centerNode, drawCardBack } from './EventDeck';
 import { art } from '../../ui/Art';
 
@@ -29,7 +29,7 @@ export class EventOverlay {
     }
 
     /** 状态变化时重建；interactive 仅允许触发者本人点击。 */
-    build(state: EventDrawState, onCard: () => void, interactive: boolean, actorName: string): void {
+    build(state: EventDrawState, onCard: () => void, interactive: boolean, actorName: string, onClose?: () => void): void {
         this.state = state;
         // 标题（金色，两侧装饰线）
         text(this.root, '触发事件', CX - 118, 347, 240, 54, 40, '#3A2A0A', { bold: true });
@@ -56,6 +56,17 @@ export class EventOverlay {
         this.face.active = state.phase === 'RESULT';
         this.back.active = state.phase !== 'RESULT';
         if (state.phase === 'WAITING' && interactive) onTap(this.card, onCard, false);
+        if (state.phase === 'RESULT' && onClose) {
+            // 结果默认展示几秒后自动收起；也可以点卡片或右上角 × 立即关闭
+            onTap(this.card, onClose, false);
+            const x = mk(this.root, 'CloseResult', CX + CARD_W / 2 - 30, CARD_CY - CARD_H / 2 - 30, 60, 60);
+            const xg = gfx(x);
+            fillCircle(xg, 30, 30, 26, '#2D3B4AE6');
+            line(xg, 20, 20, 40, 40, Theme.c.white, 5);
+            line(xg, 40, 20, 20, 40, Theme.c.white, 5);
+            onTap(x, onClose);
+            text(this.root, '点击卡片关闭', CX - 150, CARD_CY + CARD_H / 2 + 14, 300, 40, 24, Theme.c.ink, { bold: true });
+        }
         // 结果无需操作；等待时显示本人点击提示或他人抽卡提示。
         this.tick(Date.now());
     }
@@ -90,6 +101,13 @@ export class EventOverlay {
             const sc = 1 + 0.03 * k;
             this.card.setScale(sc, sc, 1);
             this.paintGlow(0.35 + 0.25 * (k + 1) / 2);
+        } else if (s.phase === 'FLIPPING' && !s.result) {
+            // 已点卡、等待服务端结果：卡背轻快抖动，不翻到空白正面
+            const k = Math.sin(((now - s.since) / 260) * Math.PI * 2);
+            this.card.setScale(1 + 0.05 * k, 1 - 0.03 * k, 1);
+            this.back.active = true;
+            this.face.active = false;
+            this.paintGlow(0.7);
         } else if (s.phase === 'FLIPPING') {
             const k = Math.min(1, (now - s.since) / Theme.anim.eventFlipMs);
             this.card.setScale(Math.max(0.02, Math.abs(Math.cos(Math.PI * k))), 1 + 0.04 * Math.sin(Math.PI * k), 1);

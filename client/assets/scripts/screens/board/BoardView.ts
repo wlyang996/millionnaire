@@ -259,6 +259,12 @@ export class BoardView {
         fillCircle(gg, x, y, 6, OWNER_COLORS[game.players[idx].avatar % 8]);
     }
 
+    /** 某格在棋盘上的宽高（四角大格、两侧扁格、上下窄格不一样）。 */
+    private cellSize(index: number): { w: number; h: number } {
+        const c = gridCell(index % ringLength(this.g), this.g);
+        return { w: this.xs[c.col + 1] - this.xs[c.col], h: this.ys[c.row + 1] - this.ys[c.row] };
+    }
+
     tileCenter(index: number): Pt {
         const c = gridCell(index % ringLength(this.g), this.g);
         return { x: (this.xs[c.col] + this.xs[c.col + 1]) / 2,
@@ -278,9 +284,12 @@ export class BoardView {
             seen[p.position] = k + 1;
             const c = this.tileCenter(p.position);
             const me = p.playerId === myId;
-            const s = me ? sMe : sOther;
-            const offX = me ? 0 : ((k % 3) - 1) * sOther * 0.5 + sOther * 0.15;
-            const offY = me ? 0 : Math.floor(k / 3) * sOther * 0.4 - sOther * 0.1;
+            // 按格子大小收窄人物，脚踩在格子中心略偏下（人物立绘的脚在节点顶 + s 处，见下方 art 的摆放）
+            const cell = this.cellSize(p.position);
+            const fit = Math.min(cell.w, cell.h);
+            const s = Math.round(me ? Math.min(sMe, fit * 0.9) : Math.min(sOther, fit * 0.62));
+            const offX = me ? 0 : ((k % 3) - 1) * s * 0.45;
+            const offY = (me ? 0 : Math.floor(k / 3) * s * 0.3) + t * 0.14 - s / 2;
             const n = mk(parent, 'Token:' + p.playerId, c.x + offX - s / 2, c.y + offY - s / 2, s, s);
             const gg = gfx(n);
             const cur = p.playerId === game.currentPlayer;

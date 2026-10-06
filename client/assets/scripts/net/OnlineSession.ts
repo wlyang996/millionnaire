@@ -5,7 +5,8 @@
  * - 对局开始 / 结束时请求跳页（board / result）。
  */
 import type { MockStore } from '../core/MockStore';
-import { OpenWindow, RoomSettings, SessionView } from '../core/Models';
+import { OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
+import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
 import { BoardTemplate, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
@@ -148,6 +149,7 @@ export class OnlineSession {
                 this.cues.push({ kind: 'move', playerId: String(d.playerId), from: Number(d.from), steps: Number(d.steps) });
             }
         }
+        this.trackEventDraw(u);
         this.lastDice = lastDiceFrom(u.events, this.lastDice);
         const s = adaptSession(u.view, this.boards, this.lastDice);
         s.roomId = u.roomCode; // 界面上的"房间号"是六位房间号
@@ -161,11 +163,41 @@ export class OnlineSession {
             this.onRoute?.('result');
         }
         this.hadGame = hasGame;
+        // 当前玩家踩到事件格、等待抽卡：所有人都显示中央卡牌（只有本人能点）
+        const g = s.game;
+        if (!g) this.store.eventDraw = EVENT_IDLE;
+        else if (g.landing && g.landing.step === 'EVENT' && g.landing.decisionPending && this.store.eventDraw.phase === 'IDLE') {
+            this.store.eventDraw = { phase: 'WAITING', actor: g.currentPlayer, since: Date.now(), result: null, settled: this.store.eventDraw.settled };
+        }
         this.store.emit();
+    }
+
+    /** 服务端抽卡结果 → 翻牌动画的结果（道具种类只有本人收得到，其他人看到"获得道具"）。 */
+    private trackEventDraw(u: UpdateMsg): void {
+        let result: EventResult | null = null;
+        let actor: string | null = null;
+        for (const e of u.events) {
+            const d = e.data ?? {};
+            if (e.kind === 'EventDrawn') {
+                actor = String(d.playerId);
+                const back = String(d.moveKind ?? '').indexOf('BACK') >= 0;
+                result = {
+                    kind: String(d.kind) as EventKind, amount: Number(d.amount ?? 0), card: null,
+                    steps: (back ? -1 : 1) * Number(d.distance ?? 0),
+                };
+            } else if (e.kind === 'EventCardReceived' && result) {
+                result.card = String(d.card) as CardType;
+            }
+        }
+        if (result && actor) {
+            const prev = this.store.eventDraw;
+            this.store.eventDraw = { phase: 'FLIPPING', actor, since: Date.now(), result, settled: prev.settled + 1 };
+        }
     }
 
     private leaveLocally(): void {
         this.hadGame = false;
+        this.store.eventDraw = EVENT_IDLE;
         this.cues.length = 0;
         this.store.session = emptySession(this.store.session?.settings);
         this.store.emit();
