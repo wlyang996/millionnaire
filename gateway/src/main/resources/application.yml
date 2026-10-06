@@ -1,3 +1,13 @@
 # 云托管要求监听端口与控制台"端口"一致（当前为 80），可用环境变量 PORT 覆盖
 server:
   port: ${PORT:80}
+
+spring:
+  # 默认不连库：数据源与 Flyway 都关闭，服务照常启动。
+  # 在云托管环境变量里设置 SPRING_PROFILES_ACTIVE=db（并配好 MYSQL_*）后才启用，见 application-db.yml。
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration

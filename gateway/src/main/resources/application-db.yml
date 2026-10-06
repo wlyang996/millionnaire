@@ -1,0 +1,23 @@
+# 启用方式：SPRING_PROFILES_ACTIVE=db
+# 连接信息只从环境变量读取（云托管控制台"服务设置"里配置），不进仓库：
+#   MYSQL_ADDRESS   host:port，内网地址，例如 10.5.109.37:3306
+#   MYSQL_USERNAME  MYSQL_PASSWORD
+#   MYSQL_DATABASE  库名，默认 millionnaire（需先在控制台"数据库管理"里创建）
+spring:
+  autoconfigure:
+    exclude: []
+  datasource:
+    url: jdbc:mysql://${MYSQL_ADDRESS}/${MYSQL_DATABASE:millionnaire}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8&connectTimeout=20000
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 0
+      connection-timeout: 30000   # 库自动暂停后唤醒需要几秒
+      max-lifetime: 300000        # 小于库的自动暂停时间，避免拿到被断开的连接
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    placeholders:
+      # 云托管 MySQL 为 5.7：没有 utf8mb4_0900_bin，用 utf8mb4_bin；5.7 会解析但忽略 CHECK 约束，需由应用层校验
+      table_options: ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin

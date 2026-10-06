@@ -2,6 +2,7 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
 COPY server ./server
+COPY persistence ./persistence
 COPY gateway ./gateway
 RUN cd server && mvn -B -q -Dmaven.test.skip=true install
 RUN cd gateway && mvn -B -q -Dmaven.test.skip=true package
