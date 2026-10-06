@@ -1,21 +1,29 @@
-/** 交易确认（买家，15 秒）：价格范围 = 标准价值的 50%～2.5 倍；同意且现金足额才成交，超时拒绝。 */
+/**
+ * 交易确认（买家，15 秒），按设计稿 04"交易确认"：卖家（金色圈）→ 买家（蓝色圈）、地产插画与"档位 · 等级"胶囊、
+ * 白色信息卡（标准价值 / 卖家出价（红）/ 价格范围 + 说明）、我的可用现金，底部"拒绝 / 同意 (金币) 价格"及说明。
+ * 价格范围 = 标准价值的 50%～2.5 倍；同意且现金足额才成交，超时拒绝。
+ */
 import { Node } from 'cc';
 import { SECONDS, standardValue, tradeRange } from '../core/Rules';
 import { Theme } from '../core/Theme';
-import { ghostButton, primaryButton } from '../ui/Buttons';
+import { art } from '../ui/Art';
+import { primaryButton, softButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
-import { fillPoly, gfx, mk, text } from '../ui/Kit';
+import { drawCoin } from '../ui/Icons';
+import { fillPoly, fillRR, gfx, line, mk, strokeRR, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
-import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
-import { coinText, infoRow, tileHero, tileSubtitle } from './Common';
+import { box, LEVEL_NAMES, pillLabel, propertyArtKey, tierName } from './Common';
+
+const W = 480;
+const H = 700;
 
 export class TradePopup extends Popup {
     constructor(private readonly tileIndex: number, private readonly sellerId: string, private readonly price: number) {
-        super('trade', '交易确认', 640, 820, SECONDS.trade);
+        super('trade', '交易确认', W, H, SECONDS.trade);
     }
 
-    protected buildBody(p: Node, w: number): void {
+    protected buildBody(p: Node): void {
         const st = ctx.store;
         const seller = st.player(this.sellerId) ?? st.game.players[1];
         const me = st.me();
@@ -24,39 +32,57 @@ export class TradePopup extends Popup {
         const sv = standardValue(tile.type === 'STATION', tile.tier, prop ? prop.upgradeSpent : 0);
         const r = tradeRange(sv);
         const inRange = this.price >= r.min && this.price <= r.max;
-        avatar(p, 120, 92, 100, seller.avatar, seller.nickname);
-        avatar(p, w - 220, 92, 100, me.avatar, me.nickname, { ring: Theme.c.blue });
-        fillPoly(gfx(mk(p, 'Arrow', 0, 0, w, 100)), [[w / 2 - 24, 124], [w / 2 + 14, 124], [w / 2 + 14, 112], [w / 2 + 40, 142], [w / 2 + 14, 172], [w / 2 + 14, 160], [w / 2 - 24, 160]], Theme.c.orange);
-        text(p, '卖家：' + seller.nickname, 70, 198, 200, 32, Theme.font.sm, Theme.c.ink, { bold: true });
-        text(p, '买家：' + me.nickname, w - 270, 198, 200, 32, Theme.font.sm, Theme.c.ink, { bold: true });
-        tileHero(p, tile, 160, 236, w - 320, 140, tileSubtitle(tile, prop));
-        infoRow(p, 40, 392, w - 80, '标准价值', sv);
-        infoRow(p, 40, 456, w - 80, '卖家出价', this.price, Theme.c.ivoryDark, inRange ? Theme.c.ink : Theme.c.red);
-        text(p, '价格范围', 60, 520, 200, 44, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
-        text(p, r.min + ' ～ ' + r.max, w - 340, 520, 300, 44, Theme.font.md, Theme.c.ink, { bold: true, align: 'r' });
-        text(p, '标准价值的 50%～2.5 倍（不允许免费赠送）', 40, 560, w - 80, 28, Theme.font.xs, Theme.c.inkFaint);
-        infoRow(p, 40, 596, w - 80, '我的可用现金', me.cash - me.frozen);
-        const bw = (w - 100) / 2;
-        ghostButton(p, '拒绝', 40, 676, bw * 0.8, 88, () => this.refuse('已拒绝交易'), Theme.font.lg);
-        const ok = primaryButton(p, '同意', 40 + bw * 0.8 + 20, 676, w - 80 - bw * 0.8 - 20, 88, () => {
-            if (me.cash - me.frozen < this.price) return Toast.show('现金不足，交易不成立');
+        const available = me.cash - me.frozen;
+        avatar(p, 82, 66, 124, seller.avatar, seller.nickname, { ring: '#F5B82E' });
+        avatar(p, 273, 66, 124, me.avatar, me.nickname, { ring: Theme.c.blue });
+        const arrows = gfx(mk(p, 'Arrows', 214, 104, 50, 50));
+        fillRR(arrows, 0, 8, 30, 12, 4, '#FF9A3D');
+        fillPoly(arrows, [[26, 0], [46, 14], [26, 28]], '#FF9A3D');
+        fillRR(arrows, 6, 34, 22, 8, 3, '#FFB347');
+        fillPoly(arrows, [[26, 28], [38, 38], [26, 48]], '#FFB347');
+        text(p, '卖家：' + seller.nickname, 24, 194, 240, 30, 24, Theme.c.navy, { bold: true });
+        text(p, '买家：' + me.nickname, 216, 194, 240, 30, 24, Theme.c.navy, { bold: true });
+        art(p, propertyArtKey(tile), (W - 188) / 2, 220, 188, 90);
+        const level = tile.type === 'PROPERTY' ? ' · ' + LEVEL_NAMES[prop ? prop.level : 0] : '';
+        pillLabel(p, tierName(tile) + level, W / 2, 316, 36, 24);
+        // 白色信息卡
+        const card = mk(p, 'Info', 20, 358, W - 40, 164);
+        const g = gfx(card);
+        fillRR(g, 0, 0, W - 40, 164, 18, Theme.c.white);
+        strokeRR(g, 0, 0, W - 40, 164, 18, '#EFE6D6', 2);
+        line(g, 16, 46, W - 56, 46, '#F0EADF', 2);
+        line(g, 16, 90, W - 56, 90, '#F0EADF', 2);
+        this.row(card, 2, '标准价值', String(sv), Theme.c.navy, true);
+        this.row(card, 46, '卖家出价', String(this.price), Theme.c.payRed, true);
+        this.row(card, 90, '价格范围', r.min + ' ～ ' + r.max, Theme.c.navy, false);
+        text(card, '标准价值的50%～2.5倍', 0, 132, W - 40, 26, 18, Theme.c.noteGray);
+        box(p, 20, 534, W - 40, 42, Theme.c.boxGray, 14);
+        const mine = mk(p, 'Mine', 20, 534, W - 40, 42);
+        this.row(mine, 0, '我的可用现金', String(available), Theme.c.navy, true, 42);
+        softButton(p, '拒绝', 15, 586, 170, 66, () => this.close(), 30);
+        const ok = primaryButton(p, '同意', 200, 586, W - 200 - 14, 66, () => {
+            if (available < this.price) return;
             st.spend(this.price);
-            if (prop) prop.owner = 'p1';
-            Toast.show('交易成交：花费 ' + this.price);
+            if (prop) prop.owner = st.myId;
             this.close();
             st.emit();
-        }, Theme.font.lg);
-        ok.setEnabled(inRange && me.cash - me.frozen >= this.price, inRange ? '现金不足' : '价格超出允许范围');
-        text(p, '同意且现金足额才成交 · 超时拒绝', 40, 772, w - 80, 28, Theme.font.xs, Theme.c.inkFaint);
-        void coinText;
+        }, 30).withCoin(this.price);
+        ok.setEnabled(inRange && available >= this.price);
+        text(p, '同意且现金足额才成交 · 超时拒绝', 0, 660, W, 26, 20, Theme.c.noteGray);
     }
 
-    private refuse(msg: string): void {
-        Toast.show(msg);
-        this.close();
+    /** 信息卡一行：左标签，右（金币 +）数值右对齐。 */
+    private row(parent: Node, y: number, label: string, value: string, color: string, coin: boolean, h = 44): void {
+        const w = W - 40;
+        text(parent, label, 22, y, 220, h, 22, Theme.c.navy, { bold: true, align: 'l' });
+        text(parent, value, w - 22 - 200, y, 200, h, 26, color, { bold: true, align: 'r' });
+        if (coin) {
+            const vw = value.length * 26 * 0.56 + 4;
+            drawCoin(gfx(mk(parent, 'Coin', w - 22 - vw - 38, y + (h - 30) / 2, 30, 30)), 15, 15, 15);
+        }
     }
 
     protected onExpire(): void {
-        this.refuse('交易超时，视为拒绝');
+        this.close();
     }
 }

@@ -91,20 +91,24 @@ export class CountdownBadge {
     private readonly label: Label;
     private lastSec = -1;
     constructor(parent: Node, x: number, y: number, w = 140, h = 48) {
+        // 设计稿 04/05：右上角红色秒表 + 红字"N秒"
         this.node = mk(parent, 'CountdownRing', x, y, w, h);
         const icon = gfx(mk(this.node, 'ClockIcon', 0, 0, h, h));
-        strokeCircle(icon, h / 2, h / 2, h * 0.36, Theme.c.orange, 4);
-        line(icon, h / 2, h / 2, h / 2, h * 0.28, Theme.c.orange, 4);
-        line(icon, h / 2, h / 2, h * 0.68, h / 2, Theme.c.orange, 4);
-        fillCircle(icon, h / 2, h * 0.12, 3, Theme.c.orange);
-        this.label = text(this.node, '', h + 2, 0, w - h - 2, h, Theme.font.lg, Theme.c.red, { bold: true, align: 'l' });
+        const red = Theme.c.payRed;
+        const lw = Math.max(3, h * 0.08);
+        strokeCircle(icon, h / 2, h * 0.56, h * 0.34, red, lw);
+        line(icon, h / 2, h * 0.56, h / 2, h * 0.36, red, lw);
+        line(icon, h / 2, h * 0.56, h * 0.64, h * 0.56, red, lw);
+        line(icon, h * 0.38, h * 0.12, h * 0.62, h * 0.12, red, lw);
+        line(icon, h / 2, h * 0.12, h / 2, h * 0.2, red, lw);
+        this.label = text(this.node, '', h + 4, 0, w - h - 4, h, Math.round(h * 0.62), red, { bold: true, align: 'l' });
     }
 
     update(cd: Countdown): void {
         const sec = cd.remainingSec();
         if (sec === this.lastSec) return;
         this.lastSec = sec;
-        setText(this.label, sec + '秒', sec <= 3 ? Theme.c.redDark : Theme.c.red);
+        setText(this.label, sec + '秒', Theme.c.payRed);
     }
 }
 

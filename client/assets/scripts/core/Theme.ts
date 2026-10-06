@@ -52,6 +52,19 @@ export const Theme = {
         /** 本局剩余时间：正常深蓝 / 警示红（设计图 09-ui-states） */
         clockNormal: '#1F3F7A',
         clockRed: '#E5303A',
+        /** 弹窗（设计稿 04/05/17）：深蓝标题与数字、暖白面板、米色数值底、浅灰说明底、米色胶囊、浅蓝次要按钮 */
+        navy: '#1E2A6B',
+        panelFill: '#FFFBF3',
+        panelLine: '#EFE2C6',
+        boxBeige: '#FBF0DC',
+        boxGray: '#F1F2F5',
+        pill: '#F6E8CB',
+        softBlue: '#DDEBFA',
+        softBlueHi: '#EBF4FE',
+        softBlueEdge: '#A9C6EA',
+        noteGray: '#5B6B8C',
+        payRed: '#E5303A',
+        gainGreen: '#1E9E43',
     },
 
     /** 8 种头像底色（顺序固定，按头像编号取） */
@@ -72,7 +85,7 @@ export const Theme = {
     /** 棋盘页布局常量（SelfCheck 校验不超出 720 宽） */
     board: { playerCols: 4, handVisible: 5, handItemW: 116, handGap: 6, handViewW: 604 },
     /** 弹窗倒计时环在面板内的固定位置（相对面板右上角的内缩量） */
-    popupRing: { size: 150, inset: 20 },
+    popupRing: { size: 124, inset: 16 },
 };
 
 /** 大致估算文字宽度（CJK 按 1 个字号宽，ASCII/数字按 0.56），用于 Chip 等自适应宽度。 */

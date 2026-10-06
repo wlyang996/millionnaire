@@ -62,6 +62,11 @@ export class PopupManager {
         for (const p of this.stack.slice()) if (ids.indexOf(p.popupId) >= 0) p.close();
     }
 
+    /** 美术图到达：通知所有打开的弹窗重建主体。 */
+    refreshArt(): void {
+        for (const p of this.stack.slice()) p.artArrived();
+    }
+
     closeAll(): void {
         for (const p of this.stack.slice()) p.close();
     }

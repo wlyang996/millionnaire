@@ -112,7 +112,11 @@ export class App {
             // 页面用到、但当时还没加载的图到达后重绘当前页；正在输入时等输入结束再重绘
             let waiting = false;
             const redraw = () => {
-                if (EditField.editing === 0) return ctx.screens.refresh();
+                if (EditField.editing === 0) {
+                    ctx.screens.refresh();
+                    ctx.popups.refreshArt();
+                    return;
+                }
                 if (waiting) return; // 输入期间到达的多批图合并成输入结束后的一次重绘
                 waiting = true;
                 setTimeout(() => {

@@ -50,7 +50,7 @@ const BOOT_KEYS = [
 const BACKGROUND_ORDER: (string | RegExp)[] = [
     'board_town', 'icon_settings', 'icon_house', 'icon_copy', 'icon_share', 'icon_mic', 'icon_chat', 'icon_coin',
     /^pawn_[a-z]+$/, /^house_lv\d$/, 'icon_bank', 'icon_jail', 'event_card_back', 'event_card_fan', 'croc_open',
-    /^dice_/, /^event_/, /^card_(?!detail|face)/, /^icon_clock/, /^info_/, 'scene_jail_closeup',
+    /^dice_/, /^event_/, /^card_(?!detail|face)/, /^icon_clock/, /^info_/, /^shop_/, 'icon_shield', 'scene_jail_closeup',
 ];
 
 const LOAD_TIMEOUT_MS = 20000;
