@@ -1,4 +1,7 @@
-/** 顶部玩家条：最多 8 人（2 行 × 4 列），现金、当前玩家高亮、连接/托管状态标记。 */
+/**
+ * 顶部玩家条（设计稿 01）：最多 8 人，2 行 × 4 列，每格 152×68；头像、昵称、金币现金；当前玩家黄框浅黄底；"我"蓝色角标。
+ * 不显示现金变化的加减额（用户要求：不要扣钱 / 加钱提示）。
+ */
 import { Node } from 'cc';
 import { ConnState, ControlMode, PlayerView } from '../../core/Models';
 import { Theme } from '../../core/Theme';
@@ -27,45 +30,41 @@ export function connBadge(conn: ConnState, control: ControlMode): StatusBadge | 
 
 export function drawPlayerBar(parent: Node, x: number, y: number, players: PlayerView[], currentId: string, myId: string, drawingId: string | null = null,
     onPlayerTap?: (id: string) => void, changes: Map<string, CashChange> = new Map(), changeNodes: CashChangeNode[] = []): Node {
-    const cw = 168;
-    const ch = 76;
-    const gap = 6;
-    const bar = mk(parent, 'PlayerBar', x, y, 4 * cw + 3 * gap, 2 * ch + gap);
+    const cw = 152;
+    const ch = 68;
+    const gapX = 9;
+    const gapY = 8;
+    const bar = mk(parent, 'PlayerBar', x, y, 4 * cw + 3 * gapX, 2 * ch + gapY);
     players.slice(0, 8).forEach((p, i) => {
-        const cx = (i % 4) * (cw + gap);
-        const cy = Math.floor(i / 4) * (ch + gap);
+        const cx = (i % 4) * (cw + gapX);
+        const cy = Math.floor(i / 4) * (ch + gapY);
         const cell = mk(bar, 'P:' + p.playerId, cx, cy, cw, ch);
         if (onPlayerTap) onTap(cell, () => onPlayerTap(p.playerId), false);
         const g = gfx(cell);
         const cur = p.playerId === currentId && p.life === 'ALIVE';
         const dead = p.life !== 'ALIVE';
-        fillRR(g, 0, 3, cw, ch, 16, Theme.c.shadow);
-        fillRR(g, 0, 0, cw, ch, 16, dead ? '#E3E7EB' : cur ? '#FFF3C4' : '#FFFFFFE6');
-        if (cur) strokeRR(g, 0, 0, cw, ch, 16, Theme.c.yellow, 4);
-        avatar(cell, 4, 6, 58, p.avatar, p.nickname, { dim: dead });
+        fillRR(g, 0, 3, cw, ch, 14, Theme.c.shadow);
+        fillRR(g, 0, 0, cw, ch, 14, dead ? '#E3E7EB' : cur ? '#FFF6D6' : '#FFFFFFEE');
+        if (cur) strokeRR(g, 1, 1, cw - 2, ch - 2, 14, Theme.c.yellow, 3);
+        avatar(cell, 5, 6, 56, p.avatar, p.nickname, { dim: dead });
         if (p.playerId === myId) {
             const badge = mk(cell, 'MeBadge', 2, 2, 24, 24);
             fillCircle(gfx(badge), 12, 12, 12, Theme.c.blue);
             text(badge, '我', 0, 0, 24, 24, 14, Theme.c.white, { bold: true });
         }
-        text(cell, p.nickname, 70, 4, cw - 74, 26, 22, dead ? Theme.c.inkFaint : Theme.c.ink, { bold: true, align: 'l' });
-        const coin = gfx(mk(cell, 'Coin', 70, 32, 22, 22));
-        drawCoin(coin, 11, 11, 9);
-        text(cell, String(p.cash), 96, 30, cw - 100, 26, 22, dead ? Theme.c.inkFaint : Theme.c.ink, { bold: true, align: 'l' });
+        const ink = dead ? Theme.c.inkFaint : Theme.c.navy;
+        text(cell, p.nickname, 66, 6, cw - 70, 26, 20, ink, { bold: true, align: 'l' });
+        const coin = gfx(mk(cell, 'Coin', 66, 36, 22, 22));
+        drawCoin(coin, 11, 11, 10);
+        text(cell, String(p.cash), 92, 33, cw - 96, 28, 22, ink, { bold: true, align: 'l' });
         const b = statusBadge(p) ?? (p.playerId === drawingId ? { text: '正在抽取事件卡', bg: '#FFF1C9', fg: '#7A5A00' } : null);
-        let bn: Node | null = null;
         if (b) {
-            bn = mk(cell, 'Badge', 66, 54, cw - 70, 20);
-            fillRR(gfx(bn), 0, 0, cw - 70, 20, 10, b.bg);
-            text(bn, b.text, 2, 0, cw - 74, 20, 14, b.fg, { bold: true });
+            const bn = mk(cell, 'Badge', 64, ch - 17, cw - 68, 16);
+            fillRR(gfx(bn), 0, 0, cw - 68, 16, 8, b.bg);
+            text(bn, b.text, 2, 0, cw - 72, 16, 12, b.fg, { bold: true });
         }
-        const change = changes.get(p.playerId);
-        if (change && change.until > Date.now()) {
-            const delta = text(cell, (change.amount > 0 ? '+' : '') + change.amount, 66, 52, cw - 70, 24, 23,
-                change.amount > 0 ? Theme.c.greenDark : Theme.c.redDark, { bold: true, align: 'l' }).node;
-            if (bn) bn.active = false;
-            changeNodes.push({ node: delta, badge: bn, until: change.until });
-        }
+        void changes;
+        void changeNodes;
     });
     return bar;
 }

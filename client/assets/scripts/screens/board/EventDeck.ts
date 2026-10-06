@@ -55,7 +55,13 @@ export function drawCardBack(n: Node, w: number, h: number, withMark = true): vo
 export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: number, mode: 'fan' | 'single', aspect = 1): Node {
     const root = mk(parent, 'EventDeck', x, y, w, h);
     if (mode === 'fan' && art(root, 'event_card_fan', 0, 0, w, h - 20, 'contain', false, { aspect })) {
-        text(root, '事件卡', 0, h - 24, w, 24, 16, '#654011', { bold: true });
+        // 设计稿 01：扇形牌堆下方的木牌"事件卡"
+        const pw = 104;
+        const ph = 30;
+        const plaque = gfx(mk(root, 'Plaque', (w - pw) / 2, h - ph, pw, ph));
+        fillRR(plaque, 0, 0, pw, ph, 10, '#8B5A2B');
+        fillRR(plaque, 2, 2, pw - 4, ph - 5, 8, '#E9C792');
+        text(root, '事件卡', (w - pw) / 2, h - ph, pw, ph - 2, 20, '#5A3410', { bold: true });
         return root;
     }
     const labelH = Math.min(h * 0.2, 28);

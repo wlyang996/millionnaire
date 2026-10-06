@@ -65,7 +65,7 @@ export class App {
         ctx.clock = store.clock;
         ctx.root = root;
         ctx.screens = new ScreenManager(root);
-        const demo = new DemoPanel(root); // 先建，使胶囊占位位于页面之上、弹窗之下
+        const demo = new DemoPanel(root, !store.online); // 先建，使胶囊占位位于页面之上、弹窗之下；联机不显示"☰"演示菜单
         ctx.popups = new PopupManager(root);
         demo.bringToFront();
         const toastLayer = mk(root, 'ToastLayer', 0, 0, Theme.W, Theme.H);

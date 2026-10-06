@@ -31,8 +31,9 @@ import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
 import { CashChange, CashChangeNode, connBadge, drawPlayerBar } from './board/PlayerBar';
 
-const VP_Y = 270;
-const VP_H = 740;
+/** 设计稿 01：棋盘区 y≈262–1095（视口 256–1098），手牌栏 1102–1192，页脚 1198–1280。 */
+const VP_Y = 256;
+const VP_H = 842;
 
 interface Move { id: string; from: number; steps: number; start: number; done: number; demo: boolean; endTurn: boolean }
 
@@ -85,20 +86,21 @@ export class BoardScreen extends Screen {
         const game = this.displayGame(st.game);
         this.backdrop('sky');
         // 页眉：返回 + 药丸（房间号 | 时钟图标 + 剩余时间）；本局倒计时按剩余时间变红/闪烁，房间号不变色
-        new IconButton(this.root, 80, 24, 60, '', () => ctx.screens.go('lobby'), Theme.c.ivory, Theme.c.ink, (g, s) => drawBack(g, s / 2, s / 2, s * 0.6, Theme.c.ink));
-        const hd = mk(this.root, 'Header', 150, 24, 366, 60);
-        fillRR(gfx(hd), 0, 0, 366, 60, 30, '#FFFFFFE6');
-        text(hd, '房间 ' + st.session.roomId, 14, 0, 150, 60, Theme.font.sm, Theme.c.ink, { bold: true, align: 'l' });
-        this.clockNode = mk(hd, 'MatchClock', 168, 0, 190, 60);
-        this.clockIcon = mk(this.clockNode, 'ClockIcon', 6, 14, 32, 32);
-        this.clockLabel = text(this.clockNode, '', 44, 0, 140, 60, Theme.font.sm, Theme.c.clockNormal, { bold: true, align: 'l' });
+        // 设计稿 01 页眉：返回（x 88–148）+ 房间号 / 本局剩余时间药丸（x 155–530，y 12–62）
+        new IconButton(this.root, 88, 7, 60, '', () => ctx.screens.go('lobby'), Theme.c.ivory, Theme.c.ink, (g, s) => drawBack(g, s / 2, s / 2, s * 0.6, Theme.c.navy));
+        const hd = mk(this.root, 'Header', 155, 12, 375, 50);
+        fillRR(gfx(hd), 0, 0, 375, 50, 25, '#FFFFFFE6');
+        text(hd, '房间 ' + st.session.roomId, 18, 0, 170, 50, 26, Theme.c.navy, { bold: true, align: 'l' });
+        this.clockNode = mk(hd, 'MatchClock', 196, 0, 175, 50);
+        this.clockIcon = mk(this.clockNode, 'ClockIcon', 2, 9, 32, 32);
+        this.clockLabel = text(this.clockNode, '', 40, 0, 135, 50, 26, Theme.c.clockNormal, { bold: true, align: 'l' });
         this.clockState = '';
 
         const ev = st.eventDraw;
         const evMode = eventViewMode(ev, this.myId);
         this.captureCashChanges(game);
         this.cashChangeNodes = [];
-        drawPlayerBar(this.root, 6, 100, game.players, game.currentPlayer, this.myId,
+        drawPlayerBar(this.root, 44, 74, game.players, game.currentPlayer, this.myId,
             ev.phase !== 'IDLE' && ev.actor !== this.myId ? ev.actor : null,
             id => ctx.popups.open(new AssetsPopup(id)), this.cashChanges, this.cashChangeNodes);
 
@@ -151,13 +153,6 @@ export class BoardScreen extends Screen {
             this.dice = new DiceView(this.root, Theme.W / 2 - 54, 900);
             this.dice.setValue(game.lastDice);
         } else this.buildTurnPanel();
-        (this.spectator || st.eventDraw.phase !== 'IDLE' ? [] : game.chat.slice(-1)).forEach((c) => {
-            const y = VP_Y + 622;
-            const w = Math.min(380, 40 + (c.from.length + c.text.length) * 22);
-            const b = mk(this.root, 'Chat', (Theme.W - w) / 2, y, w, 34);
-            fillRR(gfx(b), 0, 0, w, 34, 17, '#2D3B4ACC');
-            text(b, c.from + '：' + c.text, 12, 0, w - 20, 34, 20, Theme.c.white, { align: 'l' });
-        });
     }
 
     private connNote(me: PlayerView): { text: string; action?: string } | null {
@@ -202,39 +197,35 @@ export class BoardScreen extends Screen {
         const cur = st.player(game.currentPlayer) as PlayerView;
         const myTurn = st.isMyTurn() && !this.spectator;
         const cx = Theme.W / 2;
-        const top = VP_Y + (this.spectator ? 90 : 230);
-        const pill = roundedPanel(this.root, cx - 150, top, 300, 100, { fill: '#FFFDF2F2', r: 34 });
-        const ic = mk(pill, 'TurnIcon', 22, 26, 44, 44);
+        // 设计稿 01 / 11：白色圆角药丸（x 250–466，y 498–578）+ 黄色秒表；本人"轮到你了 / 剩余 N秒"，他人"X的回合 / 等待X投骰"
+        const top = 498;
+        const pill = roundedPanel(this.root, cx - 110, top, 220, 80, { fill: '#FFFFFFF2', r: 24 });
+        const ic = mk(pill, 'TurnIcon', 12, 14, 44, 44);
         drawClock(gfx(ic), 22, 24, 17, Theme.c.yellowDark);
-        text(pill, myTurn ? '轮到你了' : cur.nickname + '的回合', 70, 6, 220, 52, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
-        text(pill, '剩余', 70, 54, 62, 36, Theme.font.sm, Theme.c.ink, { bold: true, align: 'l' });
-        this.cdSec = text(pill, '', 130, 54, 120, 36, Theme.font.md, Theme.c.red, { bold: true, align: 'l' });
+        text(pill, myTurn ? '轮到你了' : cur.nickname + '的回合', 58, 6, 156, 40, 28, Theme.c.navy, { bold: true, align: 'l' });
+        if (myTurn) {
+            text(pill, '剩余', 58, 42, 56, 32, 22, Theme.c.navy, { bold: true, align: 'l' });
+            this.cdSec = text(pill, '', 108, 42, 100, 32, 22, Theme.c.payRed, { bold: true, align: 'l' });
+        } else {
+            text(pill, '等待' + cur.nickname + '投骰', 58, 42, 156, 32, 20, Theme.c.navy, { align: 'l' });
+        }
         if (this.spectator) {
-            const status = roundedPanel(this.root, cx - 180, top + 112, 360, 58, { fill: '#2D3B4AEE', r: 29 });
+            const status = roundedPanel(this.root, cx - 180, top + 230, 360, 58, { fill: '#2D3B4AEE', r: 29 });
             text(status, '已' + (st.me().life === 'SURRENDERED' ? '认输' : '破产') + ' · 观战中', 0, 0, 360, 58, Theme.font.lg, Theme.c.white, { bold: true });
-            this.dice = new DiceView(this.root, cx - 54, top + 228);
+            this.dice = new DiceView(this.root, cx - 54, 616);
             this.dice.setValue(game.lastDice);
             return;
         }
-        // 石板广场 + 骰子
-        const plaza = mk(this.root, 'Plaza', cx - 130, top + 104, 260, 190);
-        fillCircle(gfx(plaza), 130, 100, 112, '#E8D9B466');
-        fillCircle(gfx(plaza), 130, 100, 92, '#F1E5C655');
-        this.dice = new DiceView(this.root, cx - 54, top + 142);
+        // 骰子：设计稿 01 中央（x 300–420，y 610–730）
+        this.dice = new DiceView(this.root, cx - 54, 616);
         this.dice.setValue(game.lastDice);
         onTap(this.dice.node, () => {
             if (this.canRoll()) this.startRoll();
         }, false);
         const jailWin = st.online && myTurn && game.stage === 'JAIL_DECISION' ? st.online.myWindow('TURN') : undefined;
         if (jailWin) {
-            text(this.root, '点骰子掷出狱判定（偶数出狱）', cx - 220, top + 296, 440, 40, Theme.font.sm, Theme.c.ink, { bold: true });
-            ghostButton(this.root, '付 500 出狱', cx - 110, top + 340, 220, 64, () => void st.online!.act('PayBail', { windowId: jailWin.windowId }), Theme.font.md);
-        }
-        if (!myTurn) {
-            const badge = connBadge(cur.conn, cur.control);
-            const msg = '等待 ' + cur.nickname + ' 行动…' + (badge ? '（' + badge.text + '）' : '');
-            const wp = roundedPanel(this.root, cx - 170, top + 296, 340, 48, { fill: '#FFFDF2EE', r: 28 });
-            text(wp, msg, 10, 0, 320, 48, Theme.font.sm, Theme.c.inkSoft, { bold: true });
+            text(this.root, '点骰子掷出狱判定（偶数出狱）', cx - 220, 736, 440, 40, Theme.font.sm, Theme.c.ink, { bold: true });
+            ghostButton(this.root, '付 500 出狱', cx - 110, 780, 220, 64, () => void st.online!.act('PayBail', { windowId: jailWin.windowId }), Theme.font.md);
         }
     }
 

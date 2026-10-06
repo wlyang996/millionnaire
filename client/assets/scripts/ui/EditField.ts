@@ -2,7 +2,8 @@
  * 输入框封装。
  * - 网页（H5）：不用 cc.EditBox。它的 DOM 文本框按引擎的摄像机换算位置，而本项目的 Canvas/Camera 是运行时创建的，
  *   在等比缩放（SHOW_ALL）的宽屏上会整体偏到别处（文字"跑到上面去"）。这里改为自管一个 <input>，
- *   按 Root（720×1280 设计区，左上锚点）在页面上的实际缩放与居中位置精确摆放。
+ *   放进画布所在的容器里绝对定位（iOS 弹键盘平移页面时跟着画布一起走），打开期间每帧按 Root（720×1280 设计区，
+ *   左上锚点）在页面上的实际缩放与居中位置重新对齐；字号不小于 16px（iOS 小于 16px 会在聚焦时放大整页）。
  * - 微信小游戏等无 DOM 环境：仍用 cc.EditBox（调起系统键盘，不涉及 DOM 定位）。
  */
 import { EditBox, Label, Layers, Node, UITransform, Vec3 } from 'cc';
@@ -10,15 +11,18 @@ import { Theme } from '../core/Theme';
 import { ctx } from './Ctx';
 import { col, fillRR, gfx, mk, onTap, setText, strokeRR, text } from './Kit';
 
+type Rect = { left: number; top: number; width: number; height: number };
+type El = { getBoundingClientRect(): Rect; parentElement: { appendChild(e: unknown): void } | null };
 type Dom = {
     document: {
         createElement(tag: string): HTMLInputElement;
         body: { appendChild(e: unknown): void };
-        getElementById(id: string): { getBoundingClientRect(): { left: number; top: number; width: number; height: number } } | null;
-        querySelector(sel: string): { getBoundingClientRect(): { left: number; top: number; width: number; height: number } } | null;
+        getElementById(id: string): El | null;
+        querySelector(sel: string): El | null;
     };
-    addEventListener(type: string, fn: () => void): void;
-    removeEventListener(type: string, fn: () => void): void;
+    requestAnimationFrame(fn: () => void): number;
+    cancelAnimationFrame(id: number): void;
+    scrollTo(x: number, y: number): void;
 };
 
 function domEnv(): Dom | null {
@@ -38,7 +42,7 @@ export class EditField {
     private label: Label | null = null;
     private placeholderText = '';
     private input: HTMLInputElement | null = null;
-    private readonly relayout = () => this.placeInput();
+    private frame = 0;
     /** 回车（网页）/ 键盘"完成"（小游戏）时调用，聊天用来直接发送。 */
     onEnter: (() => void) | null = null;
 
@@ -110,10 +114,14 @@ export class EditField {
         el.value = this.current;
         el.maxLength = this.maxLength;
         el.placeholder = this.placeholderText;
+        el.setAttribute('enterkeyhint', this.onEnter ? 'send' : 'done');
+        el.setAttribute('autocomplete', 'off');
         Object.assign(el.style, {
-            position: 'fixed', zIndex: '1000', margin: '0', padding: '0 12px', boxSizing: 'border-box',
+            position: 'absolute', zIndex: '1000', margin: '0', padding: '0 12px', boxSizing: 'border-box',
             border: '3px solid ' + Theme.c.blue, borderRadius: '10px', outline: 'none', background: '#FFFFFF',
             color: Theme.c.ink, fontFamily: 'sans-serif',
+            // 页面样式给 body/div 设了 user-select: none，iOS 上会让输入框无法输入
+            userSelect: 'text', webkitUserSelect: 'text',
         });
         el.addEventListener('input', () => {
             this.current = el.value;
@@ -127,11 +135,19 @@ export class EditField {
             else el.blur();
         });
         el.addEventListener('blur', () => this.closeDom());
-        env.document.body.appendChild(el);
+        // 放进画布所在的容器：iOS 弹出键盘平移页面时，输入框与画布一起移动
+        const canvas = env.document.getElementById('GameCanvas') ?? env.document.querySelector('canvas');
+        (canvas?.parentElement ?? env.document.body).appendChild(el);
         this.input = el;
         EditField.editing++;
         this.placeInput();
-        env.addEventListener('resize', this.relayout);
+        // 打开期间每帧对齐（键盘弹出、画布重新布局、横竖屏切换都能跟上）
+        const follow = () => {
+            if (this.input !== el) return;
+            this.placeInput();
+            this.frame = env.requestAnimationFrame(follow);
+        };
+        this.frame = env.requestAnimationFrame(follow);
         this.paint(true);
         el.focus();
     }
@@ -141,7 +157,11 @@ export class EditField {
         if (!el) return;
         this.input = null;
         EditField.editing = Math.max(0, EditField.editing - 1);
-        domEnv()?.removeEventListener('resize', this.relayout);
+        const env = domEnv();
+        if (env) {
+            env.cancelAnimationFrame(this.frame);
+            env.scrollTo(0, 0); // iOS 收起键盘后页面可能停在平移后的位置
+        }
         this.current = el.value;
         el.remove();
         if (!this.bg.isValid) return;
@@ -150,7 +170,7 @@ export class EditField {
         this.onChange(this.current);
     }
 
-    /** 设计坐标（Root 左上为原点）→ 页面坐标：按 SHOW_ALL 的等比缩放与居中换算。 */
+    /** 设计坐标（Root 左上为原点）→ 容器内坐标：按 SHOW_ALL 的等比缩放与居中换算，再减去定位容器在页面上的位置。 */
     private placeInput(): void {
         const env = domEnv();
         const el = this.input;
@@ -159,17 +179,21 @@ export class EditField {
         const canvas = env.document.getElementById('GameCanvas') ?? env.document.querySelector('canvas');
         if (!canvas) return;
         const r = canvas.getBoundingClientRect();
+        const host = (el.offsetParent as unknown as El | null)?.getBoundingClientRect() ?? { left: 0, top: 0, width: 0, height: 0 };
         const s = Math.min(r.width / Theme.W, r.height / Theme.H);
-        const ox = r.left + (r.width - Theme.W * s) / 2;
-        const oy = r.top + (r.height - Theme.H * s) / 2;
+        const ox = r.left - host.left + (r.width - Theme.W * s) / 2;
+        const oy = r.top - host.top + (r.height - Theme.H * s) / 2;
         const p = this.bg.worldPosition;
         const root = ctx.root.worldPosition;
         const dx = p.x - root.x;
         const dy = root.y - p.y;
-        Object.assign(el.style, {
-            left: ox + dx * s + 'px', top: oy + dy * s + 'px', width: this.w * s + 'px', height: this.h * s + 'px',
-            fontSize: Math.max(12, Theme.font.md * s) + 'px',
-        });
+        const style = {
+            left: Math.round(ox + dx * s) + 'px', top: Math.round(oy + dy * s) + 'px',
+            width: Math.round(this.w * s) + 'px', height: Math.round(this.h * s) + 'px',
+            fontSize: Math.max(16, Math.round(Theme.font.md * s)) + 'px',
+        };
+        if (el.style.left !== style.left || el.style.top !== style.top || el.style.width !== style.width
+            || el.style.height !== style.height || el.style.fontSize !== style.fontSize) Object.assign(el.style, style);
     }
 
     private render(): void {

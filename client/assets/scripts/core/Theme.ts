@@ -9,7 +9,7 @@ export const Theme = {
     /** 顶部安全区：微信胶囊占据右上角，内容与可点元素需避开 */
     safeTop: 100,
     /** 胶囊占位（x,y,w,h），仅供布局自检/演示绘制 */
-    capsule: { x: 524, y: 22, w: 184, h: 64 },
+    capsule: { x: 540, y: 12, w: 160, h: 50 },
     /** 底部安全区（Home 条） */
     safeBottom: 24,
 
@@ -83,7 +83,7 @@ export const Theme = {
         eventFlipMs: 700, eventAutoMs: 15000, eventBreathMs: 1400, eventOtherHoldMs: 1500,
     },
     /** 棋盘页布局常量（SelfCheck 校验不超出 720 宽） */
-    board: { playerCols: 4, handVisible: 5, handItemW: 116, handGap: 6, handViewW: 604 },
+    board: { playerCols: 4, handVisible: 5, handItemW: 104, handGap: 6, handViewW: 544 },
     /** 弹窗倒计时环在面板内的固定位置（相对面板右上角的内缩量） */
     popupRing: { size: 124, inset: 16 },
 };

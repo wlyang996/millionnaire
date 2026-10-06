@@ -29,15 +29,18 @@ export class DemoPanel {
     private readonly layer: Node;
     private capsule: Node | null = null;
 
-    constructor(parent: Node) {
+    /** @param menu 是否显示左上角"☰"（联机正式游戏不显示，H5 加 ?demo=1 的演示模式才显示） */
+    constructor(parent: Node, menu = true) {
         this.layer = mk(parent, 'DemoLayer', 0, 0, Theme.W, Theme.H);
+        // 微信小游戏里胶囊由微信绘制；网页预览才画占位（设计稿位置 x 540–700，y 12–62）
+        if (!(globalThis as unknown as { wx?: unknown }).wx) this.drawCapsule(parent);
+        if (!menu) return;
         const btn = mk(this.layer, 'DemoBtn', 10, 30, 56, 56);
         const g = gfx(btn);
         fillRR(g, 0, 3, 56, 56, 28, Theme.c.shadow);
         fillRR(g, 0, 0, 56, 56, 28, '#2D3B4AE6');
         text(btn, '☰', 0, 0, 56, 56, 30, Theme.c.white, { bold: true });
         onTap(btn, () => this.toggle());
-        this.drawCapsule(parent);
     }
 
     /** 微信胶囊占位（仅预览用，真机由微信绘制）。 */
@@ -45,10 +48,11 @@ export class DemoPanel {
         const c = Theme.capsule;
         this.capsule = mk(parent, '~Capsule', c.x, c.y, c.w, c.h);
         const g = gfx(this.capsule);
+        const half = c.w / 2;
         fillRR(g, 0, 0, c.w, c.h, c.h / 2, '#FFFFFFAA');
-        fillRR(g, 90, 14, 3, c.h - 28, 1, '#00000033');
-        text(this.capsule, '···', 0, 0, 90, c.h, 30, Theme.c.ink, { bold: true });
-        text(this.capsule, '◎', 94, 0, 90, c.h, 30, Theme.c.ink, { bold: true });
+        fillRR(g, half - 1, 12, 2, c.h - 24, 1, '#00000033');
+        text(this.capsule, '···', 0, 0, half, c.h, 28, Theme.c.ink, { bold: true });
+        text(this.capsule, '◎', half, 0, half, c.h, 28, Theme.c.ink, { bold: true });
     }
 
     /** 把 ☰ 菜单层移到最上（弹窗之上、Toast 之下）。 */

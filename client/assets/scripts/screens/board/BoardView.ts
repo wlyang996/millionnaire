@@ -6,7 +6,7 @@
  * 棋子：我的棋子更大，带"我·昵称"气泡与发光底座；逐格跳跃由 hopTo() 按时间插值（BoardScreen 用时间戳驱动）。
  */
 import { Label, Mask, Node, UITransform, Vec3, view } from 'cc';
-import { axisCell, boardAxis, eventDeckRect, gridCell, gridFor, GridSpec, ringLength } from '../../core/BoardLayout';
+import { axisCell, gridCell, gridFor, GridSpec, ringLength } from '../../core/BoardLayout';
 import { BoardTile, GameView, PropertyState } from '../../core/Models';
 import { Theme, textWidth } from '../../core/Theme';
 import { drawHouse, drawPips } from '../../ui/Icons';
@@ -24,6 +24,13 @@ interface Fx { node: Node; start: number; dur: number; kind: 'dust' | 'pulse' }
 
 const OWNER_COLORS = Theme.avatarColors;
 
+/** 地产格底部厚边：档位色 + 更深的底沿。 */
+const TIER_BASE: Record<string, [string, string]> = {
+    LOW: [Theme.c.tierLow, '#58B04A'],
+    MID: [Theme.c.tierMid, '#2F7FCC'],
+    HIGH: [Theme.c.tierHigh, '#8550E0'],
+};
+
 export class BoardView {
     readonly viewport: Node;
     private world!: Node;
@@ -31,11 +38,14 @@ export class BoardView {
     private fit = 1;
     private xs: number[] = [];
     private ys: number[] = [];
-    /** Fill the portrait viewport with rectangular tiles while retaining the exact ring/grid data. */
+    /** 设计稿 01：世界节点等比显示（不再纵向拉伸），此值恒为 1，保留给美术等比换算。 */
     private verticalAspect = 1;
+    /** 世界（棋盘）宽高：设计稿 01 的棋盘区 = 视口左右各留 16、上下共留 9。 */
+    private ww = 0;
+    private wh = 0;
     /** 本次绘制中有主地产的房子（格子画完后统一画到房屋层）。 */
-    private houses: { key: string; n: Node; icx: number; icy: number; isz: number;
-        dot: { x: number; y: number }; ownerColor: string | null }[] = [];
+    private houses: { key: string; x: number; y: number; base: number; isz: number; cw: number;
+        dot: { x: number; y: number; r: number }; ownerColor: string | null }[] = [];
     cam: CamState;
     private pinchDist = 0;
     private moved = 0;
@@ -76,19 +86,29 @@ export class BoardView {
             this.world.destroy();
         }
         const size = game.tiles.length === 30 ? 30 : 50;
-        this.g = gridFor(size);
+        // 设计稿 01：所有格子（含四角）同样大小、均匀铺满棋盘区，不放大四角、不拉伸
+        const grid = gridFor(size);
+        const ww = this.w - 32;
+        const wh = this.h - 9;
+        const px = ww / grid.cols;
+        const py = wh / grid.rows;
+        this.g = { cols: grid.cols, rows: grid.rows, tile: Math.min(px, py) };
         const g = this.g;
-        this.xs = boardAxis(g.cols, g.tile);
-        this.ys = boardAxis(g.rows, g.tile);
-        const ww = g.cols * g.tile;
-        const wh = g.rows * g.tile;
+        this.xs = Array.from({ length: g.cols + 1 }, (_, i) => i * px);
+        this.ys = Array.from({ length: g.rows + 1 }, (_, i) => i * py);
+        this.ww = ww;
+        this.wh = wh;
         this.world = mk(this.viewport, 'World', 0, 0, ww, wh);
-        this.fit = this.w / ww;
-        this.verticalAspect = this.h / (wh * this.fit);
+        this.fit = 1;
+        this.verticalAspect = 1;
         if (this.cam.boardId !== game.boardId || this.cam.scale <= 0) {
             this.cam = { scale: this.fit, vx: 0, vy: 0, follow: this.cam.follow, boardId: game.boardId };
             this.centerOn(ww / 2, wh / 2, false);
         }
+        // 设计稿 01：格子环下面一圈石板色边框
+        const frame = gfx(mk(this.world, 'Frame', -8, -8, ww + 16, wh + 16));
+        fillRR(frame, 0, 0, ww + 16, wh + 16, 20, '#B9AE9B');
+        fillRR(frame, 2, 2, ww + 12, wh + 12, 18, '#DDD6C7');
         this.drawCenter(ww, wh);
         const tilesNode = mk(this.world, 'Tiles', 0, 0, ww, wh);
         this.cellToIndex.clear();
@@ -99,11 +119,8 @@ export class BoardView {
             this.drawTile(tilesNode, t, game);
         }
         this.drawHouses(mk(this.world, 'Houses', 0, 0, ww, wh));
-        // 事件牌堆：棋盘内圈左上角的装饰（design/screens/11、10），在格子之上、棋子之下
-        const dr = eventDeckRect(g, this.fit);
-        dr.x += this.xs[1] - g.tile;
-        dr.y += this.ys[1] - g.tile;
-        drawEventDeck(this.world, dr.x, dr.y, dr.w, dr.h, deckMode, this.verticalAspect);
+        // 事件牌堆：棋盘内圈左上角展开的三张卡（设计稿 01：约 250×172，含"事件卡"木牌），在格子之上、棋子之下
+        drawEventDeck(this.world, this.xs[1] + 29, this.ys[1] + 18, 250, 172, deckMode, 1);
         this.tokens.clear();
         const tokens = mk(this.world, 'Tokens', 0, 0, ww, wh);
         this.drawTokens(tokens, game, myId, myName);
@@ -148,40 +165,22 @@ export class BoardView {
      * 归属色点画在所有房子之上（原来的位置会被房子挡住）。
      */
     private drawHouses(layer: Node): void {
-        const va = this.verticalAspect;
-        const ww = this.g.cols * this.g.tile;
-        const list = this.houses.slice().sort((a, b) => a.n.position.y === b.n.position.y
-            ? a.n.position.x - b.n.position.x : b.n.position.y - a.n.position.y);
+        const list = this.houses.slice().sort((a, b) => a.y === b.y ? a.x - b.x : a.y - b.y);
         for (const h of list) {
             const ratio = artRatio(h.key);
             if (!ratio) continue;
-            const sx = h.n.scale.x;
-            const sy = h.n.scale.y;
-            const baseX = h.n.position.x + h.icx * sx;
-            const baseY = -h.n.position.y + (h.icy + h.isz / 2 + h.isz * 0.08) * sy;
-            // 显示尺寸：约 1.35 个图标高，宽不超过格子显示宽度的 1.08 倍；顶部不超出棋盘上沿
-            const cellW = this.g.tile * sx;
-            const iconH = h.isz * sy * va;
-            let dh = Math.min(Math.max(iconH * 1.35, cellW * 0.9 / ratio), (baseY - 2) * va);
-            if (dh * ratio > cellW * 1.08) dh = cellW * 1.08 / ratio;
+            // 约 1.35 个图标高，宽不超过格子宽的 1.08 倍；顶部不超出棋盘上沿
+            let dh = Math.min(Math.max(h.isz * 1.35, h.cw * 0.9 / ratio), h.base - 2);
+            if (dh * ratio > h.cw * 1.08) dh = h.cw * 1.08 / ratio;
             const lw = dh * ratio;
-            const lh = dh / va;
-            const x = Math.max(0, Math.min(ww - lw, baseX - lw / 2));
-            art(layer, h.key, x, baseY - lh, lw, lh, 'stretch');
+            const x = Math.max(0, Math.min(this.ww - lw, h.x - lw / 2));
+            art(layer, h.key, x, h.base - dh, lw, dh, 'stretch');
         }
-        const dots = gfx(mk(layer, 'OwnerDots', 0, 0, ww, this.g.rows * this.g.tile));
+        const dots = gfx(mk(layer, 'OwnerDots', 0, 0, this.ww, this.wh));
         for (const h of list) {
             if (!h.ownerColor) continue;
-            const cx = h.n.position.x + h.dot.x * h.n.scale.x;
-            const cy = -h.n.position.y + h.dot.y * h.n.scale.y;
-            const r = 8 * h.n.scale.x;
-            // 世界节点纵向有拉伸：竖直半径按比例放大，显示为正圆
-            dots.fillColor = col('#FFFFFF');
-            dots.ellipse(cx, -cy, r, r / va);
-            dots.fill();
-            dots.fillColor = col(h.ownerColor);
-            dots.ellipse(cx, -cy, r * 0.75, (r * 0.75) / va);
-            dots.fill();
+            fillCircle(dots, h.dot.x, h.dot.y, h.dot.r, '#FFFFFF');
+            fillCircle(dots, h.dot.x, h.dot.y, h.dot.r * 0.75, h.ownerColor);
         }
     }
 
@@ -193,88 +192,72 @@ export class BoardView {
         return 'left';
     }
 
+    /**
+     * 设计稿 01 的立体格子：白色顶面（事件格浅黄）+ 底部档位色厚边（特殊格浅灰）+ 投影；上部图标、下部地名（深蓝粗体）。
+     * 直接按格子实际宽高绘制（不再缩放格子节点，图标与文字都不变形）。
+     */
     private drawTile(parent: Node, tile: BoardTile, game: GameView): void {
-        const g = this.g;
-        const t = g.tile;
-        const cell = gridCell(tile.index, g);
-        const n = mk(parent, 'Tile' + tile.index, this.xs[cell.col], this.ys[cell.row], t, t);
-        n.setScale((this.xs[cell.col + 1] - this.xs[cell.col]) / t,
-            (this.ys[cell.row + 1] - this.ys[cell.row]) / t, 1);
+        const cell = gridCell(tile.index, this.g);
+        const x = this.xs[cell.col];
+        const y = this.ys[cell.row];
+        const cw = this.xs[cell.col + 1] - x;
+        const ch = this.ys[cell.row + 1] - y;
+        const n = mk(parent, 'Tile' + tile.index, x, y, cw, ch);
         const gg = gfx(n);
-        const m = 2;
-        fillRR(gg, m, m + 2, t - 2 * m, t - 2 * m, 8, '#00000022');
-        fillRR(gg, m, m, t - 2 * m, t - 2 * m, 8, '#FFFDF5');
-        if (this.highlight === tile.index) {
-            fillRR(gg, 0, 0, t, t, 10, '#FFD64666');
-            strokeRR(gg, m, m, t - 2 * m, t - 2 * m, 8, Theme.c.yellow, 4);
-        } else strokeRR(gg, m, m, t - 2 * m, t - 2 * m, 8, '#D8CBA0', 2);
-        const prop = game.properties.find((p) => p.tileIndex === tile.index);
-        // 内容区（扣掉色条）
-        let x0 = m;
-        let y0 = m;
-        let cw = t - 2 * m;
-        let ch = t - 2 * m;
+        const m = Math.max(1.5, Math.round(cw * 0.03));
+        const bw = cw - 2 * m;
+        const bh = ch - 2 * m;
+        const r = Math.min(10, bw * 0.16);
+        const band = Math.max(6, Math.round(bh * 0.2));
         const isProp = tile.type === 'PROPERTY';
-        const bar = Math.round(t * 0.26);
-        const side = this.facing(cell.col, cell.row);
-        if (isProp) {
-            const color = tile.tier === 'LOW' ? Theme.c.tierLow : tile.tier === 'MID' ? Theme.c.tierMid : Theme.c.tierHigh;
-            let bx = m;
-            let by = m;
-            let bw = cw;
-            let bh = bar;
-            if (side === 'top') { y0 += bar; ch -= bar; }
-            else if (side === 'bottom') { by = t - m - bar; ch -= bar; }
-            else if (side === 'left') { x0 += bar; cw -= bar; bw = bar; bh = t - 2 * m; }
-            else { bx = t - m - bar; cw -= bar; bw = bar; bh = t - 2 * m; }
-            fillRR(gg, bx, by, bw, bh, 6, color);
-            if (tile.auctionLot) fillCircle(gg, t - 11, t - 11, 6, Theme.c.red);
+        const prop = game.properties.find((p) => p.tileIndex === tile.index);
+        const face = tile.type === 'EVENT' ? '#FFF4D8' : '#FFFFFF';
+        const [baseColor, baseDark] = isProp ? TIER_BASE[tile.tier ?? 'LOW'] : ['#D6DCE4', '#B4BCC8'];
+        fillRR(gg, m, m + 3, bw, bh, r, '#00000026');
+        fillRR(gg, m, m, bw, bh, r, baseDark);
+        fillRR(gg, m, m, bw, bh - 3, r, baseColor);
+        const fh = bh - band;
+        fillRR(gg, m, m, bw, fh, r, face);
+        if (this.highlight === tile.index) {
+            fillRR(gg, m - 1, m - 1, bw + 2, bh + 2, r + 1, '#FFD64655');
+            strokeRR(gg, m, m, bw, fh, r, Theme.c.yellow, 3);
         }
-        // 下部三字地名，上部图标
-        const lh = Math.ceil(t * (side === 'left' || side === 'right' ? 0.4 : 0.32));
-        this.drawTileName(n, tile.name, x0, y0 + ch - lh, cw, lh);
-        const icx = x0 + cw / 2;
-        const icy = y0 + (ch - lh) / 2;
-        const isz = Math.min(cw, ch - lh) * 0.9;
-        const iconKey = tile.type === 'PROPERTY' ? 'house_lv' + (prop?.level ?? 0)
-            : ({ BANK: 'icon_bank', JAIL: 'icon_jail', EVENT: 'event_card_back', GAME_ZONE: 'croc_open' } as Record<string, string>)[tile.type];
-        // 格子节点与世界节点都有非等比缩放：图标按显示比例等比画，不再被压扁 / 拉长
-        const aspect = (n.scale.y * this.verticalAspect) / n.scale.x;
+        if (tile.auctionLot) fillCircle(gg, m + bw - 8, m + 8, 5, Theme.c.red);
+        // 下部地名、上部图标
+        const nameH = Math.round(fh * 0.34);
+        this.drawTileName(n, tile.name, m + 2, m + fh - nameH - 1, bw - 4, nameH);
+        const iconTop = m + fh * 0.06;
+        const iconH = fh - nameH - fh * 0.06;
+        const isz = Math.min(bw * 0.84, iconH);
+        const icx = m + bw / 2;
+        const icy = iconTop + iconH / 2;
+        const iconKey = isProp ? 'house_lv' + (prop?.level ?? 0)
+            : ({ BANK: 'icon_bank', JAIL: 'icon_jail', GAME_ZONE: 'croc_open', START: 'icon_start_flag' } as Record<string, string>)[tile.type];
         const housed = isProp && !!prop?.owner && !prop.mortgaged && !!iconKey && !!artRatio(iconKey);
         if (housed) {
-            // 有主地产：立体房子画在格子之上的房屋层（更大，向上探出格子），这里只留地基阴影
-            gg.fillColor = col('#00000022');
-            gg.ellipse(icx, -(icy + isz * 0.36), isz * 0.42, isz * 0.12 / aspect);
-            gg.fill();
-            this.houses.push({ key: iconKey, n, icx, icy, isz, dot: { x: x0 + 8, y: y0 + 8 }, ownerColor: this.ownerColor(prop, game) });
-        } else if (!iconKey || !art(n, iconKey, icx - isz / 2, icy - isz / 2, isz, isz, 'contain', false, { aspect })) {
+            // 有主地产：立体房子画在格子之上的房屋层（更大，向上探出格子）
+            this.houses.push({ key: iconKey, x: x + icx, y, base: y + icy + isz * 0.5, isz, cw,
+                dot: { x: x + m + 8, y: y + m + 8, r: Math.max(5, cw * 0.1) }, ownerColor: this.ownerColor(prop, game) });
+        } else if (!iconKey || !art(n, iconKey, icx - isz / 2, icy - isz / 2, isz, isz)) {
             this.drawIcon(gg, tile, prop, icx, icy, isz);
         }
         if (isProp && prop && prop.owner) {
-            if (!housed) this.drawOwnerDot(gg, prop, game, x0 + 8, y0 + 8);
+            if (!housed) this.drawOwnerDot(gg, prop, game, m + 8, m + 8);
             if (prop.mortgaged) {
-                fillRR(gg, m, m, t - 2 * m, t - 2 * m, 8, '#4A556099');
-                text(n, '押', 0, 0, t, t - lh, Math.round(t * 0.4), Theme.c.white, { bold: true });
+                fillRR(gg, m, m, bw, fh, r, '#4A556099');
+                text(n, '押', m, m, bw, fh - nameH, Math.round(Math.min(bw, fh) * 0.4), Theme.c.white, { bold: true });
             }
         }
-        if (tile.type === 'STATION') this.drawOwnerDot(gg, prop, game, t - 12, 12);
+        if (tile.type === 'STATION') this.drawOwnerDot(gg, prop, game, m + bw - 9, m + 9);
     }
 
-    /** Rasterize small names at 3x; cancel the tile/world stretch on glyphs only.
-     * The text box still fills its original band, and follows camera zoom normally.
-     */
+    /** 地名：按格子宽度自适应字号，2 倍栅格再缩回，小字也清楚。 */
     private drawTileName(parent: Node, name: string, x: number, y: number, w: number, h: number): void {
-        const sx = parent.scale.x;
-        const sy = parent.scale.y * this.verticalAspect;
-        const uniform = Math.min(sx, sy);
-        const bw = w * sx / uniform;
-        const bh = h * sy / uniform;
-        const font = Math.floor(Math.min(bh * 0.78, (bw - 4) / (textWidth(name, 1) + 0.25)));
-        const density = 3;
-        const label = text(parent, name, x, y, bw * density, bh * density,
-            font * density, Theme.c.ink, { bold: true });
+        const font = Math.max(9, Math.floor(Math.min(h * 0.82, (w - 2) / (textWidth(name, 1) + 0.1))));
+        const density = 2;
+        const label = text(parent, name, x, y, w * density, h * density, font * density, Theme.c.navy, { bold: true });
         label.overflow = Label.Overflow.CLAMP;
-        label.node.setScale(uniform / sx / density, uniform / sy / density, 1);
+        label.node.setScale(1 / density, 1 / density, 1);
     }
 
     private drawIcon(gg: ReturnType<typeof gfx>, tile: BoardTile, prop: PropertyState | undefined, cx: number, cy: number, s: number): void {
@@ -293,9 +276,9 @@ export class BoardView {
                 fillCircle(gg, cx + s * 0.2, cy + s * 0.32, s * 0.08, '#333');
                 break;
             case 'EVENT':
-                fillCircle(gg, cx, cy, s * 0.4, Theme.c.orange);
-                fillRR(gg, cx - s * 0.05, cy - s * 0.22, s * 0.1, s * 0.26, 3, Theme.c.white);
-                fillCircle(gg, cx, cy + s * 0.22, s * 0.06, Theme.c.white);
+                // 设计稿 01：橙红圆底 + 白色问号
+                fillCircle(gg, cx, cy, s * 0.4, '#F2663A');
+                text(gg.node, '?', cx - s * 0.4, cy - s * 0.42, s * 0.8, s * 0.8, Math.round(s * 0.56), Theme.c.white, { bold: true });
                 break;
             case 'BANK':
                 fillCircle(gg, cx, cy, s * 0.4, Theme.c.yellow);
@@ -351,8 +334,9 @@ export class BoardView {
     private drawTokens(parent: Node, game: GameView, myId: string, myName: string): void {
         const t = this.g.tile;
         const seen: Record<number, number> = {};
-        const sOther = Math.round(t * 0.52);
-        const sMe = Math.round(t * 0.82);
+        // 设计稿 01：我的人物约一格大小、站在发光底座上；其他人小一些
+        const sOther = Math.round(t * 0.66);
+        const sMe = Math.round(t * 1.0);
         const order = game.players.slice().sort((a, b) => (a.playerId === myId ? 1 : 0) - (b.playerId === myId ? 1 : 0)); // 我最后画，盖在最上
         for (const p of order) {
             if (p.life !== 'ALIVE') continue;
@@ -363,7 +347,7 @@ export class BoardView {
             // 按格子大小收窄人物，脚踩在格子中心略偏下（人物立绘的脚在节点顶 + s 处，见下方 art 的摆放）
             const cell = this.cellSize(p.position);
             const fit = Math.min(cell.w, cell.h);
-            const s = Math.round(me ? Math.min(sMe, fit * 0.9) : Math.min(sOther, fit * 0.62));
+            const s = Math.round(me ? sMe : Math.min(sOther, fit * 0.7));
             const offX = me ? 0 : ((k % 3) - 1) * s * 0.45;
             const offY = (me ? 0 : Math.floor(k / 3) * s * 0.3) + t * 0.14 - s / 2;
             const n = mk(parent, 'Token:' + p.playerId, c.x + offX - s / 2, c.y + offY - s / 2, s, s);
@@ -492,19 +476,19 @@ export class BoardView {
     // ---------- 相机 ----------
     private apply(): void {
         const s = this.cam.scale;
-        const ww = this.g.cols * this.g.tile * s;
-        const wh = this.g.rows * this.g.tile * s * this.verticalAspect;
+        const ww = this.ww * s;
+        const wh = this.wh * s;
         const clamp = (v: number, vp: number, size: number) => (size <= vp ? (vp - size) / 2 : Math.max(vp - size - 40, Math.min(40, v)));
         this.cam.vx = clamp(this.cam.vx, this.w, ww);
         this.cam.vy = clamp(this.cam.vy, this.h, wh);
-        this.world.setScale(s, s * this.verticalAspect, 1);
+        this.world.setScale(s, s, 1);
         place(this.world, this.cam.vx, this.cam.vy);
     }
 
     private centerOn(wx: number, wy: number, animate: boolean): void {
         const s = this.cam.scale;
         const vx = this.w / 2 - wx * s;
-        const vy = this.h / 2 - wy * s * this.verticalAspect;
+        const vy = this.h / 2 - wy * s;
         if (animate) this.target = { x: vx, y: vy };
         else {
             this.cam.vx = vx;
@@ -527,7 +511,7 @@ export class BoardView {
 
     zoomBy(f: number): void {
         const old = this.cam.scale;
-        const s = Math.max(this.fit * 0.8, Math.min(2.6, old * f));
+        const s = Math.max(this.fit, Math.min(2.6, old * f));
         const cx = this.w / 2;
         const cy = this.h / 2;
         this.cam.vx = cx - ((cx - this.cam.vx) / old) * s;
