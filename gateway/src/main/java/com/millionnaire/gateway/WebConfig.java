@@ -19,7 +19,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addRedirectViewController("/dev", "/dev/index.html");
-        registry.addRedirectViewController("/dev/", "/dev/index.html");
+        // 服务端内部转发，不发跳转：云托管代理后面，绝对跳转地址会被拼成 https://域名:80/…
+        registry.addViewController("/dev").setViewName("forward:/dev/index.html");
+        registry.addViewController("/dev/").setViewName("forward:/dev/index.html");
     }
 }

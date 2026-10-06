@@ -1,6 +1,10 @@
 # 云托管要求监听端口与控制台"端口"一致（当前为 80），可用环境变量 PORT 覆盖
 server:
   port: ${PORT:80}
+  # 在云托管的 HTTPS 代理后面：识别 X-Forwarded-* 头，跳转一律用相对地址（否则会拼出 https://域名:80）
+  forward-headers-strategy: framework
+  tomcat:
+    use-relative-redirects: true
 
 spring:
   # 默认不连库：数据源与 Flyway 都关闭，服务照常启动。
