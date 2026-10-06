@@ -79,7 +79,7 @@ class SessionScaffoldTest {
 
     @Test
     void orderDrawsFlowThroughDrawsIntoGameEvolve() {
-        ScriptedRandom script = new ScriptedRandom(List.of(
+        ScriptedRandom script = ScriptedRandom.withEventCards(List.of(
                 ScriptedRandom.step(DrawPoint.ORDER_NUMBER, 100, 41),
                 ScriptedRandom.step(DrawPoint.ORDER_NUMBER, 100, 99),
                 ScriptedRandom.step(DrawPoint.ORDER_NUMBER, 100, 0),
@@ -119,8 +119,10 @@ class SessionScaffoldTest {
         DecisionContext<SessionState> ctx = new DecisionContext<>(s, new Evolver<>(SessionDomain.INSTANCE, config),
                 SessionState.class, XoshiroLemireV1.INSTANCE, config);
         String current = ((SessionState) s.domain()).game().turn().currentPlayer();
-        FlowCoordinator.open(ctx, GameModule.FLOW, FlowKind.ATTACK, current, 0, 10_000, "post-attack");
-        FlowCoordinator.open(ctx, GameModule.FLOW, FlowKind.RESPONSE, "p2", 0, 10_000, "respond");
+        GameModule.openOverlay(ctx, FlowKind.ATTACK, current, 0, 10_000, "post-attack");
+        GameModule.openSourcedOverlay(ctx, FlowKind.RESPONSE, current, 0, 10_000, "respond",
+                new com.millionnaire.engine.core.state.FlowOrigin(com.millionnaire.engine.core.state.FlowOrigin.Kind.ATTACK_RESPONSE,
+                        ((SessionState) s.domain()).game().turn().turnNo(), ctx.state().game().flow().top().orElseThrow().windowId(), -1, current));
         for (int i = 2; i <= 8; i++) {
             assertEquals(null, FlowCoordinator.request(ctx, GameModule.FLOW, i % 2 == 0 ? FlowKind.AUCTION : FlowKind.TRADE, "p" + i));
         }

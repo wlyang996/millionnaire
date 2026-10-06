@@ -166,6 +166,17 @@ export class DemoPanel {
             ['事件格抽卡(我)', () => { this.close(); const b = ctx.screens.current; if (b instanceof BoardScreen) b.demoEventMe(); else Toast.show('请先进入对局棋盘页'); }],
             ['他人抽卡', () => { this.close(); const b = ctx.screens.current; if (b instanceof BoardScreen) b.demoEventOther(); else Toast.show('请先进入对局棋盘页'); }],
             ['逐格跳 1 步', () => { this.close(); const b = ctx.screens.current; if (b instanceof BoardScreen) b.demoHop(1); else Toast.show('请先进入对局棋盘页'); }],
+            ['资金 +300（演示）', () => {
+                this.close();
+                if (!(ctx.screens.current instanceof BoardScreen)) return Toast.show('请先进入对局棋盘页');
+                st.me().cash += 300;
+                st.emit();
+            }],
+            ['资金 -400（演示）', () => {
+                this.close();
+                if (!(ctx.screens.current instanceof BoardScreen)) return Toast.show('请先进入对局棋盘页');
+                if (!st.spend(400)) Toast.show('演示现金不足');
+            }],
         ], 3);
         y = this.heading(p, y, '工具');
         const out = text(p, '', 24, y + 138, SHEET_W - 48, 200, Theme.font.xs, Theme.c.ink, { wrap: true, align: 'l', valign: 't', lineHeight: 26 });

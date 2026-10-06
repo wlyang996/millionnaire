@@ -18,7 +18,7 @@ final class OverlayModule {
 
     /** 在安全点启动一个排队申请（覆盖窗口位于栈底，回合处于 AWAITING_FLOW）；leadMs 为尚未播完的动画缓冲（C6）。 */
     static void start(DecisionContext<SessionState> ctx, FlowRequest request, long leadMs) {
-        GameModule.openOverlay(ctx, request.kind(), request.applicant(), leadMs, durationMs(ctx.config(), request.kind()), "RETURN");
+        GameModule.openQueuedOverlay(ctx, request, leadMs, durationMs(ctx.config(), request.kind()), "RETURN");
     }
 
     /** 覆盖窗口到期：确认是当前窗口的截止任务后，按所属模块关闭（M1 占位：无结果关闭）。 */

@@ -5,6 +5,7 @@ import { TIERS } from '../core/Rules';
 import { Theme, textWidth } from '../core/Theme';
 import { drawCardIcon, drawCoin } from '../ui/Icons';
 import { fillRR, gfx, mk, strokeRR, text } from '../ui/Kit';
+import { art } from '../ui/Art';
 
 export function tierColor(tier: Tier | undefined, station = false): string {
     if (station) return Theme.c.station;
@@ -34,7 +35,7 @@ export function tileHero(parent: Node, tile: BoardTile, x: number, y: number, w:
     const station = tile.type === 'STATION';
     fillRR(g, 0, 0, w, h - 44, 24, '#DFF3D2');
     fillRR(g, 0, 0, w, 20, 10, tierColor(tile.tier, station));
-    drawCardIcon(g, station ? 'FIXED_MOVE' : 'BUILD', w / 2, (h - 44) / 2 + 8, Math.min(120, h - 70));
+    if (!station) art(n, 'house_lv' + (subtitle.match(/([1-3])级/)?.[1] ?? '0'), w / 2 - 70, 26, 140, h - 84);
     if (station) {
         fillRR(g, w / 2 - 44, (h - 44) / 2 - 18, 88, 52, 10, Theme.c.station);
         fillRR(g, w / 2 - 32, (h - 44) / 2 - 8, 64, 20, 5, '#BFE3FF');

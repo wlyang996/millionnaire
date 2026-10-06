@@ -17,5 +17,12 @@ public enum LandingStep {
     /** 必须缴租（只作为 {@link LandingState#next()} 出现：费用成立后清除；不跨步保存为当前步骤）。 */
     RENT,
     /** 租金未能付清：等待债务流程（应急抵押 / 破产）。 */
-    DEBT
+    DEBT,
+    /** M4 响应完成后消费当前任务，按结果表生成后继费用任务。 */
+    RESPONSE,
+    /** M3b 抽取/奖励/罚款/弃牌来源任务。 */
+    EVENT,
+    /** M3b/M3c 消费位移来源，接续同一 MoveChain 中的下一落点。 */
+    MOVE,
+    REWARD, FINE, CARD, DISCARD, TO_JAIL
 }

@@ -117,13 +117,13 @@ class Round8ReviewTest {
     void n4ScriptedRandomResumesFromSnapshotState() {
         List<ScriptedRandom.Step> script = List.of(ScriptedRandom.step(DrawPoint.MOVE_DIE, 6, 0),
                 ScriptedRandom.step(DrawPoint.MOVE_DIE, 6, 4));
-        Engine<DemoState> first = new Engine<>(base, DemoDomain.INSTANCE, new ScriptedRandom(script));
+        Engine<DemoState> first = new Engine<>(base, DemoDomain.INSTANCE, ScriptedRandom.withEventCards(script));
         EngineState s = first.create("r", 1, 0).state();
         long n = 0;
         for (Command c : List.of(new DemoCommand.Sit("a"), new DemoCommand.OpenRound("a", "a", 0), new DemoCommand.Roll("a", 1))) {
             s = first.step(s, new Input(++n, n, c)).state();
         }
-        ScriptedRandom fresh = new ScriptedRandom(script);
+        ScriptedRandom fresh = ScriptedRandom.withEventCards(script);
         Engine<DemoState> resumed = new Engine<>(base, DemoDomain.INSTANCE, fresh);
         EngineState r = resumed.restore(first.snapshot(s));
         r = resumed.step(r, new Input(4, 4, new DemoCommand.OpenRound("a", "a", 0))).state();

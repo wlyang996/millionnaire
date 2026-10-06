@@ -1,5 +1,6 @@
 package com.millionnaire.engine.core.event;
 
+import com.millionnaire.engine.core.command.Command;
 import com.millionnaire.engine.core.state.DomainState;
 import com.millionnaire.engine.random.DrawPoint;
 import com.millionnaire.engine.random.RngState;
@@ -17,8 +18,19 @@ public sealed interface KernelEvent extends Event {
         }
     }
 
-    /** 输入被接受：推进序号、接收水位与业务时间。digest 为输入规范字节的 SHA-256。 */
-    record InputAccepted(long seq, long at, String digest) implements KernelEvent {
+    /**
+     * 输入被接受：推进序号、接收水位与业务时间。digest 为输入规范字节的 SHA-256。
+     * systemCommand 仅记录系统输入；clientCommand 仅记录领域登记的客户端来源（确认破产/认输）。
+     * 演化核对两类来源的类型和摘要后才交给领域建立本步凭据。
+     */
+    record InputAccepted(long seq, long at, String digest, Command systemCommand, Command clientCommand) implements KernelEvent {
+        public InputAccepted(long seq, long at, String digest, Command systemCommand) {
+            this(seq, at, digest, systemCommand, null);
+        }
+        public InputAccepted(long seq, long at, String digest) {
+            this(seq, at, digest, null);
+        }
+
         @Override
         public Visibility visibility() {
             return Visibility.SERVER_ONLY;

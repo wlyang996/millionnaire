@@ -1,21 +1,22 @@
 /**
  * 页面 4：对局棋盘（含"破产观战"变体，spectator=true）。布局依据 design/screens/01-board.png、09-ui-states.png、02-motion-storyboard.png。
- * 演示流程：点"投骰子"→骰子翻滚(约 1.2s)→逐格跳跃(每步约 250ms)→按落点弹出买地/升级/租金/事件/虎口拔牙；
+ * 演示流程：点击骰子→骰子翻滚(约 1.2s)→逐格跳跃(每步约 550ms)→按落点弹出买地/升级/租金/事件/虎口拔牙；
  * 对手回合默认不自动演进（演示面板可打开"自动演进"）。动画均由时间戳驱动，点数由 MockStore 决定。
  */
 import { Label, Node } from 'cc';
 import { Countdown, formatMMSS } from '../core/Clock';
-import { eventViewMode, EVENT_KIND_LABEL } from '../core/EventDraw';
+import { eventViewMode } from '../core/EventDraw';
 import { matchClockOpacity, matchClockState } from '../core/MatchClock';
-import { PlayerView } from '../core/Models';
+import { GameView, PlayerView } from '../core/Models';
 import { ME } from '../core/MockStore';
 import { Theme } from '../core/Theme';
 import { TileInfoPopup } from '../popups/TileInfoPopup';
-import { Button, ghostButton, IconButton, primaryButton } from '../ui/Buttons';
+import { AssetsPopup } from '../popups/AssetsPopup';
+import { ghostButton, IconButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { DiceView } from '../ui/DiceView';
 import { drawBack, drawClock } from '../ui/Icons';
-import { fillCircle, fillRR, gfx, mk, setOpacity, setText, text } from '../ui/Kit';
+import { fillCircle, fillRR, gfx, mk, onTap, setOpacity, setText, text } from '../ui/Kit';
 import { Screen, ScreenId } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { roundedPanel } from '../ui/Widgets';
@@ -25,7 +26,7 @@ import { beginDebt } from '../popups/DebtPopup';
 import { DiscardPopup } from '../popups/DiscardPopup';
 import { EventOverlay } from './board/EventOverlay';
 import { handleLanding } from './board/Landing';
-import { connBadge, drawPlayerBar } from './board/PlayerBar';
+import { CashChange, CashChangeNode, connBadge, drawPlayerBar } from './board/PlayerBar';
 
 const VP_Y = 270;
 const VP_H = 740;
@@ -45,13 +46,15 @@ export class BoardScreen extends Screen {
     private clockIcon: Node | null = null;
     private clockState = '';
     private dice: DiceView | null = null;
-    private rollBtn: Button | null = null;
     private move: Move | null = null;
     private pendingEnd = false;
     private otherAt = 0;
     private eventOv: EventOverlay | null = null;
-    private lastEventPhase = '';
     private pendingFine = 0;
+    private cashGame: GameView | null = null;
+    private cashSnapshot = new Map<string, number>();
+    private cashChanges = new Map<string, CashChange>();
+    private cashChangeNodes: CashChangeNode[] = [];
 
     constructor(private readonly spectator: boolean) {
         super();
@@ -78,15 +81,23 @@ export class BoardScreen extends Screen {
         this.clockState = '';
 
         const ev = st.eventDraw;
-        const evMode = this.spectator ? 'DEFAULT' : eventViewMode(ev, ME);
-        drawPlayerBar(this.root, 6, 100, game.players, game.currentPlayer, ME, ev.phase !== 'IDLE' && ev.actor !== ME ? ev.actor : null);
+        const evMode = eventViewMode(ev, ME);
+        this.captureCashChanges(game);
+        this.cashChangeNodes = [];
+        drawPlayerBar(this.root, 6, 100, game.players, game.currentPlayer, ME,
+            ev.phase !== 'IDLE' && ev.actor !== ME ? ev.actor : null,
+            id => ctx.popups.open(new AssetsPopup(id)), this.cashChanges, this.cashChangeNodes);
 
         // 棋盘视口
         this.view = new BoardView(this.root, 0, VP_Y, Theme.W, VP_H, this.cam);
         const evActor = ev.actor ? st.player(ev.actor) : undefined;
-        this.view.render(game, ME, st.me().nickname, evMode === 'MY_DRAW' ? 'single' : 'fan', evMode === 'MY_DRAW' && evActor ? evActor.position : null);
+        this.view.render(game, ME, st.me().nickname, 'fan', evMode === 'MY_DRAW' && evActor ? evActor.position : null);
         this.cam = this.view.cam;
-        this.view.onTileTap = (i) => ctx.popups.open(new TileInfoPopup(i));
+        this.view.onTileTap = (i) => {
+            // Screen22 keeps event interaction on the board; inspecting a tile must not draw an event.
+            if (ctx.store.tile(i).type === 'EVENT' || ctx.store.tile(i).type === 'GAME_ZONE') return;
+            ctx.popups.open(new TileInfoPopup(i));
+        };
         const cur = st.player(game.currentPlayer);
         if (this.cam.follow && cur && !this.move) this.view.focusTile(cur.position, false);
 
@@ -110,13 +121,19 @@ export class BoardScreen extends Screen {
                 st.emit();
             }, Theme.font.sm);
         }
-        // 事件抽卡：仅触发者本人界面中央显示问号卡背（遮挡骰子区）；他人保持默认状态（左上三张扇形牌堆）+ 轻提示
+        // 所有观察者看到中央抽卡动画；只有触发者本人可点击卡背。
         this.eventOv = null;
-        if (!this.spectator && eventViewMode(st.eventDraw, ME) === 'MY_DRAW') {
+        this.dice = null;
+        this.cdSec = null;
+        if (st.eventDraw.phase !== 'IDLE') {
             this.eventOv = new EventOverlay(this.root);
-            this.eventOv.build(st.eventDraw, () => st.eventClick(ME), () => this.confirmEvent());
+            const actor = st.eventDraw.actor ? st.player(st.eventDraw.actor) : undefined;
+            this.eventOv.build(st.eventDraw, () => st.eventClick(ME), !this.spectator && st.eventDraw.actor === ME, actor?.nickname ?? '玩家');
+            // Screen22 retains the die below the central card; drawing never enables another roll.
+            this.dice = new DiceView(this.root, Theme.W / 2 - 54, 900);
+            this.dice.setValue(game.lastDice);
         } else this.buildTurnPanel();
-        game.chat.slice(-1).forEach((c) => {
+        (this.spectator || st.eventDraw.phase !== 'IDLE' ? [] : game.chat.slice(-1)).forEach((c) => {
             const y = VP_Y + 622;
             const w = Math.min(380, 40 + (c.from.length + c.text.length) * 22);
             const b = mk(this.root, 'Chat', (Theme.W - w) / 2, y, w, 34);
@@ -134,48 +151,50 @@ export class BoardScreen extends Screen {
         return null;
     }
 
-    /** 中央回合提示（设计图 01：药丸"轮到你了 / 剩余 15秒" + 石板广场上的骰子 + 投骰子按钮；不改变每回合 15 秒提示）。 */
+    /** 中央回合提示与可点击骰子；按用户修正取消独立投骰按钮。 */
     private buildTurnPanel(): void {
         const st = ctx.store;
         const game = st.game;
         const cur = st.player(game.currentPlayer) as PlayerView;
         const myTurn = st.isMyTurn() && !this.spectator;
         const cx = Theme.W / 2;
-        const top = VP_Y + 230;
+        const top = VP_Y + (this.spectator ? 90 : 230);
         const pill = roundedPanel(this.root, cx - 150, top, 300, 100, { fill: '#FFFDF2F2', r: 34 });
         const ic = mk(pill, 'TurnIcon', 22, 26, 44, 44);
         drawClock(gfx(ic), 22, 24, 17, Theme.c.yellowDark);
-        text(pill, myTurn ? '轮到你了' : '轮到 ' + cur.nickname, 70, 6, 220, 52, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
+        text(pill, myTurn ? '轮到你了' : cur.nickname + '的回合', 70, 6, 220, 52, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
         text(pill, '剩余', 70, 54, 62, 36, Theme.font.sm, Theme.c.ink, { bold: true, align: 'l' });
         this.cdSec = text(pill, '', 130, 54, 120, 36, Theme.font.md, Theme.c.red, { bold: true, align: 'l' });
+        if (this.spectator) {
+            const status = roundedPanel(this.root, cx - 180, top + 112, 360, 58, { fill: '#2D3B4AEE', r: 29 });
+            text(status, '已' + (st.me().life === 'SURRENDERED' ? '认输' : '破产') + ' · 观战中', 0, 0, 360, 58, Theme.font.lg, Theme.c.white, { bold: true });
+            this.dice = new DiceView(this.root, cx - 54, top + 228);
+            this.dice.setValue(game.lastDice);
+            return;
+        }
         // 石板广场 + 骰子
         const plaza = mk(this.root, 'Plaza', cx - 130, top + 104, 260, 190);
         fillCircle(gfx(plaza), 130, 100, 112, '#E8D9B466');
         fillCircle(gfx(plaza), 130, 100, 92, '#F1E5C655');
         this.dice = new DiceView(this.root, cx - 54, top + 142);
         this.dice.setValue(game.lastDice);
-        if (myTurn) {
-            this.rollBtn = primaryButton(this.root, '投骰子', cx - 150, top + 296, 300, 80, () => this.startRoll(), Theme.font.xl);
-            this.rollBtn.setEnabled(me_manual(st.me()) && !this.busy(), '托管/掉线状态下由系统自动投骰');
-        } else {
-            this.rollBtn = null;
+        onTap(this.dice.node, () => {
+            if (this.canRoll()) this.startRoll();
+        }, false);
+        if (!myTurn) {
             const badge = connBadge(cur.conn, cur.control);
-            const msg = this.spectator ? '观战中 · 不能投骰/用卡' : '等待 ' + cur.nickname + ' 行动…' + (badge ? '（' + badge.text + '）' : '');
+            const msg = '等待 ' + cur.nickname + ' 行动…' + (badge ? '（' + badge.text + '）' : '');
             const wp = roundedPanel(this.root, cx - 170, top + 296, 340, 48, { fill: '#FFFDF2EE', r: 28 });
             text(wp, msg, 10, 0, 320, 48, Theme.font.sm, Theme.c.inkSoft, { bold: true });
-            if (!st.autoplay && !this.spectator) ghostButton(this.root, '演示：轮到我', cx - 80, top + 350, 160, 34, () => this.giveTurnToMe(), Theme.font.xs);
         }
-    }
-
-    private giveTurnToMe(): void {
-        const st = ctx.store;
-        if (st.me().life !== 'ALIVE') return;
-        st.game.currentPlayer = ME;
-        st.emit();
     }
 
     private busy(): boolean {
         return !!this.move || !!(this.dice && this.dice.playing) || ctx.store.eventDraw.phase !== 'IDLE';
+    }
+
+    private canRoll(): boolean {
+        return !this.spectator && ctx.store.isMyTurn() && me_manual(ctx.store.me()) && !this.busy() && ctx.popups.count === 0;
     }
 
     // ---------- 投骰（翻滚动画）与逐格跳跃 ----------
@@ -183,7 +202,7 @@ export class BoardScreen extends Screen {
         if (this.busy() || !this.dice) return;
         const st = ctx.store;
         const v = st.rollValue();
-        this.rollBtn?.setEnabled(false);
+        this.dice.setReady(false);
         this.dice.play(v, () => {
             Toast.show('掷出 ' + v + ' 点');
             this.startMove(ME, v, false, true);
@@ -228,7 +247,6 @@ export class BoardScreen extends Screen {
             const st = ctx.store;
             const mv = st.moveBy(m.id, m.steps);
             if (m.id === ME) this.view.pulse(mv.pos);
-            if (mv.passedStart && m.id === ME) Toast.show('经过起点 +1000');
             if (m.endTurn) this.pendingEnd = true;
             st.emit();
             if (m.id === ME && m.endTurn && !m.demo) handleLanding(mv.pos);
@@ -257,27 +275,18 @@ export class BoardScreen extends Screen {
         const st = ctx.store;
         const ev = st.eventDraw;
         const now = Date.now();
-        if (ev.phase !== this.lastEventPhase) {
-            const prev = this.lastEventPhase;
-            this.lastEventPhase = ev.phase;
-            // 他人开始抽卡：保持默认界面，只给轻提示
-            if (ev.phase === 'WAITING' && ev.actor && ev.actor !== ME) {
-                const a = st.player(ev.actor);
-                Toast.show((a ? a.nickname : '玩家') + ' 正在抽取事件卡');
-            }
-            void prev;
-        }
         if (ev.actor && ev.actor !== ME) {
             // 模拟他人客户端：稍后点击卡片；结果停留片刻后由系统收起
             if (ev.phase === 'WAITING' && now - ev.since >= Theme.anim.eventOtherHoldMs) st.eventClick(ev.actor);
-            else if (ev.phase === 'RESULT' && now - ev.since >= Theme.anim.eventOtherHoldMs) {
-                const a = st.player(ev.actor);
-                if (ev.result) Toast.show((a ? a.nickname : '玩家') + ' 触发事件：' + EVENT_KIND_LABEL[ev.result.kind]);
+            else if (ev.phase === 'RESULT' && now - ev.since >= Theme.anim.eventResultHoldMs) {
                 st.eventClose(ev.actor);
             }
+        } else if (ev.actor === ME && ev.phase === 'RESULT' && now - ev.since >= Theme.anim.eventResultHoldMs) {
+            this.confirmEvent();
         }
+        const cashBeforeSettlement = st.me().cash;
         const settled = st.eventTick();
-        if (settled && settled.actor === ME && settled.result.kind === 'CASH_FINE' && st.me().cash < settled.result.amount) this.pendingFine = settled.result.amount;
+        if (settled && settled.actor === ME && settled.result.kind === 'CASH_FINE' && cashBeforeSettlement < settled.result.amount) this.pendingFine = settled.result.amount;
         this.eventOv?.tick(now);
     }
 
@@ -289,7 +298,7 @@ export class BoardScreen extends Screen {
         st.eventStart(ME);
     }
 
-    /** 演示菜单：他人（第二位玩家）走到事件格并抽卡，我保持默认界面。 */
+    /** 演示菜单：他人（第二位玩家）走到事件格并抽卡，我同步观看。 */
     demoEventOther(): void {
         const st = ctx.store;
         if (st.eventDraw.phase !== 'IDLE' || st.game.players.length < 2) return;
@@ -298,6 +307,33 @@ export class BoardScreen extends Screen {
     }
 
     // ---------- 文字/时钟 ----------
+    private captureCashChanges(game: GameView): void {
+        const now = Date.now();
+        if (this.cashGame !== game) {
+            this.cashGame = game;
+            this.cashSnapshot.clear();
+            this.cashChanges.clear();
+        }
+        for (const p of game.players) {
+            const previous = this.cashSnapshot.get(p.playerId);
+            if (previous !== undefined && previous !== p.cash)
+                this.cashChanges.set(p.playerId, { amount: p.cash - previous, until: now + 2600 });
+            this.cashSnapshot.set(p.playerId, p.cash);
+        }
+        for (const [id, change] of this.cashChanges) if (change.until <= now) this.cashChanges.delete(id);
+    }
+
+    private tickCashChanges(): void {
+        const now = Date.now();
+        for (const change of this.cashChangeNodes) {
+            if (!change.node.isValid) continue;
+            const remaining = change.until - now;
+            change.node.active = remaining > 0;
+            if (change.badge?.isValid) change.badge.active = remaining <= 0;
+            if (remaining > 0) setOpacity(change.node, Math.min(255, Math.round(remaining / 600 * 255)));
+        }
+    }
+
     private tickTexts(): void {
         const st = ctx.store;
         if (this.clockLabel && this.clockNode && this.clockIcon) {
@@ -323,7 +359,9 @@ export class BoardScreen extends Screen {
         const st = ctx.store;
         const g = st.game;
         if (!this.view) return;
+        this.tickCashChanges();
         this.view.tick(dt);
+        this.dice?.setReady(this.canRoll());
         this.dice?.update();
         if (g.currentPlayer !== this.lastCurrent) {
             this.lastCurrent = g.currentPlayer;

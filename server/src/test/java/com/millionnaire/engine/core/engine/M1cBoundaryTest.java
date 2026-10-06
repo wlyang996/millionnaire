@@ -297,7 +297,7 @@ class M1cBoundaryTest {
 
     @Test
     void t8OpeningCardsAreWeightedPrivateAndProjectedOnlyToTheirOwner() {
-        ScriptedRandom r = new ScriptedRandom(script(order(90, 10), List.of(
+        ScriptedRandom r = ScriptedRandom.withEventCards(script(order(90, 10), List.of(
                 ScriptedRandom.step(DrawPoint.INITIAL_CARD, 1000, 0), ScriptedRandom.step(DrawPoint.INITIAL_CARD, 1000, 999),
                 ScriptedRandom.step(DrawPoint.INITIAL_CARD, 1000, 120), ScriptedRandom.step(DrawPoint.INITIAL_CARD, 1000, 120))));
         Table t = new Table(r, 1).start(2);
@@ -324,7 +324,7 @@ class M1cBoundaryTest {
     @Test
     void t8DealingFollowsTurnOrderNotJoinOrder() {
         // 加入顺序 p1、p2；抽数 p1=10、p2=90 → p2 先行动，先拿前两张
-        ScriptedRandom r = new ScriptedRandom(script(order(10, 90), List.of(
+        ScriptedRandom r = ScriptedRandom.withEventCards(script(order(10, 90), List.of(
                 ScriptedRandom.step(DrawPoint.INITIAL_CARD, 1000, 0), ScriptedRandom.step(DrawPoint.INITIAL_CARD, 1000, 999),
                 ScriptedRandom.step(DrawPoint.INITIAL_CARD, 1000, 120), ScriptedRandom.step(DrawPoint.INITIAL_CARD, 1000, 120))));
         Table t = new Table(r, 1).start(2);
@@ -355,21 +355,23 @@ class M1cBoundaryTest {
 
     @Test
     void t10ZeroRemainingReleaseAccumulatesBothDiceAnimations() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1),
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1),
                 dice(DrawPoint.JAIL_DIE, 2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
         for (int i = 0; i < 4; i++) {
             t.roll();
         }
         long deadline = t.window().window().deadline();
         t.tick(deadline);                                   // 超时判定 2（偶数）→ 剩余 0 → 立即移动 2（事件格，无落点窗口）
-        assertEquals("p2", t.current());
+        assertEquals("p1", t.current(), "event window follows the completed automatic movement");
         assertEquals(deadline + 1500 + 1500 + 2 * 250, t.window().window().opensAt(),
                 "judgment animation + move animation are shown one after the other");
+        t.pass();
+        assertEquals("p2", t.current());
     }
 
     @Test
     void t10BailHasNoDiceAnimation() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1))), 1)
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1))), 1)
                 .start(2);
         for (int i = 0; i < 4; i++) {
             t.roll();

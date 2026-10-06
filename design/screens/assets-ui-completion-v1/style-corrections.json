@@ -1,0 +1,14 @@
+{
+  "tool": "built-in image_gen",
+  "reference": "design/screens/25-小镇入口-起点土地详情-候选.png",
+  "jobs": [
+    {
+      "id": "special_scenes_1",
+      "prompt": "Generate a transparent atlas with THREE fullyseparated complete isometric townlandmark vignettes across ONEhorizontalrow, largegutters. Match this provided reference specifically: EUROPEAN STORYBOOK RIVER TOWN, creamstone, red/blue pitchedgable roofs, gentle woodstonebridgearchitecture, smalltreesandflowers. NO pagoda, NO curvedChinese rooftops, NO oriental pavilion orredlanterns. NO text anywhere, no UI, nopeople, no backdrop outsidevignettes, genuine transparentalpha. Samecameraandscale each. Left BANK creamstoneclassicalfront columnsbluepitchroof goldvault nearfrontdesk; center friendly JAIL creamstoneredpitchroof watchhouse archedbarreddoor; right GAMECENTER modesttownfair boothwithredwhiteawningandgreen toyCROCODILE sign, no slotmachine. Buildings onstonebase. The reference's townentrance gatewayarchitecture setsstyle, do notcopy its exactfunction."
+    },
+    {
+      "id": "special_scenes_2",
+      "prompt": "Generate a transparent atlas with THREE fullyseparated complete isometric townlandmark vignettes across ONEhorizontalrow, largegutters. Match this provided reference specifically: EUROPEAN STORYBOOK RIVER TOWN, creamstone, red/blue pitchedgable roofs, gentle woodstonebridgearchitecture, smalltreesandflowers. NO pagoda, NO curvedChinese rooftops, NO oriental pavilion orredlanterns. NO text anywhere, no UI, nopeople, no backdrop outsidevignettes, genuine transparentalpha. Samecameraandscale each. Left RESTAREA quiettimber flat/straightpitchroof gazebo benchbyriver, noredlanterns; center STARTENTRANCE smallstonebridge archway redstraightpitchroof gateway greenstartflag likeprovidedreference, no writing; right STATION quaintbluepitchroofclockhousewithredgoldtoytrainbesideplatformbyriver, no Chineseclockletters. Eachcompletetightvignette."
+    }
+  ]
+}

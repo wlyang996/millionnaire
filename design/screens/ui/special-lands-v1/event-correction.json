@@ -1,0 +1,5 @@
+{
+  "prompt": "Edit this two-phone UI candidate. Preserve RIGHT rest-area screen exactly. Correct LEFT event screen: keep the questionmark card overlay centered and directly tappable, no separate drawbutton. Restore board underlying layout: eight compact avatar+name+cash chips at TOP below header in four columns/two rows. Remove bottom player panel. Under overlay the SINGLE dice stays in CENTER of board, partially obscured by card, not at right edge. Keep fannedbluegold eventdeck at upperleft insideboard. Bottom toolbar must be five ITEMS with labels 免租,建造,拍卖,定点移动,路障 and matching shield/house/gavel/pin/barrier icons, not 起点/集市/城镇/公园/码头 landtiles. Preserve warmriver art cream/navy designstyle. Do not change restscreen. No statusbar required.",
+  "source": "raw/事件土地-中央抽卡与休息区-修正前-v1.png",
+  "output": "事件土地-中央抽卡与休息区-停留提示-v1.png"
+}

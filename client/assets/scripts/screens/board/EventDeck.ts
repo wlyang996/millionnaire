@@ -6,6 +6,7 @@
  */
 import { Node, UITransform } from 'cc';
 import { col, fillRR, gfx, mk, text } from '../../ui/Kit';
+import { art } from '../../ui/Art';
 
 export const CARD_BACK = { blue: '#1E7FC4', blueDark: '#155E96', blueLight: '#3AA0E0', gold: '#F2C24B', goldDark: '#C9962A', cream: '#FFF1C2' };
 
@@ -20,6 +21,7 @@ export function centerNode(parent: Node, name: string, cx: number, cy: number, w
 export function drawCardBack(n: Node, w: number, h: number, withMark = true): void {
     const g = gfx(n);
     g.clear();
+    if (art(n, 'event_card_back', -w / 2, -h / 2, w, h, 'stretch')) return;
     const r = w * 0.1;
     g.fillColor = col('#00000033');
     g.roundRect(-w / 2 + 2, -h / 2 - 5, w, h, r);
@@ -51,6 +53,10 @@ export function drawCardBack(n: Node, w: number, h: number, withMark = true): vo
  */
 export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: number, mode: 'fan' | 'single'): Node {
     const root = mk(parent, 'EventDeck', x, y, w, h);
+    if (mode === 'fan' && art(root, 'event_card_fan', 0, 0, w, h - 20)) {
+        text(root, '事件卡', 0, h - 24, w, 24, 16, '#654011', { bold: true });
+        return root;
+    }
     const labelH = Math.min(h * 0.2, 28);
     const cardH = h - labelH * 0.7;
     const cw = Math.min(w * 0.46, cardH / 1.42);

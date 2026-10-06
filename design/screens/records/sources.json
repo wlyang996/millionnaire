@@ -161,9 +161,72 @@
       "source": "screens/ui/supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png",
       "version": 1,
       "role": "资产总览-格子详情-房间号键盘-候选",
-      "status": "design candidate",
+      "status": "assets and tile layout adopted and browser checked; keypad candidate; exact artwork fidelity pending",
       "sha256": "b71680df2610d34e87e7f6ae3c0aa4bbb23ff9ebacf41904250f70e0b728e8c0",
       "bytes": 2067272
+    },
+    {
+      "file": "19-道具详情与聊天-待审阅.png",
+      "source": "screens/ui/details-chat-v1/道具详情与聊天-待审阅-v1.png",
+      "version": 1,
+      "role": "道具详情与聊天-待审阅",
+      "status": "chat layout approved; card dialog superseded by screen 16; artwork integration pending",
+      "sha256": "2d32b18048ed0153b3b544661768c332475e1b06b488fb5806af7ec4111a3ae5",
+      "bytes": 2161337
+    },
+    {
+      "file": "20-银行-抵押与赎回-候选.png",
+      "source": "screens/ui/special-lands-v1/银行-抵押与赎回-v1.png",
+      "version": 1,
+      "role": "银行-抵押与赎回",
+      "status": "design candidate",
+      "sha256": "78000b335480045efc996b795d798518e21efe84c70aefddede4418aea8c70a8",
+      "bytes": 2056029
+    },
+    {
+      "file": "21-监狱-出狱判定与游戏中心-虎口拔牙-候选.png",
+      "source": "screens/ui/special-lands-v1/监狱-出狱判定与游戏中心-虎口拔牙-v1.png",
+      "version": 1,
+      "role": "监狱-出狱判定与游戏中心-虎口拔牙",
+      "status": "design candidate",
+      "sha256": "ed56057dc354e982b4973177f87b22b8059679fd3b33965f868aafaadfdb0723",
+      "bytes": 2181314
+    },
+    {
+      "file": "22-事件土地-中央抽卡与休息区-停留提示-候选.png",
+      "source": "screens/ui/special-lands-v1/事件土地-中央抽卡与休息区-停留提示-v1.png",
+      "version": 1,
+      "role": "事件土地-中央抽卡与休息区-停留提示",
+      "status": "design candidate",
+      "sha256": "dca38fb8099546c142b724757f374404348b06ebf29c3b734a081b1709c7db81",
+      "bytes": 2364031
+    },
+    {
+      "file": "23-起点-经过奖励与车站-产权租金详情-候选.png",
+      "source": "screens/ui/special-lands-v1/起点-经过奖励与车站-产权租金详情-v1.png",
+      "version": 1,
+      "role": "起点-经过奖励与车站-产权租金详情",
+      "status": "design candidate",
+      "sha256": "3a749d08d3c26eac7fae21ab3eea173c5fa6c72ea35db3ad939cfe292b09a5f7",
+      "bytes": 2143194
+    },
+    {
+      "file": "24-小镇入口-游戏大厅-候选.png",
+      "source": "screens/ui/town-entrance-v1/小镇入口-游戏大厅-v1.png",
+      "version": 1,
+      "role": "小镇入口-游戏大厅",
+      "status": "misinterpreted request; retained for history; not adopted",
+      "sha256": "5bcf937d1b8545b5ba42bc3c9e9edb2e139f9aa5560cd1eb8fb3e53b66cb6748",
+      "bytes": 2365804
+    },
+    {
+      "file": "25-小镇入口-起点土地详情-候选.png",
+      "source": "screens/ui/start-tile-v1/小镇入口-起点土地详情-v1.png",
+      "version": 1,
+      "role": "小镇入口-起点土地详情",
+      "status": "design candidate; not implemented",
+      "sha256": "2dd8b13f741f714aa58d18c2e2968c02d022503b9fa576c0ad72c7386bd0114c",
+      "bytes": 1995655
     }
   ]
 }

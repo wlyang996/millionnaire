@@ -3,6 +3,7 @@ package com.millionnaire.engine.core.engine;
 import com.millionnaire.engine.config.RuleConfig;
 import com.millionnaire.engine.core.command.Command;
 import com.millionnaire.engine.core.command.GameCommand;
+import com.millionnaire.engine.core.command.Input;
 import com.millionnaire.engine.core.command.RoomCommand;
 import com.millionnaire.engine.core.command.SessionCommand;
 import com.millionnaire.engine.core.event.Event;
@@ -77,9 +78,57 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
         }
     }
 
+    @Override
+    public SessionState acceptSystemInput(SessionState state, Input input) {
+        if (input.command() instanceof SessionCommand.EndGame c) {
+            return state.withAbortSource(new SessionState.AbortSource(input.seq(), c));
+        }
+        if (state.inGame() && state.game().debt() != null) {
+            var g = state.game();
+            var d = g.debt();
+            boolean confirmed = input.command() instanceof GameCommand.DeclareBankruptcy c
+                    && d.path() == com.millionnaire.engine.core.state.DebtPath.MANUAL
+                    && FlowCoordinator.checkWindow(g.flow(), c.windowId(), c.actor(), input.serverTime()) == null
+                    && d.debtor().equals(c.actor());
+            confirmed |= input.command() instanceof GameCommand.Surrender c
+                    && c.gameNo() == g.gameNo() && d.debtor().equals(c.actor());
+            if (confirmed) {
+                return state.withGame(g.withTurn(g.turn().withTrack(g.turn().track().bankruptcy(d.debtId()))));
+            }
+        }
+        return state;
+    }
+
+    @Override
+    public boolean recordsInputSource(Command command) {
+        return Domain.super.recordsInputSource(command) || command instanceof GameCommand.DeclareBankruptcy
+                || command instanceof GameCommand.Surrender;
+    }
+
+    @Override
+    public SessionState acceptTask(SessionState state, ScheduledTask task) {
+        if (state.inGame() && state.game().debt() != null) {
+            var g = state.game();
+            var d = g.debt();
+            var frame = FlowCoordinator.expiredFrame(g.flow(), task).orElse(null);
+            if (d.path() == com.millionnaire.engine.core.state.DebtPath.MANUAL && d.segment() == 2
+                    && frame != null && frame.kind() == com.millionnaire.engine.core.state.FlowKind.DEBT
+                    && frame.windowId() == d.windowId()) {
+                return state.withGame(g.withTurn(g.turn().withTrack(g.turn().track().bankruptcy(d.debtId()))));
+            }
+        }
+        return state;
+    }
+
     /** 步边界：对局中回合的步内衔接记录必须为空（C4）。 */
     @Override
     public void checkBoundary(SessionState state) {
+        if (state.abortSource() != null) {
+            throw new IllegalStateException("unconsumed EndGame source at a step boundary");
+        }
+        if (state.inGame() && state.game().flow().pendingStart() != null) {
+            throw new IllegalStateException("unconsumed dequeued request at a step boundary");
+        }
         if (state.inGame() && !state.game().turn().track().equals(com.millionnaire.engine.core.state.TurnTrack.NONE)) {
             throw new IllegalStateException("turn track not empty at a step boundary: " + state.game().turn().track());
         }
@@ -94,6 +143,32 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
         };
     }
 
+    @Override
+    public void checkEvent(EngineState engine, Event event, RuleConfig rules) {
+        SessionState current = (SessionState) engine.domain();
+        if (current.inGame() && current.game().turn().landing() != null) {
+            var result = current.game().turn().landing().event();
+            if (result != null && result.countPending() && !(event instanceof GameEvent.EventHandCount)) {
+                throw new IllegalStateException("private card result must immediately report its public hand count");
+            }
+        }
+        if (current.inGame() && current.game().turn().track().safePointPhase() == 1
+                && !(event instanceof GameEvent.SafePointEntered)) {
+            throw new IllegalStateException("SafePointEntered must immediately follow TurnStarted");
+        }
+        if (event instanceof GameEvent.WindowOpened e) {
+            var f = e.frame();
+            TaskLinks.requireWindowTask(engine, f.window(), f.deadlineTaskId(), FlowCoordinator.taskKind(f.kind()));
+        } else if (event instanceof GameEvent.WindowResumed e) {
+            SessionState s = (SessionState) engine.domain();
+            var f = s.game().flow().frame(e.windowId()).orElseThrow();
+            if (!(f.window().resume(e.at()) instanceof com.millionnaire.engine.time.Window.Resumption.Reopened r)) {
+                throw new IllegalStateException("exhausted window cannot resume");
+            }
+            TaskLinks.requireWindowTask(engine, r.window(), e.deadlineTaskId(), FlowCoordinator.taskKind(f.kind()));
+        }
+    }
+
     /**
      * 固定顺序的校验清单（内核部分已由 Engine 先行完成）：大厅 → 对局（局号/时间、设置、玩家、棋盘、回合、流程）
      * → 跨模块（全部定时任务都必须被某个模块认领，且认领与任务双向一致）。只在步的入口与出口执行，不在每次 emit 后执行。
@@ -101,6 +176,8 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     @Override
     public void validate(EngineState engine, SessionState state, RuleConfig config, boolean full) {
         LobbyModule.expect(state != null, "session state missing");
+        // 快照/重建结果只允许步边界状态，不能恢复一份可供后续冒用的管理中止凭据。
+        LobbyModule.expect(state.abortSource() == null, "unconsumed EndGame source at a step boundary");
         LobbyModule.validate(state.lobby(), config);
         List<FlowCoordinator.TaskClaim> claims = GameModule.validate(engine, state, config, full);
         for (ScheduledTask t : engine.timers().tasks()) {

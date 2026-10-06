@@ -3,6 +3,7 @@ import { Node } from 'cc';
 import { Theme } from '../core/Theme';
 import { mk } from './Kit';
 import { Popup } from './Popup';
+import { ctx } from './Ctx';
 
 export class PopupManager {
     readonly layer: Node;
@@ -23,6 +24,7 @@ export class PopupManager {
     open(p: Popup): Popup {
         p.mount(this.layer);
         this.stack.push(p);
+        this.syncVisibility();
         return p;
     }
 
@@ -39,6 +41,16 @@ export class PopupManager {
             p.root.removeFromParent();
             p.root.destroy();
         }
+        this.syncVisibility();
+    }
+
+    private syncVisibility(): void {
+        let fullPage = -1;
+        this.stack.forEach((popup, i) => { if (popup.coversScreen) fullPage = i; });
+        if (ctx.screens) ctx.screens.layer.active = fullPage < 0;
+        this.stack.forEach((popup, i) => {
+            if (popup.root?.isValid) popup.root.active = fullPage < 0 || i >= fullPage;
+        });
     }
 
     closeTop(): void {

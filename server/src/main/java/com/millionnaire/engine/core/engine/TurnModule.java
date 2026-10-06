@@ -32,6 +32,7 @@ import com.millionnaire.engine.core.event.GameEvent.Landed;
 import com.millionnaire.engine.core.event.GameEvent.OrderNumberDrawn;
 import com.millionnaire.engine.core.event.GameEvent.PlayerJailed;
 import com.millionnaire.engine.core.event.GameEvent.PlayerMoved;
+import com.millionnaire.engine.core.event.GameEvent.MoveChainStarted;
 import com.millionnaire.engine.core.event.GameEvent.ReleaseReason;
 import com.millionnaire.engine.core.event.GameEvent.StartRewardPaid;
 import com.millionnaire.engine.core.event.GameEvent.TurnEnded;
@@ -57,6 +58,9 @@ import com.millionnaire.engine.core.state.Standing;
 import com.millionnaire.engine.core.state.TurnStage;
 import com.millionnaire.engine.core.state.TurnState;
 import com.millionnaire.engine.core.state.TurnTrack;
+import com.millionnaire.engine.core.state.MoveChain;
+import com.millionnaire.engine.core.state.MoveSegment;
+import com.millionnaire.engine.core.state.MoveKind;
 import com.millionnaire.engine.ledger.Ledger;
 import com.millionnaire.engine.random.Draw;
 import com.millionnaire.engine.random.DrawPoint;
@@ -138,6 +142,8 @@ final class TurnModule {
         }
         GameState g = game(ctx);
         return switch (command) {
+            case GameCommand.DrawEventCard c -> EventModule.decide(ctx, c);
+            case GameCommand.DiscardCard c -> EventModule.decide(ctx, c);
             case RollDice c -> {
                 RejectionCode why = checkTurnWindow(ctx, c.actor(), c.windowId(), true);
                 if (why != null) {
@@ -424,16 +430,26 @@ final class TurnModule {
         ctx.emit(new DiceRolled(player, die, auto));
         BoardTemplate board = board(ctx);
         int from = game(ctx).player(player).orElseThrow().position();
-        int to = Math.floorMod(from + die, board.size());
-        ctx.emit(new PlayerMoved(player, from, to, die));
+        ctx.emit(new MoveChainStarted(Math.addExact(game(ctx).turn().lastChainId(), 1), game(ctx).turn().turnNo(), player, from));
+        MoveSegment segment = MovementRules.segment(1, MoveKind.DICE, from, die, board.size());
+        moveAndLand(ctx, segment, Math.addExact(carriedLeadMs, ctx.config().timing().animDiceMs()));
+    }
+
+    /** 共用移动→奖励→普通落点路径。M3b/c 在来源授权接入后复用，不在重定向前结束回合。 */
+    static void moveAndLand(DecisionContext<SessionState> ctx, MoveSegment segment, long carriedLeadMs) {
+        String player = game(ctx).turn().currentPlayer();
+        BoardTemplate board = board(ctx);
+        int to = segment.to();
+        ctx.emit(new PlayerMoved(player, segment.from(), to, segment.distance(), game(ctx).turn().chain().chainId(), segment.number(), segment.kind()));
         // O1：前进经过或落在起点才领奖，每回合最多一次；开局不领
         if (game(ctx).turn().track().rewardDue()) {
             ctx.emit(new StartRewardPaid(player, ctx.config().economy().startReward(), game(ctx).turn().turnNo()));
         }
         TileType type = board.tiles().get(to).type();
         ctx.emit(new Landed(player, to, type, placeholder(type)));
-        long animation = Math.addExact(carriedLeadMs, Math.addExact(ctx.config().timing().animDiceMs(),
-                Math.multiplyExact((long) die, ctx.config().timing().animPerStepMs())));
+        MoveSegment verified = game(ctx).turn().chain().segments().getLast();
+        long animation = Math.addExact(carriedLeadMs,
+                Math.multiplyExact((long) verified.walked().size(), ctx.config().timing().animPerStepMs()));
         if (type == TileType.JAIL) {
             ctx.emit(new PlayerJailed(player));
             endTurn(ctx, animation);
@@ -479,7 +495,7 @@ final class TurnModule {
 
     /** 事件格（M3）与游戏区（M6）尚未接入。 */
     static boolean placeholder(TileType type) {
-        return type == TileType.EVENT || type == TileType.GAME_ZONE;
+        return type == TileType.GAME_ZONE;
     }
 
     static void endTurn(DecisionContext<SessionState> ctx, long leadMs) {
@@ -781,15 +797,18 @@ final class TurnModule {
             case TurnStarted e -> {
                 check(e.turnNo() == t.turnNo() + 1 && t.stage() == TurnStage.NONE && k.equals(TurnTrack.NONE)
                         && nextAlive(g).map(e.playerId()::equals).orElse(false), "turn sequence broken");
-                yield g.withTurn(t.next(e.turnNo(), e.playerId()));
+                yield g.withTurn(t.next(e.turnNo(), e.playerId()).withTrack(TurnTrack.NONE.safePoint(1)));
             }
             case TurnStageEntered e -> {
+                check(!(e.continuation() instanceof Continuation.BeginTurn) || t.stage() == TurnStage.NONE,
+                        "BeginTurn can only start at the turn boundary");
+                check(k.safePointPhase() != 1, "turn stage started before its safe point");
                 check(e.stage() != TurnStage.NONE && Continuation.allowedFor(e.stage(), e.continuation(), t)
                         && (e.stage() == TurnStage.AWAITING_FLOW ? e.notBefore() >= 0 : e.notBefore() == 0),
                         "continuation " + e.continuation() + " / notBefore not allowed for " + e.stage());
                 check(e.stage() != TurnStage.JAIL_DECISION || g.player(t.currentPlayer()).orElseThrow().inJail(),
                         "jail decision outside jail");
-                yield g.withTurn(t.withStage(e.stage(), e.windowId(), e.continuation(), e.notBefore()));
+                yield g.withTurn(t.withStage(e.stage(), e.windowId(), e.continuation(), e.notBefore()).withTrack(k.safePoint(0)));
             }
             case TurnEnded e -> {
                 check(e.turnNo() == t.turnNo() && t.autoTaskId() == 0 && k.equals(TurnTrack.NONE) && t.landing() == null
@@ -803,23 +822,43 @@ final class TurnModule {
                         "die " + e.value() + " does not match " + d);
                 yield g.withTurn(t.withTrack(k.die(e.value())));
             }
+            case MoveChainStarted e -> {
+                check(t.chain() == null && t.landing() == null && t.stage() == TurnStage.PRE_ROLL
+                        && g.flow().frames().isEmpty() && current(g, e.playerId()) && e.turnNo() == t.turnNo()
+                        && e.chainId() == Math.addExact(t.lastChainId(), 1) && k.pendingDie() > 0
+                        && e.origin() == g.player(e.playerId()).orElseThrow().position(), "move chain source mismatch");
+                yield g.withTurn(t.withChain(new MoveChain(e.chainId(), e.turnNo(), e.playerId(), e.origin(), false,
+                        t.startRewardGiven(), List.of(), 0)));
+            }
             case PlayerMoved e -> {
                 PlayerState p = g.player(e.playerId()).orElseThrow();
-                check(current(g, e.playerId()) && k.pendingDie() != 0 && e.steps() == k.pendingDie()
-                        && p.position() == e.from() && e.to() == Math.floorMod(e.from() + e.steps(), board.size()),
-                        "move does not follow the committed die");
-                boolean reward = e.from() + e.steps() >= board.size() && !t.startRewardGiven();
-                yield g.withPlayer(p.at(e.to())).withTurn(t.withTrack(k.moved(e.to(), reward)));
+                MoveChain chain = t.chain();
+                // M3b/M3c 在这里增加已核验的事件/卡来源，不允许用 kind 自我声明来源。
+                check(current(g, e.playerId()) && chain != null && e.chainId() == chain.chainId()
+                        && p.position() == e.from() && t.landing() == null && g.flow().frames().isEmpty()
+                        && (e.kind() == MoveKind.DICE ? chain.segments().isEmpty() && e.segmentNo() == 1
+                            && k.pendingDie() != 0 && e.steps() == k.pendingDie()
+                            : k.eventMove() != null && k.eventMove().playerId().equals(e.playerId())
+                                && k.eventMove().landingId() == t.lastLandingId() && k.eventMove().cursor() == 1
+                                && e.kind() == k.eventMove().kind() && e.steps() == k.eventMove().distance()
+                                && chain.eventDrawn() && e.segmentNo() == chain.segments().size() + 1),
+                        "move does not follow the committed source/chain");
+                MoveSegment segment = e.kind() == MoveKind.TO_JAIL
+                        ? MovementRules.jailJump(e.segmentNo(), e.from(), jailIndex(board), board.size())
+                        : MovementRules.segment(e.segmentNo(), e.kind(), e.from(), e.steps(), board.size());
+                check(e.to() == segment.to(), "move endpoint mismatch");
+                boolean reward = chain.canReward(segment) && !t.startRewardGiven();
+                yield g.withPlayer(p.at(e.to())).withTurn(t.withChain(chain.append(segment)).withTrack(k.moved(e.to(), reward)));
             }
             case StartRewardPaid e -> {
-                check(k.rewardDue() && current(g, e.playerId()) && e.amount() == rules.economy().startReward()
+                check(k.rewardDue() && t.chain() != null && !t.chain().startRewardGiven() && !t.startRewardGiven() && current(g, e.playerId()) && e.amount() == rules.economy().startReward()
                         && e.turnNo() == t.turnNo(), "start reward not due or wrong amount");
                 Ledger l = g.ledger().transfer(Ledger.SYSTEM, e.playerId(), e.amount(), START_REWARD, "turn-" + e.turnNo());
-                yield g.withLedger(l).withTurn(t.rewardGiven().withTrack(k.rewarded()));
+                yield g.withLedger(l).withTurn(t.rewardGiven().withChain(t.chain().rewarded()).withTrack(k.rewarded()));
             }
             case Landed e -> {
                 TileType type = board.tiles().get(e.tile()).type();
-                check(current(g, e.playerId()) && k.pendingLanding() == e.tile() && !k.rewardDue()
+                check(current(g, e.playerId()) && t.chain() != null && k.pendingLanding() == e.tile() && !k.rewardDue()
                         && g.player(e.playerId()).orElseThrow().position() == e.tile() && e.type() == type
                         && e.placeholder() == placeholder(type), "landing mismatch");
                 yield g.withTurn(t.withTrack(k.landed(type == TileType.JAIL, type == TileType.JAIL ? -1 : e.tile())));
@@ -873,6 +912,7 @@ final class TurnModule {
                 yield g.withTurn(t.withAutoTask(0));
             }
             default -> {
+                if (EventModule.handles(event)) { yield EventModule.evolve(g, event, draws, rules); }
                 if (EconomyModule.handles(event)) {
                     yield EconomyModule.evolve(g, event, rules);
                 }
@@ -916,7 +956,9 @@ final class TurnModule {
         for (PlayerState p : g.players()) {
             LobbyModule.expect(p.life() != null && p.control() != null && p.conn() != null && p.connObservation() >= 0,
                     "player fields missing");
-            LobbyModule.expect(p.hand().size() <= config.economy().handLimit(), "hand over the limit for " + p.playerId());
+            boolean discarding = g.turn().landing() != null && g.turn().landing().step() == com.millionnaire.engine.core.state.LandingStep.DISCARD
+                    && p.playerId().equals(g.turn().currentPlayer());
+            LobbyModule.expect(p.hand().size() <= config.economy().handLimit() + (discarding ? 1 : 0), "hand over the limit for " + p.playerId());
         }
         int jail = jailIndex(LobbyModule.board(config, g.settings()));
         for (PlayerState p : g.players()) {
@@ -938,6 +980,7 @@ final class TurnModule {
             LobbyModule.expect(c.taskId() == 0 && g.flow().queue().isEmpty()
                     && (!t.stage().beforeRoll() || g.flow().frames().size() > 1), "draining without pending settlement");
         }
+        validateChain(g, config);
         PlayerState cur = g.player(t.currentPlayer()).orElse(null);
         // 当前玩家只有在他人流程进行中认输时才可能已被淘汰（回合在流程返回后结束，E2 / 待确认默认 5）
         LobbyModule.expect(cur != null && (cur.life() == LifeState.ALIVE || EconomyModule.flowsRunning(g)),
@@ -974,6 +1017,37 @@ final class TurnModule {
                     "auto task missing for an automated player");
         }
         return claims;
+    }
+
+    /** 链状态是持久领域状态；快照必须与当前位置、任务落点、逐格路径及回合奖励一致。 */
+    private static void validateChain(GameState g, RuleConfig config) {
+        TurnState t = g.turn();
+        LobbyModule.expect(t.lastChainId() >= 0 && t.lastChainId() < Long.MAX_VALUE
+                && t.lastDebtId() >= 0 && t.lastDebtId() < Long.MAX_VALUE, "movement/debt counters invalid");
+        MoveChain c = t.chain();
+        if (c == null) {
+            LobbyModule.expect(t.landing() == null && !t.startRewardGiven(), "landing or reward without a chain");
+            return;
+        }
+        int size = LobbyModule.board(config, g.settings()).size();
+        LobbyModule.expect(c.chainId() == t.lastChainId() && c.chainId() >= 1 && c.turnNo() == t.turnNo()
+                && t.currentPlayer().equals(c.playerId()) && c.origin() >= 0 && c.origin() < size
+                && c.startRewardGiven() == t.startRewardGiven()
+                && c.segments() != null && c.segments().size() >= 1 && c.segments().size() <= 2 && !t.stage().beforeRoll(), "move chain invalid");
+        MoveSegment segment = c.segments().get(0);
+        LobbyModule.expect(segment != null && segment.kind() == MoveKind.DICE && segment.number() == 1
+                && segment.from() == c.origin() && segment.distance() <= config.economy().dieFaces()
+                && MovementRules.valid(c, size)
+                && c.segments().getLast().to() == g.player(c.playerId()).orElseThrow().position(), "move chain segment/flags invalid");
+        if (c.segments().size() == 2) {
+            var second = c.segments().getLast();
+            LobbyModule.expect(c.eventDrawn() && LobbyModule.board(config, g.settings()).tiles().get(segment.to()).type() == TileType.EVENT
+                    && (second.kind() == MoveKind.EVENT_FORWARD || second.kind() == MoveKind.EVENT_BACKWARD)
+                    && second.distance() >= config.economy().eventMoveMinSteps() && second.distance() <= config.economy().eventMoveMaxSteps(),
+                    "event movement segment invalid");
+        } else {
+            LobbyModule.expect(c.eventDrawn() == (t.landing() != null && t.landing().event() != null), "move chain invalid");
+        }
     }
 
     static int jailIndex(BoardTemplate board) {

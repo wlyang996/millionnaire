@@ -120,6 +120,16 @@ public final class Table {
         return send(Math.max(now + 10, w.window().opensAt()), new GameCommand.RollDice(current(), w.windowId()));
     }
 
+    /** M1/M2 scenarios isolated from event effects: resolve CARD/discard decisions, never buy/upgrade/bank decisions. */
+    public StepResult rollThenResolveEvent() {
+        int start = log.size();
+        StepResult r = rollOnly();
+        while (session().inGame() && game().turn().landing() != null
+                && (game().turn().landing().step() == com.millionnaire.engine.core.state.LandingStep.EVENT
+                    || game().turn().landing().step() == com.millionnaire.engine.core.state.LandingStep.DISCARD)) { pass(); }
+        return new StepResult(state, new ArrayList<>(log.subList(start, log.size())), r.outcome(), r.rejection());
+    }
+
     /** 明确的"先完成当前落点（手动放弃 / 不升级 / 结束银行）再投骰"；不处理投骰后的新落点。 */
     public StepResult passThenRoll() {
         while (session().inGame() && game().turn().stage() == com.millionnaire.engine.core.state.TurnStage.LANDING) {
@@ -158,6 +168,8 @@ public final class Table {
             case BUY -> new GameCommand.DeclinePurchase(current(), w.windowId());
             case UPGRADE -> new GameCommand.SkipUpgrade(current(), w.windowId());
             case BANK -> new GameCommand.FinishBank(current(), w.windowId());
+            case EVENT -> new GameCommand.DrawEventCard(current(), w.windowId());
+            case DISCARD -> new GameCommand.DiscardCard(current(), w.windowId(), landing.event().newCardIndex());
             default -> throw new IllegalStateException("no decision window for " + landing.step());
         };
         return c instanceof Tick ? tick(w.window().deadline()) : send(at, c);

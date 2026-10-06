@@ -26,8 +26,8 @@ class M2cReviewTest {
     /** 标准 20 秒拍卖占位流程（参与者：全体存活者，仅占位测试用），三人都在 100ms 认输（被接受、延后），流程到期后整批清算。 */
     private static Table batchAfterAuction() {
         Table t = M2bReviewTest.table(3);
-        DecisionContext<SessionState> c = M2bReviewTest.ctx(t);
-        GameModule.openOverlay(c, FlowKind.AUCTION, "p2", 0, OverlayModule.durationMs(t.config, FlowKind.AUCTION), "x");
+        DecisionContext<SessionState> c = M2bReviewTest.queuedAtInitialSafePoint(t, FlowKind.AUCTION, "p2",
+                OverlayModule.durationMs(t.config, FlowKind.AUCTION), "x");
         M2bReviewTest.commit(t, c);
         long opened = t.now;
         long end = t.window().window().deadline();
@@ -113,8 +113,7 @@ class M2cReviewTest {
         assertEquals(Outcome.ACCEPTED, debt.send(debt.now + 10, new SessionCommand.EndGame(1, "ADMIN")).outcome());
         assertFalse(debt.session().inGame());
         Table pending = M2bReviewTest.table(3);
-        DecisionContext<SessionState> c = M2bReviewTest.ctx(pending);
-        GameModule.openOverlay(c, FlowKind.TRADE, "p2", 0, 15_000, "x");
+        DecisionContext<SessionState> c = M2bReviewTest.queuedAtInitialSafePoint(pending, FlowKind.TRADE, "p2", 15_000, "x");
         M2bReviewTest.commit(pending, c);
         pending.send(pending.now + 5, new GameCommand.Surrender("p2", 1));
         assertEquals(Outcome.ACCEPTED, pending.send(pending.now + 10, new SessionCommand.EndGame(1, "ADMIN")).outcome());
@@ -127,7 +126,7 @@ class M2cReviewTest {
     @Test
     void n3AnOverlayCannotPreemptAnUpgradeWindow() {
         Table t = M2bReviewTest.table(3, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         t.act(w -> new GameCommand.BuyProperty("p1", w));
         assertEquals(LandingStep.UPGRADE, t.game().turn().landing().step());
         DecisionContext<SessionState> c = M2bReviewTest.ctx(t);

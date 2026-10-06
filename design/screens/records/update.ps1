@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 # Current gallery only. Historical sources are preserved separately.
 $galleryRoot = [IO.Path]::GetFullPath((Split-Path $PSScriptRoot -Parent))
 $designRoot = Split-Path $galleryRoot -Parent
@@ -41,7 +41,14 @@ $entries = @(
     [pscustomobject]@{ File = '15-银行抵押与赎回-监狱操作.png'; Source = (Join-Path $sourceUi 'supplement-v1/银行抵押与赎回-监狱操作-v1.png'); Role = '银行抵押与赎回-监狱操作'; Version = 1; Status = 'design candidate' },
     [pscustomobject]@{ File = '16-虎口拔牙结果-定点移动与房屋保护详情.png'; Source = (Join-Path $sourceUi 'supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png'); Role = '虎口拔牙结果-定点移动与房屋保护详情'; Version = 1; Status = 'design candidate' },
     [pscustomobject]@{ File = '17-弃牌-认输二次确认-本人战绩.png'; Source = (Join-Path $sourceUi 'supplement-v1/弃牌-认输二次确认-本人战绩-v1.png'); Role = '弃牌-认输二次确认-本人战绩'; Version = 1; Status = 'design candidate' },
-    [pscustomobject]@{ File = '18-资产总览-格子详情-房间号键盘-候选.png'; Source = (Join-Path $sourceUi 'supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png'); Role = '资产总览-格子详情-房间号键盘-候选'; Version = 1; Status = 'design candidate' }
+    [pscustomobject]@{ File = '18-资产总览-格子详情-房间号键盘-候选.png'; Source = (Join-Path $sourceUi 'supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png'); Role = '资产总览-格子详情-房间号键盘-候选'; Version = 1; Status = 'assets and tile layout adopted and browser checked; keypad candidate; exact artwork fidelity pending' },
+    [pscustomobject]@{ File = '19-道具详情与聊天-待审阅.png'; Source = (Join-Path $sourceUi 'details-chat-v1/道具详情与聊天-待审阅-v1.png'); Role = '道具详情与聊天-待审阅'; Version = 1; Status = 'chat layout approved; card dialog superseded by screen 16; artwork integration pending' },
+    [pscustomobject]@{ File = '20-银行-抵押与赎回-候选.png'; Source = (Join-Path $sourceUi 'special-lands-v1/银行-抵押与赎回-v1.png'); Role = '银行-抵押与赎回'; Version = 1; Status = 'design candidate' },
+    [pscustomobject]@{ File = '21-监狱-出狱判定与游戏中心-虎口拔牙-候选.png'; Source = (Join-Path $sourceUi 'special-lands-v1/监狱-出狱判定与游戏中心-虎口拔牙-v1.png'); Role = '监狱-出狱判定与游戏中心-虎口拔牙'; Version = 1; Status = 'design candidate' },
+    [pscustomobject]@{ File = '22-事件土地-中央抽卡与休息区-停留提示-候选.png'; Source = (Join-Path $sourceUi 'special-lands-v1/事件土地-中央抽卡与休息区-停留提示-v1.png'); Role = '事件土地-中央抽卡与休息区-停留提示'; Version = 1; Status = 'design candidate' },
+    [pscustomobject]@{ File = '23-起点-经过奖励与车站-产权租金详情-候选.png'; Source = (Join-Path $sourceUi 'special-lands-v1/起点-经过奖励与车站-产权租金详情-v1.png'); Role = '起点-经过奖励与车站-产权租金详情'; Version = 1; Status = 'design candidate' },
+    [pscustomobject]@{ File = '24-小镇入口-游戏大厅-候选.png'; Source = (Join-Path $sourceUi 'town-entrance-v1/小镇入口-游戏大厅-v1.png'); Role = '小镇入口-游戏大厅'; Version = 1; Status = 'misinterpreted request; retained for history; not adopted' },
+    [pscustomobject]@{ File = '25-小镇入口-起点土地详情-候选.png'; Source = (Join-Path $sourceUi 'start-tile-v1/小镇入口-起点土地详情-v1.png'); Role = '小镇入口-起点土地详情'; Version = 1; Status = 'design candidate; not implemented' }
 )
 
 # Check every source before copying any file.

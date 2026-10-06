@@ -7,6 +7,7 @@ import { Graphics, Node, UITransform } from 'cc';
 import { Theme } from '../core/Theme';
 import { drawPips } from './Icons';
 import { col, fillCircle, gfx, mk } from './Kit';
+import { art } from './Art';
 
 const S = 108; // 容器边长
 const HALF = 46; // 骰子半边长
@@ -19,6 +20,12 @@ export class DiceView {
     private value = 1;
     private anim: { start: number; value: number; flipAt: number; shown: number; onDone: (() => void) | null } | null = null;
     private last = 0;
+    private face: Node | null = null;
+    private shown = 0;
+    private faces = new Map<string, Node>();
+    private faceKey = '';
+    private ready = false;
+    private readySince = 0;
 
     constructor(parent: Node, x: number, y: number) {
         this.node = mk(parent, 'Dice', x, y, S, S);
@@ -38,6 +45,14 @@ export class DiceView {
         return this.anim !== null;
     }
 
+    /** 本人可投骰时循环放大/缩小；翻滚开始立即停止提示。 */
+    setReady(on: boolean): void {
+        if (this.ready === on) return;
+        this.ready = on;
+        this.readySince = Date.now();
+        if (!this.anim) this.body.setScale(1, 1, 1);
+    }
+
     setValue(v: number): void {
         this.value = v;
         this.drawBody(v);
@@ -50,6 +65,8 @@ export class DiceView {
     }
 
     private drawBody(v: number): void {
+        this.shown = v;
+        if (this.drawFace('dice_' + v)) return;
         const g = gfx(this.body);
         g.clear();
         g.fillColor = col('#E4E0D4');
@@ -62,6 +79,23 @@ export class DiceView {
         g.roundRect(-HALF + 5, -HALF + 5, 2 * HALF - 10, 2 * HALF - 10, 16);
         g.fill();
         drawPips(g, -HALF, -HALF, 2 * HALF, v, Theme.c.ink);
+    }
+
+    private drawFace(key: string): boolean {
+        if (this.faceKey === key) return !!this.face;
+        let face = this.faces.get(key);
+        if (!face) {
+            const loaded = art(this.body, key, -S / 2, -S / 2, S, S);
+            if (!loaded) return false;
+            face = loaded;
+            this.faces.set(key, face);
+        }
+        if (this.face) this.face.active = false;
+        this.face = face;
+        this.face.active = true;
+        this.faceKey = key;
+        gfx(this.body).clear();
+        return true;
     }
 
     private drawShadow(scale: number): void {
@@ -96,58 +130,38 @@ export class DiceView {
     /** 每帧调用。 */
     update(): void {
         const a = this.anim;
-        if (!a) return;
+        if (!a) {
+            const k = this.ready ? (1 - Math.cos((Date.now() - this.readySince) / Theme.anim.diceReadyMs * Math.PI * 2)) / 2 : 0;
+            const scale = 1 + 0.14 * k;
+            this.body.setScale(scale, scale, 1);
+            return;
+        }
         const now = Date.now();
         const t = Math.min(1, (now - a.start) / Theme.anim.diceMs);
-        let y = 0;
-        let sx = 1;
-        let sy = 1;
-        let ang = 0;
+        let y = 0, sx = 1, sy = 1, ang = 0, hk = 0;
         let halo: 'none' | 'impact' | 'glow' = 'none';
-        let hk = 0;
-        const AIR0 = 0.1;
-        const AIR1 = 0.62;
+        const AIR0 = 0.1, AIR1 = 0.62;
         if (t < AIR0) {
-            // 准备：压扁蓄力
             const k = t / AIR0;
-            sy = 1 - 0.14 * k;
-            sx = 1 + 0.08 * k;
+            sy = 1 - 0.14 * k; sx = 1 + 0.08 * k;
         } else if (t < AIR1) {
-            // 抛起 + 翻滚：抛物线，旋转 540°
             const k = (t - AIR0) / (AIR1 - AIR0);
-            y = 120 * Math.sin(Math.PI * k);
-            ang = -540 * k;
-            sx = 1 + 0.06 * Math.sin(Math.PI * k);
-            sy = sx;
+            y = 120 * Math.sin(Math.PI * k); ang = -540 * k;
+            sx = sy = 1 + 0.06 * Math.sin(Math.PI * k);
             if (now >= a.flipAt) {
-                a.flipAt = now + 70;
-                a.shown = 1 + Math.floor(Math.random() * 6);
+                a.flipAt = now + 70; a.shown = 1 + Math.floor(Math.random() * 6);
                 this.drawBody(a.shown);
             }
         } else if (t < 0.72) {
-            // 落地：压扁 + 冲击线，点数定为最终值
             const k = (t - AIR1) / (0.72 - AIR1);
-            if (a.shown !== a.value) {
-                a.shown = a.value;
-                this.drawBody(a.value);
-            }
-            sy = 0.8 + 0.2 * k;
-            sx = 1.16 - 0.16 * k;
-            halo = 'impact';
-            hk = k;
+            if (a.shown !== a.value) { a.shown = a.value; this.drawBody(a.value); }
+            sy = 0.8 + 0.2 * k; sx = 1.16 - 0.16 * k; halo = 'impact'; hk = k;
         } else if (t < 0.88) {
-            // 回弹
             const k = (t - 0.72) / 0.16;
-            y = 22 * Math.sin(Math.PI * k);
-            ang = 10 * Math.sin(Math.PI * k);
+            y = 22 * Math.sin(Math.PI * k); ang = 10 * Math.sin(Math.PI * k);
         } else {
-            // 停稳：发光
             const k = (t - 0.88) / 0.12;
-            const pulse = 1 + 0.06 * Math.sin(Math.PI * k);
-            sx = pulse;
-            sy = pulse;
-            halo = 'glow';
-            hk = k;
+            sx = sy = 1 + 0.06 * Math.sin(Math.PI * k); halo = 'glow'; hk = k;
         }
         this.body.setPosition(S / 2, -S / 2 + y, 0);
         this.body.setScale(sx, sy, 1);

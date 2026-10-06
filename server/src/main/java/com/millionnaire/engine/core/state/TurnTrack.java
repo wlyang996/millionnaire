@@ -10,8 +10,11 @@ import java.util.List;
  */
 public record TurnTrack(int pendingDie, int pendingLanding, boolean rewardDue, boolean jailLanding, int jailRoll,
                         boolean bailPaid, List<String> drawQueue, int landedTile, long pendingCharge, Liquidation liquidating,
-                        long openBatch) {
-    public static final TurnTrack NONE = new TurnTrack(0, -1, false, false, 0, false, List.of(), -1, 0, null, 0);
+                        long openBatch, FeeSource feeSource, DebtPath debtPath, int safePointPhase, long bankruptcyDebtId, EventMove eventMove) {
+    public TurnTrack(int pendingDie, int pendingLanding, boolean rewardDue, boolean jailLanding, int jailRoll, boolean bailPaid, List<String> drawQueue, int landedTile, long pendingCharge, Liquidation liquidating, long openBatch, FeeSource feeSource, DebtPath debtPath, int safePointPhase, long bankruptcyDebtId) {
+        this(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue, landedTile, pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, null);
+    }
+    public static final TurnTrack NONE = new TurnTrack(0, -1, false, false, 0, false, List.of(), -1, 0, null, 0, null, null, 0, 0);
 
     public TurnTrack {
         drawQueue = Immutable.list(drawQueue);
@@ -20,63 +23,80 @@ public record TurnTrack(int pendingDie, int pendingLanding, boolean rewardDue, b
     /** 开局抽数轮次：本轮依次应抽数的玩家（首抽为全体座位顺序，重抽为各同分组按名次与座位顺序展开）。 */
     public TurnTrack draws(List<String> value) {
         return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, value, landedTile,
-                pendingCharge, liquidating, openBatch);
+                pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     public TurnTrack die(int value) {
         return new TurnTrack(value, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue, landedTile,
-                pendingCharge, liquidating, openBatch);
+                pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     public TurnTrack moved(int landing, boolean reward) {
         return new TurnTrack(0, landing, reward, jailLanding, jailRoll, bailPaid, drawQueue, landedTile, pendingCharge,
-                liquidating, openBatch);
+                liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, null);
     }
 
     public TurnTrack rewarded() {
         return new TurnTrack(pendingDie, pendingLanding, false, jailLanding, jailRoll, bailPaid, drawQueue, landedTile,
-                pendingCharge, liquidating, openBatch);
+                pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     /** 落下：jail 表示落在监狱（随后必须入狱）；tile 为落点（供落点推进器开始，监狱为 -1）。 */
     public TurnTrack landed(boolean jail, int tile) {
         return new TurnTrack(pendingDie, -1, rewardDue, jail, jailRoll, bailPaid, drawQueue, tile, pendingCharge,
-                liquidating, openBatch);
+                liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     public TurnTrack jailed() {
         return new TurnTrack(pendingDie, pendingLanding, rewardDue, false, jailRoll, bailPaid, drawQueue, landedTile,
-                pendingCharge, liquidating, openBatch);
+                pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     public TurnTrack judged(int value) {
         return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, value, bailPaid, drawQueue, landedTile,
-                pendingCharge, liquidating, openBatch);
+                pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     public TurnTrack bail(boolean value) {
         return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, value, drawQueue, landedTile,
-                pendingCharge, liquidating, openBatch);
+                pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     /** 落点推进器已接手本步落点。 */
     public TurnTrack landingTaken() {
         return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue, -1,
-                pendingCharge, liquidating, openBatch);
+                pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     public TurnTrack charge(long amount) {
         return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue, landedTile,
-                amount, liquidating, openBatch);
+                amount, liquidating, openBatch, amount == 0 ? null : feeSource, amount == 0 ? null : debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     public TurnTrack liquidating(Liquidation value) {
         return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue, landedTile,
-                pendingCharge, value, openBatch);
+                pendingCharge, value, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
     }
 
     public TurnTrack batch(long value) {
         return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue, landedTile,
-                pendingCharge, liquidating, value);
+                pendingCharge, liquidating, value, feeSource, debtPath, safePointPhase, bankruptcyDebtId, eventMove);
+    }
+    public TurnTrack fee(FeeSource source, DebtPath path) {
+        return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue,
+                landedTile, source.amount(), liquidating, openBatch, source, path, safePointPhase, bankruptcyDebtId, eventMove);
+    }
+    /** 1: TurnStarted awaits SafePointEntered; 2: that safe point awaits dequeue/stage start. */
+    public TurnTrack safePoint(int phase) {
+        return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue,
+                landedTile, pendingCharge, liquidating, openBatch, feeSource, debtPath, phase, bankruptcyDebtId, eventMove);
+    }
+    /** One-step authority from direct creation, accepted bankruptcy/surrender, or segment-2 expiry. */
+    public TurnTrack bankruptcy(long debtId) {
+        return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue,
+                landedTile, pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, debtId, eventMove);
+    }
+    public TurnTrack redirect(EventMove value) {
+        return new TurnTrack(pendingDie, pendingLanding, rewardDue, jailLanding, jailRoll, bailPaid, drawQueue, landedTile, pendingCharge, liquidating, openBatch, feeSource, debtPath, safePointPhase, bankruptcyDebtId, value);
     }
 }

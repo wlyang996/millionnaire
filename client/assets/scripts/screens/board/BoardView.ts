@@ -6,13 +6,14 @@
  * 棋子：我的棋子更大，带"我·昵称"气泡与发光底座；逐格跳跃由 hopTo() 按时间插值（BoardScreen 用时间戳驱动）。
  */
 import { Mask, Node, UITransform, Vec3, view } from 'cc';
-import { eventDeckRect, gridCell, gridFor, GridSpec, ringLength } from '../../core/BoardLayout';
+import { axisCell, boardAxis, eventDeckRect, gridCell, gridFor, GridSpec, ringLength } from '../../core/BoardLayout';
 import { BoardTile, GameView, PropertyState } from '../../core/Models';
 import { Theme, textWidth } from '../../core/Theme';
 import { drawHouse, drawPips } from '../../ui/Icons';
 import { col, fillCircle, fillPoly, fillRR, gfx, line, mk, place, setOpacity, strokeRR, text } from '../../ui/Kit';
 import { avatar } from '../../ui/Widgets';
 import { drawEventDeck } from './EventDeck';
+import { art, characterKey } from '../../ui/Art';
 
 export interface CamState { scale: number; vx: number; vy: number; follow: boolean; boardId: string }
 
@@ -28,6 +29,10 @@ export class BoardView {
     private world!: Node;
     private g!: GridSpec;
     private fit = 1;
+    private xs: number[] = [];
+    private ys: number[] = [];
+    /** Fill the portrait viewport with rectangular tiles while retaining the exact ring/grid data. */
+    private verticalAspect = 1;
     cam: CamState;
     private pinchDist = 0;
     private moved = 0;
@@ -70,10 +75,13 @@ export class BoardView {
         const size = game.tiles.length === 30 ? 30 : 50;
         this.g = gridFor(size);
         const g = this.g;
+        this.xs = boardAxis(g.cols, g.tile);
+        this.ys = boardAxis(g.rows, g.tile);
         const ww = g.cols * g.tile;
         const wh = g.rows * g.tile;
         this.world = mk(this.viewport, 'World', 0, 0, ww, wh);
-        this.fit = Math.min(this.w / ww, this.h / wh);
+        this.fit = this.w / ww;
+        this.verticalAspect = this.h / (wh * this.fit);
         if (this.cam.boardId !== game.boardId || this.cam.scale <= 0) {
             this.cam = { scale: this.fit, vx: 0, vy: 0, follow: this.cam.follow, boardId: game.boardId };
             this.centerOn(ww / 2, wh / 2, false);
@@ -88,6 +96,8 @@ export class BoardView {
         }
         // 事件牌堆：棋盘内圈左上角的装饰（design/screens/11、10），在格子之上、棋子之下
         const dr = eventDeckRect(g, this.fit);
+        dr.x += this.xs[1] - g.tile;
+        dr.y += this.ys[1] - g.tile;
         drawEventDeck(this.world, dr.x, dr.y, dr.w, dr.h, deckMode);
         this.tokens.clear();
         const tokens = mk(this.world, 'Tokens', 0, 0, ww, wh);
@@ -99,8 +109,12 @@ export class BoardView {
 
     private drawCenter(ww: number, wh: number): void {
         const t = this.g.tile;
-        const n = mk(this.world, 'Center', t * 0.5, t * 0.5, ww - t, wh - t);
+        const border = this.xs[1];
+        const innerW = ww - border * 2;
+        const innerH = wh - border * 2;
+        const n = mk(this.world, 'Center', border, border, innerW, innerH);
         const gg = gfx(n);
+        if (art(n, 'board_town', 0, 0, innerW, innerH, 'stretch')) return;
         fillRR(gg, 0, 0, ww - t, wh - t, 26, '#BFE8A3');
         fillRR(gg, 8, 8, ww - t - 16, wh - t - 16, 20, '#A9DC8B');
         for (let i = 0; i < 16; i++) {
@@ -123,7 +137,9 @@ export class BoardView {
         const g = this.g;
         const t = g.tile;
         const cell = gridCell(tile.index, g);
-        const n = mk(parent, 'Tile' + tile.index, cell.col * t, cell.row * t, t, t);
+        const n = mk(parent, 'Tile' + tile.index, this.xs[cell.col], this.ys[cell.row], t, t);
+        n.setScale((this.xs[cell.col + 1] - this.xs[cell.col]) / t,
+            (this.ys[cell.row + 1] - this.ys[cell.row]) / t, 1);
         const gg = gfx(n);
         const m = 2;
         fillRR(gg, m, m + 2, t - 2 * m, t - 2 * m, 8, '#00000022');
@@ -161,7 +177,9 @@ export class BoardView {
         const icx = x0 + cw / 2;
         const icy = y0 + (ch - lh) / 2;
         const isz = Math.min(cw, ch - lh) * 0.9;
-        this.drawIcon(gg, tile, prop, icx, icy, isz);
+        const iconKey = tile.type === 'PROPERTY' ? 'house_lv' + (prop?.level ?? 0)
+            : ({ BANK: 'icon_bank', JAIL: 'icon_jail', EVENT: 'event_card_back', GAME_ZONE: 'croc_open' } as Record<string, string>)[tile.type];
+        if (!iconKey || !art(n, iconKey, icx - isz / 2, icy - isz / 2, isz, isz)) this.drawIcon(gg, tile, prop, icx, icy, isz);
         if (isProp && prop && prop.owner) {
             this.drawOwnerDot(gg, prop, game, x0 + 8, y0 + 8);
             if (prop.mortgaged) {
@@ -227,7 +245,8 @@ export class BoardView {
 
     tileCenter(index: number): Pt {
         const c = gridCell(index % ringLength(this.g), this.g);
-        return { x: c.col * this.g.tile + this.g.tile / 2, y: c.row * this.g.tile + this.g.tile / 2 };
+        return { x: (this.xs[c.col] + this.xs[c.col + 1]) / 2,
+            y: (this.ys[c.row] + this.ys[c.row + 1]) / 2 };
     }
 
     // ---------- 棋子 ----------
@@ -261,7 +280,8 @@ export class BoardView {
                 gg.ellipse(s / 2, -(s * 0.92), s * 0.34, s * 0.11);
                 gg.fill();
             }
-            avatar(n, 0, me ? -s * 0.1 : 0, s, p.avatar, p.nickname, { ring: me ? Theme.c.blue : cur ? Theme.c.yellow : undefined });
+            if (!art(n, characterKey(p.avatar, true), 0, -s * 0.5, s, s * 1.5))
+                avatar(n, 0, 0, s, p.avatar, p.nickname, { ring: me ? Theme.c.blue : cur ? Theme.c.yellow : undefined });
             if (me) this.drawBubble(n, s, '我·' + myName);
             this.tokens.set(p.playerId, { node: n, s, offX, offY });
         }
@@ -281,21 +301,19 @@ export class BoardView {
 
     /**
      * 逐格跳跃：从格 a 跳到相邻格 b，k∈[0,1) 为这一步内的进度（由时间戳算出）。
-     * 蓄力(0~0.15 微下沉) → 起跳/腾空(0.15~0.8 抛物线) → 落地(0.8~1.0 回弹)。返回当前世界坐标（相机跟随用）。
+     * 连续缓入缓出，小幅抬脚；保留同格偏移，避免起步与落地时突然错位。
      */
     hopTo(id: string, a: number, b: number, k: number): Pt | null {
         const tk = this.tokens.get(id);
         if (!tk) return null;
         const A = this.tileCenter(a);
         const B = this.tileCenter(b);
-        const x = A.x + (B.x - A.x) * Math.min(1, Math.max(0, (k - 0.15) / 0.65));
-        const y = A.y + (B.y - A.y) * Math.min(1, Math.max(0, (k - 0.15) / 0.65));
-        const H = this.g.tile * 0.7;
-        let yo = 0;
-        if (k < 0.15) yo = H * 0.1 * (k / 0.15);
-        else if (k < 0.8) yo = -H * Math.sin((Math.PI * (k - 0.15)) / 0.65);
-        else yo = -H * 0.1 * Math.sin((Math.PI * (k - 0.8)) / 0.2);
-        place(tk.node, x - tk.s / 2, y - tk.s / 2 + yo);
+        const progress = Math.max(0, Math.min(1, k));
+        const eased = progress * progress * (3 - 2 * progress);
+        const x = A.x + (B.x - A.x) * eased;
+        const y = A.y + (B.y - A.y) * eased;
+        const yo = -this.g.tile * 0.16 * Math.sin(Math.PI * progress);
+        place(tk.node, x + tk.offX - tk.s / 2, y + tk.offY - tk.s / 2 + yo);
         return { x, y };
     }
 
@@ -348,8 +366,8 @@ export class BoardView {
         // UI 坐标原点在可见区左下；本工程 Canvas 位于世界原点（居中），故减去可见区一半换算成世界坐标
         const vs = view.getVisibleSize();
         const local = ut.convertToNodeSpaceAR(new Vec3(ui.x - vs.width / 2, ui.y - vs.height / 2, 0));
-        const col0 = Math.floor(local.x / this.g.tile);
-        const row = Math.floor(-local.y / this.g.tile);
+        const col0 = axisCell(this.xs, local.x);
+        const row = axisCell(this.ys, -local.y);
         const idx = this.cellToIndex.get(col0 + ',' + row);
         if (idx !== undefined) this.onTileTap(idx);
     }
@@ -358,18 +376,18 @@ export class BoardView {
     private apply(): void {
         const s = this.cam.scale;
         const ww = this.g.cols * this.g.tile * s;
-        const wh = this.g.rows * this.g.tile * s;
+        const wh = this.g.rows * this.g.tile * s * this.verticalAspect;
         const clamp = (v: number, vp: number, size: number) => (size <= vp ? (vp - size) / 2 : Math.max(vp - size - 40, Math.min(40, v)));
         this.cam.vx = clamp(this.cam.vx, this.w, ww);
         this.cam.vy = clamp(this.cam.vy, this.h, wh);
-        this.world.setScale(s, s, 1);
+        this.world.setScale(s, s * this.verticalAspect, 1);
         place(this.world, this.cam.vx, this.cam.vy);
     }
 
     private centerOn(wx: number, wy: number, animate: boolean): void {
         const s = this.cam.scale;
         const vx = this.w / 2 - wx * s;
-        const vy = this.h / 2 - wy * s;
+        const vy = this.h / 2 - wy * s * this.verticalAspect;
         if (animate) this.target = { x: vx, y: vy };
         else {
             this.cam.vx = vx;

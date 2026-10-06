@@ -1,7 +1,8 @@
 /** 明亮卡通背景：天蓝渐变 + 云 + 草地丘陵（全部 Graphics 绘制，可整体替换为正式美术）。 */
 import { Node } from 'cc';
 import { Theme } from '../core/Theme';
-import { col, fillCircle, gfx, mk } from './Kit';
+import { col, fillCircle, gfx, mk, setOpacity } from './Kit';
+import { art } from './Art';
 
 function lerpHex(a: string, b: string, t: number): string {
     const pa = [1, 3, 5].map((i) => parseInt(a.substr(i, 2), 16));
@@ -41,5 +42,7 @@ export function paintBackdrop(parent: Node, kind: BackdropKind = 'sky'): Node {
     g.fillColor = col(Theme.c.grass);
     g.ellipse(560, -(Theme.H - 10), 440, 170);
     g.fill();
+    const town = art(n, 'board_town', 0, 180, Theme.W, Theme.H - 180, 'stretch');
+    if (town) setOpacity(town, kind === 'night' ? 80 : 190);
     return n;
 }

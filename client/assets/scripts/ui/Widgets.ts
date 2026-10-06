@@ -6,6 +6,7 @@ import {
     col, fillCircle, fillRR, gfx, line, mk, onTap, paintPanel, PanelOpts, setText, strokeCircle, strokeRR, text,
 } from './Kit';
 import { Toast } from './Toast';
+import { art, characterKey } from './Art';
 
 /** 圆角面板（象牙色卡片）。 */
 export function roundedPanel(parent: Node, x: number, y: number, w: number, h: number, o: PanelOpts = {}): Node {
@@ -20,10 +21,14 @@ export interface AvatarOpts {
     showName?: boolean;
 }
 
-/** 占位头像：彩色圆底 + 首字。x,y 为左上角。 */
+/** 设计稿的八个内置头像；破产/认输使用灰显。 */
 export function avatar(parent: Node, x: number, y: number, size: number, idx: number, name: string, o: AvatarOpts = {}): Node {
     const n = mk(parent, 'Avatar:' + name, x, y, size, size);
     const g = gfx(n);
+    if (art(n, characterKey(idx), 0, 0, size, size, 'contain', !!o.dim)) {
+        if (o.ring) strokeCircle(g, size / 2, size / 2, size / 2 - 2, o.ring, 4);
+        return n;
+    }
     const base = Theme.avatarColors[((idx % 8) + 8) % 8];
     fillCircle(g, size / 2, size / 2, size / 2, o.dim ? Theme.c.gray : base);
     fillCircle(g, size / 2, size * 0.36, size * 0.2, '#FFFFFF55'); // 头

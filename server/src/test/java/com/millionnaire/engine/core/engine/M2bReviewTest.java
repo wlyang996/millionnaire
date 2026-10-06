@@ -49,11 +49,12 @@ class M2bReviewTest {
     // ------------------------------------------------------------ 工具
 
     static Table table(int players, int... moves) {
+        if (moves.length == 0) { moves = new int[] {2}; }
         int[] order = new int[players];
         for (int i = 0; i < players; i++) {
             order[i] = 90 - i * 10;
         }
-        return new Table(new ScriptedRandom(script(order(order), Table.deal(players), dice(DrawPoint.MOVE_DIE, moves))), 1)
+        return new Table(ScriptedRandom.withEventCards(script(order(order), Table.deal(players), dice(DrawPoint.MOVE_DIE, moves))), 1)
                 .start(players);
     }
 
@@ -96,6 +97,25 @@ class M2bReviewTest {
         t.log.addAll(c.events());
     }
 
+    /** 在上一回合的投骰窗提交申请，走完无费用落点，到下一回合安全点启动；保留认输/清算测试意图。 */
+    static DecisionContext<SessionState> queuedAtInitialSafePoint(Table t, FlowKind kind, String owner,
+                                                                  long duration, String tag) {
+        DecisionContext<SessionState> c = ctx(t);
+        assertEquals(null, FlowCoordinator.request(c, GameModule.FLOW, kind, owner));
+        commit(t, c);
+        t.rollThenResolveEvent();
+        assertEquals(kind, t.window().kind());
+        int opened = lastIndexOf(t.log, GameEvent.WindowOpened.class);
+        assertEquals(t.log.size() - 1, opened);
+        // 仅重新生成最后的开窗，以保留调用方指定的占位时限与标签；出队/阶段来自正常回合路径。
+        t.log.subList(opened - 1, t.log.size()).clear();
+        t.state = new Evolver<>(SessionDomain.INSTANCE, t.config).evolveAll(null, t.log);
+        c = ctx(t);
+        var r = t.game().flow().pendingStart();
+        GameModule.openQueuedOverlay(c, r, Math.max(0, t.game().turn().notBefore() - t.state.now()), duration, tag);
+        return c;
+    }
+
     static <T extends Event> int indexOf(List<Event> log, Class<T> type, int nth) {
         int seen = 0;
         for (int i = 0; i < log.size(); i++) {
@@ -132,10 +152,10 @@ class M2bReviewTest {
     @Test
     void e1DeletingTheRentIsRejectedAtTheLandingFinish() {
         Table t = table(2, 1, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         t.act(w -> new GameCommand.BuyProperty("p1", w));
         t.act(w -> new GameCommand.UpgradeProperty("p1", w));
-        t.rollOnly();                                               // p2 → 1：缴租 250
+        t.rollThenResolveEvent();                                               // p2 → 1：缴租 250
         assertEquals(2450, t.cash("p1"));
         List<Event> log = new ArrayList<>(t.log);
         log.remove(indexOf(log, GameEvent.RentPaid.class, 0));
@@ -146,7 +166,7 @@ class M2bReviewTest {
     @Test
     void e1ASecondUpgradeInTheSameLandingIsRejectedWhereItIsInserted() {
         Table t = table(2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         t.act(w -> new GameCommand.BuyProperty("p1", w));
         t.act(w -> new GameCommand.UpgradeProperty("p1", w));
         List<Event> log = new ArrayList<>(t.log);
@@ -158,7 +178,7 @@ class M2bReviewTest {
     @Test
     void e1ASkippedOrDuplicatedDecisionIsRejected() {
         Table t = table(2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         t.act(w -> new GameCommand.DeclinePurchase("p1", w));
         List<Event> skipped = new ArrayList<>(t.log);
         skipped.remove(indexOf(skipped, GameEvent.PurchaseDeclined.class, 0));
@@ -174,8 +194,7 @@ class M2bReviewTest {
     @Test
     void e2AnAcceptedDeferredSurrenderIsNotSwallowedByAnEarlyWin() {
         Table t = table(3);
-        DecisionContext<SessionState> c = ctx(t);
-        GameModule.openOverlay(c, FlowKind.TRADE, "p2", 0, 15_000, "x");    // p2 的交易流程（参与者：p2）
+        DecisionContext<SessionState> c = queuedAtInitialSafePoint(t, FlowKind.TRADE, "p2", 15_000, "x");    // p2 的交易流程（参与者：p2）
         commit(t, c);
         long end = t.window().window().deadline();
         t.send(t.now + 5, new GameCommand.Surrender("p2", 1));
@@ -192,8 +211,7 @@ class M2bReviewTest {
 
     private static List<String> twoDeferred(String first, String second) {
         Table t = table(3);
-        DecisionContext<SessionState> c = ctx(t);
-        GameModule.openOverlay(c, FlowKind.AUCTION, "p2", 0, 20_000, "x");  // 拍卖占位：全体存活者都是参与者
+        DecisionContext<SessionState> c = queuedAtInitialSafePoint(t, FlowKind.AUCTION, "p2", 20_000, "x");  // 拍卖占位：全体存活者都是参与者
         commit(t, c);
         long end = t.window().window().deadline();
         t.send(t.now + 5, new GameCommand.Surrender(first, 1));
@@ -214,8 +232,7 @@ class M2bReviewTest {
     @Test
     void e2AWholeTableDeferredBatchEndsWithEveryoneTiedOnPreBatchNetWorth() {
         Table t = table(3);
-        DecisionContext<SessionState> c = ctx(t);
-        GameModule.openOverlay(c, FlowKind.AUCTION, "p2", 0, 20_000, "x");
+        DecisionContext<SessionState> c = queuedAtInitialSafePoint(t, FlowKind.AUCTION, "p2", 20_000, "x");
         commit(t, c);
         long end = t.window().window().deadline();
         for (String p : List.of("p2", "p3", "p1")) {
@@ -256,7 +273,7 @@ class M2bReviewTest {
         Table t = table(3);
         SessionState s = withoutWindows(t);
         SessionState debt = s.withGame(s.game().withDebt(new com.millionnaire.engine.core.state.DebtState(1, "p1", "p2", 100,
-                EconomyModule.RENT, 1, false, 0)));
+                EconomyModule.RENT, 1, false, 0, null, com.millionnaire.engine.core.state.DebtPath.MANUAL)));
         assertThrows(IllegalStateException.class, () -> evolveEnd(t, debt));
     }
 
@@ -298,9 +315,9 @@ class M2bReviewTest {
 
     /** p2 欠 p1 100（现金 50，持有 3 号低价地，应急 400）；返回债务第一段开启时刻。 */
     static long debtOf(Table t) {
-        t.rollOnly();                                               // p1 → 2
+        t.rollThenResolveEvent();                                               // p1 → 2
         craft(t, own(1, "p1", 0).andThen(own(3, "p2", 0)).andThen(cash("p2", 50))::apply);
-        t.rollOnly();                                               // p2 → 1
+        t.rollThenResolveEvent();                                               // p2 → 1
         assertEquals(FlowKind.DEBT, t.window().kind());
         return t.window().window().opensAt();
     }
@@ -352,7 +369,7 @@ class M2bReviewTest {
         long s = debtOf(t);
         GameView v = view(t, "p3");
         assertNotNull(v.debt());
-        assertEquals(new GameView.PublicDebt(2, "p2", "p1", 100, 1, false, false, t.window().windowId()), v.debt());
+        assertEquals(new GameView.PublicDebt(1, "p2", "p1", 100, 1, false, false, t.window().windowId()), v.debt());
         assertEquals(LandingStep.DEBT, v.landing().step());
         assertEquals(50, v.players().stream().filter(p -> p.playerId().equals("p2")).findFirst().orElseThrow().cash());
         t.tick(s + 30_000);
@@ -392,7 +409,7 @@ class M2bReviewTest {
     @Test
     void e6TheProjectionShowsThePendingLandingDecision() {
         Table t = table(2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         GameView v = view(t, "p2");
         assertEquals(new GameView.PublicLanding(1, 1, LandingStep.BUY, true), v.landing());
     }
@@ -422,7 +439,7 @@ class M2bReviewTest {
     void e9TheGlobalEndClosesAnOpenBankWindowAtOnce() {
         Table t = table(2, 1);
         craft(t, g -> g.withPlayer(g.player("p1").orElseThrow().at(10)));
-        t.rollOnly();                                               // p1 → 11 银行
+        t.rollThenResolveEvent();                                               // p1 → 11 银行
         assertEquals(LandingStep.BANK, t.game().turn().landing().step());
         long bankDeadline = t.window().window().deadline();
         long end = t.window().window().opensAt() + 3_000;
@@ -438,7 +455,7 @@ class M2bReviewTest {
     void redeemingInsideABuyWindowIsAllowedAndDoesNotRefreshIt() {
         Table t = table(2, 1);
         craft(t, mortgaged(3, "p1", 500));
-        t.rollOnly();                                               // p1 → 1：买 / 放弃窗口
+        t.rollThenResolveEvent();                                               // p1 → 1：买 / 放弃窗口
         long deadline = t.window().window().deadline();
         assertEquals(Outcome.ACCEPTED, t.act(w -> new GameCommand.Redeem("p1", w, 3)).outcome());
         assertEquals(3000 - 550, t.cash("p1"), "off the bank: 500 + 10%");
@@ -464,7 +481,7 @@ class M2bReviewTest {
     @Test
     void e10StrictRollFailsInsteadOfSkippingALandingWindow() {
         Table t = table(2, 1, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         assertEquals(TurnStage.LANDING, t.game().turn().stage());
         assertThrows(IllegalStateException.class, t::rollOnly);
         StepResult r = t.roll();

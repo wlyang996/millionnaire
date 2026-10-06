@@ -34,7 +34,7 @@ class M1cScenarioTest {
     @Test
     void twoTieGroupsAtOnceAreResolvedHighestGroupFirstAndOnlyWithinEachGroup() {
         // 首抽 70/70/30/30：组 [p1,p2]（70）先重抽 10/20，组 [p3,p4]（30）再重抽 5/6
-        ScriptedRandom r = new ScriptedRandom(script(order(70, 70, 30, 30), order(10, 20, 5, 6), Table.deal(4)));
+        ScriptedRandom r = ScriptedRandom.withEventCards(script(order(70, 70, 30, 30), order(10, 20, 5, 6), Table.deal(4)));
         Table t = new Table(r, 1).start(4);
         assertEquals(List.of("p2", "p1", "p4", "p3"), t.game().players().stream().map(PlayerState::playerId).toList());
         assertEquals(List.of(new OrderDraw("p1", List.of(70, 10)), new OrderDraw("p2", List.of(70, 20)),
@@ -44,7 +44,7 @@ class M1cScenarioTest {
 
     @Test
     void threeConsecutiveJailTimeoutsReleaseOnTheThirdAndMoveImmediately() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1),
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1),
                 dice(DrawPoint.JAIL_DIE, 1), dice(DrawPoint.MOVE_DIE, 1), dice(DrawPoint.JAIL_DIE, 3),
                 dice(DrawPoint.MOVE_DIE, 1), dice(DrawPoint.JAIL_DIE, 5), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
         for (int i = 0; i < 4; i++) {
@@ -60,8 +60,10 @@ class M1cScenarioTest {
         t.tick(deadline);                                   // 超时：判定 5，第三次失败 → 释放，剩余 0 → 立即移动 4
         assertFalse(t.game().player("p1").orElseThrow().inJail());
         assertEquals(10, t.position("p1"));
-        assertEquals("p2", t.current());
+        assertEquals("p1", t.current(), "the already-rolled move now waits at an event window");
         assertEquals(deadline + 1500 + 1500 + 2 * 250, t.window().window().opensAt());
+        t.pass();
+        assertEquals("p2", t.current());
         assertTrue(t.log.stream().anyMatch(e -> e instanceof GameEvent.JailReleased j && j.reason() == GameEvent.ReleaseReason.THIRD_FAILURE));
     }
 
@@ -87,8 +89,9 @@ class M1cScenarioTest {
     @Test
     void overlayPausedDuringTheAnimationBufferKeepsBufferAndFullWindow() {
         // M2c：买 / 升级等落点决策窗口不可被覆盖流程抢占（N3），因此落在事件格 2，让下一位的投骰窗口带动画缓冲
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
-        t.rollOnly();                                           // 下一个窗口（落点决策或下一位投骰）带动画缓冲
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
+        M3bTest.craft(t, g -> g.withPlayer(g.player("p1").orElseThrow().at(13))); // REST preserves the next roll's animation buffer.
+        t.rollThenResolveEvent();                                           // 下一个窗口（落点决策或下一位投骰）带动画缓冲
         FlowFrame next = t.window();
         long pauseAt = t.now + 1;
         assertTrue(pauseAt < next.window().opensAt(), "pause inside the buffer");

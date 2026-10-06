@@ -2,6 +2,7 @@ package com.millionnaire.engine.core.engine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.millionnaire.engine.config.EndMode;
@@ -36,6 +37,7 @@ import com.millionnaire.engine.replay.Scenario;
 import com.millionnaire.engine.replay.ScenarioRunner;
 import com.millionnaire.engine.testkit.Table;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.SplittableRandom;
 import java.util.TreeMap;
@@ -67,6 +69,20 @@ class LongGameTest {
             playRandom(t, new SplittableRandom(seed));
             games.add(t);
         }
+        // Retain all four historical scenarios; add a long-lived no-purchase game to reach the hand cap.
+        Table passive = Table.production(404L);
+        start(passive, 2, RuleConfigs.BOARD_50, 3000, 15);
+        while (passive.session().inGame()) {
+            var g = passive.game();
+            if (g.debt() != null) { passive.tick(passive.window().window().deadline()); }
+            else if (g.turn().stage() == TurnStage.LANDING) {
+                if (g.turn().landing().step() == com.millionnaire.engine.core.state.LandingStep.EVENT && g.turn().turnNo() % 3 == 0) {
+                    passive.tick(passive.window().window().deadline());
+                } else { passive.pass(); }
+            } else { passive.rollOnly(); }
+            checkStep(passive);
+        }
+        games.add(passive);
     }
 
     private static void start(Table t, int players, String board, long cash, int minutes) {
@@ -159,7 +175,7 @@ class LongGameTest {
         String cur = g.turn().currentPlayer();
         if (w.kind() == FlowKind.DEBT) {
             List<OwnableState> assets = owned(g, w.owner(), false);
-            long mode = g.debt().debtId() % 4;
+            long mode = g.debt().source().landingId() % 4;
             if (mode == 0) {
                 t.tick(w.window().deadline());                       // 不操作：第一段 → 第二段 → 破产
             } else if (mode == 1) {
@@ -198,6 +214,8 @@ class LongGameTest {
             }
             case LANDING -> {
                 switch (g.turn().landing().step()) {
+                    case EVENT -> t.send(at(t, w, 100), new GameCommand.DrawEventCard(cur, w.windowId()));
+                    case DISCARD -> t.send(at(t, w, 100), new GameCommand.DiscardCard(cur, w.windowId(), g.turn().landing().event().newCardIndex()));
                     case BUY -> t.send(at(t, w, 100), new GameCommand.BuyProperty(cur, w.windowId()));
                     case UPGRADE -> t.send(at(t, w, 100), new GameCommand.UpgradeProperty(cur, w.windowId()));
                     case BANK -> {
@@ -218,6 +236,8 @@ class LongGameTest {
     // ------------------------------------------------------------ 随机策略（固定种子）
 
     private void playRandom(Table t, SplittableRandom rnd) {
+        assertEquals(RejectionCode.STALE_OBSERVATION,
+                t.send(t.now + 1, new GameCommand.ConnectionSuspected(t.game().gameNo(), "p1", 0)).rejection());
         TreeMap<String, Long> observations = new TreeMap<>();
         while (t.session().inGame()) {
             GameState g = t.game();
@@ -313,6 +333,8 @@ class LongGameTest {
             case LANDING -> {
                 int r = rnd.nextInt(10);
                 Command c = switch (g.turn().landing().step()) {
+                    case EVENT -> new GameCommand.DrawEventCard(cur, w.windowId());
+                    case DISCARD -> new GameCommand.DiscardCard(cur, w.windowId(), rnd.nextInt(g.player(cur).orElseThrow().hand().size()));
                     case BUY -> r < 8 ? new GameCommand.BuyProperty(cur, w.windowId()) : new GameCommand.DeclinePurchase(cur, w.windowId());
                     case UPGRADE -> r < 7 ? new GameCommand.UpgradeProperty(cur, w.windowId()) : new GameCommand.SkipUpgrade(cur, w.windowId());
                     case BANK -> {
@@ -407,6 +429,12 @@ class LongGameTest {
         c.put("jail", count(log, e -> e instanceof GameEvent.PlayerJailed));
         c.put("bail", count(log, e -> e instanceof GameEvent.BailPaid));
         c.put("startReward", count(log, e -> e instanceof GameEvent.StartRewardPaid));
+        for (var kind : com.millionnaire.engine.config.EventKind.values()) {
+            c.put("event." + kind, count(log, e -> e instanceof GameEvent.EventDrawn d && d.kind() == kind));
+        }
+        c.put("discard", count(log, e -> e instanceof GameEvent.EventCardDiscarded));
+        c.put("fineDebt", count(log, e -> e instanceof GameEvent.DebtCreated d && d.debt().source().kind() == com.millionnaire.engine.core.state.FeeSource.Kind.FINE));
+        c.put("eventAuto", count(log, e -> e instanceof GameEvent.EventDrawn d && d.auto()));
         c.put("staleObservation", count(log, e -> e instanceof KernelEvent.InputRejected r
                 && r.code() == RejectionCode.STALE_OBSERVATION));
         c.put("timeUp", count(log, e -> e instanceof GameEvent.GameEnded x && x.reason().equals("TIME_UP")));
@@ -424,13 +452,18 @@ class LongGameTest {
             Table t = games.get(i);
             TreeMap<String, Long> c = coverage(t.log);
             System.out.println("COVERAGE seed=" + t.seed + " inputs=" + t.inputs.size() + " " + c);
-            for (String path : i == 0 ? fixedMust : randomMust) {
+            var must = i == 0 ? fixedMust : i <= RANDOM_SEEDS.length ? randomMust
+                    : List.of("decline", "discard", "eventAuto", "event.CARD", "timeUp");
+            for (String path : must) {
                 assertTrue(c.get(path) > 0, "seed " + t.seed + " covers " + path + " " + c);
             }
             assertEquals(1, c.get("timeUp") + c.get("lastSurvivor"), "seed " + t.seed + " ends exactly once");
         }
         TreeMap<String, Long> all = new TreeMap<>();
         games.forEach(t -> coverage(t.log).forEach((k, v) -> all.merge(k, v, Long::sum)));
+        for (String path : List.of("event.CASH_REWARD", "event.CASH_FINE", "event.CARD", "event.MOVE", "event.JAIL", "eventAuto", "fineDebt", "discard")) {
+            assertTrue(all.get(path) > 0, "M3b long games cover " + path + " " + all);
+        }
         for (String path : List.of("decline", "bail", "debtSegment2", "bankMortgage", "redeem", "emergencyMortgage",
                 "bankrupt", "surrenderDeferred", "lastSurvivor", "timeUp", "auto.byTask")) {
             assertTrue(all.get(path) > 0, "some game covers " + path + " " + all);
@@ -488,6 +521,25 @@ class LongGameTest {
         }
     }
 
+    @Test
+    void longRunsAllocateIndependentContiguousDebtAndChainNumbers() {
+        int debts = 0;
+        for (Table t : games) {
+            long expectedDebt = 1;
+            long expectedChain = 1;
+            for (Event e : t.log) {
+                if (e instanceof GameEvent.MoveChainStarted c) { assertEquals(expectedChain++, c.chainId()); }
+                if (e instanceof GameEvent.DebtCreated c) {
+                    assertEquals(expectedDebt++, c.debt().debtId());
+                    assertEquals(c.debt().amount(), c.debt().source().amount());
+                    assertNotNull(c.debt().path());
+                    debts++;
+                }
+            }
+        }
+        assertTrue(debts > 3, "long scenarios must exercise multiple distinct debts");
+    }
+
     /**
      * 快照续跑：每个截点的快照都能恢复为与原状态相等的状态，并从该处续跑一步得到与原运行相同的状态与事件；
      * 另每隔 STRIDE 个截点从快照一直续跑到终局，比较最终状态与全部尾部事件。
@@ -510,6 +562,21 @@ class LongGameTest {
                 stepEvents.add(r.events());
             }
             assertEquals(t.state, s);
+            var keyCuts = new LinkedHashMap<String, Integer>();
+            for (int cut = 0; cut <= n; cut++) {
+                var session = (SessionState) prefixes.get(cut).domain();
+                if (!session.inGame()) { continue; }
+                var g = session.game();
+                var landing = g.turn().landing();
+                if (landing != null && landing.cursor() > 0) { keyCuts.putIfAbsent("multi-step", cut); }
+                if (landing != null && landing.step() == com.millionnaire.engine.core.state.LandingStep.EVENT) { keyCuts.putIfAbsent("event-window", cut); }
+                if (landing != null && landing.step() == com.millionnaire.engine.core.state.LandingStep.DISCARD) { keyCuts.putIfAbsent("discard-window", cut); }
+                if (g.debt() != null && g.debt().source().kind() == com.millionnaire.engine.core.state.FeeSource.Kind.FINE) { keyCuts.putIfAbsent("fine-debt", cut); }
+                if (g.turn().chain() != null && g.turn().chain().segments().size() > 1) { keyCuts.putIfAbsent("event-move", cut); }
+                if (g.debt() != null) { keyCuts.putIfAbsent("debt-" + g.debt().segment(), cut); }
+                if (g.turn().chain() != null && g.turn().chain().startRewardGiven()) { keyCuts.putIfAbsent("reward-chain", cut); }
+            }
+            System.out.println("M3b full-tail cuts seed=" + t.seed + " " + keyCuts);
             for (int cut = 0; cut <= n; cut++) {
                 EngineState restored = engine.restore(engine.snapshot(prefixes.get(cut)));
                 assertEquals(prefixes.get(cut), restored, "seed " + t.seed + " cut " + cut);
@@ -518,7 +585,7 @@ class LongGameTest {
                     assertEquals(prefixes.get(cut + 1), r.state(), "seed " + t.seed + " step after cut " + cut);
                     assertEquals(stepEvents.get(cut), r.events(), "seed " + t.seed + " events after cut " + cut);
                 }
-                if (cut % stride == 0) {
+                if (cut % stride == 0 || keyCuts.containsValue(cut)) {
                     EngineState x = restored;
                     List<Event> tail = new ArrayList<>();
                     for (int i = cut; i < n; i++) {

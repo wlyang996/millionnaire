@@ -49,7 +49,8 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.4.1</version>
+        <!-- 3.4.x 需要 Maven >= 3.6.3，本机为 3.6.1；3.3.0 已验证可打包 -->
+        <version>3.3.0</version>
       </plugin>
     </plugins>
   </build>

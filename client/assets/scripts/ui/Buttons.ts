@@ -1,7 +1,8 @@
 /** 通用按钮：PrimaryButton(黄) / SecondaryButton(蓝) / 危险 / 幽灵(象牙) / IconButton。 */
 import { Graphics, Label, Node } from 'cc';
 import { Theme } from '../core/Theme';
-import { fillCircle, fillRR, gfx, mk, onTap, setText, strokeCircle, text, TextOpts } from './Kit';
+import { art } from './Art';
+import { fillCircle, gfx, mk, onTap, setText, strokeCircle, text, TextOpts } from './Kit';
 import { Toast } from './Toast';
 
 export type BtnStyle = 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'disabled';
@@ -29,6 +30,7 @@ export class Button {
     private enabledFlag = true;
     private disabledHint = '';
     private readonly edge = 6;
+    private skin: Node | null = null;
 
     constructor(
         parent: Node, caption: string, x: number, y: number, w: number, h: number,
@@ -54,11 +56,17 @@ export class Button {
         const g = gfx(this.node);
         g.clear();
         const k = skinOf(this.enabledFlag ? this.style : 'disabled');
-        const r = Math.min(Theme.radius.md, this.h / 2);
-        fillRR(g, 0, this.edge, this.w, this.h - this.edge, r, k.edge);
-        fillRR(g, 0, 0, this.w, this.h - this.edge, r, k.face);
-        // 高光
-        fillRR(g, 6, 4, this.w - 12, Math.max(6, (this.h - this.edge) * 0.28), r * 0.6, '#FFFFFF38');
+        this.skin?.removeFromParent();
+        this.skin?.destroy();
+        const keys: Record<BtnStyle, string> = { primary: 'button_flat_yellow', secondary: 'button_flat_blue',
+            success: 'button_flat_green', ghost: 'button_flat_ivory', danger: 'button_flat_red', disabled: 'button_flat_gray' };
+        this.skin = art(this.node, keys[this.enabledFlag ? this.style : 'disabled'], 0, 0, this.w, this.h, 'capsule');
+        if (this.skin) {
+            this.skin.setSiblingIndex(0);
+            setText(this.label, this.label.string, k.text);
+            return;
+        }
+        // Missing artwork is reported by preloadArt; do not invent a replacement skin.
         setText(this.label, this.label.string, k.text);
     }
 

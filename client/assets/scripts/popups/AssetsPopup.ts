@@ -1,50 +1,69 @@
-/** 资产总览：现金、净资产、资产列表（等级/抵押状态/标准价值）。银行格才能 100% 抵押/赎回（此处仅展示）。 */
+/** Approved asset overview. Values and ownership remain driven by the store. */
 import { Node } from 'cc';
 import { standardValue } from '../core/Rules';
 import { Theme } from '../core/Theme';
-import { ghostButton } from '../ui/Buttons';
+import { art, informationCharacterKey } from '../ui/Art';
+import { ME } from '../core/MockStore';
 import { ctx } from '../ui/Ctx';
-import { fillRR, gfx, mk, text } from '../ui/Kit';
-import { Popup } from '../ui/Popup';
+import { mk, onTap, text } from '../ui/Kit';
 import { ScrollList } from '../ui/ScrollList';
 import { chip } from '../ui/Widgets';
-import { coinText, tierColor, tierName } from './Common';
+import { InformationPage, informationClose, informationPanel, shopKey } from './InformationPage';
+import { TileInfoPopup } from './TileInfoPopup';
+import { tierName } from './Common';
 
-export class AssetsPopup extends Popup {
-    constructor() {
-        super('assets', '我的资产', 660, 880, 0, true);
+export class AssetsPopup extends InformationPage {
+    constructor(private readonly playerId: string = ME) {
+        super('assets', playerId === ME ? '我的资产' : (ctx.store.player(playerId)?.nickname ?? '玩家') + '的资产');
     }
 
     protected buildBody(p: Node, w: number, h: number): void {
         const st = ctx.store;
-        const me = st.me();
-        const sum = mk(p, 'Sum', 28, 92, w - 56, 120);
-        fillRR(gfx(sum), 0, 0, w - 56, 120, 18, Theme.c.ivoryDark);
-        text(sum, '现金', 20, 8, 100, 36, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
-        coinText(sum, 20, 44, me.cash, Theme.font.lg);
-        text(sum, '净资产', 250, 8, 120, 36, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
-        coinText(sum, 250, 44, st.netWorthOf('p1'), Theme.font.lg, Theme.c.greenDark);
-        text(sum, '冻结', 460, 8, 100, 36, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
-        coinText(sum, 460, 44, me.frozen, Theme.font.lg);
-        const assets = st.assetsOf('p1');
-        text(p, '地产与车站（' + assets.length + '）', 28, 226, 300, 36, Theme.font.sm, Theme.c.ink, { bold: true, align: 'l' });
-        const rowH = 88;
-        const list = new ScrollList(p, 28, 268, w - 56, h - 268 - 120);
-        assets.forEach((a, i) => {
-            const row = mk(list.content, 'Asset', 0, i * rowH, w - 56, rowH - 8);
-            const g = gfx(row);
-            fillRR(g, 0, 0, w - 56, rowH - 8, 16, a.p.mortgaged ? '#E9EDF1' : Theme.c.white);
-            fillRR(g, 14, 14, 52, 52, 10, tierColor(a.tile.tier, a.tile.type === 'STATION'));
-            text(row, a.tile.name + ' · ' + tierName(a.tile), 82, 4, 300, 38, Theme.font.sm, Theme.c.ink, { bold: true, align: 'l' });
-            const station = a.tile.type === 'STATION';
-            text(row, station ? '车站' : a.p.level === 0 ? '未升级' : a.p.level + ' 级', 82, 40, 140, 30, Theme.font.xs, Theme.c.inkSoft, { align: 'l' });
-            if (a.p.mortgaged) chip(row, 200, 40, '已抵押', Theme.c.gray, Theme.c.white, 16, 26);
-            const sv = standardValue(station, a.tile.tier, a.p.upgradeSpent);
-            text(row, '标准价值', w - 56 - 220, 4, 100, 30, Theme.font.xs, Theme.c.inkSoft, { align: 'l' });
-            coinText(row, w - 56 - 130, 4, sv, Theme.font.sm);
+        const me = st.player(this.playerId) ?? st.me();
+        art(p, informationCharacterKey(me.avatar), 310, 184, 345, 310);
+        const sum = informationPanel(p, 'info_summary_panel', 32, 452, w - 64, 146);
+        const metrics: [string, string, number][] = [
+            ['现金', 'info_cash', me.cash], ['冻结资金', 'info_frozen', me.frozen],
+            ['净资产', 'info_net_worth', st.netWorthOf(me.playerId)],
+        ];
+        metrics.forEach(([label, key, value], i) => {
+            const x = 14 + i * 212;
+            art(sum, key, x, 42, 52, 62);
+            text(sum, label, x + 62, 24, 138, 34, 22, Theme.c.inkSoft, { align: 'l' });
+            text(sum, String(value), x + 62, 60, 138, 52, 36, Theme.c.ink, { bold: true, align: 'l' });
         });
-        if (assets.length === 0) text(list.content, '暂无资产', 0, 60, w - 56, 60, Theme.font.md, Theme.c.inkFaint);
-        list.setContentHeight(assets.length * rowH);
-        ghostButton(p, '关闭', 40, h - 100, w - 80, 76, () => this.close(), Theme.font.lg);
+        const area = informationPanel(p, 'info_rent_panel', 32, 614, w - 64, 510);
+        const assets = st.assetsOf(me.playerId);
+        art(area, 'info_properties', 22, 12, 38, 40);
+        const landCount = assets.filter(a => a.tile.type === 'PROPERTY').length;
+        text(area, '房产 ' + assets.length + ' · 地产 ' + landCount + ' · 车站 ' + (assets.length - landCount),
+            72, 12, 540, 46, 26, Theme.c.ink, { bold: true, align: 'l' });
+        const list = new ScrollList(area, 18, 72, w - 100, 416);
+        const rowH = 182;
+        assets.forEach((a, i) => {
+            const rw = w - 100;
+            const row = informationPanel(list.content, 'info_asset_panel', 0, i * rowH, rw, rowH - 12);
+            art(row, shopKey(a.tile.type, a.tile.tier), 10, 18, 135, 134);
+            text(row, a.tile.name, 156, 12, 230, 42, 30, Theme.c.ink, { bold: true, align: 'l' });
+            const tierBg = a.tile.tier === 'MID' ? '#FFF0AD' : a.tile.tier === 'HIGH' ? '#E3D6FF' : Theme.c.greenSoft;
+            chip(row, 156, 57, tierName(a.tile), tierBg, Theme.c.ink, 19, 28);
+            const station = a.tile.type === 'STATION';
+            text(row, station ? '车站' : (a.p.level ? a.p.level + '级' : '未升级') + ' · 标准', 156, 92, 230, 30, 21, Theme.c.inkSoft, { align: 'l' });
+            const value = standardValue(station, a.tile.tier, a.p.upgradeSpent);
+            text(row, '房产价值', rw - 178, 22, 154, 32, 22, Theme.c.inkSoft, { align: 'l' });
+            art(row, 'info_cash', rw - 178, 83, 32, 36);
+            text(row, String(value), rw - 140, 81, 98, 42, 28, Theme.c.ink, { bold: true, align: 'l' });
+            if (a.p.mortgaged) {
+                art(row, 'info_mortgaged', 154, 126, 23, 26);
+                text(row, '已抵押 · 本金 ' + a.p.mortgagePaid, 184, 126, 326, 28, 20, Theme.c.redDark, { align: 'l' });
+            } else text(row, '未抵押', 156, 126, 220, 28, 20, Theme.c.greenDark, { align: 'l' });
+            onTap(row, () => ctx.popups.open(new TileInfoPopup(a.tile.index)), false);
+        });
+        if (!assets.length) {
+            art(list.content, 'info_empty', 200, 30, 190, 170);
+            text(list.content, '暂无资产', 0, 218, w - 100, 42, 30, Theme.c.inkSoft);
+        }
+        list.setContentHeight(Math.max(300, assets.length * rowH));
+        informationClose(p, 44, h - 124, w - 88, () => this.close());
     }
 }

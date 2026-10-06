@@ -175,7 +175,7 @@ class Round7ReviewTest {
         ctx.emit(new RoomEvent.PlayerJoined("a", "A"));
         assertTrue(ctx.state().lobby().isMember("a"), "emit must be visible to later reads");
 
-        ScriptedRandom script = new ScriptedRandom(List.of(ScriptedRandom.step(DrawPoint.MOVE_DIE, 6, 5)));
+        ScriptedRandom script = ScriptedRandom.withEventCards(List.of(ScriptedRandom.step(DrawPoint.MOVE_DIE, 6, 5)));
         Engine<DemoState> engine = new Engine<>(config, DemoDomain.INSTANCE, script);
         EngineState s = engine.create("r", 1, 0).state();
         s = engine.step(s, new Input(1, 1, new DemoCommand.Sit("a"))).state();

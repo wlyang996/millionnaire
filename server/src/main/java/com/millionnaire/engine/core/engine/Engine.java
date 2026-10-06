@@ -57,12 +57,12 @@ public final class Engine<S extends DomainState> {
         this.configHash = config.contentHash();
         this.domain = domain;
         this.random = random;
-        this.evolver = new Evolver<>(domain, config);
         this.codec = new Codec(TypeRegistry.builder()
                 .add(Command.class, Tick.class)
                 .add(Event.class, KernelEvent.class)
                 .build()
                 .merge(domain.types()));
+        this.evolver = new Evolver<>(domain, config, codec);
     }
 
     public RuleConfig config() {
@@ -192,7 +192,9 @@ public final class Engine<S extends DomainState> {
             s = finish(ctx, out);
         }
         DecisionContext<S> ctx = context(s);
-        ctx.emitKernel(new KernelEvent.InputAccepted(input.seq(), at, digest));
+        ctx.emitKernel(new KernelEvent.InputAccepted(input.seq(), at, digest,
+                input.command() instanceof SystemCommand ? input.command() : null,
+                !(input.command() instanceof SystemCommand) && domain.recordsInputSource(input.command()) ? input.command() : null));
         RejectionCode code = input.command() instanceof Tick ? null : domain.decide(ctx, input.command());
         if (code != null) {
             if (ctx.drewRandomness()) {

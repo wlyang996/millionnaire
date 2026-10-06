@@ -14,6 +14,9 @@ import com.millionnaire.engine.core.state.ControlMode;
  * 债务人本人的应急抵押 / 确认破产 / 继续不受之后的控制模式变化影响。
  */
 public sealed interface GameCommand extends Command {
+    record DrawEventCard(String actor, long windowId) implements GameCommand { }
+    /** Select an index in the seven-card hand; duplicates remain separately selectable. */
+    record DiscardCard(String actor, long windowId, int index) implements GameCommand { }
 
     /** 客户端：投骰（投骰窗口）或掷出狱判定骰（狱中判定窗口）。 */
     record RollDice(String actor, long windowId) implements GameCommand {

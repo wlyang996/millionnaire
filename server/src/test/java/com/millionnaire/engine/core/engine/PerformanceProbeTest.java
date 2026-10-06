@@ -60,7 +60,7 @@ class PerformanceProbeTest {
 
     /** 三人局：p1 投 1 → 1 号低价地（买 / 放弃窗口）；p2 持有 3 号地；p3 持有 4 号车站；账本补到 entries 笔。 */
     private static Table prepared(int entries, int... moves) {
-        Table t = new Table(new ScriptedRandom(script(order(90, 80, 70), Table.deal(3), dice(DrawPoint.MOVE_DIE, moves))), 1)
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 80, 70), Table.deal(3), dice(DrawPoint.MOVE_DIE, moves))), 1)
                 .start(3);
         GameState g = t.game();
         Ledger l = g.ledger();
@@ -82,7 +82,7 @@ class PerformanceProbeTest {
             Input tick = new Input(base.seq + 1, base.now + 1, new Tick());
             double emptyTick = time(() -> { }, () -> base.engine.step(s0, tick));
             // 买地：先投骰进入买 / 放弃窗口，再测 BuyProperty
-            base.rollOnly();
+            base.rollThenResolveEvent();
             EngineState buyState = base.state;
             Input buy = new Input(base.seq + 1, base.window().window().opensAt() + 10,
                     new GameCommand.BuyProperty("p1", base.window().windowId()));
@@ -131,7 +131,7 @@ class PerformanceProbeTest {
         t.state = t.engine.restore(t.engine.snapshot(t.state.withDomain(t.session().withGame(
                 g.withBoard(g.board().with(new OwnableState(1, "p1", 0, false, 0, null)))
                         .withPlayer(g.player("p1").orElseThrow().at(10))))));
-        t.rollOnly();
+        t.rollThenResolveEvent();
         EngineState bank = t.state;
         Input mortgage = new Input(t.seq + 1, t.window().window().opensAt() + 10,
                 new GameCommand.BankMortgage("p1", t.window().windowId(), 1));

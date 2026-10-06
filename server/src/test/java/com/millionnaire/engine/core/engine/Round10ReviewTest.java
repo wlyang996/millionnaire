@@ -23,7 +23,7 @@ class Round10ReviewTest {
 
     /** 起点奖励 + 监狱 + 付费出狱的脚本局：p1 先 6×5 落起点，再 2+6 进狱，付费出狱。 */
     private static Table rewardJailBail() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2),
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2),
                 dice(DrawPoint.MOVE_DIE, 3, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 2, 1, 5, 1))), 1).start(2);
         // p1: 3,6,6,6,6 → 27；第 6 次 6 → 33 → 3（越过起点）；再 2 → 5，再 5 → 10（不是监狱）
         return t;
@@ -35,11 +35,11 @@ class Round10ReviewTest {
 
     @Test
     void t3TamperedMoveIsRejected() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 3))), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 3))), 1).start(2);
         t.roll();
         assertDoesNotThrow(() -> t.engine.rebuild(t.log));
         List<Event> moved = tamper(t.log, e -> e instanceof GameEvent.PlayerMoved m
-                ? new GameEvent.PlayerMoved(m.playerId(), m.from(), 4, 99) : e);
+                ? new GameEvent.PlayerMoved(m.playerId(), m.from(), 4, m.steps(), m.chainId(), m.segmentNo(), m.kind()) : e);
         assertThrows(StateValidationException.class, () -> t.engine.rebuild(moved));
         List<Event> landed = tamper(t.log, e -> e instanceof GameEvent.Landed l
                 ? new GameEvent.Landed(l.playerId(), 5, l.type(), l.placeholder()) : e);
@@ -51,7 +51,7 @@ class Round10ReviewTest {
 
     @Test
     void t3TamperedStartRewardIsRejected() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 6, 1, 6, 1, 6, 1, 6, 1, 6))), 1)
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 6, 1, 6, 1, 6, 1, 6, 1, 6))), 1)
                 .start(2);
         for (int i = 0; i < 9; i++) {
             t.roll();
@@ -65,7 +65,7 @@ class Round10ReviewTest {
 
     @Test
     void t3TamperedBailAndReleaseReasonAreRejected() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1, 5))), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1, 5))), 1).start(2);
         for (int i = 0; i < 4; i++) {
             t.roll();
         }

@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "453c3ed2-e72a-48a1-afc4-152d96aa6ed1",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "453c3ed2-e72a-48a1-afc4-152d96aa6ed1@6c48a",
+      "displayName": "pawn_naicha_land",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "453c3ed2-e72a-48a1-afc4-152d96aa6ed1",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "453c3ed2-e72a-48a1-afc4-152d96aa6ed1@f9941",
+      "displayName": "pawn_naicha_land",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 16,
+        "offsetY": -12.5,
+        "trimX": 79,
+        "trimY": 34,
+        "width": 229,
+        "height": 263,
+        "rawWidth": 355,
+        "rawHeight": 306,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -114.5,
+            -131.5,
+            0,
+            114.5,
+            -131.5,
+            0,
+            -114.5,
+            131.5,
+            0,
+            114.5,
+            131.5,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            79,
+            272,
+            308,
+            272,
+            79,
+            9,
+            308,
+            9
+          ],
+          "nuv": [
+            0.22253521126760564,
+            0.029411764705882353,
+            0.8676056338028169,
+            0.029411764705882353,
+            0.22253521126760564,
+            0.8888888888888888,
+            0.8676056338028169,
+            0.8888888888888888
+          ],
+          "minPos": [
+            -114.5,
+            -131.5,
+            0
+          ],
+          "maxPos": [
+            114.5,
+            131.5,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "453c3ed2-e72a-48a1-afc4-152d96aa6ed1@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "453c3ed2-e72a-48a1-afc4-152d96aa6ed1@6c48a"
+  }
+}

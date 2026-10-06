@@ -78,6 +78,19 @@ export function countTypes(tiles: BoardTile[]): Record<string, number> {
 
 export interface GridSpec { cols: number; rows: number; tile: number }
 
+/** Display bands: enlarge the perimeter without changing ring indices or board extent. */
+export function boardAxis(count: number, tile: number): number[] {
+    const border = tile * 1.5;
+    const inner = (count * tile - 2 * border) / (count - 2);
+    return Array.from({ length: count + 1 }, (_, i) =>
+        i === 0 ? 0 : i === count ? count * tile : border + (i - 1) * inner);
+}
+
+export function axisCell(edges: number[], position: number): number {
+    if (position < 0 || position >= edges[edges.length - 1]) return -1;
+    return edges.findIndex((edge, i) => i < edges.length - 1 && position >= edge && position < edges[i + 1]);
+}
+
 /** 环形网格：30 格 8×9（周长 30），50 格 12×15（周长 50）。 */
 export function gridFor(size: 30 | 50): GridSpec {
     return size === 30 ? { cols: 8, rows: 9, tile: 84 } : { cols: 12, rows: 15, tile: 58 };

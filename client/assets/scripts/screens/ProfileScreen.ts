@@ -2,22 +2,22 @@
 import { Label } from 'cc';
 import { checkNickname, NICK_MAX } from '../core/Rules';
 import { Theme } from '../core/Theme';
-import { Button, ghostButton, primaryButton } from '../ui/Buttons';
+import { Button, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { EditField } from '../ui/EditField';
 import { drawCheck } from '../ui/Icons';
-import { fillCircle, fillRR, gfx, mk, onTap, setText, strokeCircle, strokeRR, text } from '../ui/Kit';
+import { fillCircle, fillRR, gfx, mk, onTap, setText, strokeRR, text } from '../ui/Kit';
 import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
-import { avatar, roundedPanel } from '../ui/Widgets';
-
-const RANDOM_NAMES = ['小橘子', '云朵', '阿福', '糖糖', '大雄', '星星', '米粒', '小满'];
+import { avatar } from '../ui/Widgets';
+import { art, AVATAR_NAMES } from '../ui/Art';
 
 export class ProfileScreen extends Screen {
     readonly id = 'profile' as const;
     readonly title = '登录资料';
     private nick = '';
     private avatarIdx = 0;
+    private initialized = false;
     private hint!: Label;
     private enter!: Button;
     private field!: EditField;
@@ -25,9 +25,11 @@ export class ProfileScreen extends Screen {
     protected build(): void {
         const st = ctx.store;
         this.backdrop('sky');
-        if (!this.nick) {
+        art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
+        if (!this.initialized) {
             this.nick = st.profile.nickname;
             this.avatarIdx = st.profile.avatar;
+            this.initialized = true;
         }
         // 木牌标题
         const sign = mk(this.root, 'Logo', 110, 130, 500, 170);
@@ -35,15 +37,17 @@ export class ProfileScreen extends Screen {
         fillRR(g, 0, 10, 500, 160, 30, '#6B4423');
         fillRR(g, 0, 0, 500, 160, 30, '#A4723C');
         strokeRR(g, 0, 0, 500, 160, 30, '#5A3A1A', 5);
+        if (art(sign, 'title_wood', 0, 0, 500, 160, 'stretch')) g.clear();
         text(sign, '好友桌游', 0, 6, 500, 110, 78, '#FFF3C4', { bold: true });
         text(sign, '和朋友一起，开启一局新旅程', 0, 108, 500, 44, Theme.font.sm, '#FFE9A8');
 
-        const card = roundedPanel(this.root, 36, 340, 648, 800);
-        text(card, '登录与资料', 28, 18, 400, 56, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
+        const card = mk(this.root, 'ProfilePanel', 36, 612, 648, 646);
+        art(card, 'info_asset_panel', 0, 0, 648, 646, 'panel');
+        text(card, '登录资料', 28, 12, 592, 56, 38, '#613C24', { bold: true });
 
         // 微信登录
         const logged = st.profile.loggedIn;
-        new Button(card, logged ? '已登录 · 微信用户 ✓' : '微信一键登录', 28, 90, 592, 92, logged ? 'ghost' : 'success', () => {
+        new Button(this.root, logged ? '已登录 · 微信用户 ✓' : '微信登录', 36, 500, 648, 92, logged ? 'ghost' : 'success', () => {
             if (st.profile.loggedIn) return;
             st.setProfile({ loggedIn: true });
             if (!this.nick) this.nick = '微信用户';
@@ -52,18 +56,20 @@ export class ProfileScreen extends Screen {
         }, Theme.font.lg);
 
         // 头像
-        text(card, '选择头像（内置）', 28, 208, 400, 40, Theme.font.md, Theme.c.inkSoft, { bold: true, align: 'l' });
+        text(card, '内置头像', 28, 222, 400, 36, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
         for (let i = 0; i < 8; i++) {
-            const cx = 28 + (i % 4) * 150 + 10;
-            const cy = 260 + Math.floor(i / 4) * 130;
-            const cell = mk(card, 'AvatarCell', cx, cy, 110, 110);
+            const cx = 28 + (i % 4) * 150;
+            const cy = 260 + Math.floor(i / 4) * 128;
+            const cell = mk(card, 'AvatarCell', cx, cy, 138, 120);
             const sel = i === this.avatarIdx;
-            avatar(cell, 0, 0, 110, i, i === 0 && this.nick ? this.nick : ['小', '可', '阿', '奶', '凯', '圆', '豆', '毛'][i], { ring: sel ? Theme.c.blue : undefined });
+            fillRR(gfx(cell), 0, 0, 138, 120, 18, sel ? Theme.c.white : '#F2E9D6');
+            avatar(cell, 24, 4, 90, i, AVATAR_NAMES[i]);
+            text(cell, AVATAR_NAMES[i], 0, 94, 138, 26, Theme.font.xs, sel ? Theme.c.blueDark : Theme.c.ink, { bold: sel });
             if (sel) {
-                const gg = gfx(mk(cell, 'Sel', 0, 0, 110, 110));
-                strokeCircle(gg, 55, 55, 58, Theme.c.blue, 4);
-                fillCircle(gg, 95, 15, 15, Theme.c.blue);
-                drawCheck(gg, 95, 15, 30, Theme.c.white, 4);
+                const gg = gfx(mk(cell, 'Sel', 0, 0, 138, 120));
+                strokeRR(gg, 0, 0, 138, 120, 18, Theme.c.blue, 4);
+                fillCircle(gg, 115, 88, 15, Theme.c.blue);
+                drawCheck(gg, 115, 88, 30, Theme.c.white, 4);
             }
             onTap(cell, () => {
                 this.avatarIdx = i;
@@ -72,21 +78,16 @@ export class ProfileScreen extends Screen {
         }
 
         // 昵称
-        text(card, '昵称', 28, 540, 200, 40, Theme.font.md, Theme.c.inkSoft, { bold: true, align: 'l' });
-        this.field = new EditField(card, 28, 584, 440, 76, '输入昵称（最多 ' + NICK_MAX + ' 字）', 20, (s) => {
+        text(card, '昵称', 28, 76, 200, 36, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
+        this.field = new EditField(card, 28, 116, 592, 60, '输入昵称（最多 ' + NICK_MAX + ' 字）', 20, (s) => {
             this.nick = s;
             this.checkNow();
         });
         if (this.nick) this.field.value = this.nick;
-        ghostButton(card, '随机', 484, 584, 136, 76, () => {
-            this.nick = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
-            this.field.value = this.nick;
-            this.checkNow();
-        }, Theme.font.md);
-        this.hint = text(card, '', 28, 672, 592, 40, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
+        this.hint = text(card, '', 28, 180, 592, 36, 21, Theme.c.inkSoft, { align: 'l' });
 
 
-        this.enter = primaryButton(this.root, '进入大厅', 36, 1160, 648, 96, () => {
+        this.enter = primaryButton(card, '保存资料', 28, 520, 592, 96, () => {
             const r = checkNickname(this.nick);
             if (!st.profile.loggedIn) return Toast.show('请先微信登录');
             if (!r.ok) return Toast.show(r.reason);
@@ -99,7 +100,8 @@ export class ProfileScreen extends Screen {
     private checkNow(): void {
         const r = checkNickname(this.nick);
         const ok = r.ok && ctx.store.profile.loggedIn;
-        setText(this.hint, (r.ok ? '✓ ' : '× ') + r.reason, r.ok ? Theme.c.greenDark : Theme.c.red);
+        setText(this.hint, this.nick.trim() ? (r.ok ? '✓ ' : '× ') + r.reason : '昵称需检查，检查通过后可继续',
+            !this.nick.trim() || r.ok ? Theme.c.greenDark : Theme.c.red);
         this.enter.setEnabled(ok, ctx.store.profile.loggedIn ? r.reason : '请先微信登录');
     }
 

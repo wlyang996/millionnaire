@@ -80,7 +80,7 @@ class M2TamperTest {
             String cur = g.turn().currentPlayer();
             long at = Math.max(t.now + 10, w.window().opensAt());
             if (w.kind() == FlowKind.DEBT) {
-                if (g.debt().debtId() % 3 == 0 && g.debt().segment() == 1) {
+                if (g.debt().source().landingId() % 3 == 0 && g.debt().segment() == 1) {
                     t.tick(w.window().deadline());                  // 第一段到期 → 第二段弹窗
                     continue;
                 }
@@ -91,7 +91,7 @@ class M2TamperTest {
                 if (!deferred && g.debt().creditor() != null && g.alive().size() == 3) {
                     deferred = true;
                     t.send(at, new GameCommand.Surrender(g.debt().creditor(), g.gameNo()));
-                } else if (g.debt().debtId() % 2 == 1) {
+                } else if (g.debt().source().landingId() % 2 == 1) {
                     t.send(at, new GameCommand.DeclareBankruptcy(w.owner(), w.windowId()));
                 } else {
                     OwnableState o = g.board().ownedBy(w.owner()).stream().filter(x -> !x.mortgaged()).findFirst().orElseThrow();
@@ -119,6 +119,8 @@ class M2TamperTest {
                             case UPGRADE -> g.turn().turnNo() % 5 == 0 ? new GameCommand.SkipUpgrade(cur, w.windowId())
                                     : new GameCommand.UpgradeProperty(cur, w.windowId());
                             case BANK -> new GameCommand.FinishBank(cur, w.windowId());
+                            case EVENT -> new GameCommand.DrawEventCard(cur, w.windowId());
+                            case DISCARD -> new GameCommand.DiscardCard(cur, w.windowId(), g.turn().landing().event().newCardIndex());
                             default -> throw new IllegalStateException();
                         });
                     }
@@ -238,7 +240,7 @@ class M2TamperTest {
         rejectsTampered(GameEvent.DebtCreated.class, e -> {
             DebtState d = e.debt();
             return new GameEvent.DebtCreated(new DebtState(d.debtId(), d.debtor(), d.creditor(), d.amount() + 1, d.cause(),
-                    d.segment(), d.continued(), d.windowId()));
+                    d.segment(), d.continued(), d.windowId(), d.source(), d.path()));
         }, "debt amount");
         rejectsTampered(GameEvent.DebtSegmentStarted.class,
                 e -> new GameEvent.DebtSegmentStarted(e.debtId(), e.segment(), e.windowId() + 1), "debt window association");
@@ -282,10 +284,10 @@ class M2TamperTest {
 
     @Test
     void landingOrderIsChecked() {
-        rejectsTampered(GameEvent.LandingStarted.class, e -> new GameEvent.LandingStarted(e.landingId() + 1, e.playerId(), e.tile()),
+        rejectsTampered(GameEvent.LandingStarted.class, e -> new GameEvent.LandingStarted(e.landingId() + 1, e.playerId(), e.tile(), e.chainId()),
                 "landing number");
         rejectsTampered(GameEvent.LandingStepEntered.class, e -> new GameEvent.LandingStepEntered(e.landingId(),
-                e.step() == LandingStep.BUY ? LandingStep.BANK : LandingStep.BUY, e.payment()), "landing step");
+                e.step() == LandingStep.BUY ? LandingStep.BANK : LandingStep.BUY, e.payment(), e.cursor()), "landing step");
         // 顺序：把第一笔 RentPaid 挪到它的 RentCharged 之前
         List<Event> log = new ArrayList<>(game.log);
         int paid = 0;

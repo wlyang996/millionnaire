@@ -11,6 +11,7 @@ import { fillCircle, fillRR, gfx, line, mk, onTap, strokeCircle, text } from '..
 import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, chip, roundedPanel, Segmented } from '../ui/Widgets';
+import { art } from '../ui/Art';
 
 export class RoomScreen extends Screen {
     readonly id = 'room' as const;
@@ -22,6 +23,7 @@ export class RoomScreen extends Screen {
         const isHost = s.hostId === 'p1';
         const cap = maxPlayers(boardSizeOf(s.settings.boardId));
         this.backdrop('sky');
+        art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
         this.header('好友房间', () => ctx.screens.go('lobby'));
 
         // 房间号卡

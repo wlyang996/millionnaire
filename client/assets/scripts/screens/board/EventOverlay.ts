@@ -1,21 +1,20 @@
 /**
- * 事件抽卡覆盖层（仅触发事件的玩家本人的界面）。依据 design/screens/10-event-card-preview.png：
- * 棋盘中央出现问号卡背（上方"触发事件"、下方"点击卡片翻开"），骰子/回合药丸被临时遮挡，投骰子按钮变暗；点击卡片直接翻开，没有独立的"抽取事件"按钮。
- * 翻牌后显示中性结果面板（事件类型 + 结果数值/文字）——事件卡"卡面"设计图没有画，卡面图案待用户补设计，这里不做任何图案发挥。
+ * 中央事件抽卡覆盖层：所有观察者同步观看；仅触发者可点击卡背。
+ * 使用已有五类事件卡面；结果展示后由 BoardScreen 自动收起，没有确认/投骰按钮。
  * 动画由时间戳驱动：等待时轻微呼吸/发光，翻牌时长 Theme.anim.eventFlipMs。
  */
 import { Node } from 'cc';
 import { CARD_NAMES } from '../../core/Models';
 import { EventDrawState, eventResultText } from '../../core/EventDraw';
 import { Theme } from '../../core/Theme';
-import { Button, primaryButton } from '../../ui/Buttons';
 import { col, gfx, line, mk, onTap, text } from '../../ui/Kit';
 import { CARD_BACK, centerNode, drawCardBack } from './EventDeck';
+import { art } from '../../ui/Art';
 
 const CX = Theme.W / 2;
-const CARD_W = 180;
-const CARD_H = 250;
-const CARD_CY = 587;
+const CARD_W = 330;
+const CARD_H = 360;
+const CARD_CY = 650;
 
 export class EventOverlay {
     readonly root: Node;
@@ -29,40 +28,39 @@ export class EventOverlay {
         this.root = mk(parent, 'EventOverlay', 0, 0, Theme.W, Theme.H);
     }
 
-    /** 按当前状态重建（状态变化时由 BoardScreen 调用）。onCard：点击卡片；onConfirm：确认结果。 */
-    build(state: EventDrawState, onCard: () => void, onConfirm: () => void): void {
+    /** 状态变化时重建；interactive 仅允许触发者本人点击。 */
+    build(state: EventDrawState, onCard: () => void, interactive: boolean, actorName: string): void {
         this.state = state;
         // 标题（金色，两侧装饰线）
-        text(this.root, '触发事件', CX - 118, 407, 240, 54, 40, '#3A2A0A', { bold: true }); // 深色描边感，保证在草地上可读
-        text(this.root, '触发事件', CX - 120, 404, 240, 54, 40, CARD_BACK.gold, { bold: true });
-        const dec = gfx(mk(this.root, 'TitleDeco', 0, 404, Theme.W, 54));
+        text(this.root, '触发事件', CX - 118, 347, 240, 54, 40, '#3A2A0A', { bold: true });
+        text(this.root, '触发事件', CX - 120, 344, 240, 54, 40, CARD_BACK.gold, { bold: true });
+        const dec = gfx(mk(this.root, 'TitleDeco', 0, 344, Theme.W, 54));
         line(dec, CX - 190, 28, CX - 130, 28, CARD_BACK.gold, 3);
         line(dec, CX + 130, 28, CX + 190, 28, CARD_BACK.gold, 3);
+        if (state.phase !== 'RESULT') {
+            art(this.root, 'info_asset_panel', CX - 220, 392, 440, 492, 'panel');
+            text(this.root, interactive ? '点击卡背抽取' : actorName + ' 正在抽卡', CX - 200, 410, 400, 52, 32, Theme.c.ink, { bold: true });
+            text(this.root, '奖励 · 罚款 · 道具 · 位移 · 入狱', CX - 208, 832, 416, 36, 22, Theme.c.ink, { bold: true });
+        }
         // 光晕 + 卡片
         this.glow = centerNode(this.root, 'CardGlow', CX, CARD_CY, CARD_W + 40, CARD_H + 40);
         this.card = centerNode(this.root, 'EventCard', CX, CARD_CY, CARD_W, CARD_H);
         this.back = centerNode(this.card, 'Back', 0, 0, CARD_W, CARD_H);
         // centerNode 以父节点左上为参照；卡片内部子节点用中心为原点，需要回到 (0,0)
         this.back.setPosition(0, 0, 0);
-        drawCardBack(this.back, CARD_W, CARD_H);
+        if (!art(this.back, 'event_card_fan', -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H))
+            drawCardBack(this.back, CARD_W, CARD_H);
         this.face = centerNode(this.card, 'Face', 0, 0, CARD_W, CARD_H);
         this.face.setPosition(0, 0, 0);
         this.drawFace(this.face, state);
         this.face.active = state.phase === 'RESULT';
         this.back.active = state.phase !== 'RESULT';
-        if (state.phase === 'WAITING') onTap(this.card, onCard, false);
-        // 下方：等待时提示文字；结果时"确定"；投骰子按钮变暗（被事件遮挡）
-        if (state.phase === 'RESULT') {
-            primaryButton(this.root, '确定', CX - 100, 736, 200, 70, onConfirm, Theme.font.lg);
-        } else {
-            text(this.root, state.phase === 'WAITING' ? '点击卡片翻开' : '翻牌中…', CX - 150, 716, 300, 34, Theme.font.md, Theme.c.white, { bold: true });
-            const dim: Button = primaryButton(this.root, '投骰子', CX - 150, 764, 300, 84, () => undefined, Theme.font.xl);
-            dim.setEnabled(false);
-        }
+        if (state.phase === 'WAITING' && interactive) onTap(this.card, onCard, false);
+        // 结果无需操作；等待时显示本人点击提示或他人抽卡提示。
         this.tick(Date.now());
     }
 
-    /** 中性结果面板（卡面待用户补设计）：事件类型 + 结果文字。 */
+    /** 已有事件卡面加动态结果文字。 */
     private drawFace(n: Node, state: EventDrawState): void {
         const g = gfx(n);
         g.clear();
@@ -75,10 +73,12 @@ export class EventOverlay {
         const r = state.result;
         if (!r) return;
         const t = eventResultText(r);
-        text(n, t.title, -CARD_W / 2 + 8, -CARD_H / 2 + 30, CARD_W - 16, 44, 30, Theme.c.ink, { bold: true });
+        const key = { CASH_REWARD: 'event_reward', CASH_FINE: 'event_fine', CARD: 'event_tool', MOVE: 'event_move', JAIL: 'event_jail' }[r.kind];
+        if (art(n, key, -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 'stretch')) g.clear();
+        text(n, t.title, -CARD_W / 2 + 10, -CARD_H / 2 + 14, CARD_W - 20, 32, 22, Theme.c.white, { bold: true });
         const detail = r.kind === 'CARD' && r.card ? CARD_NAMES[r.card] : t.detail;
-        text(n, detail, -CARD_W / 2 + 8, -34, CARD_W - 16, 70, r.kind === 'CASH_REWARD' || r.kind === 'CASH_FINE' ? 40 : 30, r.kind === 'CASH_FINE' || r.kind === 'JAIL' ? Theme.c.redDark : Theme.c.greenDark, { bold: true });
-        if (r.kind === 'CARD') text(n, '已加入手牌', -CARD_W / 2 + 8, 50, CARD_W - 16, 30, Theme.font.sm, Theme.c.inkSoft);
+        text(n, detail, -CARD_W / 2 + 12, CARD_H / 2 - 58, CARD_W - 24, 44, 24,
+            r.kind === 'CASH_FINE' || r.kind === 'JAIL' ? Theme.c.redDark : Theme.c.greenDark, { bold: true });
     }
 
     /** 每帧：等待时呼吸/发光；翻牌时水平翻转（先背面缩到 0，再正面展开）。 */

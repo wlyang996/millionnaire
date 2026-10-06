@@ -64,12 +64,13 @@ export const Theme = {
     pad: 24,
     /** 动画时长（毫秒）：联调时按真实动画调整；点数/结果永远由对局结果决定，动画只是表现 */
     anim: {
-        diceMs: 1200, hopMs: 250, blinkMs: 1000, blinkLow: 0.35, pulseMs: 700,
+        diceMs: 1200, hopMs: 550, blinkMs: 1000, blinkLow: 0.35, pulseMs: 700,
+        diceReadyMs: 1400, eventResultHoldMs: 3000,
         /** 事件卡：翻牌时长 / 点击等待超时系统代抽（15s 为沿用口径，待规则确认）/ 呼吸提示周期 / 他人抽卡结果展示时长 */
         eventFlipMs: 700, eventAutoMs: 15000, eventBreathMs: 1400, eventOtherHoldMs: 1500,
     },
     /** 棋盘页布局常量（SelfCheck 校验不超出 720 宽） */
-    board: { playerCols: 4, handVisible: 5, handItemW: 120, handGap: 8, handViewW: 640 },
+    board: { playerCols: 4, handVisible: 5, handItemW: 116, handGap: 6, handViewW: 604 },
     /** 弹窗倒计时环在面板内的固定位置（相对面板右上角的内缩量） */
     popupRing: { size: 150, inset: 20 },
 };

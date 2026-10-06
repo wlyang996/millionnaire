@@ -7,6 +7,7 @@ import { ctx } from '../ui/Ctx';
 import { fillPoly, gfx, mk, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 import { Toast } from '../ui/Toast';
+import { art } from '../ui/Art';
 import { coinText, infoRow, rentTable, tileHero, tileSubtitle } from './Common';
 
 export class UpgradePopup extends Popup {
@@ -32,7 +33,11 @@ export class UpgradePopup extends Popup {
         coinText(cmp, 120, 12, rentOf(tier, level), Theme.font.lg);
         fillPoly(gfx(cmp), [[290, 22], [322, 32], [290, 42]], Theme.c.green);
         coinText(cmp, 340, 12, rentOf(tier, next), Theme.font.lg, Theme.c.greenDark);
-        rentTable(p, 40, 466, w - 80, tier, [level, next]);
+        for (let i = 1; i <= 3; i++) {
+            const x = 40 + (i - 1) * (w - 80) / 3;
+            art(p, 'house_lv' + i, x + 34, 458, (w - 80) / 3 - 68, 80, 'contain', i !== next);
+            text(p, i + '级', x, 536, (w - 80) / 3, 30, Theme.font.sm, i === next ? Theme.c.blueDark : Theme.c.inkSoft, { bold: i === next });
+        }
         text(p, '最多三级 · 每次升一级 · 抵押的地产不能升级', 40, 570, w - 80, 30, Theme.font.xs, Theme.c.inkFaint);
         const b = primaryButton(p, full ? '已满级' : '升级 ' + cost, 40 + (w - 100) * 0.38 + 20, 620, (w - 100) * 0.62, 92, () => {
             if (!st.spend(cost)) return Toast.show('现金不足');

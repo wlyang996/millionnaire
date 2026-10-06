@@ -1,6 +1,6 @@
 /** 买地（15 秒）：购买 / 放弃；指定拍卖地产另有"发起拍卖"。超时视为放弃。 */
 import { Node } from 'cc';
-import { landPrice, rentOf, stationRent, STATION, SECONDS } from '../core/Rules';
+import { landPrice, rentOf, stationRent, STATION, SECONDS, TIERS } from '../core/Rules';
 import { Theme } from '../core/Theme';
 import { Button, ghostButton, primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -26,8 +26,8 @@ export class BuyPopup extends Popup {
         if (station) {
             text(p, '车站租金 = 持有未抵押车站数 × ' + STATION.rentEach + '（现持有 0 个：' + stationRent(1) + '）', 40, 400, w - 80, 56, Theme.font.sm, Theme.c.inkSoft, { wrap: true, lineHeight: 30 });
         } else {
-            rentTable(p, 40, 400, w - 80, tile.tier ?? 'LOW');
-            void rentOf;
+            text(p, '低价 ' + TIERS.LOW.price + ' · 中价 ' + TIERS.MID.price + ' · 高价 ' + TIERS.HIGH.price, 40, 402, w - 80, 42, Theme.font.sm, Theme.c.inkSoft);
+            infoRow(p, 40, 446, w - 80, '未升级租金', rentOf(tile.tier ?? 'LOW', 0));
         }
         text(p, '现金 ' + cash + '，买后剩余 ' + (cash - price), 40, 508, w - 80, 36, Theme.font.sm, cash >= price ? Theme.c.inkSoft : Theme.c.red, { bold: true });
         const lot = !!tile.auctionLot && !station;

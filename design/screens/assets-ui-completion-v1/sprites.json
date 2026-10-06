@@ -1,0 +1,3513 @@
+{
+  "date": "2026-10-06",
+  "sprite_count": 90,
+  "original_atlases_preserved": true,
+  "applied_to_game": false,
+  "missing_atlases": [],
+  "sprites": [
+    {
+      "name": "detail_card_roadblock",
+      "category": "detail_cards_1",
+      "file": "png/detail_card_roadblock.png",
+      "source": "atlases/detail_cards_1.png",
+      "source_rect": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        93,
+        9,
+        492,
+        507
+      ],
+      "size": [
+        415,
+        514
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 16489,
+      "partial_alpha_pixels": 196821,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 6400
+      },
+      "sha256": "5809bb8fd9480aa00aaa783f370cb20d57903c679e49c9353b43540fab6d2831",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_free_rent",
+      "category": "detail_cards_1",
+      "file": "png/detail_card_free_rent.png",
+      "source": "atlases/detail_cards_1.png",
+      "source_rect": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        20,
+        9,
+        419,
+        507
+      ],
+      "size": [
+        415,
+        514
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 16705,
+      "partial_alpha_pixels": 196605,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 6304
+      },
+      "sha256": "571316ee3a311b75a5e4da6a132f56d090df9fbd9f4eeea2bda91259da25a67a",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_build",
+      "category": "detail_cards_1",
+      "file": "png/detail_card_build.png",
+      "source": "atlases/detail_cards_1.png",
+      "source_rect": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        92,
+        4,
+        491,
+        500
+      ],
+      "size": [
+        415,
+        512
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 15983,
+      "partial_alpha_pixels": 196497,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3829
+      },
+      "sha256": "433388d2b1c0d0b04be02a38bb3327dd92d36c75c7244b04bb10afa118fdfc95",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_downgrade",
+      "category": "detail_cards_1",
+      "file": "png/detail_card_downgrade.png",
+      "source": "atlases/detail_cards_1.png",
+      "source_rect": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        20,
+        4,
+        419,
+        500
+      ],
+      "size": [
+        415,
+        512
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 16801,
+      "partial_alpha_pixels": 195679,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2709
+      },
+      "sha256": "490e7a42a6d529975ae5396215189fb003f308aeff7bdb582410652dca0d3b6f",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_fixed_move",
+      "category": "detail_cards_1",
+      "file": "png/detail_card_fixed_move.png",
+      "source": "atlases/detail_cards_1.png",
+      "source_rect": [
+        0,
+        1024,
+        512,
+        1536
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        91,
+        1,
+        491,
+        495
+      ],
+      "size": [
+        416,
+        510
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 16459,
+      "partial_alpha_pixels": 195701,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2555
+      },
+      "sha256": "affa4a375a083b9078533b843a524312cad347feea7f113d9ab76285df961dc3",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_jail_release",
+      "category": "detail_cards_2",
+      "file": "png/detail_card_jail_release.png",
+      "source": "atlases/detail_cards_2.png",
+      "source_rect": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        79,
+        7,
+        479,
+        506
+      ],
+      "size": [
+        416,
+        515
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 16330,
+      "partial_alpha_pixels": 197910,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5492
+      },
+      "sha256": "61700bd6f40a9d5343b83b522ab791955dceeba0684fe0c6921c0c18412d85f7",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_auction",
+      "category": "detail_cards_2",
+      "file": "png/detail_card_auction.png",
+      "source": "atlases/detail_cards_2.png",
+      "source_rect": [
+        512,
+        0,
+        1024,
+        512
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        33,
+        7,
+        434,
+        506
+      ],
+      "size": [
+        417,
+        515
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 17099,
+      "partial_alpha_pixels": 197656,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5351
+      },
+      "sha256": "f3d5b5f8a7c32b97f9ff546d4461c677a4f83d204c6f6b274012eb89bfb919fb",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_trade",
+      "category": "detail_cards_2",
+      "file": "png/detail_card_trade.png",
+      "source": "atlases/detail_cards_2.png",
+      "source_rect": [
+        0,
+        512,
+        512,
+        1024
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        79,
+        2,
+        479,
+        502
+      ],
+      "size": [
+        416,
+        516
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 16535,
+      "partial_alpha_pixels": 198121,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3355
+      },
+      "sha256": "da074292a1094090b79f30630b9eabc6f2b8ac53651ca624671965978db01894",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_refuse_purchase",
+      "category": "detail_cards_2",
+      "file": "png/detail_card_refuse_purchase.png",
+      "source": "atlases/detail_cards_2.png",
+      "source_rect": [
+        512,
+        512,
+        1024,
+        1024
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        33,
+        2,
+        434,
+        501
+      ],
+      "size": [
+        417,
+        515
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 16965,
+      "partial_alpha_pixels": 197790,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2169
+      },
+      "sha256": "b273961e85251f5c370ce5e4f51916b07de1734ac27812bf3f0c6c3dcb1b4287",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_house_protection",
+      "category": "detail_cards_2",
+      "file": "png/detail_card_house_protection.png",
+      "source": "atlases/detail_cards_2.png",
+      "source_rect": [
+        0,
+        1024,
+        512,
+        1536
+      ],
+      "native_cell_size": [
+        512,
+        512
+      ],
+      "alpha_bounds": [
+        79,
+        0,
+        479,
+        496
+      ],
+      "size": [
+        416,
+        512
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 16215,
+      "partial_alpha_pixels": 196777,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 19,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1182
+      },
+      "sha256": "a1934db0468c392f56e66cb4a268456468b60396b36f7273c758073665dc36ea",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_query",
+      "category": "detail_cards_3",
+      "file": "png/detail_card_query.png",
+      "source": "atlases/detail_cards_3.png",
+      "source_rect": [
+        0,
+        0,
+        512,
+        574
+      ],
+      "native_cell_size": [
+        512,
+        574
+      ],
+      "alpha_bounds": [
+        79,
+        14,
+        495,
+        566
+      ],
+      "size": [
+        432,
+        568
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 18548,
+      "partial_alpha_pixels": 226828,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 22,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5211
+      },
+      "sha256": "a9709353787974df5840e55d7a9406ed3a0b8f54cc7b834727951ef07fa19622",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_forced_purchase",
+      "category": "detail_cards_3",
+      "file": "png/detail_card_forced_purchase.png",
+      "source": "atlases/detail_cards_3.png",
+      "source_rect": [
+        512,
+        0,
+        1024,
+        574
+      ],
+      "native_cell_size": [
+        512,
+        574
+      ],
+      "alpha_bounds": [
+        17,
+        14,
+        433,
+        566
+      ],
+      "size": [
+        432,
+        568
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 18450,
+      "partial_alpha_pixels": 226926,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 22,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5281
+      },
+      "sha256": "49098404da76e7cad50de10d824f099fd148738ddc5b472311ff74916a9a1cf3",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_demolish",
+      "category": "detail_cards_3",
+      "file": "png/detail_card_demolish.png",
+      "source": "atlases/detail_cards_3.png",
+      "source_rect": [
+        0,
+        574,
+        512,
+        1167
+      ],
+      "native_cell_size": [
+        512,
+        593
+      ],
+      "alpha_bounds": [
+        79,
+        3,
+        495,
+        561
+      ],
+      "size": [
+        432,
+        574
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 19103,
+      "partial_alpha_pixels": 228865,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 23,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3525
+      },
+      "sha256": "45229b20726e7a17672b46514f549eb5389979d5e0ca991237de0f3aa2eac4d6",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "detail_card_clear_land",
+      "category": "detail_cards_3",
+      "file": "png/detail_card_clear_land.png",
+      "source": "atlases/detail_cards_3.png",
+      "source_rect": [
+        512,
+        574,
+        1024,
+        1167
+      ],
+      "native_cell_size": [
+        512,
+        593
+      ],
+      "alpha_bounds": [
+        17,
+        3,
+        433,
+        561
+      ],
+      "size": [
+        432,
+        574
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 18950,
+      "partial_alpha_pixels": 229018,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 23,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4127
+      },
+      "sha256": "b76a82dfa300e2eb0dd068e1a38351f53ddc4d644e1d28ed0dcfda1d6059e111",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "card_detail_background",
+      "category": "card_detail_background",
+      "file": "png/card_detail_background.png",
+      "source": "atlases/card_detail_background.png",
+      "source_rect": [
+        0,
+        0,
+        941,
+        1672
+      ],
+      "native_cell_size": [
+        941,
+        1672
+      ],
+      "alpha_bounds": [
+        0,
+        0,
+        941,
+        1672
+      ],
+      "size": [
+        720,
+        1280
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 0,
+      "transparent_pixels": 0,
+      "partial_alpha_pixels": 0,
+      "cleanup": {},
+      "sha256": "5ebcdee76e1f48a98c406468e6f6aa21f451f1d16a485facd82cfaf18efb4131",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "card_detail_rules_5",
+      "category": "detail_rules",
+      "file": "png/card_detail_rules_5.png",
+      "source": "atlases/detail_rules.png",
+      "source_rect": [
+        0,
+        0,
+        1024,
+        611
+      ],
+      "native_cell_size": [
+        1024,
+        611
+      ],
+      "alpha_bounds": [
+        43,
+        82,
+        982,
+        563
+      ],
+      "size": [
+        955,
+        497
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 32039,
+      "partial_alpha_pixels": 442596,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 44,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1048
+      },
+      "sha256": "f837e7e1cc9105067b9c17f3d64be7bde899c955e79b6756f98f86bb03c3bc0c",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "card_detail_rules_2",
+      "category": "detail_rules",
+      "file": "png/card_detail_rules_2.png",
+      "source": "atlases/detail_rules.png",
+      "source_rect": [
+        0,
+        611,
+        1024,
+        1044
+      ],
+      "native_cell_size": [
+        1024,
+        433
+      ],
+      "alpha_bounds": [
+        42,
+        23,
+        983,
+        393
+      ],
+      "size": [
+        957,
+        386
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 28136,
+      "partial_alpha_pixels": 341266,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 34,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4133
+      },
+      "sha256": "95627a370a43172d3e9fac8e6a57fe916c4d312dd16c76fd4e365e76af5284cd",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "card_detail_rules_3",
+      "category": "detail_rules",
+      "file": "png/card_detail_rules_3.png",
+      "source": "atlases/detail_rules.png",
+      "source_rect": [
+        0,
+        1044,
+        1024,
+        1536
+      ],
+      "native_cell_size": [
+        1024,
+        492
+      ],
+      "alpha_bounds": [
+        42,
+        20,
+        983,
+        412
+      ],
+      "size": [
+        957,
+        408
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 29190,
+      "partial_alpha_pixels": 361266,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 36,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1476
+      },
+      "sha256": "385c5b0472fc5f81f698c8458788c11bff13da0309519ce8755e0b0f8eeab845",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "button_flat_yellow",
+      "category": "flat_buttons",
+      "file": "png/button_flat_yellow.png",
+      "source": "atlases/flat_buttons.png",
+      "source_rect": [
+        0,
+        0,
+        997,
+        263
+      ],
+      "native_cell_size": [
+        997,
+        263
+      ],
+      "alpha_bounds": [
+        54,
+        37,
+        965,
+        237
+      ],
+      "size": [
+        927,
+        216
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 28058,
+      "partial_alpha_pixels": 170994,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 17,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1253
+      },
+      "sha256": "96ad1c8aca28d6f723fd361527e4af47f578ba79e8d6c44adf6718ed003e7463",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "button_flat_blue",
+      "category": "flat_buttons",
+      "file": "png/button_flat_blue.png",
+      "source": "atlases/flat_buttons.png",
+      "source_rect": [
+        997,
+        0,
+        1994,
+        263
+      ],
+      "native_cell_size": [
+        997,
+        263
+      ],
+      "alpha_bounds": [
+        32,
+        37,
+        943,
+        237
+      ],
+      "size": [
+        927,
+        216
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 28139,
+      "partial_alpha_pixels": 170886,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 17,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1229
+      },
+      "sha256": "410439e96a7b30edf9d304b3d0323698b30693f3d119ab316cb92cf073ec0daa",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "button_flat_green",
+      "category": "flat_buttons",
+      "file": "png/button_flat_green.png",
+      "source": "atlases/flat_buttons.png",
+      "source_rect": [
+        0,
+        263,
+        997,
+        526
+      ],
+      "native_cell_size": [
+        997,
+        263
+      ],
+      "alpha_bounds": [
+        54,
+        23,
+        965,
+        223
+      ],
+      "size": [
+        927,
+        216
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 26945,
+      "partial_alpha_pixels": 173119,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 17,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 925
+      },
+      "sha256": "dd04866f40e5a9957e83559bbbb0ac2b466b0440795f12b9d63e894368405909",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "button_flat_ivory",
+      "category": "flat_buttons",
+      "file": "png/button_flat_ivory.png",
+      "source": "atlases/flat_buttons.png",
+      "source_rect": [
+        997,
+        263,
+        1994,
+        526
+      ],
+      "native_cell_size": [
+        997,
+        263
+      ],
+      "alpha_bounds": [
+        32,
+        23,
+        943,
+        223
+      ],
+      "size": [
+        927,
+        216
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 26752,
+      "partial_alpha_pixels": 173310,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 17,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1448
+      },
+      "sha256": "59a698195cfa5304e8ad35445bd8d79c3be4dd7c2cb26cc90d23d33da9bb4540",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "button_flat_red",
+      "category": "flat_buttons",
+      "file": "png/button_flat_red.png",
+      "source": "atlases/flat_buttons.png",
+      "source_rect": [
+        0,
+        526,
+        997,
+        789
+      ],
+      "native_cell_size": [
+        997,
+        263
+      ],
+      "alpha_bounds": [
+        54,
+        10,
+        965,
+        210
+      ],
+      "size": [
+        927,
+        216
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 28104,
+      "partial_alpha_pixels": 170717,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 17,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 879
+      },
+      "sha256": "5c0369784f58606b199c17f9333aa94cbef7691f2410566b2d43691e48496e93",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "button_flat_gray",
+      "category": "flat_buttons",
+      "file": "png/button_flat_gray.png",
+      "source": "atlases/flat_buttons.png",
+      "source_rect": [
+        997,
+        526,
+        1994,
+        789
+      ],
+      "native_cell_size": [
+        997,
+        263
+      ],
+      "alpha_bounds": [
+        32,
+        10,
+        943,
+        210
+      ],
+      "size": [
+        927,
+        216
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 28133,
+      "partial_alpha_pixels": 170572,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 17,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1024
+      },
+      "sha256": "328697850a42aa2c901da039d555a6d60fdaa7d56b74466dd48bc0ecf16a365b",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "card_detail_title",
+      "category": "detail_chrome",
+      "file": "png/card_detail_title.png",
+      "source": "atlases/detail_chrome.png",
+      "source_rect": [
+        0,
+        0,
+        906,
+        355
+      ],
+      "native_cell_size": [
+        906,
+        355
+      ],
+      "alpha_bounds": [
+        107,
+        68,
+        828,
+        321
+      ],
+      "size": [
+        737,
+        269
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 27957,
+      "partial_alpha_pixels": 170296,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 17,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3933
+      },
+      "sha256": "3146d9da5eeff001e92b76baaf76bf4feff625713baa1ee8ed356def4f550f23",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "card_detail_back",
+      "category": "detail_chrome",
+      "file": "png/card_detail_back.png",
+      "source": "atlases/detail_chrome.png",
+      "source_rect": [
+        906,
+        0,
+        1536,
+        355
+      ],
+      "native_cell_size": [
+        630,
+        355
+      ],
+      "alpha_bounds": [
+        107,
+        66,
+        375,
+        333
+      ],
+      "size": [
+        284,
+        283
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 24127,
+      "partial_alpha_pixels": 56245,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3472
+      },
+      "sha256": "89de5ad6cd4ad076a89d8bbebf3a24debe3cb7f96527b0116733bbb0ec6548ab",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "icon_start_flag",
+      "category": "detail_chrome",
+      "file": "png/icon_start_flag.png",
+      "source": "atlases/detail_chrome.png",
+      "source_rect": [
+        0,
+        355,
+        768,
+        716
+      ],
+      "native_cell_size": [
+        768,
+        361
+      ],
+      "alpha_bounds": [
+        321,
+        16,
+        628,
+        346
+      ],
+      "size": [
+        323,
+        346
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 53088,
+      "partial_alpha_pixels": 58670,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 871
+      },
+      "sha256": "c8227460fbb6dd0a7ee280d0ad41acb2b216c7c3d21b44f444accdb4504a94cb",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "icon_active_card",
+      "category": "detail_chrome",
+      "file": "png/icon_active_card.png",
+      "source": "atlases/detail_chrome.png",
+      "source_rect": [
+        768,
+        355,
+        1536,
+        716
+      ],
+      "native_cell_size": [
+        768,
+        361
+      ],
+      "alpha_bounds": [
+        223,
+        12,
+        533,
+        360
+      ],
+      "size": [
+        326,
+        364
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 39191,
+      "partial_alpha_pixels": 79473,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 815
+      },
+      "sha256": "deab11f3385eebac2c084644ec235e67ea52e3708fa015e6098f36cb6bae50d3",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "icon_response_lightning",
+      "category": "detail_chrome",
+      "file": "png/icon_response_lightning.png",
+      "source": "atlases/detail_chrome.png",
+      "source_rect": [
+        0,
+        716,
+        768,
+        1024
+      ],
+      "native_cell_size": [
+        768,
+        308
+      ],
+      "alpha_bounds": [
+        340,
+        1,
+        574,
+        279
+      ],
+      "size": [
+        250,
+        294
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 32945,
+      "partial_alpha_pixels": 40555,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1099
+      },
+      "sha256": "c4427a165b2df5d0f7e7ec90422f1cacb8be808b2d9b4d74f13b2d961c3756ae",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "rule_separator",
+      "category": "detail_chrome",
+      "file": "png/rule_separator.png",
+      "source": "atlases/detail_chrome.png",
+      "source_rect": [
+        768,
+        716,
+        1536,
+        1024
+      ],
+      "native_cell_size": [
+        768,
+        308
+      ],
+      "alpha_bounds": [
+        48,
+        130,
+        710,
+        162
+      ],
+      "size": [
+        678,
+        48
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 12467,
+      "partial_alpha_pixels": 20077,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2024
+      },
+      "sha256": "e3af3757fbe0cb2358f13f1ec994ccdbf98f24144161491c583dc00e1309da4e",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "chat_panel",
+      "category": "chat_skins",
+      "file": "png/chat_panel.png",
+      "source": "atlases/chat_skins.png",
+      "source_rect": [
+        0,
+        0,
+        768,
+        466
+      ],
+      "native_cell_size": [
+        768,
+        466
+      ],
+      "alpha_bounds": [
+        25,
+        34,
+        768,
+        442
+      ],
+      "size": [
+        759,
+        424
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 62349,
+      "partial_alpha_pixels": 259467,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 26,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4806
+      },
+      "sha256": "13c9a231b031a106ed1e190f8d712c2d4c072f1ac89009efca962c466966f64b",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "chat_bubble_white",
+      "category": "chat_skins",
+      "file": "png/chat_bubble_white.png",
+      "source": "atlases/chat_skins.png",
+      "source_rect": [
+        768,
+        0,
+        1536,
+        466
+      ],
+      "native_cell_size": [
+        768,
+        466
+      ],
+      "alpha_bounds": [
+        21,
+        131,
+        737,
+        384
+      ],
+      "size": [
+        732,
+        269
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 31238,
+      "partial_alpha_pixels": 165670,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1448
+      },
+      "sha256": "2e47e40056823a2a4305e2b37d6397ed90b8454d6fca4212ce0d0eb494bf0d95",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "chat_bubble_blue",
+      "category": "chat_skins",
+      "file": "png/chat_bubble_blue.png",
+      "source": "atlases/chat_skins.png",
+      "source_rect": [
+        0,
+        466,
+        768,
+        760
+      ],
+      "native_cell_size": [
+        768,
+        294
+      ],
+      "alpha_bounds": [
+        24,
+        15,
+        740,
+        264
+      ],
+      "size": [
+        732,
+        265
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 31920,
+      "partial_alpha_pixels": 162060,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3500
+      },
+      "sha256": "4f26805e6de82f5d1b62c1fc3b767ae2573c9bb55332a70c1bf38f62f7ca1020",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "chat_bubble_pink",
+      "category": "chat_skins",
+      "file": "png/chat_bubble_pink.png",
+      "source": "atlases/chat_skins.png",
+      "source_rect": [
+        768,
+        466,
+        1536,
+        760
+      ],
+      "native_cell_size": [
+        768,
+        294
+      ],
+      "alpha_bounds": [
+        12,
+        15,
+        740,
+        264
+      ],
+      "size": [
+        744,
+        265
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 32590,
+      "partial_alpha_pixels": 164570,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3720
+      },
+      "sha256": "b7357ed9441a97f9ebf2402785556db5cd2a984dd49306223cf150313328a87d",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "chat_quick_phrase",
+      "category": "chat_skins",
+      "file": "png/chat_quick_phrase.png",
+      "source": "atlases/chat_skins.png",
+      "source_rect": [
+        0,
+        760,
+        768,
+        1024
+      ],
+      "native_cell_size": [
+        768,
+        264
+      ],
+      "alpha_bounds": [
+        60,
+        31,
+        737,
+        210
+      ],
+      "size": [
+        693,
+        195
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 20850,
+      "partial_alpha_pixels": 114285,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5778
+      },
+      "sha256": "6781c49247b10dd13d9a499c0c6974a4cebd71abac7efd07235f3fdd0a86b45a",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "chat_input_panel",
+      "category": "chat_skins",
+      "file": "png/chat_input_panel.png",
+      "source": "atlases/chat_skins.png",
+      "source_rect": [
+        768,
+        760,
+        1536,
+        1024
+      ],
+      "native_cell_size": [
+        768,
+        264
+      ],
+      "alpha_bounds": [
+        31,
+        30,
+        712,
+        205
+      ],
+      "size": [
+        697,
+        191
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 21106,
+      "partial_alpha_pixels": 112021,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2755
+      },
+      "sha256": "57181f97ca09767d3a5d9c44950d09215e13a64d4856b8646afc941cd91b4f7b",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "information_host_tangtang",
+      "category": "information_hosts",
+      "file": "png/information_host_tangtang.png",
+      "source": "atlases/information_hosts.png",
+      "source_rect": [
+        0,
+        0,
+        418,
+        470
+      ],
+      "native_cell_size": [
+        418,
+        470
+      ],
+      "alpha_bounds": [
+        21,
+        14,
+        411,
+        455
+      ],
+      "size": [
+        406,
+        457
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 74178,
+      "partial_alpha_pixels": 111138,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 7,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1758
+      },
+      "sha256": "636d62c7969746a24ea252105474e754656c393f67d3e4f70eafccbcff53ae28",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "information_host_keke",
+      "category": "information_hosts",
+      "file": "png/information_host_keke.png",
+      "source": "atlases/information_hosts.png",
+      "source_rect": [
+        418,
+        0,
+        836,
+        470
+      ],
+      "native_cell_size": [
+        418,
+        470
+      ],
+      "alpha_bounds": [
+        13,
+        39,
+        417,
+        460
+      ],
+      "size": [
+        420,
+        437
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 63482,
+      "partial_alpha_pixels": 119914,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1313
+      },
+      "sha256": "f8954f38ccf92e04c096a8e38d062d0f9bc02cf0c1157c93a2642e2abeeeb2ca",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "information_host_ajie",
+      "category": "information_hosts",
+      "file": "png/information_host_ajie.png",
+      "source": "atlases/information_hosts.png",
+      "source_rect": [
+        836,
+        0,
+        1254,
+        470
+      ],
+      "native_cell_size": [
+        418,
+        470
+      ],
+      "alpha_bounds": [
+        18,
+        39,
+        397,
+        460
+      ],
+      "size": [
+        395,
+        437
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 56133,
+      "partial_alpha_pixels": 116304,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2669
+      },
+      "sha256": "88cb188c8840f7e0b239f0003f82ee4371026f18ee51ca8644c0404c3da5f6b7",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "information_host_naicha",
+      "category": "information_hosts",
+      "file": "png/information_host_naicha.png",
+      "source": "atlases/information_hosts.png",
+      "source_rect": [
+        1254,
+        0,
+        1672,
+        470
+      ],
+      "native_cell_size": [
+        418,
+        470
+      ],
+      "alpha_bounds": [
+        6,
+        18,
+        403,
+        460
+      ],
+      "size": [
+        413,
+        458
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 61975,
+      "partial_alpha_pixels": 127036,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1523
+      },
+      "sha256": "0ae5fb7fbb6162fa5b41c910aa94ed612dd1f146f22f05441b3abd49737cb5f7",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "information_host_akai",
+      "category": "information_hosts",
+      "file": "png/information_host_akai.png",
+      "source": "atlases/information_hosts.png",
+      "source_rect": [
+        0,
+        470,
+        418,
+        941
+      ],
+      "native_cell_size": [
+        418,
+        471
+      ],
+      "alpha_bounds": [
+        21,
+        5,
+        399,
+        445
+      ],
+      "size": [
+        394,
+        456
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 63604,
+      "partial_alpha_pixels": 115859,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4592
+      },
+      "sha256": "aef6b68510bbcf64e6c17346e35028700c27d060fa5ac7d77bfefd47403ac735",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "information_host_yuanyuan",
+      "category": "information_hosts",
+      "file": "png/information_host_yuanyuan.png",
+      "source": "atlases/information_hosts.png",
+      "source_rect": [
+        418,
+        470,
+        836,
+        941
+      ],
+      "native_cell_size": [
+        418,
+        471
+      ],
+      "alpha_bounds": [
+        0,
+        30,
+        418,
+        448
+      ],
+      "size": [
+        434,
+        434
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 50552,
+      "partial_alpha_pixels": 137652,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2101
+      },
+      "sha256": "85be6f16dc5ecf02ccacf6664f803c2fe2d5878b695a768ee0620f0f58ab0d35",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "information_host_doudou",
+      "category": "information_hosts",
+      "file": "png/information_host_doudou.png",
+      "source": "atlases/information_hosts.png",
+      "source_rect": [
+        836,
+        470,
+        1254,
+        941
+      ],
+      "native_cell_size": [
+        418,
+        471
+      ],
+      "alpha_bounds": [
+        8,
+        21,
+        395,
+        445
+      ],
+      "size": [
+        403,
+        440
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 59935,
+      "partial_alpha_pixels": 117270,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5610
+      },
+      "sha256": "fd66569e3275a44b5092d671acec6a42363293ebb45cee1672954214ecafd92a",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "information_host_maomao",
+      "category": "information_hosts",
+      "file": "png/information_host_maomao.png",
+      "source": "atlases/information_hosts.png",
+      "source_rect": [
+        1254,
+        470,
+        1672,
+        941
+      ],
+      "native_cell_size": [
+        418,
+        471
+      ],
+      "alpha_bounds": [
+        0,
+        21,
+        410,
+        444
+      ],
+      "size": [
+        426,
+        439
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 52441,
+      "partial_alpha_pixels": 134420,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1521
+      },
+      "sha256": "6432f7c029d36a6c27d15a9b97dabe9737ace2bb3cd5bd544b981c6ad4521dc2",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_tangtang_ready",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_tangtang_ready.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        0,
+        0,
+        339,
+        290
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        102,
+        2,
+        283,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 73387,
+      "partial_alpha_pixels": 35173,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 5,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4410
+      },
+      "sha256": "93cba70da5a48d2ca1fa0f81b96dc364736dedc7917ac9fd016afbfd6839313a",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_tangtang_crouch",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_tangtang_crouch.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        339,
+        0,
+        678,
+        290
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        80,
+        34,
+        287,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 76159,
+      "partial_alpha_pixels": 32399,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3778
+      },
+      "sha256": "2caaa49f9e5f5cd558fd6f4ed61e5f83c0f4e5b2c61cadc5f572635c3b78c655",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_tangtang_airborne",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_tangtang_airborne.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        678,
+        0,
+        1017,
+        290
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        66,
+        3,
+        281,
+        276
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 73487,
+      "partial_alpha_pixels": 35105,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3096
+      },
+      "sha256": "93586ea5df2c38f55cc65e551469ae906ad43435888fdf38ce7b752f680764a5",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_tangtang_land",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_tangtang_land.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        1017,
+        0,
+        1356,
+        290
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        68,
+        42,
+        281,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 75404,
+      "partial_alpha_pixels": 33159,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4167
+      },
+      "sha256": "a51923b0bbd22f563d7e6baf810f7b0310c46cd3c174c9bcb0e9c9f41436038f",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_keke_ready",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_keke_ready.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        0,
+        290,
+        339,
+        580
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        72,
+        19,
+        287,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 71774,
+      "partial_alpha_pixels": 36817,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 5,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4338
+      },
+      "sha256": "746c4454075522b4e7d144e98296718d3590263d66c01112a1db2ea06b63f912",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_keke_crouch",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_keke_crouch.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        339,
+        290,
+        678,
+        580
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        76,
+        46,
+        298,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 73314,
+      "partial_alpha_pixels": 35282,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 5,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2981
+      },
+      "sha256": "910663110d2b9c00e0255d19491f907e1b39b5224e8cc87352de8b2209ba3404",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_keke_airborne",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_keke_airborne.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        678,
+        290,
+        1017,
+        580
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        57,
+        12,
+        286,
+        268
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 71887,
+      "partial_alpha_pixels": 36718,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3581
+      },
+      "sha256": "365e5207e52a8254a20e67651c1fb556a6e2639744b0972144050ff5a16eaa8f",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_keke_land",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_keke_land.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        1017,
+        290,
+        1356,
+        580
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        70,
+        54,
+        296,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 72792,
+      "partial_alpha_pixels": 35797,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4027
+      },
+      "sha256": "f9f8c648a18eb5baee7b59c8d456245bfc8ad65e2218a49f62a31b966d01e550",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_ajie_ready",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_ajie_ready.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        0,
+        580,
+        339,
+        870
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        90,
+        8,
+        263,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 73319,
+      "partial_alpha_pixels": 35271,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5636
+      },
+      "sha256": "b2eafbe1c43bdf766e954905661b7cfc3e3d1a5025db48345203df8e9035eeaa",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_ajie_crouch",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_ajie_crouch.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        339,
+        580,
+        678,
+        870
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        76,
+        44,
+        279,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 75446,
+      "partial_alpha_pixels": 33138,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3719
+      },
+      "sha256": "4e7fc5405ecf3210daa1aa10ebf9c054fc0b1370691cee33177ba9741c26c6ce",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_ajie_airborne",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_ajie_airborne.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        678,
+        580,
+        1017,
+        870
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        67,
+        0,
+        282,
+        271
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 72432,
+      "partial_alpha_pixels": 36172,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3293
+      },
+      "sha256": "5e4997922b791ba25277390b217b6c9cd9f920dcf157e0f4334ce08401616554",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_ajie_land",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_ajie_land.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        1017,
+        580,
+        1356,
+        870
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        73,
+        49,
+        282,
+        290
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 74740,
+      "partial_alpha_pixels": 33828,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3409
+      },
+      "sha256": "eea775c91fa26954b8fdac1b9fcf3a525c659f4f2fbc95ae87df50c7a51921ee",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_naicha_ready",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_naicha_ready.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        0,
+        870,
+        339,
+        1160
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        56,
+        8,
+        293,
+        288
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 68094,
+      "partial_alpha_pixels": 40499,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4799
+      },
+      "sha256": "285d153d45e1fd035f19ef54a19b4765942d8c4db5ffc51aedba072f4ecf0d9f",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_naicha_crouch",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_naicha_crouch.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        339,
+        870,
+        678,
+        1160
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        70,
+        28,
+        292,
+        288
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 70526,
+      "partial_alpha_pixels": 38041,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4354
+      },
+      "sha256": "0a03c1064fead47f4a294197cfa60483f32152172d66416840603435e520d0c6",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_naicha_airborne",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_naicha_airborne.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        678,
+        870,
+        1017,
+        1160
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        50,
+        4,
+        288,
+        270
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 68325,
+      "partial_alpha_pixels": 40248,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3031
+      },
+      "sha256": "8397d50c76de2d7a078a0985a710ebf84d32dbfd8f0752031775f044d48125a5",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_naicha_land",
+      "category": "pawn_motion_1",
+      "file": "png/pawn_naicha_land.png",
+      "source": "atlases/pawn_motion_1.png",
+      "source_rect": [
+        1017,
+        870,
+        1356,
+        1160
+      ],
+      "native_cell_size": [
+        339,
+        290
+      ],
+      "alpha_bounds": [
+        71,
+        26,
+        300,
+        289
+      ],
+      "size": [
+        355,
+        306
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 68844,
+      "partial_alpha_pixels": 39734,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5327
+      },
+      "sha256": "3510fb65c373b2c16970bac4fd31f686dd937718663f48ca2f0932e3142b7d67",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_akai_ready",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_akai_ready.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        0,
+        0,
+        315,
+        311
+      ],
+      "native_cell_size": [
+        315,
+        311
+      ],
+      "alpha_bounds": [
+        63,
+        3,
+        257,
+        311
+      ],
+      "size": [
+        331,
+        327
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 68766,
+      "partial_alpha_pixels": 39288,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1857
+      },
+      "sha256": "03f4f2d9981b409f30352d907f805bf3448e3fbb2f49092dde9d1e4228a8b91c",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_akai_crouch",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_akai_crouch.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        315,
+        0,
+        631,
+        311
+      ],
+      "native_cell_size": [
+        316,
+        311
+      ],
+      "alpha_bounds": [
+        72,
+        42,
+        268,
+        311
+      ],
+      "size": [
+        332,
+        327
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 72280,
+      "partial_alpha_pixels": 36204,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1637
+      },
+      "sha256": "3b5f68d8337b1c69150a489b8db6f8d79755904e3bbb9f0e051ce9f123a23e06",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_akai_airborne",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_akai_airborne.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        631,
+        0,
+        946,
+        311
+      ],
+      "native_cell_size": [
+        315,
+        311
+      ],
+      "alpha_bounds": [
+        38,
+        3,
+        276,
+        298
+      ],
+      "size": [
+        331,
+        327
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 68157,
+      "partial_alpha_pixels": 39967,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3213
+      },
+      "sha256": "d552e3904e89419f2e970d5e8bb2269d7e8967fcc079c4b4b793a83359dbd700",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_akai_land",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_akai_land.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        946,
+        0,
+        1262,
+        311
+      ],
+      "native_cell_size": [
+        316,
+        311
+      ],
+      "alpha_bounds": [
+        70,
+        48,
+        265,
+        311
+      ],
+      "size": [
+        332,
+        327
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 72789,
+      "partial_alpha_pixels": 35655,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1721
+      },
+      "sha256": "77e532877b96333c55aa1f8a0b6e60f9b88f19fe5dce9441c6a19c3982899b6d",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_yuanyuan_ready",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_yuanyuan_ready.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        0,
+        311,
+        315,
+        623
+      ],
+      "native_cell_size": [
+        315,
+        312
+      ],
+      "alpha_bounds": [
+        35,
+        22,
+        295,
+        312
+      ],
+      "size": [
+        331,
+        328
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 59708,
+      "partial_alpha_pixels": 48791,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4791
+      },
+      "sha256": "8f95c5f3a02b14f14c036e8850631aa611624332116210780ab71bb4fad57921",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_yuanyuan_crouch",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_yuanyuan_crouch.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        315,
+        311,
+        631,
+        623
+      ],
+      "native_cell_size": [
+        316,
+        312
+      ],
+      "alpha_bounds": [
+        28,
+        43,
+        293,
+        312
+      ],
+      "size": [
+        332,
+        328
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 63362,
+      "partial_alpha_pixels": 45472,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 6,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3960
+      },
+      "sha256": "0cf51959e1ae754f5adbd5815fdbc3b0abdffd297c2cdb112932e363b1045ed8",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_yuanyuan_airborne",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_yuanyuan_airborne.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        631,
+        311,
+        946,
+        623
+      ],
+      "native_cell_size": [
+        315,
+        312
+      ],
+      "alpha_bounds": [
+        19,
+        15,
+        291,
+        286
+      ],
+      "size": [
+        331,
+        328
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 60495,
+      "partial_alpha_pixels": 48019,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3457
+      },
+      "sha256": "3afb83c019099a7fe21b65d7071d76990c64ad97c2e0ac9842b2a8cb71112e69",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_yuanyuan_land",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_yuanyuan_land.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        946,
+        311,
+        1262,
+        623
+      ],
+      "native_cell_size": [
+        316,
+        312
+      ],
+      "alpha_bounds": [
+        27,
+        42,
+        288,
+        312
+      ],
+      "size": [
+        332,
+        328
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 63259,
+      "partial_alpha_pixels": 45559,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 7,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3980
+      },
+      "sha256": "dd1d779172eb9e1d228929edf091851d10bfa6ba031892e33b193fff3cbe0e37",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_doudou_ready",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_doudou_ready.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        0,
+        623,
+        315,
+        934
+      ],
+      "native_cell_size": [
+        315,
+        311
+      ],
+      "alpha_bounds": [
+        56,
+        12,
+        263,
+        306
+      ],
+      "size": [
+        331,
+        327
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 68715,
+      "partial_alpha_pixels": 39411,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4704
+      },
+      "sha256": "924b562d37127e79fae905dd4695c43154639f05f2f12208ca78a03c2693585a",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_doudou_crouch",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_doudou_crouch.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        315,
+        623,
+        631,
+        934
+      ],
+      "native_cell_size": [
+        316,
+        311
+      ],
+      "alpha_bounds": [
+        58,
+        38,
+        263,
+        305
+      ],
+      "size": [
+        332,
+        327
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 71758,
+      "partial_alpha_pixels": 36678,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3340
+      },
+      "sha256": "b38441c551fd5fa9d2ee1ba44947aa8ff54966c3cea22a82f900099f2761b69a",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_doudou_airborne",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_doudou_airborne.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        631,
+        623,
+        946,
+        934
+      ],
+      "native_cell_size": [
+        315,
+        311
+      ],
+      "alpha_bounds": [
+        43,
+        2,
+        269,
+        269
+      ],
+      "size": [
+        331,
+        327
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 68599,
+      "partial_alpha_pixels": 39575,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 5,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4008
+      },
+      "sha256": "a1d761df760f9db0960dfe1ca1e3395abc1b8d4cc2485466561e21d8f8951fca",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_doudou_land",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_doudou_land.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        946,
+        623,
+        1262,
+        934
+      ],
+      "native_cell_size": [
+        316,
+        311
+      ],
+      "alpha_bounds": [
+        60,
+        40,
+        267,
+        307
+      ],
+      "size": [
+        332,
+        327
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 71385,
+      "partial_alpha_pixels": 37079,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3999
+      },
+      "sha256": "55c3200d7ba69e449f42b1be90bf7f261e820b8150147c9cf39c7a506b55000d",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_maomao_ready",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_maomao_ready.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        0,
+        934,
+        315,
+        1246
+      ],
+      "native_cell_size": [
+        315,
+        312
+      ],
+      "alpha_bounds": [
+        32,
+        8,
+        297,
+        305
+      ],
+      "size": [
+        331,
+        328
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 58631,
+      "partial_alpha_pixels": 49868,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 4,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3349
+      },
+      "sha256": "9559e2548f90da124d6237446aba870c5b2a554ec60f355b089dc4cbac03ead9",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_maomao_crouch",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_maomao_crouch.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        315,
+        934,
+        631,
+        1246
+      ],
+      "native_cell_size": [
+        316,
+        312
+      ],
+      "alpha_bounds": [
+        27,
+        29,
+        290,
+        305
+      ],
+      "size": [
+        332,
+        328
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 61442,
+      "partial_alpha_pixels": 47404,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 6,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 3063
+      },
+      "sha256": "bf6792faa2b2589a3b11954d7c82fa4a63191166e8da7cfd3f5954bd34cbf557",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_maomao_airborne",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_maomao_airborne.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        631,
+        934,
+        946,
+        1246
+      ],
+      "native_cell_size": [
+        315,
+        312
+      ],
+      "alpha_bounds": [
+        11,
+        4,
+        292,
+        272
+      ],
+      "size": [
+        331,
+        328
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 59608,
+      "partial_alpha_pixels": 48903,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 6,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2714
+      },
+      "sha256": "f2b1112c2077e7a2f615b04d26150658346c2d4e025e0d90620ab4a3627d599d",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "pawn_maomao_land",
+      "category": "pawn_motion_2",
+      "file": "png/pawn_maomao_land.png",
+      "source": "atlases/pawn_motion_2.png",
+      "source_rect": [
+        946,
+        934,
+        1262,
+        1246
+      ],
+      "native_cell_size": [
+        316,
+        312
+      ],
+      "alpha_bounds": [
+        27,
+        31,
+        284,
+        306
+      ],
+      "size": [
+        332,
+        328
+      ],
+      "motion_fixed_cell": true,
+      "transparent_padding": 8,
+      "transparent_pixels": 61678,
+      "partial_alpha_pixels": 47150,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2883
+      },
+      "sha256": "d36acb72ec9a2f72dfc8cebe581d8c3b710c8b010e377ecc5aef8803d50d366d",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "scene_bank",
+      "category": "special_scenes_1",
+      "file": "png/scene_bank.png",
+      "source": "atlases/special_scenes_1.png",
+      "source_rect": [
+        0,
+        0,
+        724,
+        724
+      ],
+      "native_cell_size": [
+        724,
+        724
+      ],
+      "alpha_bounds": [
+        7,
+        53,
+        724,
+        684
+      ],
+      "size": [
+        733,
+        647
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 140447,
+      "partial_alpha_pixels": 333608,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 33,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 7648
+      },
+      "sha256": "472d2d9fa0fecb286bd505b3f6a2e9839eb5639275dd4d55c0e5124c7da18496",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "scene_jail",
+      "category": "special_scenes_1",
+      "file": "png/scene_jail.png",
+      "source": "atlases/special_scenes_1.png",
+      "source_rect": [
+        724,
+        0,
+        1448,
+        724
+      ],
+      "native_cell_size": [
+        724,
+        724
+      ],
+      "alpha_bounds": [
+        47,
+        5,
+        724,
+        711
+      ],
+      "size": [
+        693,
+        722
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 204754,
+      "partial_alpha_pixels": 295384,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 29,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 8568
+      },
+      "sha256": "ab889e7d9b279594c3d5ca1ddf833e1adb932e25633a14b0357b8111bb4fc38e",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "scene_game_center",
+      "category": "special_scenes_1",
+      "file": "png/scene_game_center.png",
+      "source": "atlases/special_scenes_1.png",
+      "source_rect": [
+        1448,
+        0,
+        2172,
+        724
+      ],
+      "native_cell_size": [
+        724,
+        724
+      ],
+      "alpha_bounds": [
+        23,
+        85,
+        714,
+        715
+      ],
+      "size": [
+        707,
+        646
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 138497,
+      "partial_alpha_pixels": 318059,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 31,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 9085
+      },
+      "sha256": "2a8e7f8ec5e51c81bad0067385f8b9843248206b28cd1bb20c6fa800c0cddb09",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "scene_rest",
+      "category": "special_scenes_2",
+      "file": "png/scene_rest.png",
+      "source": "atlases/special_scenes_2.png",
+      "source_rect": [
+        0,
+        0,
+        724,
+        724
+      ],
+      "native_cell_size": [
+        724,
+        724
+      ],
+      "alpha_bounds": [
+        19,
+        34,
+        710,
+        670
+      ],
+      "size": [
+        707,
+        652
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 153964,
+      "partial_alpha_pixels": 306848,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 30,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 12366
+      },
+      "sha256": "20cf027a897c26df45a66c6f41f033869eade7a347c5ceca262b36172883a1a1",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "scene_start",
+      "category": "special_scenes_2",
+      "file": "png/scene_start.png",
+      "source": "atlases/special_scenes_2.png",
+      "source_rect": [
+        724,
+        0,
+        1448,
+        724
+      ],
+      "native_cell_size": [
+        724,
+        724
+      ],
+      "alpha_bounds": [
+        13,
+        89,
+        724,
+        669
+      ],
+      "size": [
+        727,
+        596
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 138733,
+      "partial_alpha_pixels": 294358,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 29,
+        "removed_components": 6,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 13368
+      },
+      "sha256": "28c488aecb2a44a54a4793f39400ac3396af3de8fffe9691f7a22714cb2c6da1",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "scene_station",
+      "category": "special_scenes_2",
+      "file": "png/scene_station.png",
+      "source": "atlases/special_scenes_2.png",
+      "source_rect": [
+        1448,
+        0,
+        2172,
+        724
+      ],
+      "native_cell_size": [
+        724,
+        724
+      ],
+      "alpha_bounds": [
+        13,
+        85,
+        721,
+        678
+      ],
+      "size": [
+        724,
+        609
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 109002,
+      "partial_alpha_pixels": 331768,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 32,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 14207
+      },
+      "sha256": "01322ccc9aa69370a64ef656c9b4b551bc63dca59dee653d7512ef104afde8d3",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "brand_logo",
+      "category": "brand_logo",
+      "file": "png/brand_logo.png",
+      "source": "atlases/brand_logo.png",
+      "source_rect": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "native_cell_size": [
+        1672,
+        941
+      ],
+      "alpha_bounds": [
+        107,
+        4,
+        1578,
+        935
+      ],
+      "size": [
+        1487,
+        947
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 555943,
+      "partial_alpha_pixels": 851465,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 84,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 4850
+      },
+      "sha256": "f5b3d6b59f8cb752a6748c9919b72bfe9c67124966d53c9aa6e7c7a1f81e9624",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "lobby_friends",
+      "category": "lobby_friends",
+      "file": "png/lobby_friends.png",
+      "source": "atlases/lobby_friends.png",
+      "source_rect": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "native_cell_size": [
+        1672,
+        941
+      ],
+      "alpha_bounds": [
+        23,
+        90,
+        1651,
+        881
+      ],
+      "size": [
+        1644,
+        807
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 302426,
+      "partial_alpha_pixels": 1024105,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 101,
+        "removed_components": 4,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 10380
+      },
+      "sha256": "a5133826c63ab88fd0d8280cb9d075298d397b3db46b77325ba8c8ee409a1c68",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "result_trophy",
+      "category": "settlement_art",
+      "file": "png/result_trophy.png",
+      "source": "atlases/settlement_art.png",
+      "source_rect": [
+        0,
+        0,
+        610,
+        429
+      ],
+      "native_cell_size": [
+        610,
+        429
+      ],
+      "alpha_bounds": [
+        42,
+        71,
+        599,
+        429
+      ],
+      "size": [
+        573,
+        374
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 49377,
+      "partial_alpha_pixels": 164600,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 5,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 6245
+      },
+      "sha256": "2cf65dab06941227d22c88fde7640366fd8022e9a694884811f84ff7066595de",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "result_laurel",
+      "category": "settlement_art",
+      "file": "png/result_laurel.png",
+      "source": "atlases/settlement_art.png",
+      "source_rect": [
+        610,
+        0,
+        1220,
+        429
+      ],
+      "native_cell_size": [
+        610,
+        429
+      ],
+      "alpha_bounds": [
+        378,
+        74,
+        591,
+        429
+      ],
+      "size": [
+        229,
+        371
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 42647,
+      "partial_alpha_pixels": 42199,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 13,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 47691
+      },
+      "sha256": "69181ae59412d712063858eeb8143f441f4285916836a8063d1759fe561c4bec",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "result_plaque",
+      "category": "settlement_art",
+      "file": "png/result_plaque.png",
+      "source": "atlases/settlement_art.png",
+      "source_rect": [
+        0,
+        429,
+        610,
+        859
+      ],
+      "native_cell_size": [
+        610,
+        430
+      ],
+      "alpha_bounds": [
+        12,
+        144,
+        610,
+        366
+      ],
+      "size": [
+        614,
+        238
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 51215,
+      "partial_alpha_pixels": 94724,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 25735
+      },
+      "sha256": "c0de0fb9023d5cf5faf97b9fb3602a19772d935341fec12d2b45ebc6b15e39ac",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "minigame_title",
+      "category": "settlement_art",
+      "file": "png/minigame_title.png",
+      "source": "atlases/settlement_art.png",
+      "source_rect": [
+        610,
+        429,
+        1220,
+        859
+      ],
+      "native_cell_size": [
+        610,
+        430
+      ],
+      "alpha_bounds": [
+        18,
+        110,
+        606,
+        381
+      ],
+      "size": [
+        604,
+        287
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 52706,
+      "partial_alpha_pixels": 120247,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 4,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 12815
+      },
+      "sha256": "d102305a780b527241ad668f57f48baebf225f57bc786f3a2e5041310e833a52",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "result_reward_panel",
+      "category": "settlement_art",
+      "file": "png/result_reward_panel.png",
+      "source": "atlases/settlement_art.png",
+      "source_rect": [
+        0,
+        859,
+        610,
+        1289
+      ],
+      "native_cell_size": [
+        610,
+        430
+      ],
+      "alpha_bounds": [
+        23,
+        1,
+        602,
+        364
+      ],
+      "size": [
+        595,
+        379
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 19015,
+      "partial_alpha_pixels": 206014,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 20,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 5578
+      },
+      "sha256": "156a783555c59ffd72ae9f1946a8994c05e5c59fde64c3f427b079091e77ebe2",
+      "status": "generated candidate; not imported"
+    },
+    {
+      "name": "result_zero_panel",
+      "category": "settlement_art",
+      "file": "png/result_zero_panel.png",
+      "source": "atlases/settlement_art.png",
+      "source_rect": [
+        610,
+        859,
+        1220,
+        1289
+      ],
+      "native_cell_size": [
+        610,
+        430
+      ],
+      "alpha_bounds": [
+        8,
+        1,
+        587,
+        364
+      ],
+      "size": [
+        595,
+        379
+      ],
+      "motion_fixed_cell": false,
+      "transparent_padding": 8,
+      "transparent_pixels": 18782,
+      "partial_alpha_pixels": 206277,
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 20,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 6945
+      },
+      "sha256": "08a055075d2c70c299faf436f0104ac588b7bf8742aac4d73581297ae404d006",
+      "status": "generated candidate; not imported"
+    }
+  ]
+}

@@ -1,38 +1,67 @@
-/** 点击棋盘格子的详情：名称与棋盘上的三字地名一致（core/BoardNames）、档位、价格/租金、归属与等级。 */
+/** Screen18: property identity, prices and four flat rent rows with live values. */
 import { Node } from 'cc';
-import { landPrice, STATION } from '../core/Rules';
-import { TILE_TYPE_NAME } from '../core/BoardLayout';
-import { Theme } from '../core/Theme';
-import { ghostButton } from '../ui/Buttons';
+import { landPrice, TIERS } from '../core/Rules';
+import { art } from '../ui/Art';
 import { ctx } from '../ui/Ctx';
-import { text } from '../ui/Kit';
-import { Popup } from '../ui/Popup';
-import { chip } from '../ui/Widgets';
-import { infoRow, rentTable, tierName, tileHero, tileSubtitle } from './Common';
+import { gfx, mk, text } from '../ui/Kit';
+import { drawHouse } from '../ui/Icons';
+import { avatar, chip } from '../ui/Widgets';
+import { InformationPage, informationClose, informationCard, shopKey } from './InformationPage';
+import { buildSpecialLand, SpecialLandState } from './SpecialLandView';
 
-export class TileInfoPopup extends Popup {
+const INK = '#101A50';
+
+export class TileInfoPopup extends InformationPage {
+    protected get headingY(): number { return ctx.store.tile(this.tileIndex).type === 'JAIL' ? 174 : 112; }
+    protected get headingSize(): number { return ctx.store.tile(this.tileIndex).type === 'JAIL' ? 66 : 44; }
+    private specialState: SpecialLandState = { bankMode: 'mortgage', selected: null };
     constructor(private readonly tileIndex: number) {
-        super('tile', ctx.store.tile(tileIndex).name, 640, 760, 0, true);
+        super('tile', ({ BANK: '银行 · 抵押与赎回', JAIL: '监狱', REST: '休息区', GAME_ZONE: '游戏中心' } as Record<string, string>)[ctx.store.tile(tileIndex).type] ?? '格子详情');
     }
 
     protected buildBody(p: Node, w: number, h: number): void {
-        const st = ctx.store;
-        const tile = st.tile(this.tileIndex);
-        const prop = st.prop(this.tileIndex);
-        const isProp = tile.type === 'PROPERTY';
-        const station = tile.type === 'STATION';
-        chip(p, 28, 84, '第 ' + (this.tileIndex + 1) + ' 格 · ' + (isProp || station ? tierName(tile) : TILE_TYPE_NAME[tile.type]), Theme.c.ivoryDark, Theme.c.inkSoft, Theme.font.xs);
-        if (isProp || station) {
-            tileHero(p, tile, 40, 128, w - 80, 190, tileSubtitle(tile, prop));
-            infoRow(p, 40, 334, w - 80, '原价', landPrice(station, tile.tier), Theme.c.ivoryDark);
-            if (isProp) rentTable(p, 40, 408, w - 80, tile.tier ?? 'LOW', prop ? [prop.level] : [0]);
-            else text(p, '租金 = 所有者持有未抵押车站数 × ' + STATION.rentEach, 40, 408, w - 80, 40, Theme.font.sm, Theme.c.inkSoft);
-            const owner = prop && prop.owner ? st.player(prop.owner) : undefined;
-            text(p, owner ? '所有者：' + owner.nickname + (prop && prop.mortgaged ? '（已抵押）' : '') : '无主，可购买', 40, 524, w - 80, 40, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
-            if (tile.auctionLot) text(p, '指定拍卖地产：到达者可原价买、发起拍卖或放弃', 40, 570, w - 80, 36, Theme.font.xs, Theme.c.inkSoft, { align: 'l' });
-        } else {
-            text(p, tile.name + '：' + TILE_TYPE_NAME[tile.type] + '格', 40, 200, w - 80, 60, Theme.font.lg, Theme.c.ink, { bold: true });
+        const st = ctx.store, tile = st.tile(this.tileIndex), prop = st.prop(this.tileIndex);
+        if (tile.type !== 'PROPERTY') {
+            buildSpecialLand(p, this.tileIndex, this.specialState, () => this.rebuildBody(), () => this.close());
+            return;
         }
-        ghostButton(p, '关闭', 40, h - 104, w - 80, 76, () => this.close(), Theme.font.lg);
+        const owner = prop?.owner ? st.player(prop.owner) : undefined;
+        // Supplied shop artwork differs from the street close-up in screen18.
+        art(p, shopKey(tile.type, tile.tier), 18, 238, w - 36, 326);
+        const ownerBox = informationCard(p, 94, 222, 222, 66, '#FFFEF6', 32);
+        text(ownerBox, owner?.nickname ?? '无主', 66, 8, 148, 48, 32, INK, { bold: true, align: 'l' });
+        if (owner) avatar(p, 40, 190, 112, owner.avatar, owner.nickname);
+
+        const info = informationCard(p, 32, 552, w - 64, 152, '#FFFEF8', 32);
+        art(info, shopKey(tile.type, tile.tier), 22, 18, 134, 116);
+        text(info, tile.name, 180, 16, 442, 64, 46, INK, { bold: true, align: 'l' });
+        const level = prop?.level ?? 0, mortgaged = !!prop?.mortgaged;
+        text(info, level ? level + '级 ·' : '未升级 ·', 180, 84, 144, 44, 30, INK, { bold: true, align: 'l' });
+        chip(info, 338, 86, mortgaged ? '已抵押' : '未抵押', mortgaged ? '#FFE0E0' : '#B3F2B7',
+            mortgaged ? '#B73337' : '#125D2B', 25, 40);
+
+        const price = informationCard(p, 32, 714, 322, 122, '#FFFEF8', 30);
+        const upgrade = informationCard(p, 366, 714, 322, 122, '#FFFEF8', 30);
+        [price, upgrade].forEach((card, i) => {
+            text(card, i ? '升级费' : '原价', 30, 8, 260, 36, 25, INK, { align: 'l' });
+            art(card, 'info_cash', 28, 54, 52, 52);
+            text(card, String(i ? TIERS[tile.tier ?? 'LOW'].upgrade : landPrice(false, tile.tier)),
+                96, 44, 204, 66, 44, INK, { bold: true, align: 'l' });
+        });
+
+        const rentPanel = informationCard(p, 32, 846, w - 64, 290, '#FFF8E3', 30);
+        drawHouse(gfx(mk(rentPanel, 'RentHome', 26, 14, 44, 44)), 22, 22, 40, '#D84128', '#FFF1CF');
+        text(rentPanel, '租金表', 84, 10, 300, 50, 30, INK, { bold: true, align: 'l' });
+        TIERS[tile.tier ?? 'LOW'].rent.forEach((rent, i) => {
+            const current = i === level;
+            const row = informationCard(rentPanel, 26, 66 + i * 52, w - 116, 48,
+                current ? '#EFF8E9' : '#FFFCF4', 16, false);
+            if (current) text(row, '当前', 16, 2, 74, 44, 20, '#277240', { bold: true });
+            text(row, i ? i + '级' : '未升级', 98, 2, 180, 44, 26, INK, { bold: true });
+            art(row, 'info_cash', 330, 6, 36, 36);
+            text(row, String(rent), 388, 0, 178, 48, 30, INK, { bold: true, align: 'l' });
+        });
+        if (mortgaged) text(p, '抵押本金 ' + prop!.mortgagePaid + ' · 抵押期间不收租', 50, 1136, w - 100, 24, 19, '#B73337', { align: 'l' });
+        informationClose(p, 44, h - 124, w - 88, () => this.close());
     }
 }

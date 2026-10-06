@@ -22,10 +22,17 @@ public final class ScriptedRandom implements RandomSourceFactory {
     }
 
     private final List<Step> script;
+    private final boolean eventCards;
 
     public ScriptedRandom(List<Step> script) {
-        this.script = List.copyOf(script);
+        this(script, false);
     }
+    private ScriptedRandom(List<Step> script, boolean eventCards) {
+        this.script = List.copyOf(script);
+        this.eventCards = eventCards;
+    }
+    /** Legacy non-event scenarios explicitly choose harmless CARD events; all effects still run in production code. */
+    public static ScriptedRandom withEventCards(List<Step> script) { return new ScriptedRandom(script, true); }
 
     public static Step step(DrawPoint point, int bound, int value) {
         return new Step(point, bound, value);
@@ -46,9 +53,17 @@ public final class ScriptedRandom implements RandomSourceFactory {
         int start = cursor(state);
         return new RandomSource() {
             private int position = start;
+            private long extra = state.s2();
 
             @Override
             public int nextInt(DrawPoint point, int bound) {
+                if (eventCards && (position >= script.size() || script.get(position).point() != point)
+                        && (point == DrawPoint.EVENT_KIND || point == DrawPoint.EVENT_CARD)) {
+                    int expected = point == DrawPoint.EVENT_KIND ? 100 : 1000;
+                    if (bound != expected) { throw new AssertionError("legacy event bound mismatch"); }
+                    extra++;
+                    return point == DrawPoint.EVENT_KIND ? 55 : 0;
+                }
                 if (position >= script.size()) {
                     throw new AssertionError("script exhausted at draw " + (position + 1) + " (" + point + "/" + bound + ")");
                 }
@@ -63,14 +78,14 @@ public final class ScriptedRandom implements RandomSourceFactory {
 
             @Override
             public RngState state() {
-                return new RngState(MARK, position, 0, 0);
+                return new RngState(MARK, position, extra, 0);
             }
         };
     }
 
     /** 状态中记录的已消费条数。 */
     public static int cursor(RngState state) {
-        if (state.s0() != MARK || state.s2() != 0 || state.s3() != 0) {
+        if (state.s0() != MARK || state.s2() < 0 || state.s3() != 0) {
             throw new IllegalArgumentException("not a scripted random state: " + state);
         }
         return Math.toIntExact(state.s1());

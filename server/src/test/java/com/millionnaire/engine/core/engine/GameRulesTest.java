@@ -58,7 +58,7 @@ class GameRulesTest {
     @Test
     void tiesAreRedrawnOnlyWithinTheirSubgroupUntilSeparated() {
         // 首抽：p1/p2/p3 同为 50，p4 = 90 → p4 已分开；组 [p1,p2,p3] 重抽 30/30/70 → p3 分开；子组 [p1,p2] 再抽 20/10
-        ScriptedRandom r = new ScriptedRandom(script(order(50, 50, 50, 90), order(30, 30, 70), order(20, 10), Table.deal(4)));
+        ScriptedRandom r = ScriptedRandom.withEventCards(script(order(50, 50, 50, 90), order(30, 30, 70), order(20, 10), Table.deal(4)));
         Table t = new Table(r, 1).start(4);
         GameState g = t.game();
         assertEquals(List.of("p4", "p3", "p1", "p2"), g.players().stream().map(PlayerState::playerId).toList());
@@ -83,7 +83,7 @@ class GameRulesTest {
                 moves.addAll(dice(DrawPoint.MOVE_DIE, p2.get(i)));
             }
         }
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), moves)), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), moves)), 1).start(2);
         assertEquals(3000, t.cash("p1"), "no reward at game start");
         for (int i = 0; i < 9; i++) {
             t.roll();
@@ -105,7 +105,7 @@ class GameRulesTest {
 
     @Test
     void aSecondStartRewardInTheSameTurnIsRejectedOnRebuild() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 6, 1, 6, 1, 6, 1, 6, 1, 6))), 1)
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 6, 1, 6, 1, 6, 1, 6, 1, 6))), 1)
                 .start(2);
         for (int i = 0; i < 9; i++) {
             t.roll();
@@ -124,7 +124,7 @@ class GameRulesTest {
 
     @Test
     void thirdJailFailureReleasesAndMovesTheSameTurnWithTheRemainingRollTime() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2),
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2),
                 dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1), dice(DrawPoint.JAIL_DIE, 1), dice(DrawPoint.MOVE_DIE, 1),
                 dice(DrawPoint.JAIL_DIE, 3), dice(DrawPoint.MOVE_DIE, 1), dice(DrawPoint.JAIL_DIE, 5),
                 dice(DrawPoint.MOVE_DIE, 4))), 1).start(2);
@@ -158,7 +158,7 @@ class GameRulesTest {
 
     @Test
     void releaseWithZeroRemainingTimeMovesImmediatelyWithoutAZeroLengthWindow() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1),
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1),
                 dice(DrawPoint.JAIL_DIE, 2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
         for (int i = 0; i < 4; i++) {
             t.roll();
@@ -168,15 +168,17 @@ class GameRulesTest {
         StepResult r = t.tick(deadline);                                  // 超时：自动判定，偶数释放，剩余 0 → 立即自动移动
         assertTrue(r.events().stream().anyMatch(e -> e instanceof GameEvent.JailRolled j && j.auto()));
         assertTrue(r.events().stream().anyMatch(e -> e instanceof GameEvent.DiceRolled d && d.auto() && d.value() == 2));
-        assertFalse(r.events().stream().anyMatch(e -> e instanceof GameEvent.WindowOpened o && o.frame().owner().equals("p1")),
-                "no window for p1 was opened");
-        assertEquals(10, t.position("p1"), "M2: lands on an event tile (no landing window)");
+        assertFalse(r.events().stream().anyMatch(e -> e instanceof GameEvent.WindowOpened o && o.frame().owner().equals("p1")
+                        && o.frame().resumeTag().equals(TurnStage.PRE_ROLL.name())),
+                "no zero-length post-release roll window was opened");
+        assertEquals(10, t.position("p1"), "M3b: movement lands on an event draw window");
+        t.pass();
         assertEquals("p2", t.current());
     }
 
     @Test
     void bailReleasesWithTheRemainingTimeAndNeedsEnoughCash() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1, 5))), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 1, 6, 1, 5))), 1).start(2);
         for (int i = 0; i < 4; i++) {
             t.roll();
         }
@@ -206,7 +208,8 @@ class GameRulesTest {
 
     @Test
     void timeoutRollsAutomaticallyAndTheNextWindowStartsAfterTheAnimation() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
+        M3bTest.craft(t, g -> g.withPlayer(g.player("p1").orElseThrow().at(13))); // REST at 15 isolates animation timing.
         long deadline = t.window().window().deadline();
         StepResult r = t.tick(deadline);
         assertTrue(r.events().stream().anyMatch(e -> e instanceof GameEvent.DiceRolled d && d.auto()));
@@ -217,7 +220,8 @@ class GameRulesTest {
 
     @Test
     void duplicateExpiredAndForeignCommandsHaveNoEffectAndConsumeNoRandomness() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 2))), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 2))), 1).start(2);
+        M3bTest.craft(t, g -> g.withPlayer(g.player("p1").orElseThrow().at(13)));
         long w1 = t.windowId();
         assertEquals(RejectionCode.NOT_YOUR_TURN, t.send(new GameCommand.RollDice("p2", w1)).rejection());
         assertEquals(RejectionCode.NOT_MEMBER, t.send(new GameCommand.RollDice("zz", w1)).rejection());
@@ -238,7 +242,8 @@ class GameRulesTest {
 
     @Test
     void awayAndConfirmedOfflinePlayersRollAutomaticallyAndModeChangesCancelOldTasks() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 2, 6, 6))), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 2, 6, 6))), 1).start(2);
+        M3bTest.craft(t, g -> g.withPlayer(g.player("p1").orElseThrow().at(13)).withPlayer(g.player("p2").orElseThrow().at(13)));
         long s = t.now;
         t.send(s + 100, new GameCommand.SetControl(1, "p1", ControlMode.AWAY));
         long autoTask = t.game().turn().autoTaskId();
@@ -306,7 +311,7 @@ class GameRulesTest {
         for (int i = 0; i < 600; i++) {
             sixes.addAll(dice(DrawPoint.MOVE_DIE, 6));                      // 全是 6：位置只在 0/6/12/18/24，永不进监狱
         }
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), sixes)), 1)
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), sixes)), 1)
                 .start(2, RuleConfigs.BOARD_30, EndMode.TIME_LIMIT, 15);
         long endsAt = t.game().clock().endsAt();
         long lead = DICE_ANIM + 6 * STEP_ANIM;

@@ -2,6 +2,7 @@ package com.millionnaire.engine.core.event;
 
 import com.millionnaire.engine.config.CardType;
 import com.millionnaire.engine.config.TileType;
+import com.millionnaire.engine.core.state.MoveKind;
 import com.millionnaire.engine.core.state.ConnState;
 import com.millionnaire.engine.core.state.Continuation;
 import com.millionnaire.engine.core.state.DebtState;
@@ -23,6 +24,20 @@ import java.util.List;
  * 携带随机结果的事件（OrderNumberDrawn、DiceRolled、JailRolled）在演化时消费对应的 RandomDrawn 并核对。
  */
 public sealed interface GameEvent extends Event {
+    record EventDrawn(String playerId, long landingId, int cursor, com.millionnaire.engine.config.EventKind kind,
+                      long amount, MoveKind moveKind, int distance, boolean auto) implements GameEvent, PublicEvent { }
+    record EventRewardPaid(String playerId, long landingId, int cursor, long amount) implements GameEvent, PublicEvent { }
+    record FeeCharged(String payer, com.millionnaire.engine.core.state.FeeSource source) implements GameEvent, PublicEvent { }
+    record FeePaid(String payer, com.millionnaire.engine.core.state.FeeSource source) implements GameEvent, PublicEvent { }
+    record EventMoveCommitted(String playerId, long landingId, int cursor, MoveKind kind, int distance) implements GameEvent, PublicEvent { }
+    record EventCardReceived(String recipient, long landingId, int cursor, CardType card) implements GameEvent {
+        @Override public Visibility visibility() { return Visibility.PRIVATE; }
+    }
+    record EventCardDiscarded(String recipient, long landingId, int cursor, int index, CardType card, boolean auto) implements GameEvent {
+        @Override public Visibility visibility() { return Visibility.PRIVATE; }
+    }
+    /** Publicly disclose only that a card was obtained/discarded and the actual hand size. */
+    record EventHandCount(String playerId, long landingId, int cursor, int handCount, boolean discarded) implements GameEvent, PublicEvent { }
 
     // ------------------------------------------------------------ 开局与结束
 
@@ -60,8 +75,12 @@ public sealed interface GameEvent extends Event {
     record DrainingStarted(long at) implements GameEvent, PublicEvent {
     }
 
-    /** 对局结束并回到大厅；result 为结算摘要（管理端中止为 null）；全员取消准备。 */
+    /** 正常对局结束并回到大厅；result 必须为非空结算摘要；全员取消准备。 */
     record GameEnded(long gameNo, String reason, GameResult result) implements GameEvent, PublicEvent {
+    }
+
+    /** 管理中止：inputSeq 关联已接纳的系统 EndGame；只有名称或空结算摘要不构成授权。 */
+    record GameAborted(long gameNo, String reason, long inputSeq) implements GameEvent, PublicEvent {
     }
 
     // ------------------------------------------------------------ 回合
@@ -96,9 +115,16 @@ public sealed interface GameEvent extends Event {
     record DiceRolled(String playerId, int value, boolean auto) implements GameEvent, PublicEvent {
     }
 
-    /** 固定方向前进（M1 只有前进）。 */
-    record PlayerMoved(String playerId, int from, int to, int steps) implements GameEvent, PublicEvent {
+    /** 移动段：链编号、段序号与来源种类随日志重建；M3a 仅接纳已核对骰子的段。 */
+    record PlayerMoved(String playerId, int from, int to, int steps, long chainId, int segmentNo, MoveKind kind)
+            implements GameEvent, PublicEvent {
+        public PlayerMoved(String playerId, int from, int to, int steps) {
+            this(playerId, from, to, steps, 0, 0, MoveKind.DICE);
+        }
     }
+
+    /** 骰子行动开始一条移动链；重定向沿用链编号，不能伪造新行动。 */
+    record MoveChainStarted(long chainId, long turnNo, String playerId, int origin) implements GameEvent, PublicEvent { }
 
     /** 起点奖励（系统 → 玩家，经账本记账）；每回合最多一次。 */
     record StartRewardPaid(String playerId, long amount, long turnNo) implements GameEvent, PublicEvent {
@@ -111,11 +137,13 @@ public sealed interface GameEvent extends Event {
     // ------------------------------------------------------------ 落点推进器与经济（M2）
 
     /** 落点推进器开始：分配落点编号（整局单调递增）。 */
-    record LandingStarted(long landingId, String playerId, int tile) implements GameEvent, PublicEvent {
+    record LandingStarted(long landingId, String playerId, int tile, long chainId) implements GameEvent, PublicEvent {
+        public LandingStarted(long landingId, String playerId, int tile) { this(landingId, playerId, tile, 0); }
     }
 
     /** 落点进入一个需要等待的子阶段；payment 为 DEBT 时的欠款，其余为 0。 */
-    record LandingStepEntered(long landingId, LandingStep step, long payment) implements GameEvent, PublicEvent {
+    record LandingStepEntered(long landingId, LandingStep step, long payment, int cursor) implements GameEvent, PublicEvent {
+        public LandingStepEntered(long landingId, LandingStep step, long payment) { this(landingId, step, payment, -1); }
     }
 
     /** 落点结算完成：必须没有待处理的必要步骤、决策已消费、费用已结清（E1）。 */

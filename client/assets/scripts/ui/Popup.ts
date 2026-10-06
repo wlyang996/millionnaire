@@ -16,6 +16,8 @@ export abstract class Popup {
     readonly cd: Countdown | null;
     private ring: CountdownBadge | null = null;
     closed = false;
+    /** Full-page information views replace the board visually while preserving its state. */
+    get coversScreen(): boolean { return false; }
 
     /**
      * @param popupId 目录 id（演示面板用）
@@ -44,7 +46,7 @@ export abstract class Popup {
         paintPanel(this.panel, this.pw, this.ph, { fill: Theme.c.ivory, r: Theme.radius.lg, shadow: 8, stroke: Theme.c.ivoryLine, strokeW: 3 });
         // 吞掉面板上的空白点击（避免触发 mask 关闭）
         this.panel.addComponent(BlockInputEvents);
-        text(this.panel, this.title, 28, 20, this.pw - 28 - Theme.popupRing.size - 40, 64, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
+        this.buildTitle();
         if (this.cd) {
             const r = Theme.popupRing;
             this.ring = new CountdownBadge(this.panel, this.pw - r.size - r.inset, r.inset + 6, r.size - 10, 48);
@@ -56,6 +58,10 @@ export abstract class Popup {
     }
 
     protected abstract buildBody(panel: Node, w: number, h: number): void;
+
+    protected buildTitle(): void {
+        text(this.panel, this.title, 28, 20, this.pw - 28 - Theme.popupRing.size - 40, 64, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
+    }
 
     /** 每帧（PopupManager 调用） */
     tick(): void {

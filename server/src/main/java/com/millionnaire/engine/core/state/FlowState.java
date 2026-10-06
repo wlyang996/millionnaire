@@ -10,7 +10,11 @@ import java.util.Optional;
  * （相等表示本安全点已启动过一个流程，不能再启动第二个）。
  */
 public record FlowState(List<FlowFrame> frames, List<FlowRequest> queue, long nextWindowId, long nextRequestId,
-                        long safePointNo, long startedAtSafePoint) {
+                        long safePointNo, long startedAtSafePoint, FlowRequest pendingStart) {
+    public FlowState(List<FlowFrame> frames, List<FlowRequest> queue, long nextWindowId, long nextRequestId,
+                     long safePointNo, long startedAtSafePoint) {
+        this(frames, queue, nextWindowId, nextRequestId, safePointNo, startedAtSafePoint, null);
+    }
     public FlowState {
         frames = Immutable.list(frames);
         queue = Immutable.list(queue);
@@ -29,22 +33,25 @@ public record FlowState(List<FlowFrame> frames, List<FlowRequest> queue, long ne
     }
 
     public FlowState withFrames(List<FlowFrame> value) {
-        return new FlowState(value, queue, nextWindowId, nextRequestId, safePointNo, startedAtSafePoint);
+        return new FlowState(value, queue, nextWindowId, nextRequestId, safePointNo, startedAtSafePoint, pendingStart);
     }
 
     public FlowState withQueue(List<FlowRequest> value) {
-        return new FlowState(frames, value, nextWindowId, nextRequestId, safePointNo, startedAtSafePoint);
+        return new FlowState(frames, value, nextWindowId, nextRequestId, safePointNo, startedAtSafePoint, pendingStart);
     }
 
     public FlowState withNextWindowId(long value) {
-        return new FlowState(frames, queue, value, nextRequestId, safePointNo, startedAtSafePoint);
+        return new FlowState(frames, queue, value, nextRequestId, safePointNo, startedAtSafePoint, pendingStart);
     }
 
     public FlowState withNextRequestId(long value) {
-        return new FlowState(frames, queue, nextWindowId, value, safePointNo, startedAtSafePoint);
+        return new FlowState(frames, queue, nextWindowId, value, safePointNo, startedAtSafePoint, pendingStart);
     }
 
     public FlowState withSafePoint(long no, long startedAt) {
-        return new FlowState(frames, queue, nextWindowId, nextRequestId, no, startedAt);
+        return new FlowState(frames, queue, nextWindowId, nextRequestId, no, startedAt, pendingStart);
+    }
+    public FlowState withPendingStart(FlowRequest value) {
+        return new FlowState(frames, queue, nextWindowId, nextRequestId, safePointNo, startedAtSafePoint, value);
     }
 }

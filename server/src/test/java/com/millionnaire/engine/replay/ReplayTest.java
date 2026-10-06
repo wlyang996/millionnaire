@@ -35,7 +35,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 class ReplayTest {
     /** 黄金值：锁定引擎行为 + 规范格式 + 随机协议。有意修改时同步更新，并提升 EngineVersion。 */
-    static final String GOLDEN_FINAL_HASH = "5fbe4bdbc214f8415cf6a56b3a6dddbc38f9eeb806b77f2d3b51e7a88b9a65c2";
+    static final String GOLDEN_FINAL_HASH = "1a57affdd26689c31835ecd4579aaa28dc63a4795d450e480560b42f7fc26616";
     private static final String GOLDEN_SNAPSHOT_RESOURCE = "/golden/demo-final.snapshot";
 
     private final Scenario scenario = DemoScenarios.full();
@@ -66,6 +66,13 @@ class ReplayTest {
     @Test
     void goldenFinalHash() {
         assertEquals(GOLDEN_FINAL_HASH, full.finalHash());
+    }
+
+    @Test
+    void m3bGoldenSnapshotDiffersFromM3aOnlyInItsVersionBytes() {
+        byte[] previous = java.util.Base64.getDecoder().decode("bWlsbGlvbm5haXJlLWVuZ2luZS8xL3NuYXBzaG90Cnsicm9vbUlkIjoicm9vbS0xIiwiY29uZmlnSGFzaCI6ImY4NTI0YTYyODgwMjc4Y2EzZTNhMGU2ODM4MTQwZTkxNmYyOGNmMWIyNDk4MTExYzUzYTI5ZGRiMzhlZjcwOWQiLCJlbmdpbmVWZXJzaW9uIjoiZW5naW5lLTAuOC4xLW0zYSIsImRvbWFpbklkIjoiZGVtby10ZXN0Iiwicm5nUHJvdG9jb2wiOiJ4b3NoaXJvMjU2c3MtbGVtaXJlMzItdjEiLCJub3ciOjYwMDAwLCJsYXN0U2VxIjoyOCwibGFzdFJlY2VpdmVkQXQiOjYwMDAwLCJsYXN0SW5wdXREaWdlc3QiOiJmZDUwMTY5NWYxYmZkYzA2MjhjNDU4MzgzMDA3NDNiOTE5NmUxYWI3NWIyN2I3MmU3YzQ4YzgzMjJiZGM0NDY2IiwiZXZlbnRDb3VudCI6NjMsInRpbWVycyI6eyJ0YXNrcyI6W119LCJuZXh0VGFza0lkIjo3LCJybmciOnsiczAiOjcwMzI4NzIxODkzMjIyMzQ3NDYsInMxIjotNzQ1MDcxMzIzNTMxNTU3OTk3LCJzMiI6MjU5MDU3Nzg4MjY5OTg0NTE1OCwiczMiOjEyNjExNjM4MDU3NDQ5Mjg1NTl9LCJwZW5kaW5nRHJhd3MiOltdLCJkb21haW4iOnsiQHR5cGUiOiJEZW1vU3RhdGUiLCJob3N0SWQiOiJiIiwicGxheWVycyI6WyJiIl0sInJvdW5kIjpudWxsLCJuZXh0V2luZG93SWQiOjUsInJvbGxzIjpbMiw1XX19");
+        byte[] normalized = engine.snapshot(full.state()).replace("engine-0.9.0-m3b", "engine-0.8.1-m3a").getBytes(StandardCharsets.UTF_8);
+        assertArrayEquals(previous, normalized);
     }
 
     @Test

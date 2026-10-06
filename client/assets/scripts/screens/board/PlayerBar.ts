@@ -3,10 +3,12 @@ import { Node } from 'cc';
 import { ConnState, ControlMode, PlayerView } from '../../core/Models';
 import { Theme } from '../../core/Theme';
 import { drawCoin } from '../../ui/Icons';
-import { fillCircle, fillRR, gfx, mk, strokeRR, text } from '../../ui/Kit';
+import { fillCircle, fillRR, gfx, mk, onTap, strokeRR, text } from '../../ui/Kit';
 import { avatar } from '../../ui/Widgets';
 
 export interface StatusBadge { text: string; bg: string; fg: string }
+export interface CashChange { amount: number; until: number }
+export interface CashChangeNode { node: Node; badge: Node | null; until: number }
 
 /** 连接/控制状态标记：已掉线·自动投骰 / 疑似断线 / 托管中 / 暂离。破产单独标记。 */
 export function statusBadge(p: PlayerView): StatusBadge | null {
@@ -23,7 +25,8 @@ export function connBadge(conn: ConnState, control: ControlMode): StatusBadge | 
     return null;
 }
 
-export function drawPlayerBar(parent: Node, x: number, y: number, players: PlayerView[], currentId: string, myId: string, drawingId: string | null = null): Node {
+export function drawPlayerBar(parent: Node, x: number, y: number, players: PlayerView[], currentId: string, myId: string, drawingId: string | null = null,
+    onPlayerTap?: (id: string) => void, changes: Map<string, CashChange> = new Map(), changeNodes: CashChangeNode[] = []): Node {
     const cw = 168;
     const ch = 76;
     const gap = 6;
@@ -32,27 +35,36 @@ export function drawPlayerBar(parent: Node, x: number, y: number, players: Playe
         const cx = (i % 4) * (cw + gap);
         const cy = Math.floor(i / 4) * (ch + gap);
         const cell = mk(bar, 'P:' + p.playerId, cx, cy, cw, ch);
+        if (onPlayerTap) onTap(cell, () => onPlayerTap(p.playerId), false);
         const g = gfx(cell);
         const cur = p.playerId === currentId && p.life === 'ALIVE';
         const dead = p.life !== 'ALIVE';
         fillRR(g, 0, 3, cw, ch, 16, Theme.c.shadow);
         fillRR(g, 0, 0, cw, ch, 16, dead ? '#E3E7EB' : cur ? '#FFF3C4' : '#FFFFFFE6');
         if (cur) strokeRR(g, 0, 0, cw, ch, 16, Theme.c.yellow, 4);
-        avatar(cell, 6, 8, 44, p.avatar, p.nickname, { dim: dead });
+        avatar(cell, 4, 6, 58, p.avatar, p.nickname, { dim: dead });
         if (p.playerId === myId) {
             const badge = mk(cell, 'MeBadge', 2, 2, 24, 24);
             fillCircle(gfx(badge), 12, 12, 12, Theme.c.blue);
             text(badge, '我', 0, 0, 24, 24, 14, Theme.c.white, { bold: true });
         }
-        text(cell, p.nickname, 54, 4, cw - 58, 26, 20, dead ? Theme.c.inkFaint : Theme.c.ink, { bold: true, align: 'l' });
-        const coin = gfx(mk(cell, 'Coin', 54, 32, 22, 22));
+        text(cell, p.nickname, 70, 4, cw - 74, 26, 22, dead ? Theme.c.inkFaint : Theme.c.ink, { bold: true, align: 'l' });
+        const coin = gfx(mk(cell, 'Coin', 70, 32, 22, 22));
         drawCoin(coin, 11, 11, 9);
-        text(cell, String(p.cash), 80, 30, cw - 84, 26, 22, dead ? Theme.c.inkFaint : Theme.c.ink, { bold: true, align: 'l' });
+        text(cell, String(p.cash), 96, 30, cw - 100, 26, 22, dead ? Theme.c.inkFaint : Theme.c.ink, { bold: true, align: 'l' });
         const b = statusBadge(p) ?? (p.playerId === drawingId ? { text: '正在抽取事件卡', bg: '#FFF1C9', fg: '#7A5A00' } : null);
+        let bn: Node | null = null;
         if (b) {
-            const bn = mk(cell, 'Badge', 54, 54, cw - 60, 20);
-            fillRR(gfx(bn), 0, 0, cw - 60, 20, 10, b.bg);
-            text(bn, b.text, 2, 0, cw - 64, 20, 14, b.fg, { bold: true });
+            bn = mk(cell, 'Badge', 66, 54, cw - 70, 20);
+            fillRR(gfx(bn), 0, 0, cw - 70, 20, 10, b.bg);
+            text(bn, b.text, 2, 0, cw - 74, 20, 14, b.fg, { bold: true });
+        }
+        const change = changes.get(p.playerId);
+        if (change && change.until > Date.now()) {
+            const delta = text(cell, (change.amount > 0 ? '+' : '') + change.amount, 66, 52, cw - 70, 24, 23,
+                change.amount > 0 ? Theme.c.greenDark : Theme.c.redDark, { bold: true, align: 'l' }).node;
+            if (bn) bn.active = false;
+            changeNodes.push({ node: delta, badge: bn, until: change.until });
         }
     });
     return bar;

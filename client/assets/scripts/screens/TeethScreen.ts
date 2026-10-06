@@ -17,6 +17,7 @@ import { ChatPopup } from '../popups/ChatPopup';
 import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, CountdownBadge } from '../ui/Widgets';
+import { art } from '../ui/Art';
 
 type Phase = 'picking' | 'closed';
 
@@ -61,6 +62,8 @@ export class TeethScreen extends Screen {
     protected build(): void {
         if (!this.inited) this.init();
         this.backdrop('sky');
+        art(this.root, 'card_detail_background', 0, 0, Theme.W, Theme.H, 'stretch');
+        art(this.root, 'scene_game_center', 50, 110, 620, 260);
         new IconButton(this.root, 80, 24, 60, '', () => ctx.screens.back('board'), Theme.c.ivory, Theme.c.ink, (g, s) => drawBack(g, s / 2, s / 2, s * 0.6, Theme.c.ink));
         const hd = mk(this.root, 'Header', 150, 24, 360, 60);
         text(hd, '虎口拔牙', 0, 0, 360, 60, Theme.font.lg, Theme.c.ink, { bold: true });
@@ -68,15 +71,15 @@ export class TeethScreen extends Screen {
         // 参与者
         this.participants.forEach((p, i) => {
             const cx = 20 + (i % 4) * 172;
-            const cy = 100 + Math.floor(i / 4) * 124;
+            const cy = 270 + Math.floor(i / 4) * 88;
             const cur = i === this.turn && this.phase === 'picking';
             const cell = mk(this.root, 'Pl' + i, cx, cy, 160, 116);
-            avatar(cell, 40, 0, 80, p.avatar, p.nickname, { ring: cur ? Theme.c.yellow : undefined });
-            text(cell, p.nickname, 0, 84, 160, 28, Theme.font.sm, Theme.c.ink, { bold: true });
+            avatar(cell, 46, 0, 66, p.avatar, p.nickname, { ring: cur ? Theme.c.yellow : undefined });
+            text(cell, p.nickname, 0, 66, 160, 26, Theme.font.sm, Theme.c.ink, { bold: true });
         });
 
         // 轮到谁 + 倒计时
-        const bar = mk(this.root, 'Turn', 120, 358, 480, 76);
+        const bar = mk(this.root, 'Turn', 120, 452, 480, 76);
         fillRR(gfx(bar), 0, 4, 480, 72, 36, Theme.c.shadow);
         fillRR(gfx(bar), 0, 0, 480, 72, 36, Theme.c.ivory);
         this.turnLabel = text(bar, '', 24, 0, 330, 72, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
@@ -88,7 +91,7 @@ export class TeethScreen extends Screen {
         const info = mk(this.root, 'Info', 100, 1050, 520, 112);
         fillRR(gfx(info), 0, 4, 520, 108, 26, Theme.c.shadow);
         fillRR(gfx(info), 0, 0, 520, 108, 26, Theme.c.ivory);
-        text(info, '请选择一颗牙齿', 0, 8, 520, 52, Theme.font.lg, Theme.c.ink, { bold: true });
+        text(info, this.phase === 'closed' ? (this.loser?.nickname ?? '') + '触发闭合' : '请选择一颗牙齿', 0, 8, 520, 52, Theme.font.lg, Theme.c.ink, { bold: true });
         text(info, '其余玩家各获得', 120, 58, 190, 40, Theme.font.sm, Theme.c.inkSoft, { align: 'r' });
         drawCoin(gfx(mk(info, 'C', 320, 60, 36, 36)), 18, 18, 15);
         text(info, String(MINIGAME_REWARD), 362, 58, 120, 40, Theme.font.lg, Theme.c.yellowDark, { bold: true, align: 'l' });
@@ -96,12 +99,17 @@ export class TeethScreen extends Screen {
         // 语音 / 聊天
         new IconButton(this.root, 24, 1190, 72, '', () => Toast.show('麦克风已开启（演示）'), Theme.c.ivory, Theme.c.blueDark, (g, s) => drawMic(g, s / 2, s / 2, s * 0.6, Theme.c.blueDark));
         new IconButton(this.root, 624, 1190, 72, '', () => ctx.popups.open(new ChatPopup()), Theme.c.ivory, Theme.c.blueDark, (g, s) => drawChat(g, s / 2, s / 2, s * 0.62, Theme.c.blueDark));
+        this.participants.forEach((p, i) => avatar(this.root, 114 + i * 62, 1194, 54, p.avatar, p.nickname));
         this.tickTexts();
     }
 
     private drawCroc(): void {
-        const wrap = mk(this.root, 'Croc', 0, 450, Theme.W, 580);
+        const wrap = mk(this.root, 'Croc', 0, 530, Theme.W, 510);
         const g = gfx(wrap);
+        if (art(wrap, this.phase === 'closed' ? 'croc_closed' : 'croc_open', 40, 0, 640, 510, 'stretch')) {
+            if (this.phase === 'picking') this.drawTeeth(wrap);
+            return;
+        }
         // 头部
         fillRR(g, 40, 30, 640, 520, 240, '#4FAE45');
         fillRR(g, 56, 40, 608, 500, 230, '#63C957');
@@ -136,13 +144,14 @@ export class TeethScreen extends Screen {
             const th = 66;
             const pressed = this.pressed[idx];
             const dx = (cx - 360) / 230;
-            const baseY = isTop ? 160 + dx * dx * 22 : 500 - th - dx * dx * 22;
+            const baseY = isTop ? 196 + dx * dx * 18 : 430 - th - dx * dx * 18;
             const y = pressed ? baseY + (isTop ? -14 : 14) : baseY;
             const t = mk(wrap, 'Tooth' + idx, cx - tw / 2, y, tw, th);
             const g = gfx(t);
-            fillRR(g, 0, 4, tw, th, 14, '#00000030');
-            fillRR(g, 0, 0, tw, th, 14, pressed ? '#9AA3AD' : '#FFFFFF');
-            fillRR(g, 5, 5, tw - 10, th * 0.35, 8, pressed ? '#868F99' : '#F1EEE2');
+            if (!art(t, pressed ? 'tooth_pressed' : 'tooth_normal', 0, 0, tw, th, 'stretch')) {
+                fillRR(g, 0, 4, tw, th, 14, '#00000030');
+                fillRR(g, 0, 0, tw, th, 14, pressed ? '#9AA3AD' : '#FFFFFF');
+            }
             this.teethNodes[idx] = t;
             onTap(t, () => this.pick(idx, ME), false);
         };

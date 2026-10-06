@@ -4,16 +4,16 @@
  * 滑动与点击区分：位移超过约 10px 判滑动（HScroll 与 Kit.onTap 同阈值）。
  */
 import { Node } from 'cc';
-import { CardType, Card, CARD_DESC, CARD_NAMES } from '../../core/Models';
+import { CardType, Card, CARD_NAMES } from '../../core/Models';
 import { groupCards, MAX_HAND } from '../../core/Rules';
 import { Theme } from '../../core/Theme';
-import { ConfirmPopup } from '../../popups/ConfirmPopup';
+import { CardDetailPage } from '../../popups/CardDetailPage';
 import { ctx } from '../../ui/Ctx';
 import { HScroll } from '../../ui/HScroll';
 import { drawCardIcon } from '../../ui/Icons';
 import { fillCircle, fillRR, gfx, line, mk, onTap, strokeRR, text } from '../../ui/Kit';
-import { Toast } from '../../ui/Toast';
 import { roundedPanel } from '../../ui/Widgets';
+import { art, CARD_ART } from '../../ui/Art';
 
 export function groupHand(hand: Card[]): { type: CardType; count: number }[] {
     return groupCards(hand.map((c) => c.type)) as { type: CardType; count: number }[];
@@ -42,20 +42,17 @@ export function drawHandBar(parent: Node, x: number, y: number, w: number, h: nu
     groups.forEach((gp, i) => {
         const card = mk(sc.content, 'Card:' + gp.type, i * (itemW + gap), 2, itemW, ch);
         const g = gfx(card);
-        fillRR(g, 0, 0, itemW, ch, 16, CARD_BG[gp.type] ?? Theme.c.ivory);
-        strokeRR(g, 0, 0, itemW, ch, 16, '#00000018', 2);
-        drawCardIcon(g, gp.type, itemW / 2, 38, 58);
+        if (!art(card, CARD_ART[gp.type], 0, 0, itemW, ch, 'stretch')) {
+            fillRR(g, 0, 0, itemW, ch, 16, CARD_BG[gp.type] ?? Theme.c.ivory);
+            strokeRR(g, 0, 0, itemW, ch, 16, '#00000018', 2);
+            drawCardIcon(g, gp.type, itemW / 2, 38, 58);
+        }
         text(card, CARD_NAMES[gp.type], 2, ch - 36, itemW - 4, 30, 19, Theme.c.ink, { bold: true });
         if (gp.count > 1) {
             fillCircle(g, itemW - 14, 14, 13, Theme.c.orange);
             text(card, String(gp.count), itemW - 27, 1, 26, 26, 18, Theme.c.white, { bold: true });
         }
-        onTap(card, () => ctx.popups.open(new ConfirmPopup({
-            title: CARD_NAMES[gp.type],
-            message: CARD_DESC[gp.type] + (canUse ? '' : '\n（现在不是你的主动用卡时机）'),
-            confirmText: '使用',
-            onConfirm: () => (canUse ? Toast.show('已使用「' + CARD_NAMES[gp.type] + '」（演示，未结算）') : Toast.show('只能在自己的回合使用')),
-        }, 'card')), false);
+        onTap(card, () => ctx.popups.open(new CardDetailPage(gp.type, canUse)), false);
     });
     const cw = groups.length * itemW + (groups.length - 1) * gap;
     sc.setContentWidth(cw);

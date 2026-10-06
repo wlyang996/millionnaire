@@ -1,6 +1,10 @@
 package com.millionnaire.engine.core.engine;
 
 import com.millionnaire.engine.config.RuleConfig;
+import com.millionnaire.engine.core.command.Command;
+import com.millionnaire.engine.core.command.Input;
+import com.millionnaire.engine.core.command.SystemCommand;
+import com.millionnaire.engine.core.command.Tick;
 import com.millionnaire.engine.core.event.Event;
 import com.millionnaire.engine.core.event.KernelEvent;
 import com.millionnaire.engine.core.event.KernelEvent.Genesis;
@@ -13,7 +17,10 @@ import com.millionnaire.engine.core.event.KernelEvent.TaskScheduled;
 import com.millionnaire.engine.core.state.DomainState;
 import com.millionnaire.engine.core.state.EngineState;
 import com.millionnaire.engine.random.Draw;
+import com.millionnaire.engine.serialize.Canonical;
+import com.millionnaire.engine.serialize.Codec;
 import com.millionnaire.engine.serialize.Immutable;
+import com.millionnaire.engine.serialize.TypeRegistry;
 import com.millionnaire.engine.time.ScheduledTask;
 import com.millionnaire.engine.time.TimerQueue;
 import java.util.List;
@@ -25,11 +32,17 @@ import java.util.List;
 final class Evolver<S extends DomainState> {
     private final Domain<S> domain;
     private final RuleConfig rules;
+    private final Codec codec;
 
     /** rules：本局绑定的不可变规则（引擎以配置哈希保证与状态一致）。 */
     Evolver(Domain<S> domain, RuleConfig rules) {
+        this(domain, rules, new Codec(TypeRegistry.builder().add(Command.class, Tick.class).build().merge(domain.types())));
+    }
+
+    Evolver(Domain<S> domain, RuleConfig rules, Codec codec) {
         this.domain = domain;
         this.rules = rules;
+        this.codec = codec;
     }
 
     EngineState evolveAll(EngineState state, List<Event> events) {
@@ -45,10 +58,13 @@ final class Evolver<S extends DomainState> {
             check(s == null, "Genesis must be the first event");
             check(domain.id().equals(g.domainId()) && domain.stateType().isInstance(g.initial()),
                     "genesis belongs to another domain: " + g.domainId());
+            // 创世也是步边界；不能从 initial 偷带一个未经 InputAccepted 建立的系统命令凭据。
+            domain.checkBoundary(domain.stateType().cast(g.initial()));
             return new EngineState(g.roomId(), g.configHash(), g.engineVersion(), g.domainId(), g.rngProtocol(),
                     g.at(), 0, g.at(), null, 1, TimerQueue.empty(), 1, g.rng(), List.of(), g.initial());
         }
         check(s != null, "first event must be Genesis");
+        domain.checkEvent(s, event, rules);
         EngineState next = event instanceof KernelEvent k ? kernel(s, k) : domainEvent(s, event);
         return next.withEventCount(Math.addExact(s.eventCount(), 1));
     }
@@ -61,7 +77,18 @@ final class Evolver<S extends DomainState> {
                 domain.checkBoundary(domain.stateType().cast(s.domain()));
                 check(e.seq() == Math.addExact(s.lastSeq(), 1), "input seq must be lastSeq+1");
                 check(e.at() >= s.lastReceivedAt() && e.at() >= s.now(), "accepted input must not go back in time");
-                yield s.withInputCursor(e.seq(), e.at(), e.digest()).withNow(e.at());
+                EngineState accepted = s.withInputCursor(e.seq(), e.at(), e.digest()).withNow(e.at());
+                check(e.systemCommand() == null || e.clientCommand() == null, "accepted input has two sources");
+                if (e.systemCommand() != null || e.clientCommand() != null) {
+                    Command source = e.systemCommand() != null ? e.systemCommand() : e.clientCommand();
+                    check(e.systemCommand() != null ? source instanceof SystemCommand
+                            : !(source instanceof SystemCommand) && domain.recordsInputSource(source),
+                            "accepted source command has an invalid type");
+                    Input input = new Input(e.seq(), e.at(), source);
+                    check(Canonical.sha256Hex(codec.bytes(input)).equals(e.digest()), "accepted system input digest mismatch");
+                    accepted = accepted.withDomain(domain.acceptSystemInput(domain.stateType().cast(s.domain()), input));
+                }
+                yield accepted;
             }
             case InputRejected e -> {
                 checkStepBoundary(s);
@@ -82,7 +109,8 @@ final class Evolver<S extends DomainState> {
                 ScheduledTask head = s.timers().peek().orElseThrow(() -> new IllegalStateException("no task to fire"));
                 check(head.taskId() == e.taskId() && head.dueAt() == e.at() && e.at() >= s.now(),
                         "fired task must be the queue head");
-                yield s.withTimers(s.timers().cancel(e.taskId()), s.nextTaskId()).withNow(e.at());
+                yield s.withTimers(s.timers().cancel(e.taskId()), s.nextTaskId()).withNow(e.at())
+                        .withDomain(domain.acceptTask(domain.stateType().cast(s.domain()), head));
             }
             case RandomDrawn e -> {
                 check(s.rngProtocol().equals(e.protocol()), "draw uses protocol " + e.protocol());

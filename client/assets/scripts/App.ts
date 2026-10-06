@@ -3,7 +3,7 @@
  *   screens(页面) < capsule(微信胶囊占位) < popups(弹窗) < demo(☰ 菜单) < toast。
  * 由 LobbyBootstrap 组件在 onLoad 里调用 start()，每帧调用 update()。
  */
-import { Camera, Canvas, Color, Layers, Node, ResolutionPolicy, UITransform, Vec3, view } from 'cc';
+import { Camera, Canvas, Color, Layers, Node, profiler, ResolutionPolicy, UITransform, Vec3, view } from 'cc';
 import { MockStore, Scenario } from './core/MockStore';
 import { POPUP_CATALOG } from './popups/Catalog';
 import { ScreenId } from './ui/Screen';
@@ -17,13 +17,15 @@ import { ResultScreen } from './screens/ResultScreen';
 import { RoomScreen } from './screens/RoomScreen';
 import { TeethScreen } from './screens/TeethScreen';
 import { ctx } from './ui/Ctx';
-import { mk } from './ui/Kit';
+import { preloadArt } from './ui/Art';
+import { mk, text } from './ui/Kit';
 import { PopupManager } from './ui/PopupManager';
 import { ScreenManager } from './ui/ScreenManager';
 import { Toast } from './ui/Toast';
 
 export class App {
     start(host: Node): void {
+        profiler.hideStats();
         view.setDesignResolutionSize(Theme.W, Theme.H, ResolutionPolicy.SHOW_ALL);
         const canvasNode = new Node('Canvas');
         canvasNode.layer = Layers.Enum.UI_2D;
@@ -77,7 +79,12 @@ export class App {
             scenario: (p: Partial<Scenario>) => ctx.store.patchScenario(p),
             layout: () => formatIssues(checkLayout(), 40),
         };
-        s.go('profile');
+        const loading = text(root, '正在加载小镇…', 0, 560, Theme.W, 80, Theme.font.lg);
+        void preloadArt().then((missing) => {
+            loading.node.destroy();
+            s.go('profile');
+            if (missing.length) Toast.show('部分美术加载失败，请刷新重试');
+        });
     }
 
     update(dt: number): void {

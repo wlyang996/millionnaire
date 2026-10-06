@@ -15,7 +15,7 @@ import {
     auctionParams, boardSizeOf, emergencyMortgage, landPrice, maxPlayers, netWorth, rankStandings, standardValue, START_BONUS,
 } from './Rules';
 
-export const NAMES = ['小林', '可可', '阿杰', '奶茶', '阿凯', '圆圆', '豆豆', '毛毛'];
+export const NAMES = ['糖糖', '可可', '阿杰', '奶茶', '阿凯', '圆圆', '豆豆', '毛毛'];
 export const ME = 'p1';
 
 export type ConnPreset = 'normal' | 'mixed' | 'mySuspect';
@@ -89,7 +89,7 @@ export class MockStore {
                 playerId: 'p' + (i + 1),
                 nickname: i === 0 && this.profile.nickname ? this.profile.nickname : NAMES[i],
                 ready: i < sc.players - 1 || sc.players === 2 ? true : false,
-                avatar: i,
+                avatar: i === 0 ? this.profile.avatar : i,
                 speaking: i === 1,
             });
         }
@@ -277,6 +277,11 @@ export class MockStore {
         const m = this.session.members[0];
         if (m && this.profile.nickname) m.nickname = this.profile.nickname;
         if (m) m.avatar = this.profile.avatar;
+        const me = this.player(ME);
+        if (me) {
+            me.avatar = this.profile.avatar;
+            if (this.profile.nickname) me.nickname = this.profile.nickname;
+        }
         this.emit();
     }
 

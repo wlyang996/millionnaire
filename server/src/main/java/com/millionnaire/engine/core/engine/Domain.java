@@ -2,6 +2,7 @@ package com.millionnaire.engine.core.engine;
 
 import com.millionnaire.engine.config.RuleConfig;
 import com.millionnaire.engine.core.command.Command;
+import com.millionnaire.engine.core.command.Input;
 import com.millionnaire.engine.core.event.Event;
 import com.millionnaire.engine.core.event.RejectionCode;
 import com.millionnaire.engine.core.state.DomainState;
@@ -39,6 +40,29 @@ public interface Domain<S extends DomainState> {
      * rules 为本局绑定的不可变规则配置（其内容哈希写在创世事件里），用于核对事件中的金额、上界等派生值。
      */
     S evolve(S state, Event event, Draws draws, RuleConfig rules);
+
+    /** 领域事件演化前核对跨内核关联（任务等），在目标事件处报告日志损坏；默认领域无需处理。 */
+    default void checkEvent(EngineState engine, Event event, RuleConfig rules) {
+    }
+
+    /**
+     * 仅由 InputAccepted 的演化调用：已登记来源命令的类型与输入摘要已经内核核对。
+     * 方法名沿用系统来源接口；生产会话也用它建立确认破产/认输的客户端来源凭据。
+     * 领域可据此建立本步来源凭据；拒绝输入不调用，在线拒绝时工作区整体丢弃。
+     */
+    default S acceptSystemInput(S state, Input input) {
+        return state;
+    }
+
+    /** Commands whose accepted payload must be retained for event-source verification. */
+    default boolean recordsInputSource(Command command) {
+        return command instanceof com.millionnaire.engine.core.command.SystemCommand;
+    }
+
+    /** Called after the kernel verifies and removes the exact queue-head task. */
+    default S acceptTask(S state, ScheduledTask task) {
+        return state;
+    }
 
     /**
      * 步边界的轻量检查（C4）：在新输入或新任务开始、在线决策完成时调用，领域在此断言"步内衔接状态已清空"等。

@@ -1,0 +1,1172 @@
+{
+  "date": "2026-10-06",
+  "status": "runtime copies for UI preview; original candidates unchanged",
+  "files": 194,
+  "resourceKeys": 193,
+  "entries": [
+    {
+      "key": "avatar_tangtang",
+      "source": "design/screens/assets-supplement-v1/png/avatars/01-avatar_tangtang.png",
+      "runtime": "client/assets/resources/art/avatars/01-avatar_tangtang.png",
+      "sha256": "518f30b9ce2a46316ceb59fe8a1c567603db040d37a66e49569c511de6d76851"
+    },
+    {
+      "key": "avatar_keke",
+      "source": "design/screens/assets-supplement-v1/png/avatars/02-avatar_keke.png",
+      "runtime": "client/assets/resources/art/avatars/02-avatar_keke.png",
+      "sha256": "97aaacf69996364f7542a111f1f07e57c17075e5cec0772f4edbd5475ba46ef7"
+    },
+    {
+      "key": "avatar_ajie",
+      "source": "design/screens/assets-supplement-v1/png/avatars/03-avatar_ajie.png",
+      "runtime": "client/assets/resources/art/avatars/03-avatar_ajie.png",
+      "sha256": "58ce177bef72eabb5c51a2d980481dca18eb1923cb46d846a870c65debe6c9c9"
+    },
+    {
+      "key": "avatar_naicha",
+      "source": "design/screens/assets-supplement-v1/png/avatars/04-avatar_naicha.png",
+      "runtime": "client/assets/resources/art/avatars/04-avatar_naicha.png",
+      "sha256": "c9ef5688000bf95971907bcd4f1a33b4a7da8a84a41f3226829bd5418736e4bf"
+    },
+    {
+      "key": "avatar_akai",
+      "source": "design/screens/assets-supplement-v1/png/avatars/05-avatar_akai.png",
+      "runtime": "client/assets/resources/art/avatars/05-avatar_akai.png",
+      "sha256": "93e5e28c9b32783b3396c0486a5a8c7ebbc7068797dfc996049121cb9847ab48"
+    },
+    {
+      "key": "avatar_yuanyuan",
+      "source": "design/screens/assets-supplement-v1/png/avatars/06-avatar_yuanyuan.png",
+      "runtime": "client/assets/resources/art/avatars/06-avatar_yuanyuan.png",
+      "sha256": "a961f7cd17a214c6d9d27ecef12c24f36a421a48ed958a94e93f89fc53c735a5"
+    },
+    {
+      "key": "avatar_doudou",
+      "source": "design/screens/assets-supplement-v1/png/avatars/07-avatar_doudou.png",
+      "runtime": "client/assets/resources/art/avatars/07-avatar_doudou.png",
+      "sha256": "34ea5e65391a9cc8d3d4466cf1d4570c8f0eb60358174ddac0915a30f672f2b1"
+    },
+    {
+      "key": "avatar_maomao",
+      "source": "design/screens/assets-supplement-v1/png/avatars/08-avatar_maomao.png",
+      "runtime": "client/assets/resources/art/avatars/08-avatar_maomao.png",
+      "sha256": "2e25fe3d08ac50bc7db098b849e48b09ca38f35aed2edd014e20b9d6b5f9314b"
+    },
+    {
+      "key": "pawn_tangtang",
+      "source": "design/screens/assets-supplement-v1/png/pawns/01-pawn_tangtang.png",
+      "runtime": "client/assets/resources/art/pawns/01-pawn_tangtang.png",
+      "sha256": "223f12b6b7c6f781de45133187ecf5a13787cae8b8b23980f4ace9b33d037e80"
+    },
+    {
+      "key": "pawn_keke",
+      "source": "design/screens/assets-supplement-v1/png/pawns/02-pawn_keke.png",
+      "runtime": "client/assets/resources/art/pawns/02-pawn_keke.png",
+      "sha256": "b77fb922ac9045abeac56860d40022680ca0397d82f57dadad6071edb19a35ad"
+    },
+    {
+      "key": "pawn_ajie",
+      "source": "design/screens/assets-supplement-v1/png/pawns/03-pawn_ajie.png",
+      "runtime": "client/assets/resources/art/pawns/03-pawn_ajie.png",
+      "sha256": "8c429cb549ec228211d6ee64d55382f90d8d3cb9990b335adbf9b97e53efebc1"
+    },
+    {
+      "key": "pawn_naicha",
+      "source": "design/screens/assets-supplement-v1/png/pawns/04-pawn_naicha.png",
+      "runtime": "client/assets/resources/art/pawns/04-pawn_naicha.png",
+      "sha256": "196467250175e9a6c73450c72b4bb2a7ce78de4f7877073ec9cbcad871c78ce2"
+    },
+    {
+      "key": "pawn_akai",
+      "source": "design/screens/assets-supplement-v1/png/pawns/05-pawn_akai.png",
+      "runtime": "client/assets/resources/art/pawns/05-pawn_akai.png",
+      "sha256": "554da645214324699cf8275384375cf472218bc7738324cca7a70b2f960c9d2e"
+    },
+    {
+      "key": "pawn_yuanyuan",
+      "source": "design/screens/assets-supplement-v1/png/pawns/06-pawn_yuanyuan.png",
+      "runtime": "client/assets/resources/art/pawns/06-pawn_yuanyuan.png",
+      "sha256": "54cdbe840f923c790f7e5ac5ac4df0535c9eccdd56b43cb095fe6ed7bc06eab0"
+    },
+    {
+      "key": "pawn_doudou",
+      "source": "design/screens/assets-supplement-v1/png/pawns/07-pawn_doudou.png",
+      "runtime": "client/assets/resources/art/pawns/07-pawn_doudou.png",
+      "sha256": "a1ae774a3a39cd0af43ad7c3114fa47384a2a47c9f599c74a62721102c0cd706"
+    },
+    {
+      "key": "pawn_maomao",
+      "source": "design/screens/assets-supplement-v1/png/pawns/08-pawn_maomao.png",
+      "runtime": "client/assets/resources/art/pawns/08-pawn_maomao.png",
+      "sha256": "fa31ae8bf9b4afef770a869a579ca90d152564093ce8f63e9d234fe460b52072"
+    },
+    {
+      "key": "house_lv0",
+      "source": "design/screens/assets-supplement-v1/png/houses/01-house_lv0.png",
+      "runtime": "client/assets/resources/art/houses/01-house_lv0.png",
+      "sha256": "bb1240f56149bd0e47a45c51392223a37705e9cb83ecb8addefabef917b226a1"
+    },
+    {
+      "key": "house_lv1",
+      "source": "design/screens/assets-supplement-v1/png/houses/02-house_lv1.png",
+      "runtime": "client/assets/resources/art/houses/02-house_lv1.png",
+      "sha256": "5f1e90e9040a90b69e539512dcc95c3986f80c22c73b7562895054addb21f777"
+    },
+    {
+      "key": "house_lv2",
+      "source": "design/screens/assets-supplement-v1/png/houses/03-house_lv2.png",
+      "runtime": "client/assets/resources/art/houses/03-house_lv2.png",
+      "sha256": "ff3b68de5fb082d5d53481766b12c5ebb8359b545b892186e3aad5cd76265780"
+    },
+    {
+      "key": "house_lv3",
+      "source": "design/screens/assets-supplement-v1/png/houses/04-house_lv3.png",
+      "runtime": "client/assets/resources/art/houses/04-house_lv3.png",
+      "sha256": "10ed164e7b65bf273275b95df192948d8078c7ecb78bf292e128be13d3156119"
+    },
+    {
+      "key": "board_town",
+      "source": "design/screens/assets-supplement-v1/png/town/01-board_town.png",
+      "runtime": "client/assets/resources/art/town/01-board_town.png",
+      "sha256": "27c8f2471cba2efc5fcf89684b9895973bcd33820fd9dfa3093601af51306ec0"
+    },
+    {
+      "key": "button_yellow",
+      "source": "design/screens/assets-supplement-v1/png/buttons/01-button_yellow.png",
+      "runtime": "client/assets/resources/art/buttons/01-button_yellow.png",
+      "sha256": "cc442c3069a74d173f9b565adf8f8b9659f4328303bc05c1f95e93733a5177e5"
+    },
+    {
+      "key": "button_blue",
+      "source": "design/screens/assets-supplement-v1/png/buttons/02-button_blue.png",
+      "runtime": "client/assets/resources/art/buttons/02-button_blue.png",
+      "sha256": "d1f11fd5fa6eaae60101a52cabdcf2bb9b703afaa0c42c0fe3c302cb1d99dc4d"
+    },
+    {
+      "key": "button_green",
+      "source": "design/screens/assets-supplement-v1/png/buttons/03-button_green.png",
+      "runtime": "client/assets/resources/art/buttons/03-button_green.png",
+      "sha256": "fb326621c4d5077fddf2d1067d9f7085d1a201f28b00924d7b693e18d3c51715"
+    },
+    {
+      "key": "button_ivory",
+      "source": "design/screens/assets-supplement-v1/png/buttons/04-button_ivory.png",
+      "runtime": "client/assets/resources/art/buttons/04-button_ivory.png",
+      "sha256": "38e028dd2533a1abc11cbed864f83966f45391230b97bad488a5afe3664e5c92"
+    },
+    {
+      "key": "button_red",
+      "source": "design/screens/assets-supplement-v1/png/buttons/05-button_red.png",
+      "runtime": "client/assets/resources/art/buttons/05-button_red.png",
+      "sha256": "c5dfc3d50938418fbe9078a06c10cb2894c80988ae72ab5c4f48a54d477da167"
+    },
+    {
+      "key": "button_disabled",
+      "source": "design/screens/assets-supplement-v1/png/buttons/06-button_disabled.png",
+      "runtime": "client/assets/resources/art/buttons/06-button_disabled.png",
+      "sha256": "815bb3c59ee12262ffe268b6957a33d388dce4405e3988414102a0e76fb5e8fa"
+    },
+    {
+      "key": "icon_coin",
+      "source": "design/screens/assets-supplement-v1/png/icons/01-icon_coin.png",
+      "runtime": "client/assets/resources/art/icons/01-icon_coin.png",
+      "sha256": "76fe5cd7f397ea9a96b3196b61f93129a4d5f0b05cb1fd9a4b924ca3b224b4f8"
+    },
+    {
+      "key": "icon_mic",
+      "source": "design/screens/assets-supplement-v1/png/icons/02-icon_mic.png",
+      "runtime": "client/assets/resources/art/icons/02-icon_mic.png",
+      "sha256": "e8029cb20511dd27c1217ffa4011f6fc57d93761ee4ff3ceef69e0c49eab7724"
+    },
+    {
+      "key": "icon_chat",
+      "source": "design/screens/assets-supplement-v1/png/icons/03-icon_chat.png",
+      "runtime": "client/assets/resources/art/icons/03-icon_chat.png",
+      "sha256": "3244e8dab092ca9b7488b8292aebe621415596326f602b05d24ed263d494dda4"
+    },
+    {
+      "key": "icon_clock_normal",
+      "source": "design/screens/assets-supplement-v1/png/icons/04-icon_clock_normal.png",
+      "runtime": "client/assets/resources/art/icons/04-icon_clock_normal.png",
+      "sha256": "09a5d20b2a3f7a0265635f7f7eab5e3d3ef615a8ba4ec2acc8998eeaf0dd2902"
+    },
+    {
+      "key": "icon_clock_warning",
+      "source": "design/screens/assets-supplement-v1/png/icons/05-icon_clock_warning.png",
+      "runtime": "client/assets/resources/art/icons/05-icon_clock_warning.png",
+      "sha256": "8cbfcb402739eaa1af6b8532010c676645ab5349ea8c4530cfc3956d9c8b63b6"
+    },
+    {
+      "key": "icon_back",
+      "source": "design/screens/assets-supplement-v1/png/icons/06-icon_back.png",
+      "runtime": "client/assets/resources/art/icons/06-icon_back.png",
+      "sha256": "cb33648ed0e7efb11e6d083d09ecf975abf58413b69ca3ea1f8473b8326087ec"
+    },
+    {
+      "key": "icon_settings",
+      "source": "design/screens/assets-supplement-v1/png/icons/07-icon_settings.png",
+      "runtime": "client/assets/resources/art/icons/07-icon_settings.png",
+      "sha256": "c0a2ca4c35da86215be73a3c68cc4cd7c932a4638813c0b0e1316e2d9c41522e"
+    },
+    {
+      "key": "icon_copy",
+      "source": "design/screens/assets-supplement-v1/png/icons/08-icon_copy.png",
+      "runtime": "client/assets/resources/art/icons/08-icon_copy.png",
+      "sha256": "5e5af27870e4d48397a3eaa3cae42ecce93fc68ff00fb07eb8734a80fb692106"
+    },
+    {
+      "key": "icon_share",
+      "source": "design/screens/assets-supplement-v1/png/icons/09-icon_share.png",
+      "runtime": "client/assets/resources/art/icons/09-icon_share.png",
+      "sha256": "27d17ef40773d02be7dd96a6ab04bebf7e13adb4e327943a238bfce89dae454c"
+    },
+    {
+      "key": "icon_house",
+      "source": "design/screens/assets-supplement-v1/png/icons/10-icon_house.png",
+      "runtime": "client/assets/resources/art/icons/10-icon_house.png",
+      "sha256": "a9a1cf30258b82dc466409f95d7812e1b5010d59c1c01cc278e7f9bf026f0b62"
+    },
+    {
+      "key": "icon_auction",
+      "source": "design/screens/assets-supplement-v1/png/icons/11-icon_auction.png",
+      "runtime": "client/assets/resources/art/icons/11-icon_auction.png",
+      "sha256": "2e199819c43df558a1c31873714c99825ce20d7e5d6c559595e39fa911f67e58"
+    },
+    {
+      "key": "icon_move",
+      "source": "design/screens/assets-supplement-v1/png/icons/12-icon_move.png",
+      "runtime": "client/assets/resources/art/icons/12-icon_move.png",
+      "sha256": "c33e802882882cc0cf7d1797afc4ca9f5f049155f555624a6fc46369df200c15"
+    },
+    {
+      "key": "icon_roadblock",
+      "source": "design/screens/assets-supplement-v1/png/icons/13-icon_roadblock.png",
+      "runtime": "client/assets/resources/art/icons/13-icon_roadblock.png",
+      "sha256": "23d01c25a5b3fedec97dbd47fb4fa15ce636b25e54d80a340880f9ff8410a956"
+    },
+    {
+      "key": "icon_key",
+      "source": "design/screens/assets-supplement-v1/png/icons/14-icon_key.png",
+      "runtime": "client/assets/resources/art/icons/14-icon_key.png",
+      "sha256": "d0dec864fb7a6337a3afdc24af4683d8fa7ef3de35749d1d94bbbe5668500e6d"
+    },
+    {
+      "key": "icon_query",
+      "source": "design/screens/assets-supplement-v1/png/icons/15-icon_query.png",
+      "runtime": "client/assets/resources/art/icons/15-icon_query.png",
+      "sha256": "33245676329e2198afbd2e069a8055b562eeb6e2b2157f7f97d7c441be70cde4"
+    },
+    {
+      "key": "icon_shield",
+      "source": "design/screens/assets-supplement-v1/png/icons/16-icon_shield.png",
+      "runtime": "client/assets/resources/art/icons/16-icon_shield.png",
+      "sha256": "1c0348bcce8f57bf758d62c6fa78b4069ad45cb6c575dbeb7b31ec2128f86234"
+    },
+    {
+      "key": "icon_chevron",
+      "source": "design/screens/assets-supplement-v1/png/icons/17-icon_chevron.png",
+      "runtime": "client/assets/resources/art/icons/17-icon_chevron.png",
+      "sha256": "f66aabca12e847ce8f22eaf481bb05fb4af4959f93177381f1dc005dd8b23b58"
+    },
+    {
+      "key": "icon_check",
+      "source": "design/screens/assets-supplement-v1/png/icons/18-icon_check.png",
+      "runtime": "client/assets/resources/art/icons/18-icon_check.png",
+      "sha256": "168043f299fa045be7998b86b6529aafec7fc93cbde8993f112cd03cd9a697e7"
+    },
+    {
+      "key": "icon_bank",
+      "source": "design/screens/assets-supplement-v1/png/icons/19-icon_bank.png",
+      "runtime": "client/assets/resources/art/icons/19-icon_bank.png",
+      "sha256": "00fc60717dd14e9a6979cb9f888d18cc718f5b31a96074b09e5abf7f1af727f0"
+    },
+    {
+      "key": "icon_jail",
+      "source": "design/screens/assets-supplement-v1/png/icons/20-icon_jail.png",
+      "runtime": "client/assets/resources/art/icons/20-icon_jail.png",
+      "sha256": "41f3a91a50c2c3a18aac54b20a813636da9d73f992ae018eeb4f4f83bb96358e"
+    },
+    {
+      "key": "card_roadblock",
+      "source": "design/screens/assets-supplement-v1/png/cards/01-card_roadblock.png",
+      "runtime": "client/assets/resources/art/cards/01-card_roadblock.png",
+      "sha256": "cdf3f58ef8e85c150f75360cbb34c29e0847061ae65bad7bfa94ae8e135fc987"
+    },
+    {
+      "key": "card_free_rent",
+      "source": "design/screens/assets-supplement-v1/png/cards/02-card_free_rent.png",
+      "runtime": "client/assets/resources/art/cards/02-card_free_rent.png",
+      "sha256": "222f6da2ed42810dc0fb8fdb29316f2f3729fcee4798cac5481c6ea31394bb57"
+    },
+    {
+      "key": "card_build",
+      "source": "design/screens/assets-supplement-v1/png/cards/03-card_build.png",
+      "runtime": "client/assets/resources/art/cards/03-card_build.png",
+      "sha256": "556e00e0b0aa80f90e3e37c873916f16329032607a774e988acbc86473f7ff10"
+    },
+    {
+      "key": "card_downgrade",
+      "source": "design/screens/assets-supplement-v1/png/cards/04-card_downgrade.png",
+      "runtime": "client/assets/resources/art/cards/04-card_downgrade.png",
+      "sha256": "f54f130459cb6a949358a9dafc55eb89b62748be838eacc0d2fbc7ad55738ca6"
+    },
+    {
+      "key": "card_fixed_move",
+      "source": "design/screens/assets-supplement-v1/png/cards/05-card_fixed_move.png",
+      "runtime": "client/assets/resources/art/cards/05-card_fixed_move.png",
+      "sha256": "12d14746c57442a9182b035e43f04eb5b6b5ffa33858a5c9fc08762d573d3951"
+    },
+    {
+      "key": "card_jail_release",
+      "source": "design/screens/assets-supplement-v1/png/cards/06-card_jail_release.png",
+      "runtime": "client/assets/resources/art/cards/06-card_jail_release.png",
+      "sha256": "1b7a2b47932ba70f243ced3518bb50fa0388f17dc4e0e31d45012317f4dee010"
+    },
+    {
+      "key": "card_auction",
+      "source": "design/screens/assets-supplement-v1/png/cards/07-card_auction.png",
+      "runtime": "client/assets/resources/art/cards/07-card_auction.png",
+      "sha256": "b1cb0a50f22d0c59682571235843f65aabcc3e9b3fdd25e33e7c49edcfe939c1"
+    },
+    {
+      "key": "card_trade",
+      "source": "design/screens/assets-supplement-v1/png/cards/08-card_trade.png",
+      "runtime": "client/assets/resources/art/cards/08-card_trade.png",
+      "sha256": "a0c01decd860cc05773771bce4a3d41f5a84c649cc920f74cb569796416924b5"
+    },
+    {
+      "key": "card_refuse_purchase",
+      "source": "design/screens/assets-supplement-v1/png/cards/09-card_refuse_purchase.png",
+      "runtime": "client/assets/resources/art/cards/09-card_refuse_purchase.png",
+      "sha256": "c44de7b7a839522e99697deb32331f8986772f05d4058f89af80bc57cac211fb"
+    },
+    {
+      "key": "card_house_protection",
+      "source": "design/screens/assets-supplement-v1/png/cards/10-card_house_protection.png",
+      "runtime": "client/assets/resources/art/cards/10-card_house_protection.png",
+      "sha256": "7901df26ba408badac415b46d8b32d7cb6f291a8763f7ac7d18c1f53dded88e0"
+    },
+    {
+      "key": "card_query",
+      "source": "design/screens/assets-supplement-v1/png/cards/11-card_query.png",
+      "runtime": "client/assets/resources/art/cards/11-card_query.png",
+      "sha256": "7fa431cc84f0518bbdb095e39b406a89307d1ad5146f51848303c3b58ef339df"
+    },
+    {
+      "key": "card_forced_purchase",
+      "source": "design/screens/assets-supplement-v1/png/cards/12-card_forced_purchase.png",
+      "runtime": "client/assets/resources/art/cards/12-card_forced_purchase.png",
+      "sha256": "22f82c85bbc5d710a337ef6fa662b433958ae154cc6c889ccf1691f18415cd3e"
+    },
+    {
+      "key": "card_demolish",
+      "source": "design/screens/assets-supplement-v1/png/cards/13-card_demolish.png",
+      "runtime": "client/assets/resources/art/cards/13-card_demolish.png",
+      "sha256": "e1c7c85b82c94b3d05aab157341714465d9a22487cb668c023ef17658ee008c7"
+    },
+    {
+      "key": "card_clear_land",
+      "source": "design/screens/assets-supplement-v1/png/cards/14-card_clear_land.png",
+      "runtime": "client/assets/resources/art/cards/14-card_clear_land.png",
+      "sha256": "e09d89262714bd4b98820751fc8dbe17d638e7432ed7e87d6e902f14425b06a7"
+    },
+    {
+      "key": "event_card_back",
+      "source": "design/screens/assets-supplement-v1/png/cards/15-event_card_back.png",
+      "runtime": "client/assets/resources/art/cards/15-event_card_back.png",
+      "sha256": "38c1385addf65f0eb568908178a84b75e75f816b7df618241e3e95e584b79195"
+    },
+    {
+      "key": "card_face_blank",
+      "source": "design/screens/assets-supplement-v1/png/cards/16-card_face_blank.png",
+      "runtime": "client/assets/resources/art/cards/16-card_face_blank.png",
+      "sha256": "344c53a747318a51cc277186fb72a0f22a9a60c254e9f37f2ebef4887012d851"
+    },
+    {
+      "key": "dice_1",
+      "source": "design/screens/assets-supplement-v1/png/dice/01-dice_1.png",
+      "runtime": "client/assets/resources/art/dice/01-dice_1.png",
+      "sha256": "dad22c4d6d30377d1b6075827a80631621f6e85aa600afb8d459720432d18f2d"
+    },
+    {
+      "key": "dice_2",
+      "source": "design/screens/assets-supplement-v1/png/dice/02-dice_2.png",
+      "runtime": "client/assets/resources/art/dice/02-dice_2.png",
+      "sha256": "4d726e5b89ec964e5097c20366770269b7c147f0f5e636a8f9b334ca86f10d8f"
+    },
+    {
+      "key": "dice_3",
+      "source": "design/screens/assets-supplement-v1/png/dice/03-dice_3.png",
+      "runtime": "client/assets/resources/art/dice/03-dice_3.png",
+      "sha256": "37e9a7b70ca981878825ad2eeac3af352d039542096b9f902d4beba928a351f7"
+    },
+    {
+      "key": "dice_4",
+      "source": "design/screens/assets-supplement-v1/png/dice/04-dice_4.png",
+      "runtime": "client/assets/resources/art/dice/04-dice_4.png",
+      "sha256": "300f5594c05ea93d675925cb3615525af997561467b015bed16d494613636da1"
+    },
+    {
+      "key": "dice_5",
+      "source": "design/screens/assets-supplement-v1/png/dice/05-dice_5.png",
+      "runtime": "client/assets/resources/art/dice/05-dice_5.png",
+      "sha256": "df533cf0fc73f25d3f6c05a5d0ed127a41b5b9f6aae918311a2d8757256f127b"
+    },
+    {
+      "key": "dice_6",
+      "source": "design/screens/assets-supplement-v1/png/dice/06-dice_6.png",
+      "runtime": "client/assets/resources/art/dice/06-dice_6.png",
+      "sha256": "26d548faae6c5f999f3b6d195b2d4ec5b7ac451e2be9e47da0e8e0e403a3cb9f"
+    },
+    {
+      "key": "dice_roll_a",
+      "source": "design/screens/assets-supplement-v1/png/dice/07-dice_roll_a.png",
+      "runtime": "client/assets/resources/art/dice/07-dice_roll_a.png",
+      "sha256": "57576a49374190a702719850ca37a559266866a58f2e57b276d7ecc1cdbdafad"
+    },
+    {
+      "key": "dice_roll_b",
+      "source": "design/screens/assets-supplement-v1/png/dice/08-dice_roll_b.png",
+      "runtime": "client/assets/resources/art/dice/08-dice_roll_b.png",
+      "sha256": "389f7da4fe4acb550482ae67c7db5e8f6fa1a8b2a51eeda576560c051aa83009"
+    },
+    {
+      "key": "dice_roll_c",
+      "source": "design/screens/assets-supplement-v1/png/dice/09-dice_roll_c.png",
+      "runtime": "client/assets/resources/art/dice/09-dice_roll_c.png",
+      "sha256": "1146bad779943298de5863649dd75986c611ab22bdc5853a5b98fd862f25d117"
+    },
+    {
+      "key": "croc_open",
+      "source": "design/screens/assets-supplement-v1/png/croc/01-croc_open.png",
+      "runtime": "client/assets/resources/art/croc/01-croc_open.png",
+      "sha256": "9b1e88a1a44d73834e536161ba9600106b4ab163755983af13ba6dc4447964e6"
+    },
+    {
+      "key": "croc_half",
+      "source": "design/screens/assets-supplement-v1/png/croc/02-croc_half.png",
+      "runtime": "client/assets/resources/art/croc/02-croc_half.png",
+      "sha256": "693b6b5ab7fe23733d5c6ec4b6f055c86ed395de40b888c800c3f7aefc5191d4"
+    },
+    {
+      "key": "croc_closed",
+      "source": "design/screens/assets-supplement-v1/png/croc/03-croc_closed.png",
+      "runtime": "client/assets/resources/art/croc/03-croc_closed.png",
+      "sha256": "bab9245e4c4514325fccc56dc79d03cef14592e0f388d67120cd8bb7c2791d44"
+    },
+    {
+      "key": "tooth_normal",
+      "source": "design/screens/assets-supplement-v1/png/teeth/01-tooth_normal.png",
+      "runtime": "client/assets/resources/art/teeth/01-tooth_normal.png",
+      "sha256": "d4bce4ffaf6c8f64afb6910321c3d7085739eb81856e7ec28d9ca60a77dc64bb"
+    },
+    {
+      "key": "tooth_pressed",
+      "source": "design/screens/assets-supplement-v1/png/teeth/02-tooth_pressed.png",
+      "runtime": "client/assets/resources/art/teeth/02-tooth_pressed.png",
+      "sha256": "03ac3c9b87cd8937fd59dd6b5ecd5df05b5ed5733ea9f32d81845f171dc6b1fd"
+    },
+    {
+      "key": "event_reward",
+      "source": "design/screens/assets-supplement-v1/png/event_art/01-event_reward.png",
+      "runtime": "client/assets/resources/art/event_art/01-event_reward.png",
+      "sha256": "4668f146ddc702ead8f048d6bb798e1fd9a260877b3d69476e167db46e9c565c"
+    },
+    {
+      "key": "event_fine",
+      "source": "design/screens/assets-supplement-v1/png/event_art/02-event_fine.png",
+      "runtime": "client/assets/resources/art/event_art/02-event_fine.png",
+      "sha256": "3fada828e54acd0aea68b7f5cb615981519df6bd6c9219d78109379a6c4231fe"
+    },
+    {
+      "key": "event_tool",
+      "source": "design/screens/assets-supplement-v1/png/event_art/03-event_tool.png",
+      "runtime": "client/assets/resources/art/event_art/03-event_tool.png",
+      "sha256": "393dbd02494184a01ea2e8eec66c23e6194ac588ac4ab711777668269b770280"
+    },
+    {
+      "key": "event_move",
+      "source": "design/screens/assets-supplement-v1/png/event_art/04-event_move.png",
+      "runtime": "client/assets/resources/art/event_art/04-event_move.png",
+      "sha256": "9832c55946a4b6c43cae5a8dfa6a915bb8ff633cca09b8e9fe0299d5818687be"
+    },
+    {
+      "key": "event_jail",
+      "source": "design/screens/assets-supplement-v1/png/event_art/05-event_jail.png",
+      "runtime": "client/assets/resources/art/event_art/05-event_jail.png",
+      "sha256": "d2b4bb10f42b55cc2abf096c726b0df29c3610b92a90c57dd639e78e566b28c4"
+    },
+    {
+      "key": "event_card_back",
+      "source": "design/screens/assets-supplement-v1/png/event_art/06-event_card_back.png",
+      "runtime": "client/assets/resources/art/event_art/06-event_card_back.png",
+      "sha256": "6693cc8e9979296373141adf7e25507d2d8d01a9262cb0712ffca893a3a78a83"
+    },
+    {
+      "key": "event_card_fan",
+      "source": "design/screens/assets-supplement-v1/png/event_art/07-event_card_fan.png",
+      "runtime": "client/assets/resources/art/event_art/07-event_card_fan.png",
+      "sha256": "dafe3a6cce9edeb59b30730d1f436b2bdc0f3851d95e960d76724cda2709b125"
+    },
+    {
+      "key": "event_card_highlight",
+      "source": "design/screens/assets-supplement-v1/png/event_art/08-event_card_highlight.png",
+      "runtime": "client/assets/resources/art/event_art/08-event_card_highlight.png",
+      "sha256": "288ef4535e6a21ca46bc65b66c0d74aec2a978926afbf132b316e4aee1080bf2"
+    },
+    {
+      "key": "information_background",
+      "source": "design/screens/assets-information-v1/png/information_background.png",
+      "runtime": "client/assets/resources/art/information/information_background.png",
+      "sha256": "9c1187726a6d93d4c11ef14c2366820be504f72f7e45d8ccf01d3ea5a653aab8"
+    },
+    {
+      "key": "information_host",
+      "source": "design/screens/assets-information-v1/png/information_host.png",
+      "runtime": "client/assets/resources/art/information/information_host.png",
+      "sha256": "4c8b6ed2049adb2f8366138f92b16ccaa2a8c88499238c5160a380bed98ec198"
+    },
+    {
+      "key": "shop_low",
+      "source": "design/screens/assets-information-v1/png/shop_low.png",
+      "runtime": "client/assets/resources/art/information/shop_low.png",
+      "sha256": "57aa999e1462f45b59627ac291306f1e62af0c43196f8517f80c604fd8e9d108"
+    },
+    {
+      "key": "shop_mid",
+      "source": "design/screens/assets-information-v1/png/shop_mid.png",
+      "runtime": "client/assets/resources/art/information/shop_mid.png",
+      "sha256": "046bca92d285542c39e3c460c246d7d05f9f37113c51363afd96d57f22474ecd"
+    },
+    {
+      "key": "shop_high",
+      "source": "design/screens/assets-information-v1/png/shop_high.png",
+      "runtime": "client/assets/resources/art/information/shop_high.png",
+      "sha256": "ae31cf4c476cc69b16376a29acaa68ce14fa8cc56c9f0a8ee6ff9b6eb6ec3c64"
+    },
+    {
+      "key": "shop_station",
+      "source": "design/screens/assets-information-v1/png/shop_station.png",
+      "runtime": "client/assets/resources/art/information/shop_station.png",
+      "sha256": "53567da4d955226956ca69d101e915b6953c19573b880680ca5f8309fef18c4e"
+    },
+    {
+      "key": "info_cash",
+      "source": "design/screens/assets-information-v1/png/info_cash.png",
+      "runtime": "client/assets/resources/art/information/info_cash.png",
+      "sha256": "c50ed64c3ec673a7131320660bd67fd79e806b264042cc8b9f919167a16ad01d"
+    },
+    {
+      "key": "info_frozen",
+      "source": "design/screens/assets-information-v1/png/info_frozen.png",
+      "runtime": "client/assets/resources/art/information/info_frozen.png",
+      "sha256": "a16caedabad6190c9e2288db72b591077d7145fe06372490e16625439ee2690c"
+    },
+    {
+      "key": "info_net_worth",
+      "source": "design/screens/assets-information-v1/png/info_net_worth.png",
+      "runtime": "client/assets/resources/art/information/info_net_worth.png",
+      "sha256": "bbbc375c7399fdc7b79e87cc80b293626cb5b4a330bff257683b5ecb637f7907"
+    },
+    {
+      "key": "info_mortgaged",
+      "source": "design/screens/assets-information-v1/png/info_mortgaged.png",
+      "runtime": "client/assets/resources/art/information/info_mortgaged.png",
+      "sha256": "8fb5419a1dbb5bab1eb67f0f31d589d0651c725b1f20b3f584ff2beac662cb36"
+    },
+    {
+      "key": "info_unmortgaged",
+      "source": "design/screens/assets-information-v1/png/info_unmortgaged.png",
+      "runtime": "client/assets/resources/art/information/info_unmortgaged.png",
+      "sha256": "46fb483e8a7bcc4b02c59a08bd98138718c9a29d35c2ae93e909e2556113cc6f"
+    },
+    {
+      "key": "info_properties",
+      "source": "design/screens/assets-information-v1/png/info_properties.png",
+      "runtime": "client/assets/resources/art/information/info_properties.png",
+      "sha256": "0938f258ab7cbbc0894752726c033828c09cf34ba04c6d86259bfddd503844b6"
+    },
+    {
+      "key": "info_empty",
+      "source": "design/screens/assets-information-v1/png/info_empty.png",
+      "runtime": "client/assets/resources/art/information/info_empty.png",
+      "sha256": "e6272e05806a866c18d94046790766dfb5de7905150b7f02b1aff178fdcfdfb4"
+    },
+    {
+      "key": "info_upgrade",
+      "source": "design/screens/assets-information-v1/png/info_upgrade.png",
+      "runtime": "client/assets/resources/art/information/info_upgrade.png",
+      "sha256": "d8992e2b2d861885bd952384b57f742fc7447c56737e13319ab9f9c8bb008689"
+    },
+    {
+      "key": "info_summary_panel",
+      "source": "design/screens/assets-information-v1/png/info_summary_panel.png",
+      "runtime": "client/assets/resources/art/information/info_summary_panel.png",
+      "sha256": "c5b2278ab58c4def107e5f2ec6ce1345e98f583a8f101bf534515f990e37e1ca"
+    },
+    {
+      "key": "info_asset_panel",
+      "source": "design/screens/assets-information-v1/png/info_asset_panel.png",
+      "runtime": "client/assets/resources/art/information/info_asset_panel.png",
+      "sha256": "f08ea6e03a270976d64164961cc9bab5f8f328be8684777a9609959b3d73c5e7"
+    },
+    {
+      "key": "info_rent_panel",
+      "source": "design/screens/assets-information-v1/png/info_rent_panel.png",
+      "runtime": "client/assets/resources/art/information/info_rent_panel.png",
+      "sha256": "55f21656ad5cad78916b4d394feccc30aad293a613ac8a9ac49a64ad81ecaf67"
+    },
+    {
+      "key": "title_wood",
+      "source": "design/screens/assets-v3/png/title_wood.png",
+      "runtime": "client/assets/resources/art/title_wood.png",
+      "sha256": "e95f6a2e4def17ad846a2bc0d08f4f9482580bb1dd7e92070466e5dcf13b3b5a"
+    },
+    {
+      "key": "detail_card_roadblock",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_roadblock.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_roadblock.png",
+      "sha256": "5809bb8fd9480aa00aaa783f370cb20d57903c679e49c9353b43540fab6d2831"
+    },
+    {
+      "key": "detail_card_free_rent",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_free_rent.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_free_rent.png",
+      "sha256": "571316ee3a311b75a5e4da6a132f56d090df9fbd9f4eeea2bda91259da25a67a"
+    },
+    {
+      "key": "detail_card_build",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_build.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_build.png",
+      "sha256": "433388d2b1c0d0b04be02a38bb3327dd92d36c75c7244b04bb10afa118fdfc95"
+    },
+    {
+      "key": "detail_card_downgrade",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_downgrade.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_downgrade.png",
+      "sha256": "490e7a42a6d529975ae5396215189fb003f308aeff7bdb582410652dca0d3b6f"
+    },
+    {
+      "key": "detail_card_fixed_move",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_fixed_move.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_fixed_move.png",
+      "sha256": "affa4a375a083b9078533b843a524312cad347feea7f113d9ab76285df961dc3"
+    },
+    {
+      "key": "detail_card_jail_release",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_jail_release.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_jail_release.png",
+      "sha256": "61700bd6f40a9d5343b83b522ab791955dceeba0684fe0c6921c0c18412d85f7"
+    },
+    {
+      "key": "detail_card_auction",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_auction.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_auction.png",
+      "sha256": "f3d5b5f8a7c32b97f9ff546d4461c677a4f83d204c6f6b274012eb89bfb919fb"
+    },
+    {
+      "key": "detail_card_trade",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_trade.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_trade.png",
+      "sha256": "da074292a1094090b79f30630b9eabc6f2b8ac53651ca624671965978db01894"
+    },
+    {
+      "key": "detail_card_refuse_purchase",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_refuse_purchase.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_refuse_purchase.png",
+      "sha256": "b273961e85251f5c370ce5e4f51916b07de1734ac27812bf3f0c6c3dcb1b4287"
+    },
+    {
+      "key": "detail_card_house_protection",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_house_protection.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_house_protection.png",
+      "sha256": "a1934db0468c392f56e66cb4a268456468b60396b36f7273c758073665dc36ea"
+    },
+    {
+      "key": "detail_card_query",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_query.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_query.png",
+      "sha256": "a9709353787974df5840e55d7a9406ed3a0b8f54cc7b834727951ef07fa19622"
+    },
+    {
+      "key": "detail_card_forced_purchase",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_forced_purchase.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_forced_purchase.png",
+      "sha256": "49098404da76e7cad50de10d824f099fd148738ddc5b472311ff74916a9a1cf3"
+    },
+    {
+      "key": "detail_card_demolish",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_demolish.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_demolish.png",
+      "sha256": "45229b20726e7a17672b46514f549eb5389979d5e0ca991237de0f3aa2eac4d6"
+    },
+    {
+      "key": "detail_card_clear_land",
+      "source": "design/screens/assets-ui-completion-v1/png/detail_card_clear_land.png",
+      "runtime": "client/assets/resources/art/completion/detail_card_clear_land.png",
+      "sha256": "b76a82dfa300e2eb0dd068e1a38351f53ddc4d644e1d28ed0dcfda1d6059e111"
+    },
+    {
+      "key": "card_detail_background",
+      "source": "design/screens/assets-ui-completion-v1/png/card_detail_background.png",
+      "runtime": "client/assets/resources/art/completion/card_detail_background.png",
+      "sha256": "5ebcdee76e1f48a98c406468e6f6aa21f451f1d16a485facd82cfaf18efb4131"
+    },
+    {
+      "key": "card_detail_rules_5",
+      "source": "design/screens/assets-ui-completion-v1/png/card_detail_rules_5.png",
+      "runtime": "client/assets/resources/art/completion/card_detail_rules_5.png",
+      "sha256": "f837e7e1cc9105067b9c17f3d64be7bde899c955e79b6756f98f86bb03c3bc0c"
+    },
+    {
+      "key": "card_detail_rules_2",
+      "source": "design/screens/assets-ui-completion-v1/png/card_detail_rules_2.png",
+      "runtime": "client/assets/resources/art/completion/card_detail_rules_2.png",
+      "sha256": "95627a370a43172d3e9fac8e6a57fe916c4d312dd16c76fd4e365e76af5284cd"
+    },
+    {
+      "key": "card_detail_rules_3",
+      "source": "design/screens/assets-ui-completion-v1/png/card_detail_rules_3.png",
+      "runtime": "client/assets/resources/art/completion/card_detail_rules_3.png",
+      "sha256": "385c5b0472fc5f81f698c8458788c11bff13da0309519ce8755e0b0f8eeab845"
+    },
+    {
+      "key": "button_flat_yellow",
+      "source": "design/screens/assets-ui-completion-v1/png/button_flat_yellow.png",
+      "runtime": "client/assets/resources/art/completion/button_flat_yellow.png",
+      "sha256": "96ad1c8aca28d6f723fd361527e4af47f578ba79e8d6c44adf6718ed003e7463"
+    },
+    {
+      "key": "button_flat_blue",
+      "source": "design/screens/assets-ui-completion-v1/png/button_flat_blue.png",
+      "runtime": "client/assets/resources/art/completion/button_flat_blue.png",
+      "sha256": "410439e96a7b30edf9d304b3d0323698b30693f3d119ab316cb92cf073ec0daa"
+    },
+    {
+      "key": "button_flat_green",
+      "source": "design/screens/assets-ui-completion-v1/png/button_flat_green.png",
+      "runtime": "client/assets/resources/art/completion/button_flat_green.png",
+      "sha256": "dd04866f40e5a9957e83559bbbb0ac2b466b0440795f12b9d63e894368405909"
+    },
+    {
+      "key": "button_flat_ivory",
+      "source": "design/screens/assets-ui-completion-v1/png/button_flat_ivory.png",
+      "runtime": "client/assets/resources/art/completion/button_flat_ivory.png",
+      "sha256": "59a698195cfa5304e8ad35445bd8d79c3be4dd7c2cb26cc90d23d33da9bb4540"
+    },
+    {
+      "key": "button_flat_red",
+      "source": "design/screens/assets-ui-completion-v1/png/button_flat_red.png",
+      "runtime": "client/assets/resources/art/completion/button_flat_red.png",
+      "sha256": "5c0369784f58606b199c17f9333aa94cbef7691f2410566b2d43691e48496e93"
+    },
+    {
+      "key": "button_flat_gray",
+      "source": "design/screens/assets-ui-completion-v1/png/button_flat_gray.png",
+      "runtime": "client/assets/resources/art/completion/button_flat_gray.png",
+      "sha256": "328697850a42aa2c901da039d555a6d60fdaa7d56b74466dd48bc0ecf16a365b"
+    },
+    {
+      "key": "card_detail_title",
+      "source": "design/screens/assets-ui-completion-v1/png/card_detail_title.png",
+      "runtime": "client/assets/resources/art/completion/card_detail_title.png",
+      "sha256": "3146d9da5eeff001e92b76baaf76bf4feff625713baa1ee8ed356def4f550f23"
+    },
+    {
+      "key": "card_detail_back",
+      "source": "design/screens/assets-ui-completion-v1/png/card_detail_back.png",
+      "runtime": "client/assets/resources/art/completion/card_detail_back.png",
+      "sha256": "89de5ad6cd4ad076a89d8bbebf3a24debe3cb7f96527b0116733bbb0ec6548ab"
+    },
+    {
+      "key": "icon_start_flag",
+      "source": "design/screens/assets-ui-completion-v1/png/icon_start_flag.png",
+      "runtime": "client/assets/resources/art/completion/icon_start_flag.png",
+      "sha256": "c8227460fbb6dd0a7ee280d0ad41acb2b216c7c3d21b44f444accdb4504a94cb"
+    },
+    {
+      "key": "icon_active_card",
+      "source": "design/screens/assets-ui-completion-v1/png/icon_active_card.png",
+      "runtime": "client/assets/resources/art/completion/icon_active_card.png",
+      "sha256": "deab11f3385eebac2c084644ec235e67ea52e3708fa015e6098f36cb6bae50d3"
+    },
+    {
+      "key": "icon_response_lightning",
+      "source": "design/screens/assets-ui-completion-v1/png/icon_response_lightning.png",
+      "runtime": "client/assets/resources/art/completion/icon_response_lightning.png",
+      "sha256": "c4427a165b2df5d0f7e7ec90422f1cacb8be808b2d9b4d74f13b2d961c3756ae"
+    },
+    {
+      "key": "rule_separator",
+      "source": "design/screens/assets-ui-completion-v1/png/rule_separator.png",
+      "runtime": "client/assets/resources/art/completion/rule_separator.png",
+      "sha256": "e3af3757fbe0cb2358f13f1ec994ccdbf98f24144161491c583dc00e1309da4e"
+    },
+    {
+      "key": "chat_panel",
+      "source": "design/screens/assets-ui-completion-v1/png/chat_panel.png",
+      "runtime": "client/assets/resources/art/completion/chat_panel.png",
+      "sha256": "13c9a231b031a106ed1e190f8d712c2d4c072f1ac89009efca962c466966f64b"
+    },
+    {
+      "key": "chat_bubble_white",
+      "source": "design/screens/assets-ui-completion-v1/png/chat_bubble_white.png",
+      "runtime": "client/assets/resources/art/completion/chat_bubble_white.png",
+      "sha256": "2e47e40056823a2a4305e2b37d6397ed90b8454d6fca4212ce0d0eb494bf0d95"
+    },
+    {
+      "key": "chat_bubble_blue",
+      "source": "design/screens/assets-ui-completion-v1/png/chat_bubble_blue.png",
+      "runtime": "client/assets/resources/art/completion/chat_bubble_blue.png",
+      "sha256": "4f26805e6de82f5d1b62c1fc3b767ae2573c9bb55332a70c1bf38f62f7ca1020"
+    },
+    {
+      "key": "chat_bubble_pink",
+      "source": "design/screens/assets-ui-completion-v1/png/chat_bubble_pink.png",
+      "runtime": "client/assets/resources/art/completion/chat_bubble_pink.png",
+      "sha256": "b7357ed9441a97f9ebf2402785556db5cd2a984dd49306223cf150313328a87d"
+    },
+    {
+      "key": "chat_quick_phrase",
+      "source": "design/screens/assets-ui-completion-v1/png/chat_quick_phrase.png",
+      "runtime": "client/assets/resources/art/completion/chat_quick_phrase.png",
+      "sha256": "6781c49247b10dd13d9a499c0c6974a4cebd71abac7efd07235f3fdd0a86b45a"
+    },
+    {
+      "key": "chat_input_panel",
+      "source": "design/screens/assets-ui-completion-v1/png/chat_input_panel.png",
+      "runtime": "client/assets/resources/art/completion/chat_input_panel.png",
+      "sha256": "57181f97ca09767d3a5d9c44950d09215e13a64d4856b8646afc941cd91b4f7b"
+    },
+    {
+      "key": "information_host_tangtang",
+      "source": "design/screens/assets-ui-completion-v1/png/information_host_tangtang.png",
+      "runtime": "client/assets/resources/art/completion/information_host_tangtang.png",
+      "sha256": "636d62c7969746a24ea252105474e754656c393f67d3e4f70eafccbcff53ae28"
+    },
+    {
+      "key": "information_host_keke",
+      "source": "design/screens/assets-ui-completion-v1/png/information_host_keke.png",
+      "runtime": "client/assets/resources/art/completion/information_host_keke.png",
+      "sha256": "f8954f38ccf92e04c096a8e38d062d0f9bc02cf0c1157c93a2642e2abeeeb2ca"
+    },
+    {
+      "key": "information_host_ajie",
+      "source": "design/screens/assets-ui-completion-v1/png/information_host_ajie.png",
+      "runtime": "client/assets/resources/art/completion/information_host_ajie.png",
+      "sha256": "88cb188c8840f7e0b239f0003f82ee4371026f18ee51ca8644c0404c3da5f6b7"
+    },
+    {
+      "key": "information_host_naicha",
+      "source": "design/screens/assets-ui-completion-v1/png/information_host_naicha.png",
+      "runtime": "client/assets/resources/art/completion/information_host_naicha.png",
+      "sha256": "0ae5fb7fbb6162fa5b41c910aa94ed612dd1f146f22f05441b3abd49737cb5f7"
+    },
+    {
+      "key": "information_host_akai",
+      "source": "design/screens/assets-ui-completion-v1/png/information_host_akai.png",
+      "runtime": "client/assets/resources/art/completion/information_host_akai.png",
+      "sha256": "aef6b68510bbcf64e6c17346e35028700c27d060fa5ac7d77bfefd47403ac735"
+    },
+    {
+      "key": "information_host_yuanyuan",
+      "source": "design/screens/assets-ui-completion-v1/png/information_host_yuanyuan.png",
+      "runtime": "client/assets/resources/art/completion/information_host_yuanyuan.png",
+      "sha256": "85be6f16dc5ecf02ccacf6664f803c2fe2d5878b695a768ee0620f0f58ab0d35"
+    },
+    {
+      "key": "information_host_doudou",
+      "source": "design/screens/assets-ui-completion-v1/png/information_host_doudou.png",
+      "runtime": "client/assets/resources/art/completion/information_host_doudou.png",
+      "sha256": "fd66569e3275a44b5092d671acec6a42363293ebb45cee1672954214ecafd92a"
+    },
+    {
+      "key": "information_host_maomao",
+      "source": "design/screens/assets-ui-completion-v1/png/information_host_maomao.png",
+      "runtime": "client/assets/resources/art/completion/information_host_maomao.png",
+      "sha256": "6432f7c029d36a6c27d15a9b97dabe9737ace2bb3cd5bd544b981c6ad4521dc2"
+    },
+    {
+      "key": "pawn_tangtang_ready",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_tangtang_ready.png",
+      "runtime": "client/assets/resources/art/completion/pawn_tangtang_ready.png",
+      "sha256": "93cba70da5a48d2ca1fa0f81b96dc364736dedc7917ac9fd016afbfd6839313a"
+    },
+    {
+      "key": "pawn_tangtang_crouch",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_tangtang_crouch.png",
+      "runtime": "client/assets/resources/art/completion/pawn_tangtang_crouch.png",
+      "sha256": "2caaa49f9e5f5cd558fd6f4ed61e5f83c0f4e5b2c61cadc5f572635c3b78c655"
+    },
+    {
+      "key": "pawn_tangtang_airborne",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_tangtang_airborne.png",
+      "runtime": "client/assets/resources/art/completion/pawn_tangtang_airborne.png",
+      "sha256": "93586ea5df2c38f55cc65e551469ae906ad43435888fdf38ce7b752f680764a5"
+    },
+    {
+      "key": "pawn_tangtang_land",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_tangtang_land.png",
+      "runtime": "client/assets/resources/art/completion/pawn_tangtang_land.png",
+      "sha256": "a51923b0bbd22f563d7e6baf810f7b0310c46cd3c174c9bcb0e9c9f41436038f"
+    },
+    {
+      "key": "pawn_keke_ready",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_keke_ready.png",
+      "runtime": "client/assets/resources/art/completion/pawn_keke_ready.png",
+      "sha256": "746c4454075522b4e7d144e98296718d3590263d66c01112a1db2ea06b63f912"
+    },
+    {
+      "key": "pawn_keke_crouch",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_keke_crouch.png",
+      "runtime": "client/assets/resources/art/completion/pawn_keke_crouch.png",
+      "sha256": "910663110d2b9c00e0255d19491f907e1b39b5224e8cc87352de8b2209ba3404"
+    },
+    {
+      "key": "pawn_keke_airborne",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_keke_airborne.png",
+      "runtime": "client/assets/resources/art/completion/pawn_keke_airborne.png",
+      "sha256": "365e5207e52a8254a20e67651c1fb556a6e2639744b0972144050ff5a16eaa8f"
+    },
+    {
+      "key": "pawn_keke_land",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_keke_land.png",
+      "runtime": "client/assets/resources/art/completion/pawn_keke_land.png",
+      "sha256": "f9f8c648a18eb5baee7b59c8d456245bfc8ad65e2218a49f62a31b966d01e550"
+    },
+    {
+      "key": "pawn_ajie_ready",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_ajie_ready.png",
+      "runtime": "client/assets/resources/art/completion/pawn_ajie_ready.png",
+      "sha256": "b2eafbe1c43bdf766e954905661b7cfc3e3d1a5025db48345203df8e9035eeaa"
+    },
+    {
+      "key": "pawn_ajie_crouch",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_ajie_crouch.png",
+      "runtime": "client/assets/resources/art/completion/pawn_ajie_crouch.png",
+      "sha256": "4e7fc5405ecf3210daa1aa10ebf9c054fc0b1370691cee33177ba9741c26c6ce"
+    },
+    {
+      "key": "pawn_ajie_airborne",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_ajie_airborne.png",
+      "runtime": "client/assets/resources/art/completion/pawn_ajie_airborne.png",
+      "sha256": "5e4997922b791ba25277390b217b6c9cd9f920dcf157e0f4334ce08401616554"
+    },
+    {
+      "key": "pawn_ajie_land",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_ajie_land.png",
+      "runtime": "client/assets/resources/art/completion/pawn_ajie_land.png",
+      "sha256": "eea775c91fa26954b8fdac1b9fcf3a525c659f4f2fbc95ae87df50c7a51921ee"
+    },
+    {
+      "key": "pawn_naicha_ready",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_naicha_ready.png",
+      "runtime": "client/assets/resources/art/completion/pawn_naicha_ready.png",
+      "sha256": "285d153d45e1fd035f19ef54a19b4765942d8c4db5ffc51aedba072f4ecf0d9f"
+    },
+    {
+      "key": "pawn_naicha_crouch",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_naicha_crouch.png",
+      "runtime": "client/assets/resources/art/completion/pawn_naicha_crouch.png",
+      "sha256": "0a03c1064fead47f4a294197cfa60483f32152172d66416840603435e520d0c6"
+    },
+    {
+      "key": "pawn_naicha_airborne",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_naicha_airborne.png",
+      "runtime": "client/assets/resources/art/completion/pawn_naicha_airborne.png",
+      "sha256": "8397d50c76de2d7a078a0985a710ebf84d32dbfd8f0752031775f044d48125a5"
+    },
+    {
+      "key": "pawn_naicha_land",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_naicha_land.png",
+      "runtime": "client/assets/resources/art/completion/pawn_naicha_land.png",
+      "sha256": "3510fb65c373b2c16970bac4fd31f686dd937718663f48ca2f0932e3142b7d67"
+    },
+    {
+      "key": "pawn_akai_ready",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_akai_ready.png",
+      "runtime": "client/assets/resources/art/completion/pawn_akai_ready.png",
+      "sha256": "03f4f2d9981b409f30352d907f805bf3448e3fbb2f49092dde9d1e4228a8b91c"
+    },
+    {
+      "key": "pawn_akai_crouch",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_akai_crouch.png",
+      "runtime": "client/assets/resources/art/completion/pawn_akai_crouch.png",
+      "sha256": "3b5f68d8337b1c69150a489b8db6f8d79755904e3bbb9f0e051ce9f123a23e06"
+    },
+    {
+      "key": "pawn_akai_airborne",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_akai_airborne.png",
+      "runtime": "client/assets/resources/art/completion/pawn_akai_airborne.png",
+      "sha256": "d552e3904e89419f2e970d5e8bb2269d7e8967fcc079c4b4b793a83359dbd700"
+    },
+    {
+      "key": "pawn_akai_land",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_akai_land.png",
+      "runtime": "client/assets/resources/art/completion/pawn_akai_land.png",
+      "sha256": "77e532877b96333c55aa1f8a0b6e60f9b88f19fe5dce9441c6a19c3982899b6d"
+    },
+    {
+      "key": "pawn_yuanyuan_ready",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_yuanyuan_ready.png",
+      "runtime": "client/assets/resources/art/completion/pawn_yuanyuan_ready.png",
+      "sha256": "8f95c5f3a02b14f14c036e8850631aa611624332116210780ab71bb4fad57921"
+    },
+    {
+      "key": "pawn_yuanyuan_crouch",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_yuanyuan_crouch.png",
+      "runtime": "client/assets/resources/art/completion/pawn_yuanyuan_crouch.png",
+      "sha256": "0cf51959e1ae754f5adbd5815fdbc3b0abdffd297c2cdb112932e363b1045ed8"
+    },
+    {
+      "key": "pawn_yuanyuan_airborne",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_yuanyuan_airborne.png",
+      "runtime": "client/assets/resources/art/completion/pawn_yuanyuan_airborne.png",
+      "sha256": "3afb83c019099a7fe21b65d7071d76990c64ad97c2e0ac9842b2a8cb71112e69"
+    },
+    {
+      "key": "pawn_yuanyuan_land",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_yuanyuan_land.png",
+      "runtime": "client/assets/resources/art/completion/pawn_yuanyuan_land.png",
+      "sha256": "dd1d779172eb9e1d228929edf091851d10bfa6ba031892e33b193fff3cbe0e37"
+    },
+    {
+      "key": "pawn_doudou_ready",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_doudou_ready.png",
+      "runtime": "client/assets/resources/art/completion/pawn_doudou_ready.png",
+      "sha256": "924b562d37127e79fae905dd4695c43154639f05f2f12208ca78a03c2693585a"
+    },
+    {
+      "key": "pawn_doudou_crouch",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_doudou_crouch.png",
+      "runtime": "client/assets/resources/art/completion/pawn_doudou_crouch.png",
+      "sha256": "b38441c551fd5fa9d2ee1ba44947aa8ff54966c3cea22a82f900099f2761b69a"
+    },
+    {
+      "key": "pawn_doudou_airborne",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_doudou_airborne.png",
+      "runtime": "client/assets/resources/art/completion/pawn_doudou_airborne.png",
+      "sha256": "a1d761df760f9db0960dfe1ca1e3395abc1b8d4cc2485466561e21d8f8951fca"
+    },
+    {
+      "key": "pawn_doudou_land",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_doudou_land.png",
+      "runtime": "client/assets/resources/art/completion/pawn_doudou_land.png",
+      "sha256": "55c3200d7ba69e449f42b1be90bf7f261e820b8150147c9cf39c7a506b55000d"
+    },
+    {
+      "key": "pawn_maomao_ready",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_maomao_ready.png",
+      "runtime": "client/assets/resources/art/completion/pawn_maomao_ready.png",
+      "sha256": "9559e2548f90da124d6237446aba870c5b2a554ec60f355b089dc4cbac03ead9"
+    },
+    {
+      "key": "pawn_maomao_crouch",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_maomao_crouch.png",
+      "runtime": "client/assets/resources/art/completion/pawn_maomao_crouch.png",
+      "sha256": "bf6792faa2b2589a3b11954d7c82fa4a63191166e8da7cfd3f5954bd34cbf557"
+    },
+    {
+      "key": "pawn_maomao_airborne",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_maomao_airborne.png",
+      "runtime": "client/assets/resources/art/completion/pawn_maomao_airborne.png",
+      "sha256": "f2b1112c2077e7a2f615b04d26150658346c2d4e025e0d90620ab4a3627d599d"
+    },
+    {
+      "key": "pawn_maomao_land",
+      "source": "design/screens/assets-ui-completion-v1/png/pawn_maomao_land.png",
+      "runtime": "client/assets/resources/art/completion/pawn_maomao_land.png",
+      "sha256": "d36acb72ec9a2f72dfc8cebe581d8c3b710c8b010e377ecc5aef8803d50d366d"
+    },
+    {
+      "key": "scene_bank",
+      "source": "design/screens/assets-ui-completion-v1/png/scene_bank.png",
+      "runtime": "client/assets/resources/art/completion/scene_bank.png",
+      "sha256": "472d2d9fa0fecb286bd505b3f6a2e9839eb5639275dd4d55c0e5124c7da18496"
+    },
+    {
+      "key": "scene_jail",
+      "source": "design/screens/assets-ui-completion-v1/png/scene_jail.png",
+      "runtime": "client/assets/resources/art/completion/scene_jail.png",
+      "sha256": "ab889e7d9b279594c3d5ca1ddf833e1adb932e25633a14b0357b8111bb4fc38e"
+    },
+    {
+      "key": "scene_game_center",
+      "source": "design/screens/assets-ui-completion-v1/png/scene_game_center.png",
+      "runtime": "client/assets/resources/art/completion/scene_game_center.png",
+      "sha256": "2a8e7f8ec5e51c81bad0067385f8b9843248206b28cd1bb20c6fa800c0cddb09"
+    },
+    {
+      "key": "scene_rest",
+      "source": "design/screens/assets-ui-completion-v1/png/scene_rest.png",
+      "runtime": "client/assets/resources/art/completion/scene_rest.png",
+      "sha256": "20cf027a897c26df45a66c6f41f033869eade7a347c5ceca262b36172883a1a1"
+    },
+    {
+      "key": "scene_start",
+      "source": "design/screens/assets-ui-completion-v1/png/scene_start.png",
+      "runtime": "client/assets/resources/art/completion/scene_start.png",
+      "sha256": "28c488aecb2a44a54a4793f39400ac3396af3de8fffe9691f7a22714cb2c6da1"
+    },
+    {
+      "key": "scene_station",
+      "source": "design/screens/assets-ui-completion-v1/png/scene_station.png",
+      "runtime": "client/assets/resources/art/completion/scene_station.png",
+      "sha256": "01322ccc9aa69370a64ef656c9b4b551bc63dca59dee653d7512ef104afde8d3"
+    },
+    {
+      "key": "brand_logo",
+      "source": "design/screens/assets-ui-completion-v1/png/brand_logo.png",
+      "runtime": "client/assets/resources/art/completion/brand_logo.png",
+      "sha256": "f5b3d6b59f8cb752a6748c9919b72bfe9c67124966d53c9aa6e7c7a1f81e9624"
+    },
+    {
+      "key": "lobby_friends",
+      "source": "design/screens/assets-ui-completion-v1/png/lobby_friends.png",
+      "runtime": "client/assets/resources/art/completion/lobby_friends.png",
+      "sha256": "a5133826c63ab88fd0d8280cb9d075298d397b3db46b77325ba8c8ee409a1c68"
+    },
+    {
+      "key": "result_trophy",
+      "source": "design/screens/assets-ui-completion-v1/png/result_trophy.png",
+      "runtime": "client/assets/resources/art/completion/result_trophy.png",
+      "sha256": "2cf65dab06941227d22c88fde7640366fd8022e9a694884811f84ff7066595de"
+    },
+    {
+      "key": "result_laurel",
+      "source": "design/screens/assets-ui-completion-v1/png/result_laurel.png",
+      "runtime": "client/assets/resources/art/completion/result_laurel.png",
+      "sha256": "69181ae59412d712063858eeb8143f441f4285916836a8063d1759fe561c4bec"
+    },
+    {
+      "key": "result_plaque",
+      "source": "design/screens/assets-ui-completion-v1/png/result_plaque.png",
+      "runtime": "client/assets/resources/art/completion/result_plaque.png",
+      "sha256": "c0de0fb9023d5cf5faf97b9fb3602a19772d935341fec12d2b45ebc6b15e39ac"
+    },
+    {
+      "key": "minigame_title",
+      "source": "design/screens/assets-ui-completion-v1/png/minigame_title.png",
+      "runtime": "client/assets/resources/art/completion/minigame_title.png",
+      "sha256": "d102305a780b527241ad668f57f48baebf225f57bc786f3a2e5041310e833a52"
+    },
+    {
+      "key": "result_reward_panel",
+      "source": "design/screens/assets-ui-completion-v1/png/result_reward_panel.png",
+      "runtime": "client/assets/resources/art/completion/result_reward_panel.png",
+      "sha256": "156a783555c59ffd72ae9f1946a8994c05e5c59fde64c3f427b079091e77ebe2"
+    },
+    {
+      "key": "result_zero_panel",
+      "source": "design/screens/assets-ui-completion-v1/png/result_zero_panel.png",
+      "runtime": "client/assets/resources/art/completion/result_zero_panel.png",
+      "sha256": "08a055075d2c70c299faf436f0104ac588b7bf8742aac4d73581297ae404d006"
+    },
+    {
+      "key": "scene_jail_closeup",
+      "source": "design/screens/assets-alignment-v1/scene_jail_closeup.png",
+      "runtime": "client/assets/resources/art/alignment/scene_jail_closeup.png",
+      "sha256": "42b80e187893a34b787aafc3996fe6fa6dfe8eb5f7bd86624090f2d05c3ca9fb"
+    }
+  ]
+}

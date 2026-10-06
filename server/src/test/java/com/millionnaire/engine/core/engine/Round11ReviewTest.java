@@ -74,7 +74,7 @@ class Round11ReviewTest {
 
     @Test
     void c3AJailFailureCannotBeBookedToAnotherPlayer() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 2, 6, 6),
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2, 2, 6, 6),
                 dice(DrawPoint.JAIL_DIE, 1))), 1).start(2);
         for (int i = 0; i < 5; i++) {
             t.roll();                                           // p1、p2 都进狱；p1 判定 1 → 失败
@@ -87,7 +87,7 @@ class Round11ReviewTest {
 
     @Test
     void c4TurnTrackMustBeEmptyAtEveryInputBoundary() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 3))), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 3))), 1).start(2);
         t.roll();
         t.send(t.now, new Tick());
         List<Event> log = new ArrayList<>(t.log);
@@ -126,7 +126,8 @@ class Round11ReviewTest {
 
     @Test
     void c6AQueuedFlowDoesNotOpenBeforeTheMoveAnimationEnds() {
-        Table t = new Table(new ScriptedRandom(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2), dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
+        M3bTest.craft(t, g -> g.withPlayer(g.player("p1").orElseThrow().at(13))); // REST at 15 keeps this a queue/animation test.
         DecisionContext<SessionState> c = ctx(t);
         FlowCoordinator.request(c, GameModule.FLOW, FlowKind.AUCTION, "p2");
         commit(t, c);

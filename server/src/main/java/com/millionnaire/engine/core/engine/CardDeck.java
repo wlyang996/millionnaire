@@ -20,6 +20,9 @@ final class CardDeck {
     }
 
     static CardType pick(RuleConfig config, int value) {
+        if (value < 0 || value >= totalWeight(config)) {
+            throw new IllegalStateException("card draw " + value + " out of range");
+        }
         int cumulative = 0;
         for (CardType t : CardType.values()) {
             cumulative += config.cardWeights().get(t);

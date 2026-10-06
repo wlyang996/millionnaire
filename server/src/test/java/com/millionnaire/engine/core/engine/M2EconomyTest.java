@@ -47,7 +47,7 @@ class M2EconomyTest {
         for (int i = 0; i < players; i++) {
             order.add(90 - i * 10);
         }
-        Table t = new Table(new ScriptedRandom(script(order(order.stream().mapToInt(Integer::intValue).toArray()),
+        Table t = new Table(ScriptedRandom.withEventCards(script(order(order.stream().mapToInt(Integer::intValue).toArray()),
                 Table.deal(players), dice(DrawPoint.MOVE_DIE, moves))), 1).start(players);
         return t;
     }
@@ -79,7 +79,7 @@ class M2EconomyTest {
     @Test
     void buyThenImmediateUpgradeThenRent() {
         Table t = table(2, 1, 1);
-        t.rollOnly();                                                   // p1 → 1（低价）
+        t.rollThenResolveEvent();                                                   // p1 → 1（低价）
         assertEquals(TurnStage.LANDING, t.game().turn().stage());
         assertEquals(LandingStep.BUY, t.game().turn().landing().step());
         t.act(w -> new GameCommand.BuyProperty("p1", w));
@@ -90,7 +90,7 @@ class M2EconomyTest {
         assertEquals(2200, t.cash("p1"));
         assertEquals(1, t.game().board().ownable(1).orElseThrow().level());
         assertEquals("p2", t.current(), "at most one level per landing");
-        t.rollOnly();                                                   // p2 → 1：租金 250（一级）
+        t.rollThenResolveEvent();                                                   // p2 → 1：租金 250（一级）
         assertEquals(List.of(new GameEvent.RentPaid("p2", "p1", 1, 250)), events(t.log, GameEvent.RentPaid.class));
         assertEquals(2450, t.cash("p1"));
         assertEquals(2750, t.cash("p2"));
@@ -100,10 +100,10 @@ class M2EconomyTest {
     @Test
     void declineAndTimeoutLeaveTheLandUnowned() {
         Table t = table(2, 1, 3);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         t.act(w -> new GameCommand.DeclinePurchase("p1", w));
         assertNull(t.game().board().ownable(1).orElseThrow().owner());
-        t.rollOnly();                                                   // p2 → 3：不操作，15 秒到时放弃
+        t.rollThenResolveEvent();                                                   // p2 → 3：不操作，15 秒到时放弃
         long deadline = t.window().window().deadline();
         assertEquals(t.config.timing().decisionWindowMs(), deadline - t.window().window().opensAt());
         t.tick(deadline);
@@ -115,7 +115,7 @@ class M2EconomyTest {
     @Test
     void designatedAuctionLandOffersOnlyBuyOrDeclineUntilM5() {
         Table t = table(2, 6);
-        t.rollOnly();                                                   // p1 → 6（指定拍卖地）
+        t.rollThenResolveEvent();                                                   // p1 → 6（指定拍卖地）
         assertEquals(RejectionCode.NOT_AVAILABLE, t.act(w -> new GameCommand.StartLandAuction("p1", w)).rejection());
         t.act(w -> new GameCommand.BuyProperty("p1", w));
         assertEquals(2500, t.cash("p1"));
@@ -143,10 +143,10 @@ class M2EconomyTest {
     void noPurchaseWindowWhenCashIsShortAndNoUpgradeWindowOnMortgagedOrMaxLevelLand() {
         Table t = table(2, 1, 5);
         craft(t, cash("p1", 400));
-        t.rollOnly();                                                   // p1 → 1，付不起 500：不开窗口
+        t.rollThenResolveEvent();                                                   // p1 → 1，付不起 500：不开窗口
         assertEquals("p2", t.current());
         craft(t, own(5, "p2", 3));
-        t.rollOnly();                                                   // p2 → 5，自己的三级地产：不开升级窗口
+        t.rollThenResolveEvent();                                                   // p2 → 5，自己的三级地产：不开升级窗口
         assertEquals("p1", t.current());
     }
 
@@ -159,12 +159,12 @@ class M2EconomyTest {
         for (int tier = 0; tier < 3; tier++) {
             for (int level = 0; level <= 3; level++) {
                 Table t = table(2, 1, 1);
-                t.rollOnly();
+                t.rollThenResolveEvent();
                 t.pass();
                 int target = tiles[tier];
                 craft(t, own(target, "p1", level).andThen(g -> g.withPlayer(g.player("p2").orElseThrow().at(target - 1)))::apply);
                 long before = t.cash("p2");
-                t.rollOnly();
+                t.rollThenResolveEvent();
                 assertEquals(expected[tier][level], before - t.cash("p2"), Tier.values()[tier] + " level " + level);
             }
         }
@@ -173,14 +173,14 @@ class M2EconomyTest {
     @Test
     void stationRentCountsOnlyUnmortgagedStationsAndMortgagedLandCollectsNothing() {
         Table t = table(2, 1, 4, 1, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         t.pass();
         craft(t, own(4, "p1", 0).andThen(own(12, "p1", 0)).andThen(mortgaged(19, "p1", 1000))::apply);
-        t.rollOnly();                                                   // p2 → 4：持有未抵押车站 2 座 × 200
+        t.rollThenResolveEvent();                                                   // p2 → 4：持有未抵押车站 2 座 × 200
         assertEquals(List.of(new GameEvent.RentPaid("p2", "p1", 4, 400)), events(t.log, GameEvent.RentPaid.class));
-        t.rollOnly();                                                   // p1 → 2
+        t.rollThenResolveEvent();                                                   // p1 → 2
         craft(t, mortgaged(5, "p1", 1000));
-        t.rollOnly();                                                   // p2 → 5：已抵押，不收租
+        t.rollThenResolveEvent();                                                   // p2 → 5：已抵押，不收租
         assertEquals(1, events(t.log, GameEvent.RentPaid.class).size());
         assertEquals("p1", t.current());
     }
@@ -190,12 +190,12 @@ class M2EconomyTest {
     @Test
     void bankMortgagesAtFullPriceAndRedeemsFreeOffBankRedemptionCostsTenPercent() {
         Table t = table(2, 5, 1, 6, 1, 1, 1);
-        t.rollOnly();                                                   // p1 → 5（中价）买下
+        t.rollThenResolveEvent();                                                   // p1 → 5（中价）买下
         t.act(w -> new GameCommand.BuyProperty("p1", w));
         t.pass();
-        t.rollOnly();                                                   // p2 → 1
+        t.rollThenResolveEvent();                                                   // p2 → 1
         t.pass();
-        t.rollOnly();                                                   // p1 → 11 银行
+        t.rollThenResolveEvent();                                                   // p1 → 11 银行
         assertEquals(LandingStep.BANK, t.game().turn().landing().step());
         long windowEnd = t.window().window().deadline();
         t.act(w -> new GameCommand.BankMortgage("p1", w, 5));
@@ -206,14 +206,14 @@ class M2EconomyTest {
         assertEquals(2000, t.cash("p1"), "free redemption at the bank");
         t.act(w -> new GameCommand.BankMortgage("p1", w, 5));
         t.act(w -> new GameCommand.FinishBank("p1", w));
-        t.rollOnly();                                                   // p2 → 2（事件，占位）
+        t.rollThenResolveEvent();                                                   // p2 → 2（事件，占位）
         // p1 的下一回合：仍站在银行格（O10 不要求落地当回合），投骰前可再操作
         t.act(w -> new GameCommand.Redeem("p1", w, 5));
         assertEquals(2000, t.cash("p1"), "still on the bank: free");
         t.act(w -> new GameCommand.BankMortgage("p1", w, 5));
-        t.rollOnly();                                                   // p1 → 12（车站）
+        t.rollThenResolveEvent();                                                   // p1 → 12（车站）
         t.pass();
-        t.rollOnly();                                                   // p2 → 3
+        t.rollThenResolveEvent();                                                   // p2 → 3
         t.pass();
         assertEquals(RejectionCode.NOT_AT_BANK, t.act(w -> new GameCommand.BankMortgage("p1", w, 5)).rejection());
         long before = t.cash("p1");
@@ -227,9 +227,9 @@ class M2EconomyTest {
     @Test
     void rentDebtOpensTheManualWindowAndEmergencyMortgageSettlesIt() {
         Table t = table(2, 2, 1);
-        t.rollOnly();                                                   // p1 → 2（事件，占位）
+        t.rollThenResolveEvent();                                                   // p1 → 2（事件，占位）
         craft(t, own(1, "p1", 0).andThen(own(3, "p2", 0)).andThen(cash("p2", 50))::apply);
-        StepResult r = t.rollOnly();                                    // p2 → 1：租金 100，现金 50
+        StepResult r = t.rollThenResolveEvent();                                    // p2 → 1：租金 100，现金 50
         assertTrue(r.events().stream().anyMatch(e -> e instanceof GameEvent.DebtCreated));
         assertEquals(TurnStage.AWAITING_FLOW, t.game().turn().stage());
         assertEquals(FlowKind.DEBT, t.window().kind());
@@ -247,20 +247,20 @@ class M2EconomyTest {
     @Test
     void insufficientAssetsMeanImmediateBankruptcyWithoutAWindow() {
         Table t = table(2, 2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         craft(t, own(1, "p1", 2).andThen(cash("p2", 50))::apply);
-        t.rollOnly();                                                   // p2 → 1：租金 450，只有 50 现金、无资产
+        t.rollThenResolveEvent();                                                   // p2 → 1：租金 450，只有 50 现金、无资产
         GameEvent.GameEnded end = events(t.log, GameEvent.GameEnded.class).get(0);
         assertEquals("LAST_SURVIVOR", end.reason());
         assertEquals(List.of("p1", "p2"), end.result().standings().stream().map(Standing::playerId).toList());
         assertTrue(events(t.log, GameEvent.WindowOpened.class).stream().noneMatch(o -> o.frame().kind() == FlowKind.DEBT));
-        assertEquals(List.of(new GameEvent.DebtSettled(2, "p1", 50)), events(t.log, GameEvent.DebtSettled.class));
+        assertEquals(List.of(new GameEvent.DebtSettled(1, "p1", 50)), events(t.log, GameEvent.DebtSettled.class));
     }
 
     @Test
     void automatedDebtorsGoBankruptDirectlyLiquidatingAtEmergencyRatios() {
         Table t = table(3, 2, 1);
-        t.rollOnly();                                                   // p1 → 2
+        t.rollThenResolveEvent();                                                   // p1 → 2
         craft(t, own(1, "p1", 0).andThen(own(14, "p2", 0)).andThen(mortgaged(4, "p2", 1000)).andThen(cash("p2", 50))::apply);
         t.send(t.now + 5, new GameCommand.SetControl(1, "p2", ControlMode.AWAY));
         long sys = t.game().ledger().systemNet();
@@ -269,7 +269,7 @@ class M2EconomyTest {
         assertEquals(List.of(new GameEvent.AssetReclaimed("p2", 4)), events(t.log, GameEvent.AssetReclaimed.class));
         assertEquals(List.of(new GameEvent.AssetLiquidated("p2", 14, 900)), events(t.log, GameEvent.AssetLiquidated.class),
                 "high tier liquidates at 60%");
-        assertEquals(List.of(new GameEvent.DebtSettled(2, "p1", 100)), events(t.log, GameEvent.DebtSettled.class));
+        assertEquals(List.of(new GameEvent.DebtSettled(1, "p1", 100)), events(t.log, GameEvent.DebtSettled.class));
         assertEquals(List.of(new GameEvent.CashReclaimed("p2", 850)), events(t.log, GameEvent.CashReclaimed.class));
         assertEquals(sys - 900 + 850, t.game().ledger().systemNet());
         assertNull(t.game().board().ownable(14).orElseThrow().owner());
@@ -279,9 +279,9 @@ class M2EconomyTest {
     @Test
     void debtSegmentsLastThirtyPlusThirtySecondsAndThenBankrupt() {
         Table t = table(3, 2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         craft(t, own(1, "p1", 0).andThen(own(3, "p2", 0)).andThen(cash("p2", 50))::apply);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         long start = t.window().window().opensAt();
         long w1 = t.window().windowId();
         assertEquals(RejectionCode.WRONG_STAGE, t.send(start + 1, new GameCommand.ContinueDebt("p2", w1)).rejection(),
@@ -303,13 +303,13 @@ class M2EconomyTest {
     @Test
     void declaringBankruptcyIsAllowedAnyTime() {
         Table t = table(3, 2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         craft(t, own(1, "p1", 0).andThen(own(3, "p2", 0)).andThen(cash("p2", 50))::apply);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         t.send(t.window().window().opensAt() + 1, new GameCommand.DeclareBankruptcy("p2", t.window().windowId()));
         assertEquals(LifeState.BANKRUPT, t.game().player("p2").orElseThrow().life());
         assertEquals(List.of(new GameEvent.AssetLiquidated("p2", 3, 400)), events(t.log, GameEvent.AssetLiquidated.class));
-        assertEquals(List.of(new GameEvent.DebtSettled(2, "p1", 100)), events(t.log, GameEvent.DebtSettled.class),
+        assertEquals(List.of(new GameEvent.DebtSettled(1, "p1", 100)), events(t.log, GameEvent.DebtSettled.class),
                 "the creditor is paid in full from liquidation, never more than the debt");
     }
 
@@ -345,9 +345,9 @@ class M2EconomyTest {
     @Test
     void aCreditorsSurrenderWaitsForTheDebtAndTheDebtorsSurrenderIsBankruptcy() {
         Table t = table(3, 2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         craft(t, own(1, "p1", 0).andThen(own(3, "p2", 0)).andThen(cash("p2", 50))::apply);
-        t.rollOnly();                                                   // p2 欠 p1 100
+        t.rollThenResolveEvent();                                                   // p2 欠 p1 100
         long w = t.window().windowId();
         t.send(t.window().window().opensAt() + 1, new GameCommand.Surrender("p1", 1));
         assertEquals(List.of("p1"), t.game().pendingSurrenders(), "the creditor's surrender is deferred");
@@ -364,19 +364,19 @@ class M2EconomyTest {
     @Test
     void aSuspectedDebtorStillGetsTheManualWindow() {
         Table t = table(3, 2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         craft(t, own(1, "p1", 0).andThen(own(3, "p2", 0)).andThen(cash("p2", 50))::apply);
         t.send(t.now + 5, new GameCommand.ConnectionSuspected(1, "p2", 1));
-        t.rollOnly();
+        t.rollThenResolveEvent();
         assertEquals(FlowKind.DEBT, t.window().kind(), "suspect is not offline: manual emergency mortgage (decision 2)");
     }
 
     @Test
     void aBatchThatLeavesNobodyAliveIsRankedByPreBatchNetWorth() {
         Table t = table(2, 2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         craft(t, own(1, "p1", 0).andThen(own(3, "p2", 0)).andThen(cash("p2", 50))::apply);
-        t.rollOnly();                                                   // p2 欠 p1 100
+        t.rollThenResolveEvent();                                                   // p2 欠 p1 100
         t.send(t.window().window().opensAt() + 1, new GameCommand.Surrender("p1", 1));   // 债权人：延后
         long p1Worth = EconomyModule.netWorth(t.config, t.game(), "p1");
         t.send(t.now + 10, new GameCommand.DeclareBankruptcy("p2", t.window().windowId()));
@@ -389,9 +389,9 @@ class M2EconomyTest {
     @Test
     void theDebtorSurrenderingInsideTheDebtIsBankruptcy() {
         Table t = table(3, 2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         craft(t, own(1, "p1", 0).andThen(own(3, "p2", 0)).andThen(cash("p2", 50))::apply);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         t.send(t.window().window().opensAt() + 1, new GameCommand.Surrender("p2", 1));
         assertEquals(LifeState.BANKRUPT, t.game().player("p2").orElseThrow().life());
     }
@@ -438,7 +438,7 @@ class M2EconomyTest {
             if (!t.session().inGame() || t.game().phase() != GamePhase.RUNNING) {
                 continue;
             }
-            t.rollOnly();
+            t.rollThenResolveEvent();
             if (t.session().inGame() && t.game().turn().stage() == TurnStage.LANDING
                     && t.game().turn().landing().step() == LandingStep.BUY && t.window().window().deadline() > endsAt) {
                 return t;
@@ -473,7 +473,7 @@ class M2EconomyTest {
     @Test
     void staleDuplicateAndForeignCommandsHaveNoSecondEffect() {
         Table t = table(2, 1);
-        t.rollOnly();
+        t.rollThenResolveEvent();
         long w = t.window().windowId();
         assertEquals(RejectionCode.NOT_YOUR_TURN, t.act(x -> new GameCommand.BuyProperty("p2", x)).rejection());
         t.act(x -> new GameCommand.BuyProperty("p1", x));

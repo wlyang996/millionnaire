@@ -17,3 +17,5 @@
 [jobs.json](jobs.json)保存初始内置image_gen提示词，correction-jobs系列及results-correction-final.json保存修正提示词。raw/保留纠错前稿件。生成图可能存在细微字形或图标差异，落地时应使用统一单件素材、真实数据和文字层。
 
 位图在[assets-supplement-v1](../../assets-supplement-v1/MANIFEST.md)，不是从整页截图裁出来的素材。
+
+2026-10-06 后续状态：用户采纳18稿的资产总览与格子详情布局，已接入客户端并补充17件专用素材；数字键盘仍为候选。实现与验证见 ../../records/information-pages-2026-10-06.md。

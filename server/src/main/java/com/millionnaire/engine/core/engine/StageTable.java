@@ -3,6 +3,7 @@ package com.millionnaire.engine.core.engine;
 import com.millionnaire.engine.config.RuleConfig;
 import com.millionnaire.engine.core.command.GameCommand;
 import com.millionnaire.engine.core.state.GameState;
+import com.millionnaire.engine.core.state.FlowKind;
 import com.millionnaire.engine.core.state.LandingStep;
 import com.millionnaire.engine.core.state.TurnStage;
 import java.util.List;
@@ -31,7 +32,7 @@ final class StageTable {
         /** 落点：无推进器的普通等待（测试与占位）。 */
         WAIT,
         /** 债务覆盖窗口（两段）。 */
-        DEBT
+        DEBT, EVENT_DRAW, DISCARD
     }
 
     /** 时限来源。 */
@@ -41,12 +42,12 @@ final class StageTable {
         /** 落点决策 15 秒。 */
         DECISION,
         /** 债务每段 30 秒。 */
-        DEBT_SEGMENT
+        DEBT_SEGMENT, DISCARD
     }
 
     /** 超时或自动执行的动作。 */
     enum Action {
-        ROLL, BUY_IF_AFFORDABLE, DECLINE, UPGRADE_IF_AFFORDABLE, SKIP, FINISH, NEXT_SEGMENT_OR_BANKRUPT
+        ROLL, BUY_IF_AFFORDABLE, DECLINE, UPGRADE_IF_AFFORDABLE, SKIP, FINISH, NEXT_SEGMENT_OR_BANKRUPT, DRAW_EVENT, DISCARD_NEW
     }
 
     /**
@@ -54,7 +55,8 @@ final class StageTable {
      * preemptible：其上能否直接开启覆盖流程（N3：落点决策窗口与债务窗口不可抢占；投骰前可被攻击类流程覆盖）。
      */
     record Rule(Point point, List<Class<? extends GameCommand>> commands, Duration duration, Action onTimeout,
-                Action hostedPolicy, Action offlinePolicy, boolean safePointBefore, boolean drainingAllowed, boolean preemptible) {
+                Action hostedPolicy, Action offlinePolicy, boolean safePointBefore, boolean drainingAllowed, List<FlowKind> preemptible) {
+        boolean preemptible(FlowKind kind) { return preemptible.contains(kind); }
         boolean allows(GameCommand command) {
             return commands.stream().anyMatch(c -> c.isInstance(command));
         }
@@ -62,22 +64,26 @@ final class StageTable {
 
     static final List<Rule> RULES = List.of(
             new Rule(Point.JAIL, List.of(GameCommand.RollDice.class, GameCommand.PayBail.class, GameCommand.Redeem.class,
-                    GameCommand.BankMortgage.class), Duration.ROLL, Action.ROLL, Action.ROLL, Action.ROLL, true, false, true),
+                    GameCommand.BankMortgage.class), Duration.ROLL, Action.ROLL, Action.ROLL, Action.ROLL, true, false, List.of()),
             new Rule(Point.ROLL, List.of(GameCommand.RollDice.class, GameCommand.Redeem.class, GameCommand.BankMortgage.class),
-                    Duration.ROLL, Action.ROLL, Action.ROLL, Action.ROLL, true, false, true),
+                    Duration.ROLL, Action.ROLL, Action.ROLL, Action.ROLL, true, false, List.of(FlowKind.ATTACK)),
             // 待确认默认 4：本人普通操作窗口均可赎回（含买 / 升级窗口，不刷新截止；DRAINING 后仍按 O16 拒绝）
             new Rule(Point.BUY, List.of(GameCommand.BuyProperty.class, GameCommand.DeclinePurchase.class,
                     GameCommand.StartLandAuction.class, GameCommand.Redeem.class), Duration.DECISION, Action.DECLINE, Action.BUY_IF_AFFORDABLE,
-                    Action.DECLINE, false, true, false),
+                    Action.DECLINE, false, true, List.of()),
             new Rule(Point.UPGRADE, List.of(GameCommand.UpgradeProperty.class, GameCommand.SkipUpgrade.class,
                     GameCommand.Redeem.class),
-                    Duration.DECISION, Action.SKIP, Action.UPGRADE_IF_AFFORDABLE, Action.SKIP, false, true, false),
+                    Duration.DECISION, Action.SKIP, Action.UPGRADE_IF_AFFORDABLE, Action.SKIP, false, true, List.of()),
             new Rule(Point.BANK, List.of(GameCommand.BankMortgage.class, GameCommand.Redeem.class, GameCommand.FinishBank.class),
-                    Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, false, false),
-            new Rule(Point.WAIT, List.of(), Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, true, true),
+                    Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, false, List.of()),
+            new Rule(Point.WAIT, List.of(), Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, true, List.of(FlowKind.ATTACK)),
             new Rule(Point.DEBT, List.of(GameCommand.EmergencyMortgage.class, GameCommand.ContinueDebt.class,
                     GameCommand.DeclareBankruptcy.class), Duration.DEBT_SEGMENT, Action.NEXT_SEGMENT_OR_BANKRUPT,
-                    Action.NEXT_SEGMENT_OR_BANKRUPT, Action.NEXT_SEGMENT_OR_BANKRUPT, false, true, false));
+                    Action.NEXT_SEGMENT_OR_BANKRUPT, Action.NEXT_SEGMENT_OR_BANKRUPT, false, true, List.of()),
+            new Rule(Point.EVENT_DRAW, List.of(GameCommand.DrawEventCard.class), Duration.DECISION,
+                    Action.DRAW_EVENT, Action.DRAW_EVENT, Action.DRAW_EVENT, false, true, List.of()),
+            new Rule(Point.DISCARD, List.of(GameCommand.DiscardCard.class), Duration.DISCARD,
+                    Action.DISCARD_NEW, Action.DISCARD_NEW, Action.DISCARD_NEW, false, true, List.of()));
 
     static Rule rule(Point point) {
         return RULES.stream().filter(r -> r.point() == point).findFirst().orElseThrow();
@@ -95,12 +101,9 @@ final class StageTable {
     }
 
     static Point landingPoint(LandingStep step) {
-        return switch (step) {
-            case BUY -> Point.BUY;
-            case UPGRADE -> Point.UPGRADE;
-            case BANK -> Point.BANK;
-            case BUILD_CARD, DEBT, RENT -> throw new IllegalStateException(step + " has no landing window");
-        };
+        Point point = LandingRules.rule(step).point();
+        if (point == null) { throw new IllegalStateException(step + " has no landing window"); }
+        return point;
     }
 
     static long durationMs(RuleConfig config, GameState g, Duration d) {
@@ -108,6 +111,7 @@ final class StageTable {
             case ROLL -> Math.multiplyExact((long) g.settings().rollSeconds(), 1000L);
             case DECISION -> config.timing().decisionWindowMs();
             case DEBT_SEGMENT -> config.timing().debtSegmentMs();
+            case DISCARD -> config.timing().discardWindowMs();
         };
     }
 }

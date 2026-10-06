@@ -6,12 +6,19 @@ import com.millionnaire.engine.core.command.SessionCommand.EndGame;
 import com.millionnaire.engine.core.command.SessionCommand.StartGame;
 import com.millionnaire.engine.core.event.GameEvent;
 import com.millionnaire.engine.core.event.GameEvent.FlowEvent;
+import com.millionnaire.engine.core.event.GameEvent.GameAborted;
 import com.millionnaire.engine.core.event.GameEvent.GameEnded;
 import com.millionnaire.engine.core.event.GameEvent.GameStarted;
 import com.millionnaire.engine.core.event.RejectionCode;
 import com.millionnaire.engine.core.state.BoardState;
 import com.millionnaire.engine.core.state.EngineState;
 import com.millionnaire.engine.core.state.FlowState;
+import com.millionnaire.engine.core.state.FlowKind;
+import com.millionnaire.engine.core.state.FlowOrigin;
+import com.millionnaire.engine.core.state.FlowRequest;
+import com.millionnaire.engine.core.state.DebtPath;
+import com.millionnaire.engine.core.state.TurnStage;
+import com.millionnaire.engine.core.state.Continuation;
 import com.millionnaire.engine.core.state.GameClock;
 import com.millionnaire.engine.core.state.GamePhase;
 import com.millionnaire.engine.core.state.GameState;
@@ -22,6 +29,7 @@ import com.millionnaire.engine.core.state.RoomState;
 import com.millionnaire.engine.core.state.RoomStatus;
 import com.millionnaire.engine.core.state.SessionState;
 import com.millionnaire.engine.core.state.TurnState;
+import com.millionnaire.engine.core.state.TurnTrack;
 import com.millionnaire.engine.ledger.Ledger;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +66,7 @@ final class GameModule {
                     yield RejectionCode.INVALID_ARGUMENT;
                 }
                 TurnModule.terminate(ctx);
-                ctx.emit(new GameEnded(s.game().gameNo(), c.reason(), null));
+                ctx.emit(new GameAborted(s.game().gameNo(), c.reason(), ctx.engineState().lastSeq()));
                 yield null;
             }
         };
@@ -111,30 +119,74 @@ final class GameModule {
             case GameEnded x -> {
                 LobbyModule.check(s.inGame() && s.game().gameNo() == x.gameNo(), "no such game " + x.gameNo());
                 LobbyModule.check(s.game().flow().frames().isEmpty(), "windows must be closed before the game ends");
-                // E2 / E3：正常结束时不得残留债务、清算事务或已接受未处理的认输；E5：进入 DRAINING 后原因固定为到时结束
-                // N2：正常结束要求全部步内事务记录已清空（债务、清算、认输批次、已成立未付的费用）；管理端中止（result 为 null）是明确例外
-                var track = s.game().turn().track();
-                LobbyModule.check(x.result() == null || s.game().debt() == null && s.game().pendingSurrenders().isEmpty()
-                        && track.liquidating() == null && track.openBatch() == 0 && track.pendingCharge() == 0,
-                        "game ended with an unfinished debt, liquidation, surrender batch or charge");
-                LobbyModule.check(x.result() == null || s.game().phase() != GamePhase.DRAINING || x.reason().equals("TIME_UP"),
+                LobbyModule.check(x.result() != null && s.abortSource() == null,
+                        "normal game end requires a result and cannot consume an EndGame source");
+                // E2 / E3 / N2：正常终局必须完整关闭事务，亦不得吞掉投骰、移动、奖励、判定等步内衔接记录。
+                LobbyModule.check(s.game().debt() == null && s.game().pendingSurrenders().isEmpty()
+                        && TurnTrack.NONE.equals(s.game().turn().track()),
+                        "game ended with an unfinished debt, surrender or turn track");
+                LobbyModule.check(s.game().phase() != GamePhase.DRAINING || "TIME_UP".equals(x.reason()),
                         "a game past its global end can only end as TIME_UP");
-                // 结算摘要必须与规则计算的名次一致（管理端中止为 null）
-                LobbyModule.check(x.result() == null || x.result().gameNo() == x.gameNo() && x.result().reason().equals(x.reason())
+                LobbyModule.check(x.result().gameNo() == x.gameNo() && x.result().reason().equals(x.reason())
                         && x.result().standings().equals(TurnModule.standings(s.game(), rules)), "game result does not follow the rules");
-                RoomState l = s.lobby();
-                RoomState back = new RoomState(l.status(), l.hostId(), LobbyModule.unready(l), l.settings());
-                yield new SessionState(back, null, x.gameNo(), s.game().flow().nextWindowId(), x.result());
+                yield backToLobby(s, x.result());
+            }
+            case GameAborted x -> {
+                LobbyModule.check(s.inGame() && s.game().gameNo() == x.gameNo(), "no such game " + x.gameNo());
+                var source = s.abortSource();
+                LobbyModule.check(source != null && source.inputSeq() == x.inputSeq()
+                        && source.command().expectedGameNo() == x.gameNo()
+                        && x.reason() != null && !x.reason().isBlank() && x.reason().equals(source.command().reason()),
+                        "game abort requires a matching accepted system EndGame source");
+                LobbyModule.check(s.game().flow().frames().isEmpty(), "windows must be closed before the game aborts");
+                // 管理中止可丢弃进行中的债务、待认输等状态；只由已核对的系统来源提供此例外。
+                yield backToLobby(s, null);
             }
             case FlowEvent x -> {
                 LobbyModule.check(s.inGame(), "flow event outside a game");
-                yield s.withGame(s.game().withFlow(FlowCoordinator.evolve(s.game().flow(), x)));
+                if (x instanceof GameEvent.FlowRequested requested) {
+                    LobbyModule.check(s.game().phase() == GamePhase.RUNNING
+                            && s.game().player(requested.request().applicant()).map(PlayerState::alive).orElse(false),
+                            "queued request requires a live applicant before global end");
+                }
+                if (x instanceof GameEvent.FlowDequeued) {
+                    LobbyModule.check(s.game().phase() == GamePhase.RUNNING, "cannot dequeue after global end");
+                    var t = s.game().turn();
+                    LobbyModule.check(t.stage() == TurnStage.NONE && t.track().safePointPhase() == 2
+                            && t.landing() == null && t.chain() == null, "dequeue requires the current turn start safe point");
+                }
+                if (x instanceof GameEvent.SafePointEntered) {
+                    var t = s.game().turn();
+                    LobbyModule.check(t.stage() == TurnStage.NONE && t.track().safePointPhase() == 1
+                            && t.landing() == null && t.chain() == null, "safe point requires a fresh TurnStarted");
+                }
+                if (x instanceof GameEvent.WindowOpened opened && opened.frame().kind() != FlowKind.TURN) {
+                    var frame = opened.frame();
+                    // FlowCoordinator is authoritative for queued request/origin equality. This layer owns game timing.
+                    String error = frame.kind().queued() ? queuedStageBlocked(s.game())
+                            : sourcedOverlayBlocked(s.game(), frame.kind(), frame.owner(), frame.origin());
+                    LobbyModule.check(error == null, "illegal overlay source/stage: " + error);
+                }
+                GameState next = s.game().withFlow(FlowCoordinator.evolve(s.game().flow(), x));
+                if (x instanceof GameEvent.SafePointEntered) {
+                    next = next.withTurn(next.turn().withTrack(next.turn().track().safePoint(2)));
+                } else if (x instanceof GameEvent.FlowDequeued) {
+                    next = next.withTurn(next.turn().withTrack(next.turn().track().safePoint(0)));
+                }
+                yield s.withGame(next);
             }
             default -> {
                 LobbyModule.check(s.inGame(), "game event outside a game: " + event);
                 yield s.withGame(TurnModule.evolve(s.game(), event, draws, rules));
             }
         };
+    }
+
+    private static SessionState backToLobby(SessionState s, com.millionnaire.engine.core.state.GameResult result) {
+        RoomState l = s.lobby();
+        RoomState back = new RoomState(l.status(), l.hostId(), LobbyModule.unready(l), l.settings());
+        // 回房同时消费中止凭据，保证同一终态不能再被重用。
+        return new SessionState(back, null, s.game().gameNo(), s.game().flow().nextWindowId(), result);
     }
 
     /**
@@ -175,6 +227,31 @@ final class GameModule {
         LobbyModule.expect(g.flow() != null && g.flow().nextWindowId() >= s.nextWindowId(), "window ids must not go back");
         List<FlowCoordinator.TaskClaim> claims = new java.util.ArrayList<>(TurnModule.validate(engine, g, config, full));
         claims.addAll(FlowCoordinator.validate(engine, g.flow()));
+        for (var frame : g.flow().frames()) {
+            if (frame.kind() == FlowKind.TURN) { continue; }
+            FlowOrigin o = frame.origin();
+            LobbyModule.expect(o != null && frame.owner().equals(o.actor()), "overlay source missing");
+            if (frame.kind().queued()) {
+                LobbyModule.expect(o.kind() == FlowOrigin.Kind.QUEUED && o.ref() >= 1 && o.ref() < g.flow().nextRequestId()
+                        && o.scopeId() == g.flow().startedAtSafePoint() && o.cursor() == -1
+                        && g.turn().continuation() instanceof Continuation.BeginTurn, "queued flow origin invalid");
+            } else if (frame.kind() == FlowKind.DEBT) {
+                LobbyModule.expect(g.debt() != null && o.kind() == FlowOrigin.Kind.DEBT && o.ref() == g.debt().debtId()
+                        && o.scopeId() == g.turn().turnNo() && o.cursor() == g.turn().landing().cursor(), "debt flow origin invalid");
+            } else if (frame.kind() == FlowKind.ATTACK) {
+                LobbyModule.expect(o.scopeId() == g.turn().turnNo() && o.kind() == FlowOrigin.Kind.ACTIVE_CARD
+                        && o.ref() == 0 && o.cursor() == -1 && o.actor().equals(g.turn().currentPlayer())
+                        && StageTable.rule(StageTable.turnPoint(g)).preemptible(FlowKind.ATTACK), "attack flow origin invalid");
+            } else if (frame.kind() == FlowKind.RESPONSE) {
+                // M4 must bind a real attack's target set. The scaffold accepts a live responder, not only the attacker.
+                var parent = g.flow().frame(o.ref()).orElse(null);
+                LobbyModule.expect(o.scopeId() == g.turn().turnNo() && o.kind() == FlowOrigin.Kind.ATTACK_RESPONSE
+                        && o.cursor() == -1 && parent != null && parent.kind() == FlowKind.ATTACK
+                        && parent.windowId() < frame.windowId() && g.player(o.actor()).map(PlayerState::alive).orElse(false), "response flow origin invalid");
+            } else {
+                LobbyModule.expect(false, "unregistered synchronous flow origin");
+            }
+        }
         return claims;
     }
 
@@ -188,49 +265,93 @@ final class GameModule {
             throw new IllegalArgumentException(kind + " is not an overlay; TURN stage windows use TurnModule.openDecision");
         }
         String blocked = overlayBlocked(ctx.state().game(), kind);
-        if (blocked != null) {
-            throw new IllegalStateException(blocked);
+        if (blocked != null) { throw new IllegalStateException(blocked); }
+        GameState g = ctx.state().game();
+        FlowOrigin origin = kind == FlowKind.DEBT
+                ? new FlowOrigin(FlowOrigin.Kind.DEBT, g.turn().turnNo(), g.debt().debtId(), g.turn().landing().cursor(), owner)
+                : new FlowOrigin(FlowOrigin.Kind.ACTIVE_CARD, g.turn().turnNo(), 0, -1, owner);
+        return openSourcedOverlay(ctx, kind, owner, leadMs, durationMs, resumeTag, origin);
+    }
+
+    /** 唯一队列启动入口：对象必须等于刚出队凭据，不能用一个自造 FlowRequest 冒充。 */
+    static FlowCoordinator.Opened openQueuedOverlay(DecisionContext<SessionState> ctx, FlowRequest request,
+                                                   long leadMs, long durationMs, String resumeTag) {
+        GameState g = ctx.state().game();
+        if (request == null || !request.equals(g.flow().pendingStart())) {
+            throw new IllegalStateException("queued flow requires the actual dequeued request");
         }
+        FlowOrigin origin = new FlowOrigin(FlowOrigin.Kind.QUEUED, g.flow().safePointNo(), request.requestId(), -1, request.applicant());
+        return openSourcedOverlay(ctx, request.kind(), request.applicant(), leadMs, durationMs, resumeTag, origin);
+    }
+
+    /** 同步来源入口；攻击响应必须绑定父窗口，租金响应将在 M4 接入费用成立前的任务来源。 */
+    static FlowCoordinator.Opened openSourcedOverlay(DecisionContext<SessionState> ctx, FlowKind kind, String owner,
+                                                    long leadMs, long durationMs, String resumeTag, FlowOrigin origin) {
+        String blocked = sourcedOverlayBlocked(ctx.state().game(), kind, owner, origin);
+        if (blocked != null) { throw new IllegalStateException(blocked); }
         if (durationMs == 0) {
-            // 零时长：不创建窗口、不暂停父窗口，因此也不撤父窗口的自动任务（T5）；由调用方立即执行自动动作
+            if (kind.queued()) { throw new IllegalStateException("queued flows require a positive duration"); }
             return new FlowCoordinator.Opened.Exhausted();
         }
         TurnModule.suspendAuto(ctx);
-        return FlowCoordinator.open(ctx, FLOW, kind, owner, leadMs, durationMs, resumeTag);
+        return FlowCoordinator.open(ctx, FLOW, kind, owner, leadMs, durationMs, resumeTag, origin);
     }
 
-    /**
-     * 覆盖流程入口的合法阶段门禁（N3），在任何事件发出之前判定；返回拒绝原因，合法时返回 null。
-     * <ul>
-     *   <li>清算事务进行中：任何覆盖流程都不能开启；</li>
-     *   <li>债务窗口：只能为已成立的债务、在空栈上开启（第一段由落点推进器开启，第二段在第一段关闭后开启）；</li>
-     *   <li>债务进行中：不能开启其他覆盖流程；</li>
-     *   <li>栈顶是回合窗口时，该决策点必须可被抢占（{@link StageTable.Rule#preemptible()}）：买 / 放弃、升级、银行等落点决策窗口不可抢占。
-     *       响应窗（RESPONSE，M4）属于当前结算本身，不算抢占。</li>
-     * </ul>
-     * M5 的玩家命令（发起拍卖、交易）应先调用本方法，把原因转成正常拒绝；排队申请（{@code FlowCoordinator.request}）不受影响，
-     * 它们只在安全点由 {@link OverlayModule#start} 启动。
-     */
-    static String overlayBlocked(GameState g, com.millionnaire.engine.core.state.FlowKind kind) {
-        if (g.turn().track().liquidating() != null) {
-            return kind + " cannot open inside a liquidation";
+    /** 在任何事件前检查，排队申请本身不经过此门禁。 */
+    static String overlayBlocked(GameState g, FlowKind kind) {
+        if (g.turn().track().liquidating() != null) { return kind + " cannot open inside a liquidation"; }
+        if (kind == FlowKind.DEBT) {
+            return g.debt() != null && g.debt().path() == DebtPath.MANUAL && g.flow().frames().isEmpty() ? null
+                    : "a debt window opens only for an established manual debt on an empty flow stack";
         }
-        if (kind == com.millionnaire.engine.core.state.FlowKind.DEBT) {
-            return g.debt() != null && g.flow().frames().isEmpty() ? null
-                    : "a debt window opens only for an established debt on an empty flow stack";
-        }
-        if (g.debt() != null) {
-            return kind + " cannot open while a debt is open";
-        }
+        if (g.debt() != null) { return kind + " cannot open while a debt is open"; }
         var top = g.flow().top().orElse(null);
-        if (top != null && top.kind() == com.millionnaire.engine.core.state.FlowKind.TURN
-                && kind != com.millionnaire.engine.core.state.FlowKind.RESPONSE) {
-            StageTable.Point point = StageTable.turnPoint(g);
-            if (!StageTable.rule(point).preemptible()) {
-                return kind + " cannot open over the " + point + " window: it cannot be preempted";
-            }
+        if (top != null && top.kind() == FlowKind.TURN && !StageTable.rule(StageTable.turnPoint(g)).preemptible(kind)) {
+            return kind + " cannot open over the " + StageTable.turnPoint(g) + " window: it cannot be preempted";
         }
+        // Queued kinds are also != ATTACK: the explicit-source gate below rejects them without a duplicate branch.
+        if (kind != FlowKind.ATTACK) { return kind + " requires an explicit synchronous source"; }
         return null;
+    }
+
+    private static String sourcedOverlayBlocked(GameState g, FlowKind kind, String owner, FlowOrigin origin) {
+        if (origin == null || owner == null || !owner.equals(origin.actor())
+                || !g.player(owner).map(PlayerState::alive).orElse(false)) { return "missing or foreign flow source"; }
+        if (g.turn().track().liquidating() != null) { return "flow cannot open inside a liquidation"; }
+        if (kind.queued()) {
+            FlowRequest r = g.flow().pendingStart();
+            return origin.kind() == FlowOrigin.Kind.QUEUED && r != null && r.kind() == kind && r.applicant().equals(owner)
+                    && origin.ref() == r.requestId() && origin.scopeId() == g.flow().safePointNo() && origin.cursor() == -1
+                    && queuedStageBlocked(g) == null
+                    ? null : "queued flow source/safe point mismatch";
+        }
+        if (origin.scopeId() != g.turn().turnNo()) { return "source belongs to another turn"; }
+        if (kind == FlowKind.DEBT) {
+            return overlayBlocked(g, kind) == null && origin.kind() == FlowOrigin.Kind.DEBT && origin.ref() == g.debt().debtId()
+                    && owner.equals(g.debt().debtor()) && g.turn().landing() != null && origin.cursor() == g.turn().landing().cursor()
+                    ? null : "debt flow source mismatch";
+        }
+        if (g.debt() != null) { return "flow cannot open while a debt is open"; }
+        var top = g.flow().top().orElse(null);
+        if (kind == FlowKind.ATTACK) {
+            return origin.kind() == FlowOrigin.Kind.ACTIVE_CARD && origin.ref() == 0 && origin.cursor() == -1
+                    && owner.equals(g.turn().currentPlayer()) && g.phase() == GamePhase.RUNNING && top != null
+                    && top.kind() == FlowKind.TURN && StageTable.rule(StageTable.turnPoint(g)).preemptible(kind)
+                    ? null : "attack stage/action source mismatch";
+        }
+        if (kind == FlowKind.RESPONSE) {
+            // M4 target-set/card authorization is pending; the scaffold binds the real responder and current parent.
+            return origin.kind() == FlowOrigin.Kind.ATTACK_RESPONSE && top != null && top.kind() == FlowKind.ATTACK
+                    && origin.ref() == top.windowId() && origin.cursor() == -1
+                    ? null : "response requires its current attack parent source";
+        }
+        return "no synchronous source registered for " + kind;
+    }
+
+    private static String queuedStageBlocked(GameState g) {
+        return g.flow().frames().isEmpty() && g.debt() == null && g.phase() == GamePhase.RUNNING
+                && g.turn().stage() == TurnStage.AWAITING_FLOW && g.turn().continuation() instanceof Continuation.BeginTurn
+                ? null : "queued flow source/safe point mismatch";
     }
 
     /**

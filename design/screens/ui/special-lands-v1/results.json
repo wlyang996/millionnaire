@@ -1,0 +1,26 @@
+[
+  {
+    "file": "监狱-出狱判定与游戏中心-虎口拔牙-v1.png",
+    "bytes": 2181314,
+    "sha256": "ed56057dc354e982b4973177f87b22b8059679fd3b33965f868aafaadfdb0723",
+    "status": "static design candidate; not implemented"
+  },
+  {
+    "file": "起点-经过奖励与车站-产权租金详情-v1.png",
+    "bytes": 2143194,
+    "sha256": "3a749d08d3c26eac7fae21ab3eea173c5fa6c72ea35db3ad939cfe292b09a5f7",
+    "status": "static design candidate; not implemented"
+  },
+  {
+    "file": "事件土地-中央抽卡与休息区-停留提示-v1.png",
+    "bytes": 2364031,
+    "sha256": "dca38fb8099546c142b724757f374404348b06ebf29c3b734a081b1709c7db81",
+    "status": "static design candidate; not implemented"
+  },
+  {
+    "file": "银行-抵押与赎回-v1.png",
+    "bytes": 2056029,
+    "sha256": "78000b335480045efc996b795d798518e21efe84c70aefddede4418aea8c70a8",
+    "status": "static design candidate; not implemented"
+  }
+]

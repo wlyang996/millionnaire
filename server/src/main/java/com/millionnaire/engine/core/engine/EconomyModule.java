@@ -38,6 +38,9 @@ import com.millionnaire.engine.core.event.GameEvent.UpgradeSkipped;
 import com.millionnaire.engine.core.event.RejectionCode;
 import com.millionnaire.engine.core.state.Continuation;
 import com.millionnaire.engine.core.state.DebtState;
+import com.millionnaire.engine.core.state.DebtPath;
+import com.millionnaire.engine.core.state.FeeSource;
+import com.millionnaire.engine.core.state.LandingResult;
 import com.millionnaire.engine.core.state.Elimination;
 import com.millionnaire.engine.core.state.EngineState;
 import com.millionnaire.engine.core.state.FlowFrame;
@@ -137,7 +140,7 @@ final class EconomyModule {
     static void land(DecisionContext<SessionState> ctx, int tile, long leadMs) {
         GameState g = game(ctx);
         long id = Math.addExact(g.turn().lastLandingId(), 1);
-        ctx.emit(new LandingStarted(id, g.turn().currentPlayer(), tile));
+        ctx.emit(new LandingStarted(id, g.turn().currentPlayer(), tile, g.turn().chain().chainId()));
         resolve(ctx, leadMs);
     }
 
@@ -161,6 +164,7 @@ final class EconomyModule {
             // O16：全局到时后不允许银行常规抵押 / 赎回（阶段表 BANK.drainingAllowed = false），因此不开银行窗口
             case BANK -> g.phase() == GamePhase.RUNNING || StageTable.rule(StageTable.Point.BANK).drainingAllowed()
                     ? LandingStep.BANK : null;
+            case EVENT -> g.turn().chain() != null && !g.turn().chain().eventDrawn() ? LandingStep.EVENT : null;
             default -> null;
         };
     }
@@ -172,10 +176,10 @@ final class EconomyModule {
             finishLanding(ctx, leadMs);
             return;
         }
-        switch (l.next()) {
-            case BUY, UPGRADE, BANK -> openStep(ctx, l.next(), leadMs);
+        switch (LandingRules.rule(l.next()).execution()) {
+            case WINDOW -> openStep(ctx, l.next(), leadMs);
             case RENT -> chargeRent(ctx, game(ctx).board().ownable(l.tile()).orElseThrow(), leadMs);
-            default -> throw new IllegalStateException("unexpected required step " + l.next());
+            case EFFECT -> EventModule.performEffect(ctx);
         }
     }
 
@@ -186,7 +190,7 @@ final class EconomyModule {
                 && g.ledger().available(player) >= config.tier(tile.tier()).upgradeCost();
     }
 
-    /** 买下之后：若可升级则必须开升级窗口（演化在 PropertyBought 时已据此设置 next）；M4 建造卡在此之后接入。 */
+    /** 买下之后：若可升级则必须开升级窗口（PropertyBought 按任务表消费 BUY 并追加后续任务）；M4 建造卡在此之后接入。 */
     private static void offerUpgrade(DecisionContext<SessionState> ctx, long leadMs) {
         resolve(ctx, leadMs);
     }
@@ -194,14 +198,19 @@ final class EconomyModule {
     private static void openStep(DecisionContext<SessionState> ctx, LandingStep step, long leadMs) {
         GameState g = game(ctx);
         LandingState l = g.turn().landing();
-        ctx.emit(new LandingStepEntered(l.landingId(), step, 0));
+        ctx.emit(new LandingStepEntered(l.landingId(), step, 0, l.cursor()));
         StageTable.Rule rule = StageTable.rule(StageTable.landingPoint(step));
         TurnModule.openLandingWindow(ctx, leadMs, StageTable.durationMs(ctx.config(), g, rule.duration()),
                 new Continuation.ResumeLanding(g.turn().turnNo(), l.landingId()));
     }
 
-    static void finishLanding(DecisionContext<SessionState> ctx, long leadMs) {
+    /** 只完成当前落点，保留行动链；重定向应接着移动，不能先发 TurnEnded。 */
+    static void completeLanding(DecisionContext<SessionState> ctx) {
         ctx.emit(new LandingFinished(game(ctx).turn().landing().landingId()));
+    }
+
+    static void finishLanding(DecisionContext<SessionState> ctx, long leadMs) {
+        completeLanding(ctx);
         TurnModule.endTurn(ctx, leadMs);
     }
 
@@ -248,6 +257,8 @@ final class EconomyModule {
                 ctx.emit(new BankFinished(player, auto));
                 resolve(ctx, 0);
             }
+            case DRAW_EVENT -> EventModule.draw(ctx, true);
+            case DISCARD_NEW -> EventModule.discard(ctx, l.event().newCardIndex(), true);
             case ROLL, NEXT_SEGMENT_OR_BANKRUPT -> throw new IllegalStateException(action + " is not a landing action");
         }
     }
@@ -300,6 +311,17 @@ final class EconomyModule {
         }
     }
 
+    static void chargeFee(DecisionContext<SessionState> ctx, FeeSource source, long leadMs) {
+        String payer = game(ctx).turn().currentPlayer();
+        ctx.emit(new GameEvent.FeeCharged(payer, source));
+        if (game(ctx).ledger().available(payer) >= source.amount()) {
+            ctx.emit(new GameEvent.FeePaid(payer, source));
+            resolve(ctx, leadMs);
+        } else {
+            startDebt(ctx, source.creditor(), source.amount(), FeeRules.rule(source.kind()).cause(), leadMs);
+        }
+    }
+
     /** 可用于应急抵押的资产应急额合计（未抵押、未被流程锁定）。 */
     static long emergencyCapacity(RuleConfig config, BoardTemplate board, GameState g, String player) {
         long sum = 0;
@@ -315,19 +337,25 @@ final class EconomyModule {
      * 费用成立而现金不足（已裁决 2、O6）：债务成立即锁定处理路径。确认掉线、暂离或托管 → 直接破产；
      * 现金 + 全部可抵押资产的应急额仍不足 → 立即破产，不开窗口；否则开手动应急抵押窗口（第一段 30 秒）。
      */
+    static DebtPath debtPath(RuleConfig config, GameState g, String player, long amount) {
+        long capacity = Math.addExact(g.ledger().available(player), emergencyCapacity(config,
+                LobbyModule.board(config, g.settings()), g, player));
+        return g.player(player).orElseThrow().automated() || capacity < amount
+                ? DebtPath.DIRECT_BANKRUPTCY : DebtPath.MANUAL;
+    }
+
     private static void startDebt(DecisionContext<SessionState> ctx, String creditor, long amount, String cause, long leadMs) {
         GameState g = game(ctx);
         String debtor = g.turn().currentPlayer();
         LandingState l = g.turn().landing();
-        DebtState debt = new DebtState(l.landingId(), debtor, creditor, amount, cause, 0, false, 0);
+        DebtState debt = new DebtState(Math.addExact(g.turn().lastDebtId(), 1), debtor, creditor, amount, cause,
+                0, false, 0, g.turn().track().feeSource(), g.turn().track().debtPath());
         ctx.emit(new DebtCreated(debt));
-        PlayerState p = g.player(debtor).orElseThrow();
-        long capacity = Math.addExact(g.ledger().cash(debtor), emergencyCapacity(ctx.config(), board(ctx), g, debtor));
-        if (p.automated() || capacity < amount) {
+        if (debt.path() == DebtPath.DIRECT_BANKRUPTCY) {
             bankrupt(ctx, debtor, leadMs);
             return;
         }
-        ctx.emit(new LandingStepEntered(l.landingId(), LandingStep.DEBT, amount));
+        ctx.emit(new LandingStepEntered(l.landingId(), LandingStep.DEBT, amount, l.cursor()));
         ctx.emit(new TurnStageEntered(TurnStage.AWAITING_FLOW, 0,
                 new Continuation.ResumeLanding(g.turn().turnNo(), l.landingId()), Math.addExact(ctx.now(), leadMs)));
         openDebtSegment(ctx, 1, leadMs);
@@ -744,33 +772,23 @@ final class EconomyModule {
             case LandingStarted e -> {
                 check(current(g, e.playerId()) && l == null && k.landedTile() == e.tile() && e.landingId() == t.lastLandingId() + 1
                         && g.player(e.playerId()).orElseThrow().position() == e.tile(), "landing start mismatch");
-                LandingStep next = requiredStep(rules, g, e.playerId(), e.tile());
-                yield g.withTurn(t.withLanding(new LandingState(e.landingId(), e.tile(), null, 0, false, next, false))
+                check(t.chain() != null && e.chainId() == t.chain().chainId(), "landing belongs to another move chain");
+                yield g.withTurn(t.withLanding(new LandingState(e.landingId(), e.chainId(), e.tile(), null, 0, false,
+                                LandingRules.initial(rules, g, e.playerId(), e.tile()),
+                                LandingRules.initial(rules, g, e.playerId(), e.tile()).stream().map(ignored -> -1).toList(),
+                                List.of(), 0, false))
                         .withTrack(k.landingTaken()));
             }
             case LandingStepEntered e -> {
-                check(l != null && l.landingId() == e.landingId(), "landing step for another landing");
-                String player = t.currentPlayer();
-                Tile tile = board.tiles().get(l.tile());
-                OwnableState o = g.board().ownable(l.tile()).orElse(null);
-                boolean ok = !l.decisionOpen() && switch (e.step()) {
-                    case BUY -> l.next() == LandingStep.BUY && o != null && o.owner() == null
-                            && g.ledger().available(player) >= basePrice(rules, tile) && e.payment() == 0;
-                    case UPGRADE -> l.next() == LandingStep.UPGRADE && o != null
-                            && canUpgrade(rules, board, g, player, o) && e.payment() == 0;
-                    case BANK -> l.next() == LandingStep.BANK && tile.type() == TileType.BANK && g.phase() == GamePhase.RUNNING
-                            && e.payment() == 0;
-                    case DEBT -> l.next() == null && l.step() == null && g.debt() != null && g.debt().debtId() == l.landingId()
-                            && g.debt().amount() == e.payment() && g.debt().segment() == 0;
-                    case RENT, BUILD_CARD -> false;
-                };
+                check(l != null && l.landingId() == e.landingId() && e.cursor() == l.cursor(), "landing step for another landing or cursor");
+                boolean ok = LandingRules.canEnter(rules, g, l, e.step(), e.payment());
                 check(ok, "landing step " + e.step() + " not legal here (next " + l.next() + ")");
                 boolean decision = e.step() != LandingStep.DEBT;
-                yield g.withTurn(t.withLanding(l.withStep(e.step(), e.payment()).withNext(null).decision(decision)));
+                yield g.withTurn(t.withLanding(l.withStep(e.step(), e.payment()).decision(decision)));
             }
             case LandingFinished e -> {
-                check(l != null && l.landingId() == e.landingId() && l.next() == null && !l.decisionOpen()
-                        && k.pendingCharge() == 0 && (g.debt() == null || g.debt().debtId() != l.landingId()),
+                check(l != null && l.landingId() == e.landingId() && l.cursor() == l.tasks().size() && !l.decisionOpen() && l.pendingPayment() == 0
+                        && k.pendingCharge() == 0 && (g.debt() == null || g.debt().source().landingId() != l.landingId()),
                         "landing finished before its required steps were done (next " + (l == null ? null : l.next())
                                 + ", decision open " + (l != null && l.decisionOpen()) + ")");
                 yield g.withTurn(t.withLanding(null));
@@ -788,13 +806,12 @@ final class EconomyModule {
                 Ledger ledger = g.ledger().transfer(e.playerId(), Ledger.SYSTEM, e.price(), PURCHASE, "tile-" + e.tile());
                 GameState bought = g.withLedger(ledger).withBoard(g.board().with(o.owned(e.playerId())));
                 // 买下之后必须处理的下一步：可升级则必须开升级窗口（已裁决 6）
-                LandingStep next = requiredStep(rules, bought, e.playerId(), e.tile());
-                yield bought.withTurn(t.withLanding(l.markBought().decision(false).withNext(next)));
+                yield bought.withTurn(t.withLanding(LandingRules.consume(rules, bought, l, LandingResult.BOUGHT)));
             }
             case PurchaseDeclined e -> {
                 check(current(g, e.playerId()) && l != null && l.step() == LandingStep.BUY && l.decisionOpen()
                         && l.tile() == e.tile(), "decline mismatch");
-                yield g.withTurn(t.withLanding(l.decision(false)));
+                yield g.withTurn(t.withLanding(LandingRules.consume(rules, g, l, LandingResult.DECLINED)));
             }
             case PropertyUpgraded e -> {
                 OwnableState o = g.board().ownable(e.tile()).orElse(null);
@@ -803,27 +820,33 @@ final class EconomyModule {
                         && l.tile() == e.tile() && o != null && canUpgrade(rules, board, g, e.playerId(), o)
                         && e.level() == o.level() + 1 && e.cost() == rules.tier(tile.tier()).upgradeCost(), "upgrade mismatch");
                 Ledger ledger = g.ledger().transfer(e.playerId(), Ledger.SYSTEM, e.cost(), UPGRADE, "tile-" + e.tile());
-                yield g.withLedger(ledger).withBoard(g.board().with(o.level(e.level())))
-                        .withTurn(t.withLanding(l.decision(false)));
+                GameState upgraded = g.withLedger(ledger).withBoard(g.board().with(o.level(e.level())));
+                yield upgraded.withTurn(t.withLanding(LandingRules.consume(rules, upgraded, l, LandingResult.UPGRADED)));
             }
             case UpgradeSkipped e -> {
                 check(current(g, e.playerId()) && l != null && l.step() == LandingStep.UPGRADE && l.decisionOpen()
                         && l.tile() == e.tile(), "skip mismatch");
-                yield g.withTurn(t.withLanding(l.decision(false)));
+                yield g.withTurn(t.withLanding(LandingRules.consume(rules, g, l, LandingResult.SKIPPED)));
             }
             case RentCharged e -> {
                 OwnableState o = g.board().ownable(e.tile()).orElse(null);
                 check(current(g, e.payer()) && l != null && l.next() == LandingStep.RENT && l.tile() == e.tile() && o != null
                         && o.owner() != null && o.owner().equals(e.owner()) && !e.owner().equals(e.payer()) && !o.mortgaged()
                         && k.pendingCharge() == 0 && e.amount() == rent(rules, board, g, o), "rent charge mismatch");
-                yield g.withTurn(t.withLanding(l.withNext(null)).withTrack(k.charge(e.amount())));
+                FeeSource source = new FeeSource(FeeSource.Kind.RENT, l.landingId(), l.cursor(), e.tile(), e.owner(), e.amount());
+                yield g.withTurn(t.withLanding(l.withStep(null, e.amount()))
+                        .withTrack(k.fee(source, debtPath(rules, g, e.payer(), e.amount()))));
             }
             case RentPaid e -> {
+                // RentCharged is the sole producer of pendingCharge, and fixes RENT/source/cursor/creditor together.
+                // No intervening event changes its source; amount/tile/owner and LandingRules.consume remain authoritative.
                 check(current(g, e.payer()) && l != null && l.tile() == e.tile() && k.pendingCharge() == e.amount()
-                        && e.amount() > 0 && g.board().ownable(e.tile()).map(o -> e.owner().equals(o.owner())).orElse(false),
+                        && e.amount() > 0 && g.debt() == null
+                        && g.board().ownable(e.tile()).map(o -> e.owner().equals(o.owner())).orElse(false),
                         "rent payment mismatch");
                 Ledger ledger = g.ledger().transfer(e.payer(), e.owner(), e.amount(), RENT, "landing-" + l.landingId());
-                yield g.withLedger(ledger).withTurn(t.withTrack(k.charge(0)));
+                GameState paid = g.withLedger(ledger);
+                yield paid.withTurn(t.withLanding(LandingRules.consume(rules, paid, l, LandingResult.PAID)).withTrack(k.charge(0)));
             }
             case AssetMortgaged e -> {
                 OwnableState o = g.board().ownable(e.tile()).orElse(null);
@@ -856,37 +879,42 @@ final class EconomyModule {
             case BankFinished e -> {
                 check(current(g, e.playerId()) && l != null && l.step() == LandingStep.BANK && l.decisionOpen(),
                         "bank finish mismatch");
-                yield g.withTurn(t.withLanding(l.decision(false)));
+                yield g.withTurn(t.withLanding(LandingRules.consume(rules, g, l, LandingResult.BANK_FINISHED)));
             }
             case DebtCreated e -> {
                 DebtState d = e.debt();
-                OwnableState o = l == null ? null : g.board().ownable(l.tile()).orElse(null);
-                check(g.debt() == null && l != null && d.debtId() == l.landingId() && current(g, d.debtor())
+                check(g.debt() == null && l != null && d.debtId() == Math.addExact(t.lastDebtId(), 1) && current(g, d.debtor())
                         && k.pendingCharge() == d.amount() && d.amount() > g.ledger().available(d.debtor())
-                        && RENT.equals(d.cause()) && o != null && java.util.Objects.equals(d.creditor(), o.owner())
+                        && d.source() != null && FeeRules.rule(d.source().kind()).cause().equals(d.cause())
+                        && FeeRules.valid(rules, g, l, d.source()) && java.util.Objects.equals(d.creditor(), d.source().creditor())
+                        && java.util.Objects.equals(d.source(), k.feeSource()) && d.source() != null
+                        && d.source().landingId() == l.landingId() && d.source().cursor() == l.cursor()
+                        && d.path() != null && d.path() == k.debtPath()
                         && d.segment() == 0 && !d.continued() && d.windowId() == 0, "debt creation mismatch");
-                yield g.withDebt(d).withTurn(t.withTrack(k.charge(0)));
+                yield g.withDebt(d).withTurn(t.debtAllocated(d.debtId()).withTrack(k.charge(0)
+                        .bankruptcy(d.path() == DebtPath.DIRECT_BANKRUPTCY ? d.debtId() : 0)));
             }
             case DebtSegmentStarted e -> {
                 DebtState d = g.debt();
                 FlowFrame top = g.flow().top().orElse(null);
-                check(d != null && d.debtId() == e.debtId() && e.segment() == d.segment() + 1 && e.segment() <= 2
+                check(d != null && d.path() == DebtPath.MANUAL && d.debtId() == e.debtId() && e.segment() == d.segment() + 1 && e.segment() <= 2
                         && top != null && top.windowId() == e.windowId() && top.kind() == FlowKind.DEBT
                         && d.debtor().equals(top.owner()), "debt segment mismatch");
                 yield g.withDebt(d.segment(e.segment(), e.windowId()));
             }
             case DebtContinued e -> {
                 DebtState d = g.debt();
-                check(d != null && d.debtId() == e.debtId() && d.segment() == 2 && !d.continued(), "debt continue mismatch");
+                check(d != null && d.path() == DebtPath.MANUAL && d.debtId() == e.debtId() && d.segment() == 2 && !d.continued(), "debt continue mismatch");
                 yield g.withDebt(d.continuedNow());
             }
             case DebtPaid e -> {
                 DebtState d = g.debt();
-                check(d != null && d.debtId() == e.debtId() && d.amount() == e.amount() && d.segment() >= 1
+                check(d != null && d.path() == DebtPath.MANUAL && d.debtId() == e.debtId() && d.amount() == e.amount() && d.segment() >= 1
                         && g.ledger().available(d.debtor()) >= e.amount(), "debt payment mismatch");
                 String to = d.creditor() == null ? Ledger.SYSTEM : d.creditor();
                 Ledger ledger = g.ledger().transfer(d.debtor(), to, e.amount(), DEBT_PAYMENT, "debt-" + d.debtId());
-                yield g.withLedger(ledger).withDebt(null);
+                GameState paid = g.withLedger(ledger).withDebt(null);
+                yield paid.withTurn(t.withLanding(LandingRules.consume(rules, paid, l, LandingResult.PAID)));
             }
             case LiquidationStarted e -> {
                 PlayerState p = g.player(e.playerId()).orElse(null);
@@ -894,6 +922,10 @@ final class EconomyModule {
                 if (e.debtId() != 0) {
                     ok &= g.debt() != null && g.debt().debtId() == e.debtId() && g.debt().debtor().equals(e.playerId())
                             && e.outcome() == LifeState.BANKRUPT;
+                    DebtState d = g.debt();
+                    ok &= d != null && k.bankruptcyDebtId() == e.debtId() && g.flow().frames().isEmpty()
+                            && (d.path() == DebtPath.DIRECT_BANKRUPTCY ? d.segment() == 0 && d.windowId() == 0
+                                : d.path() == DebtPath.MANUAL && (d.segment() == 1 || d.segment() == 2) && d.windowId() != 0);
                 } else {
                     ok &= e.outcome() == LifeState.SURRENDERED
                             && (g.debt() == null || !e.playerId().equals(g.debt().debtor()));
@@ -901,7 +933,7 @@ final class EconomyModule {
                 // 已接受的延后认输只能在认输批次中清算（E2）
                 ok &= !g.pendingSurrenders().contains(e.playerId()) || k.openBatch() != 0;
                 check(ok, "liquidation start mismatch");
-                yield g.withTurn(t.withTrack(k.liquidating(new Liquidation(e.playerId(), e.outcome(), e.debtId()))));
+                yield g.withTurn(t.withTrack(k.bankruptcy(0).liquidating(new Liquidation(e.playerId(), e.outcome(), e.debtId()))));
             }
             case PlayerEliminated e -> {
                 PlayerState p = g.player(e.playerId()).orElseThrow();
@@ -937,7 +969,8 @@ final class EconomyModule {
                         && e.paid() == Math.min(g.ledger().cash(d.debtor()), d.amount()), "debt settlement mismatch");
                 Ledger ledger = e.paid() == 0 ? g.ledger() : g.ledger().transfer(d.debtor(),
                         d.creditor() == null ? Ledger.SYSTEM : d.creditor(), e.paid(), DEBT_SETTLEMENT, "debt-" + d.debtId());
-                yield g.withLedger(ledger).withDebt(null);
+                GameState settled = g.withLedger(ledger).withDebt(null);
+                yield settled.withTurn(t.withLanding(LandingRules.consume(rules, settled, l, LandingResult.PAID)));
             }
             case CashReclaimed e -> {
                 check(liquidating(k, e.playerId()) && g.board().ownedBy(e.playerId()).isEmpty()
@@ -1026,20 +1059,17 @@ final class EconomyModule {
         TurnState t = g.turn();
         LandingState l = t.landing();
         if (l != null) {
-            expect(l.step() != null && l.landingId() >= 1 && l.landingId() <= t.lastLandingId() && l.next() == null
+            expect(LandingRules.valid(l) && l.step() != null && l.landingId() >= 1 && l.landingId() == t.lastLandingId()
+                    && t.chain() != null && l.chainId() == t.chain().chainId() && l.cursor() < l.tasks().size() && l.next() == null
                     && l.decisionOpen() == (l.step() != LandingStep.DEBT)
+                    && (l.step() == LandingStep.DEBT || l.currentTask() == l.step())
+                    && (l.step() == LandingStep.DEBT || l.pendingPayment() == 0)
                     && g.player(t.currentPlayer()).orElseThrow().position() == l.tile(), "landing invalid");
-            OwnableState o = g.board().ownable(l.tile()).orElse(null);
-            switch (l.step()) {
-                case BUY -> expect(t.stage() == TurnStage.LANDING && o != null && (o.owner() == null
-                        || o.owner().equals(t.currentPlayer()) && l.bought()), "buy step invalid");
-                case UPGRADE -> expect(t.stage() == TurnStage.LANDING && o != null && t.currentPlayer().equals(o.owner())
-                        && !o.mortgaged() && board.tiles().get(l.tile()).type() == TileType.PROPERTY, "upgrade step invalid");
-                case BANK -> expect(t.stage() == TurnStage.LANDING && board.tiles().get(l.tile()).type() == TileType.BANK,
-                        "bank step invalid");
-                case DEBT -> expect(t.stage() == TurnStage.AWAITING_FLOW && g.debt() != null
-                        && g.debt().debtId() == l.landingId() && g.debt().amount() == l.pendingPayment(), "debt step invalid");
-                case BUILD_CARD, RENT -> expect(false, l.step() + " is never a resting landing step");
+            expect(LandingRules.resting(config, g, l), l.step().name().toLowerCase(java.util.Locale.ROOT) + " step invalid");
+            expect(EventModule.validResolution(config, l), "event resolution invalid");
+            if (l.step() == LandingStep.DISCARD) {
+                expect(g.player(t.currentPlayer()).orElseThrow().hand().get(l.event().newCardIndex())
+                        == CardDeck.pick(config, l.event().cardDraw()), "new card differs from its audited receipt");
             }
         } else {
             expect(!(t.continuation() instanceof Continuation.ResumeLanding), "resume-landing continuation without a landing");
@@ -1050,6 +1080,10 @@ final class EconomyModule {
             FlowFrame top = g.flow().top().orElse(null);
             expect(d.debtor().equals(t.currentPlayer()) && g.player(d.debtor()).orElseThrow().alive()
                     && (d.creditor() == null || g.player(d.creditor()).map(PlayerState::alive).orElse(false))
+                    && d.debtId() == t.lastDebtId() && d.debtId() >= 1 && d.path() == DebtPath.MANUAL
+                    && d.source() != null && FeeRules.rule(d.source().kind()).cause().equals(d.cause())
+                    && d.source().amount() == d.amount() && java.util.Objects.equals(d.source().creditor(), d.creditor())
+                    && FeeRules.valid(config, g, l, d.source())
                     && d.amount() > 0 && g.ledger().available(d.debtor()) < d.amount()
                     && (d.segment() == 1 || d.segment() == 2) && (!d.continued() || d.segment() == 2)
                     && top != null && top.kind() == FlowKind.DEBT && top.windowId() == d.windowId()

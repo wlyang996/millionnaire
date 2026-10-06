@@ -8,7 +8,7 @@ import { Theme } from './Theme';
 import {
     advanceEvent, canClickCard, CARD_ODDS, clickCard, closeResult, EVENT_IDLE, EVENT_KIND_ODDS, eventViewMode, rollEvent, triggerEvent,
 } from './EventDraw';
-import { eventDeckRect } from './BoardLayout';
+import { axisCell, boardAxis, eventDeckRect } from './BoardLayout';
 import { buildBoard, countTypes, gridCell, gridFor, ringLength } from './BoardLayout';
 import { Clock, Countdown } from './Clock';
 import { MockStore } from './MockStore';
@@ -30,6 +30,18 @@ export function runSelfCheck(): CheckResult {
         else fails.push(name + '：期望 ' + e + '，实际 ' + a);
     };
     const ok = (name: string, cond: boolean): void => eq(name, cond, true);
+    for (const size of [30, 50] as const) {
+        const grid = gridFor(size);
+        const xs = boardAxis(grid.cols, grid.tile);
+        const ys = boardAxis(grid.rows, grid.tile);
+        ok('外围加宽不改变棋盘范围 ' + size, xs[grid.cols] === grid.cols * grid.tile && ys[grid.rows] === grid.rows * grid.tile);
+        ok('所有格子中心点击仍命中原格 ' + size, buildBoard(size).every(tile => {
+            const c = gridCell(tile.index, grid);
+            return axisCell(xs, (xs[c.col] + xs[c.col + 1]) / 2) === c.col
+                && axisCell(ys, (ys[c.row] + ys[c.row + 1]) / 2) === c.row;
+        }));
+        eq('棋盘外点击不命中 ' + size, [axisCell(xs, -1), axisCell(xs, xs[grid.cols])], [-1, -1]);
+    }
 
     // ---- 数值（requirements 第 6/7/9/8 节）----
     eq('低价租金', TIERS.LOW.rent, [100, 250, 450, 700]);
@@ -233,6 +245,13 @@ export function runSelfCheck(): CheckResult {
         }
     }
     const st = new MockStore();
+    st.setProfile({ nickname: '头像检查', avatar: 1 });
+    eq('资料保存同步房间成员头像', st.session.members[0].avatar, 1);
+    eq('资料保存同步对局玩家头像', [st.me().avatar, st.me().nickname], [1, '头像检查']);
+    st.patchScenario({ host: true });
+    eq('创建房间重建仍保留选择头像', [st.session.members[0].avatar, st.me().avatar], [1, 1]);
+    st.patchScenario({ players: 4, boardSize: 30 });
+    eq('切换人数地图仍保留选择头像', [st.me().avatar, st.me().nickname], [1, '头像检查']);
     st.patchScenario({ boardSize: 50, players: 8 });
     st.patchScenario({ boardSize: 30 });
     eq('8人切30格收敛为4人', [st.scenario.boardSize, st.game.players.length], [30, 4]);

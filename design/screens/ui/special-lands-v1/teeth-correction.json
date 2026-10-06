@@ -1,0 +1,5 @@
+{
+  "prompt": "Edit this two-screen Chinese game UI design. Keep LEFT prison page artwork layout and text unchanged. On RIGHT tiger-tooth game screen retain four participant avatars. Correct toy crocodile mouth teeth to EXACTLY EIGHT total tappable teeth: four evenly spaced teeth on UPPER jaw, four evenly spaced teeth on LOWER jaw, clearly separated large tap surfaces. No extra small teeth at mouth corners. All teeth identical white, no color clue to hidden dangerous tooth. Finger may indicate one tooth generically. Rule toothcount=participantcount*2 (4players=8teeth). Keep existing game title,10secondtimer,轮到你·点击一颗牙齿,奖励0/其余各500. Remove simulated iOS time,battery,statusbar icons at verytop of BOTH pages so safe area remains clean. Do not add newgamebuttons.",
+  "source": "raw/监狱与游戏中心-牙齿修正前-v1.png",
+  "output": "监狱-出狱判定与游戏中心-虎口拔牙-v1.png"
+}

@@ -1,0 +1,493 @@
+{
+  "date": "2026-10-06",
+  "sprites": [
+    {
+      "name": "information_background",
+      "file": "png/information_background.png",
+      "size": [
+        941,
+        1672
+      ],
+      "source": "atlases/information_background.png",
+      "source_rect": [
+        0,
+        0,
+        941,
+        1672
+      ],
+      "trim": [
+        0,
+        0,
+        941,
+        1672
+      ],
+      "cleanup": {},
+      "sha256": "9c1187726a6d93d4c11ef14c2366820be504f72f7e45d8ccf01d3ea5a653aab8"
+    },
+    {
+      "name": "information_host",
+      "file": "png/information_host.png",
+      "size": [
+        1041,
+        1021
+      ],
+      "source": "atlases/information_host.png",
+      "source_rect": [
+        0,
+        0,
+        1374,
+        1145
+      ],
+      "trim": [
+        192,
+        86,
+        1217,
+        1091
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 65,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 7863
+      },
+      "sha256": "4c8b6ed2049adb2f8366138f92b16ccaa2a8c88499238c5160a380bed98ec198"
+    },
+    {
+      "name": "shop_low",
+      "file": "png/shop_low.png",
+      "size": [
+        734,
+        494
+      ],
+      "source": "atlases/information_shops.png",
+      "source_rect": [
+        0,
+        0,
+        768,
+        544
+      ],
+      "trim": [
+        29,
+        16,
+        747,
+        494
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 25,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 20096
+      },
+      "sha256": "57aa999e1462f45b59627ac291306f1e62af0c43196f8517f80c604fd8e9d108"
+    },
+    {
+      "name": "shop_mid",
+      "file": "png/shop_mid.png",
+      "size": [
+        739,
+        476
+      ],
+      "source": "atlases/information_shops.png",
+      "source_rect": [
+        768,
+        0,
+        1536,
+        544
+      ],
+      "trim": [
+        17,
+        32,
+        740,
+        492
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 24,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 9703
+      },
+      "sha256": "046bca92d285542c39e3c460c246d7d05f9f37113c51363afd96d57f22474ecd"
+    },
+    {
+      "name": "shop_high",
+      "file": "png/shop_high.png",
+      "size": [
+        754,
+        534
+      ],
+      "source": "atlases/information_shops.png",
+      "source_rect": [
+        0,
+        480,
+        768,
+        1024
+      ],
+      "trim": [
+        17,
+        2,
+        755,
+        520
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 28,
+        "removed_components": 1,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 9023
+      },
+      "sha256": "ae31cf4c476cc69b16376a29acaa68ce14fa8cc56c9f0a8ee6ff9b6eb6ec3c64"
+    },
+    {
+      "name": "shop_station",
+      "file": "png/shop_station.png",
+      "size": [
+        759,
+        537
+      ],
+      "source": "atlases/information_shops.png",
+      "source_rect": [
+        768,
+        480,
+        1536,
+        1024
+      ],
+      "trim": [
+        14,
+        19,
+        757,
+        540
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 24,
+        "removed_components": 3,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 12586
+      },
+      "sha256": "53567da4d955226956ca69d101e915b6953c19573b880680ca5f8309fef18c4e"
+    },
+    {
+      "name": "info_cash",
+      "file": "png/info_cash.png",
+      "size": [
+        324,
+        314
+      ],
+      "source": "atlases/information_icons.png",
+      "source_rect": [
+        0,
+        0,
+        384,
+        512
+      ],
+      "trim": [
+        60,
+        164,
+        368,
+        462
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 980
+      },
+      "sha256": "c50ed64c3ec673a7131320660bd67fd79e806b264042cc8b9f919167a16ad01d"
+    },
+    {
+      "name": "info_frozen",
+      "file": "png/info_frozen.png",
+      "size": [
+        309,
+        322
+      ],
+      "source": "atlases/information_icons.png",
+      "source_rect": [
+        384,
+        0,
+        768,
+        512
+      ],
+      "trim": [
+        60,
+        164,
+        353,
+        470
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 866
+      },
+      "sha256": "a16caedabad6190c9e2288db72b591077d7145fe06372490e16625439ee2690c"
+    },
+    {
+      "name": "info_net_worth",
+      "file": "png/info_net_worth.png",
+      "size": [
+        315,
+        346
+      ],
+      "source": "atlases/information_icons.png",
+      "source_rect": [
+        768,
+        0,
+        1152,
+        512
+      ],
+      "trim": [
+        47,
+        139,
+        346,
+        469
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 2,
+        "removed_alpha_pixels": 2236
+      },
+      "sha256": "bbbc375c7399fdc7b79e87cc80b293626cb5b4a330bff257683b5ecb637f7907"
+    },
+    {
+      "name": "info_mortgaged",
+      "file": "png/info_mortgaged.png",
+      "size": [
+        278,
+        341
+      ],
+      "source": "atlases/information_icons.png",
+      "source_rect": [
+        1152,
+        0,
+        1536,
+        512
+      ],
+      "trim": [
+        69,
+        145,
+        331,
+        470
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1107
+      },
+      "sha256": "8fb5419a1dbb5bab1eb67f0f31d589d0651c725b1f20b3f584ff2beac662cb36"
+    },
+    {
+      "name": "info_unmortgaged",
+      "file": "png/info_unmortgaged.png",
+      "size": [
+        286,
+        355
+      ],
+      "source": "atlases/information_icons.png",
+      "source_rect": [
+        0,
+        512,
+        384,
+        1024
+      ],
+      "trim": [
+        58,
+        34,
+        328,
+        373
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1034
+      },
+      "sha256": "46fb483e8a7bcc4b02c59a08bd98138718c9a29d35c2ae93e909e2556113cc6f"
+    },
+    {
+      "name": "info_properties",
+      "file": "png/info_properties.png",
+      "size": [
+        393,
+        355
+      ],
+      "source": "atlases/information_icons.png",
+      "source_rect": [
+        384,
+        512,
+        768,
+        1024
+      ],
+      "trim": [
+        7,
+        35,
+        384,
+        374
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2357
+      },
+      "sha256": "0938f258ab7cbbc0894752726c033828c09cf34ba04c6d86259bfddd503844b6"
+    },
+    {
+      "name": "info_empty",
+      "file": "png/info_empty.png",
+      "size": [
+        375,
+        291
+      ],
+      "source": "atlases/information_icons.png",
+      "source_rect": [
+        768,
+        512,
+        1152,
+        1024
+      ],
+      "trim": [
+        25,
+        96,
+        384,
+        371
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 2357
+      },
+      "sha256": "e6272e05806a866c18d94046790766dfb5de7905150b7f02b1aff178fdcfdfb4"
+    },
+    {
+      "name": "info_upgrade",
+      "file": "png/info_upgrade.png",
+      "size": [
+        337,
+        301
+      ],
+      "source": "atlases/information_icons.png",
+      "source_rect": [
+        1152,
+        512,
+        1536,
+        1024
+      ],
+      "trim": [
+        36,
+        85,
+        357,
+        370
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 16,
+        "removed_components": 0,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 1242
+      },
+      "sha256": "d8992e2b2d861885bd952384b57f742fc7447c56737e13319ab9f9c8bb008689"
+    },
+    {
+      "name": "info_summary_panel",
+      "file": "png/info_summary_panel.png",
+      "size": [
+        1481,
+        288
+      ],
+      "source": "atlases/information_panels.png",
+      "source_rect": [
+        0,
+        0,
+        1619,
+        323
+      ],
+      "trim": [
+        78,
+        47,
+        1543,
+        319
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 39,
+        "removed_components": 2,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 17449
+      },
+      "sha256": "c5b2278ab58c4def107e5f2ec6ce1345e98f583a8f101bf534515f990e37e1ca"
+    },
+    {
+      "name": "info_asset_panel",
+      "file": "png/info_asset_panel.png",
+      "size": [
+        1481,
+        290
+      ],
+      "source": "atlases/information_panels.png",
+      "source_rect": [
+        0,
+        323,
+        1619,
+        647
+      ],
+      "trim": [
+        78,
+        19,
+        1543,
+        293
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 39,
+        "removed_components": 6,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 42093
+      },
+      "sha256": "f08ea6e03a270976d64164961cc9bab5f8f328be8684777a9609959b3d73c5e7"
+    },
+    {
+      "name": "info_rent_panel",
+      "file": "png/info_rent_panel.png",
+      "size": [
+        1482,
+        298
+      ],
+      "source": "atlases/information_panels.png",
+      "source_rect": [
+        0,
+        647,
+        1619,
+        971
+      ],
+      "trim": [
+        77,
+        0,
+        1543,
+        282
+      ],
+      "cleanup": {
+        "alpha_core_threshold": 16,
+        "component_min_pixels": 40,
+        "removed_components": 6,
+        "preserved_components": 1,
+        "removed_alpha_pixels": 17205
+      },
+      "sha256": "55f21656ad5cad78916b4d394feccc30aad293a613ac8a9ac49a64ad81ecaf67"
+    }
+  ],
+  "originals_preserved": true
+}

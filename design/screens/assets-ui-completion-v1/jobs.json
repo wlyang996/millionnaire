@@ -1,0 +1,323 @@
+{
+  "date": "2026-10-06",
+  "tool": "built-in image_gen",
+  "jobs": [
+    {
+      "id": "detail_cards_1",
+      "grid": [
+        2,
+        3
+      ],
+      "names": [
+        "detail_card_roadblock",
+        "detail_card_free_rent",
+        "detail_card_build",
+        "detail_card_downgrade",
+        "detail_card_fixed_move"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. A high-resolution PORTRAIT 2columns x3rows atlas. Every card occupies ONEcell, portrait gold rounded frame, rich fullcolor river-town interior and large centralsymbol, cream BLANK bottom captionband for runtime title. Do not draw any labels or cardtext. Same card frame size/orientation and subtleborderweight, frontface no perspective tilt. Leave last cells empty. Rowmajor subjects: orange white roadblock barrier; blue shield with coin and rent-protection; house with green upward arrow and builder hammer; house and red downward arrow; large red location pin on colorful board tiles. Card frames distinctfromtinyhandcards, large detailedprint-qualityart matching righttwo goldcards ofreference."
+    },
+    {
+      "id": "detail_cards_2",
+      "grid": [
+        2,
+        3
+      ],
+      "names": [
+        "detail_card_jail_release",
+        "detail_card_auction",
+        "detail_card_trade",
+        "detail_card_refuse_purchase",
+        "detail_card_house_protection"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. A high-resolution PORTRAIT 2columns x3rows atlas. Every card occupies ONEcell, portrait gold rounded frame, rich fullcolor river-town interior and large centralsymbol, cream BLANK bottom captionband for runtime title. Do not draw any labels or cardtext. Same card frame size/orientation and subtleborderweight, frontface no perspective tilt. Leave last cells empty. Rowmajor subjects: gold jail key with open prison bars; wooden auction gavel; two house deeds exchanged with circular arrows; red shield blocking a house deal; blue shield in front of redroof house. Card frames distinctfromtinyhandcards, large detailedprint-qualityart matching righttwo goldcards ofreference."
+    },
+    {
+      "id": "detail_cards_3",
+      "grid": [
+        2,
+        3
+      ],
+      "names": [
+        "detail_card_query",
+        "detail_card_forced_purchase",
+        "detail_card_demolish",
+        "detail_card_clear_land"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. A high-resolution PORTRAIT 2columns x3rows atlas. Every card occupies ONEcell, portrait gold rounded frame, rich fullcolor river-town interior and large centralsymbol, cream BLANK bottom captionband for runtime title. Do not draw any labels or cardtext. Same card frame size/orientation and subtleborderweight, frontface no perspective tilt. Leave last cells empty. Rowmajor subjects: magnifying glass over house deed; house deed and goldcoins captured with hand; house upperfloors removed by hammer, land remains; broom clearing foundations to empty plot. Card frames distinctfromtinyhandcards, large detailedprint-qualityart matching righttwo goldcards ofreference."
+    },
+    {
+      "id": "card_detail_background",
+      "grid": [
+        1,
+        1
+      ],
+      "names": [
+        "card_detail_background"
+      ],
+      "alpha": false,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "One portrait9:16 standalone river-town PAGE BACKGROUND matching righttwo carddetail pages ofreference. No cards, no characters, no panels, no text or controls. Blue sky upperquarter, pastelhouses trees bridge river alongsides, softlyblurred lowercenterwithsubtlegrassyforeground. Quiet center for live goldcard and rulepanels. Highresolution."
+    },
+    {
+      "id": "detail_rules",
+      "grid": [
+        1,
+        3
+      ],
+      "names": [
+        "card_detail_rules_5",
+        "card_detail_rules_2",
+        "card_detail_rules_3"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. Portrait atlas ONEcolumn THREErows. Threeblankwide cream rounded RULE PANELS. Each a horizontal rounded rectangle ~1.8wide:1tall withsoftivoryfill thinwarmborder andno glossybevel. Row1 exactly4 thin horizontal separators creating5 equalrows. Row2 exactly1 separator making2rows. Row3 exactly2separators making3rows. NO icons orwords. Largeconsistentleft/rightmargins separatorlines. Whole panels fullyinside eachcell."
+    },
+    {
+      "id": "flat_buttons",
+      "grid": [
+        2,
+        3
+      ],
+      "names": [
+        "button_flat_yellow",
+        "button_flat_blue",
+        "button_flat_green",
+        "button_flat_ivory",
+        "button_flat_red",
+        "button_flat_gray"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. Exactly2columns3rows of SIX FLAT blank capsule button BACKPLATES. Rowmajor yellowgold,skyblue,green,ivory,red,neutralgray. Everybuttonsamewide horizontalratio3.8:1, symmetricalroundends, minimal2pixelborder andtinybottomshadow, matteflatfill, NO gloss NO reflection NO specularhighlights NO inflated3D bevel NO leaves. No text/icon. Largegutters."
+    },
+    {
+      "id": "detail_chrome",
+      "grid": [
+        2,
+        3
+      ],
+      "names": [
+        "card_detail_title",
+        "card_detail_back",
+        "icon_start_flag",
+        "icon_active_card",
+        "icon_response_lightning",
+        "rule_separator"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. 2columns3rows atlas, rowmajor: blankwide paleivorycapsule titlebackplate; blankcircularivorybackbuttondisk WITHOUT arrow; small blackwhite checkeredflag onshortpole; blue shield with tiny goldcard symbol for active-card-use; boldgold lightningbolt forresponse; one thin warmbeige horizontaldividerline (make thickness8px) asstandalonepiece. No words, no gradientspeckles. MattecleanUI."
+    },
+    {
+      "id": "chat_skins",
+      "grid": [
+        2,
+        3
+      ],
+      "names": [
+        "chat_panel",
+        "chat_bubble_white",
+        "chat_bubble_blue",
+        "chat_bubble_pink",
+        "chat_quick_phrase",
+        "chat_input_panel"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. 2columns3rows atlas rowmajor. ONE largeblank creamchatpanel withroundedcorners; whitehorizontal speechbubble withlefttail; lightbluehorizontal speechbubble withlefttail; lightpinkhorizontal speechbubble withlefttail; blankivoryhorizontal quickphrasecapsule; blanksoftbluehorizontal messageinputcapsule. Wideoutlines for9slice,cornersminimal, NO text NO avatars NO chatmessages. Flatfillsoftedge matchingrivergame."
+    },
+    {
+      "id": "information_hosts",
+      "grid": [
+        2,
+        4
+      ],
+      "names": [
+        "information_host_tangtang",
+        "information_host_keke",
+        "information_host_ajie",
+        "information_host_naicha",
+        "information_host_akai",
+        "information_host_yuanyuan",
+        "information_host_doudou",
+        "information_host_maomao"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/assets-supplement-v1/previews/pawns.jpg"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. 2columns4rows of EIGHT waist-up character illustrations. EXACT same character identities outfits face/hair/skin asreference eightpawns rowmajor. Each friendlywaistupwave orpresentinghands withoutcoin/props/platform. Tangtang bluehoodiebrownhairedboy; Keke yellowflowergirl; Ajiegreenhatglassesboy; Naichapinkhatgirl; Akai blackhairblackwhitehoodieboy; Yuanyuan purplehairpurpleoutfitgirl; Doudou tanhatyellowoutfitboy; Maomao blacklonghairwhiteblueuniformgirl. No circularframe. Preservehairs andhands withgenerousgutters."
+    },
+    {
+      "id": "pawn_motion_1",
+      "grid": [
+        4,
+        4
+      ],
+      "names": [
+        "pawn_tangtang_ready",
+        "pawn_tangtang_crouch",
+        "pawn_tangtang_airborne",
+        "pawn_tangtang_land",
+        "pawn_keke_ready",
+        "pawn_keke_crouch",
+        "pawn_keke_airborne",
+        "pawn_keke_land",
+        "pawn_ajie_ready",
+        "pawn_ajie_crouch",
+        "pawn_ajie_airborne",
+        "pawn_ajie_land",
+        "pawn_naicha_ready",
+        "pawn_naicha_crouch",
+        "pawn_naicha_airborne",
+        "pawn_naicha_land"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/assets-supplement-v1/previews/pawns.jpg"
+      ],
+      "motion": true,
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. 4columns4rows SPRITE ANIMATION sheet. ExactlyFOUR characters (onecharacterperrow): tangtang, keke, ajie, naicha. Preserve reference identity andoutfitforeach. Everyrow FOURposes lefttoright: standingready, kneesbentcrouch, midairsmallhop kneesliftedarmsbalanced, landingkneesbent. Fullbody SAMEcamera3quarterFRONT SAMEheadsize SAMEscale allframes. Feetbaselinealigned exceptairborne risesonlyslightly; fixedcellcenter. Remove coloredcircularpawnplatforms completely, no ground shadows,no motionlines,no backgrounds. Characters are hoppingoneboardtile, notrunning orrotating. Completehandsfeetunclipped. Strongcleanconsistency between fourframes."
+    },
+    {
+      "id": "pawn_motion_2",
+      "grid": [
+        4,
+        4
+      ],
+      "names": [
+        "pawn_akai_ready",
+        "pawn_akai_crouch",
+        "pawn_akai_airborne",
+        "pawn_akai_land",
+        "pawn_yuanyuan_ready",
+        "pawn_yuanyuan_crouch",
+        "pawn_yuanyuan_airborne",
+        "pawn_yuanyuan_land",
+        "pawn_doudou_ready",
+        "pawn_doudou_crouch",
+        "pawn_doudou_airborne",
+        "pawn_doudou_land",
+        "pawn_maomao_ready",
+        "pawn_maomao_crouch",
+        "pawn_maomao_airborne",
+        "pawn_maomao_land"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/assets-supplement-v1/previews/pawns.jpg"
+      ],
+      "motion": true,
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. 4columns4rows SPRITE ANIMATION sheet. ExactlyFOUR characters (onecharacterperrow): akai, yuanyuan, doudou, maomao. Preserve reference identity andoutfitforeach. Everyrow FOURposes lefttoright: standingready, kneesbentcrouch, midairsmallhop kneesliftedarmsbalanced, landingkneesbent. Fullbody SAMEcamera3quarterFRONT SAMEheadsize SAMEscale allframes. Feetbaselinealigned exceptairborne risesonlyslightly; fixedcellcenter. Remove coloredcircularpawnplatforms completely, no ground shadows,no motionlines,no backgrounds. Characters are hoppingoneboardtile, notrunning orrotating. Completehandsfeetunclipped. Strongcleanconsistency between fourframes."
+    },
+    {
+      "id": "special_scenes_1",
+      "grid": [
+        3,
+        1
+      ],
+      "names": [
+        "scene_bank",
+        "scene_jail",
+        "scene_game_center"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. WIDEatlas THREEcolumns ONErow: standalone smalltownBANKfrontwithgoldvaultdesk; friendly stone JAILwatchhousewithbars withoutpeople; GAMECENTER fairgroundboothwithtoy-green-crocodile sign withoutletters. Isometricvignette ongroundplinth withtreesminimal, eachsame scale. NOUI controls no text. Transparentoutsideeachvignette. Bankstonecreamarchitecture, jailnonviolent, gameno gamblingmachines. Eachhorizontallanddetailhero."
+    },
+    {
+      "id": "special_scenes_2",
+      "grid": [
+        3,
+        1
+      ],
+      "names": [
+        "scene_rest",
+        "scene_start",
+        "scene_station"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. WIDEatlas THREEcolumns ONErow: peacefulriverbenchgazebo RESTAREA; welcomingstonebridgewithwoodroofgateway andgreenSTARTflag(NOwords) STARTENTRANCE; RIVERSTATIONbuildingwithsmalltrain STATION. Isometriccompletehero vignette ongroundplinth rivergreenery, transparentoutside, nolabels orpeople. No detachedordinaryhouse asstart. Largecleansilhouettes."
+    },
+    {
+      "id": "brand_logo",
+      "grid": [
+        1,
+        1
+      ],
+      "names": [
+        "brand_logo"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/03-登录资料-本局结算-破产观战.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. ONE complete colorful FRIENDS BOARDGAME brandingLOGO matching LEFTloginreference. ONLY exactChinese text 好友桌游 inbig playfulgoldyellowandblue dimensionallettering withdarkblueoutline, smallroofandgreenleaves behind, ONEwhite diebelow. Notwoodsign. Truealpha outside. No other words,slogans,captions. All4Chinesecharacters crisp andcorrect."
+    },
+    {
+      "id": "lobby_friends",
+      "grid": [
+        1,
+        1
+      ],
+      "names": [
+        "lobby_friends"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/assets-supplement-v1/previews/pawns.jpg"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. ONE wide transparent cutout groupillustration FOUR friends behind tabletop miniaturetown board. Tangtangbluehoodie,Kekeyellowgirl,Ajiegreenhatglasses,Naichapinkhatgirl EXACTreferenceidentity. Happyplayingboardgame, handsvisible, miniaturecottages and ONEdie ontablesurface. No scenebackground,no text,no buttons, no titles, no shape frame. Entiretablegroupcontained, cleanalphasilhouette for overlay onexistingriverbackground."
+    },
+    {
+      "id": "settlement_art",
+      "grid": [
+        2,
+        3
+      ],
+      "names": [
+        "result_trophy",
+        "result_laurel",
+        "result_plaque",
+        "minigame_title",
+        "result_reward_panel",
+        "result_zero_panel"
+      ],
+      "alpha": true,
+      "refs": [
+        "F:/work/millionnaire/design/screens/03-登录资料-本局结算-破产观战.png",
+        "F:/work/millionnaire/design/screens/16-虎口拔牙结果-定点移动与房屋保护详情.png"
+      ],
+      "prompt": "Production bitmap assets for the established warm 3D chibi Chinese river-town board game. Match reference STYLE only. Actual transparent alpha outside each asset, no checkerboard, no white backdrop, no watermark. NO TEXT, NO LABELS, NO NUMBERS except explicitly requested logo. NO whole UI screenshots. No scattered sparkles outside silhouettes. Separate objects with large clean transparent gutters, fully contained in exact equal grid cells. 2columns3rows atlas of SIX independentresultpageassets: goldcup trophy withtwohandles; matchinggoldlaurelwreathsidepair withtransparentcenter; BLUE blankribbonresulttitleplaque; woodleaf framed BLANK minigametitleplaque; paleBLUE blankroundedrewardsummarycard; paleIVORY blankroundedzero-rewardsummarycard. NO TEXT noamounts nofaces. Cupandwreathcleansilhouette, panelinsideflatblankforruntimetext. Rowmajorexact."
+    }
+  ]
+}

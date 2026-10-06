@@ -214,7 +214,7 @@ class KernelTest {
 
     @Test
     void scriptedRandomChecksPointBoundAndConsumption() {
-        ScriptedRandom script = new ScriptedRandom(List.of(
+        ScriptedRandom script = ScriptedRandom.withEventCards(List.of(
                 ScriptedRandom.step(DrawPoint.MOVE_DIE, 6, 0),
                 ScriptedRandom.step(DrawPoint.MOVE_DIE, 6, 5)));
         Engine<DemoState> scripted = new Engine<>(RuleConfigs.defaultV1(), DemoDomain.INSTANCE, script);

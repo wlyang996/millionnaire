@@ -68,6 +68,8 @@ class M2ClosedLoopTest {
         switch (g.turn().stage()) {
             case JAIL_DECISION, PRE_ROLL -> t.send(at, new GameCommand.RollDice(cur, w.windowId()));
             case LANDING -> t.send(at, switch (g.turn().landing().step()) {
+                case EVENT -> new GameCommand.DrawEventCard(cur, w.windowId());
+                case DISCARD -> new GameCommand.DiscardCard(cur, w.windowId(), g.turn().landing().event().newCardIndex());
                 case BUY -> new GameCommand.BuyProperty(cur, w.windowId());
                 case UPGRADE -> new GameCommand.UpgradeProperty(cur, w.windowId());
                 case BANK -> new GameCommand.FinishBank(cur, w.windowId());

@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-06",
+  "reference": [
+    "F:/work/millionnaire/design/screens/18-资产总览-格子详情-房间号键盘-候选.png"
+  ],
+  "jobs": [
+    {
+      "id": "information_background",
+      "grid": [
+        1,
+        1
+      ],
+      "names": [
+        "information_background"
+      ],
+      "alpha": false,
+      "prompt": "Production game bitmap art matching the approved Chinese cheerful riverside-town 2.5D game mockup reference. Warm ivory,warm sun,blue sky,greenery,soft polished illustration,NOT hyperreal. Reference is visualstyle only, do NOT copy UI/text/charactersunlessrequested. NO TEXT/LETTERS/NUMBERS/WATERMARKS anywhere. ONE portrait fullbleed 9:16 clean pagebackground. Beautiful calm riverside smalltown withstonebridge andpastelhouses andtrees atuppermid horizon,blue skyatupperquarter,light blurredtown towardlowerhalf withsoftgrassforeground. No dice,no mapring,no cards,no panel,no characters. Scene is background for assetoverviewandlanddetail. Keeplargequietcenter forlivecards, detail mostlyalongedgesandupperhorizon. Highresolution."
+    },
+    {
+      "id": "information_host",
+      "grid": [
+        1,
+        1
+      ],
+      "names": [
+        "information_host"
+      ],
+      "alpha": true,
+      "prompt": "Production game bitmap art matching the approved Chinese cheerful riverside-town 2.5D game mockup reference. Warm ivory,warm sun,blue sky,greenery,soft polished illustration,NOT hyperreal. Reference is visualstyle only, do NOT copy UI/text/charactersunlessrequested. NO TEXT/LETTERS/NUMBERS/WATERMARKS anywhere. ONE isolated waist-up cute bluehoodie brownhairedboy 糖糖 consistentwithreference,leftarmrestingforward atbottomrightcheerfulwave,lookingtowardsviewer. Bodyfacingfront. No coin,no text,no backdrop. Fullyvisible headhairandarms and waist, transparentBACKGROUND withgenerousclear margins. Cleanfullytransparentoutercanvas. Needs fitaboveassetcardasheaderillustration. Not fullbodypawn, no circularavatarframe."
+    },
+    {
+      "id": "information_shops",
+      "grid": [
+        2,
+        2
+      ],
+      "names": [
+        "shop_low",
+        "shop_mid",
+        "shop_high",
+        "shop_station"
+      ],
+      "alpha": true,
+      "prompt": "Production game bitmap art matching the approved Chinese cheerful riverside-town 2.5D game mockup reference. Warm ivory,warm sun,blue sky,greenery,soft polished illustration,NOT hyperreal. Reference is visualstyle only, do NOT copy UI/text/charactersunlessrequested. NO TEXT/LETTERS/NUMBERS/WATERMARKS anywhere. FOUR isolated scenic SHOP CLOSEUP illustrations equallyspaced 2columns2rows samecameraangle,sameartscale, eachinsideitsowncompletecell withgeneroustransparentgap. TopLeft cozycreamblueawningneighbourhoodshop(redroof) withflowers,lamp andsmallstonepaving, topRight rusticwoodcarpenterstore withtimber andgreenery,no text, BottomLeft elegantredroofthreefloor bakery/cafe withstripedawning andflowers, BottomRight friendly blue-roof trainstationbuilding withshorttrack,pottedtrees,roundblankclock,nolegend. Eachincludes smallgroundplot andgreensaroundbuilding,softtopdownfrontcamera butmostlyfrontshowingdoorandawning. NO UIframe,text,people,mapdice. Complete roofs, no clipping, genuinelytransparentoutsideeachindependentscene."
+    },
+    {
+      "id": "information_icons",
+      "grid": [
+        4,
+        2
+      ],
+      "names": [
+        "info_cash",
+        "info_frozen",
+        "info_net_worth",
+        "info_mortgaged",
+        "info_unmortgaged",
+        "info_properties",
+        "info_empty",
+        "info_upgrade"
+      ],
+      "alpha": true,
+      "prompt": "Production game bitmap art matching the approved Chinese cheerful riverside-town 2.5D game mockup reference. Warm ivory,warm sun,blue sky,greenery,soft polished illustration,NOT hyperreal. Reference is visualstyle only, do NOT copy UI/text/charactersunlessrequested. NO TEXT/LETTERS/NUMBERS/WATERMARKS anywhere. 8 standalonecharmingicons in4columns2rows withwidegaps,eachcompleteisolatedtransparent. Row1:stackofgoldcoinswithoutwrittenmoneylabels; luminousblueICE CUBE withfacets; GREEN threeascendingbarswithupwardarrow(NetWorth); RED closedpadlock(no badge/text). Row2:GREEN openpadlock; smallwarmredroofhouse(sectionicon); emptygrassplotwithhouseoutlinedemptyspace(noquestion/text) for noownedproperties; GOLD smallhammer besideupwardsarrow(upgradecost). Samepolishedsoftbevel style, clear silhouette smallscreen. No lettersnumerals, noshadowbackgroundplates, cleantransparentcanvas."
+    },
+    {
+      "id": "information_panels",
+      "grid": [
+        1,
+        3
+      ],
+      "names": [
+        "info_summary_panel",
+        "info_asset_panel",
+        "info_rent_panel"
+      ],
+      "alpha": true,
+      "prompt": "Production game bitmap art matching the approved Chinese cheerful riverside-town 2.5D game mockup reference. Warm ivory,warm sun,blue sky,greenery,soft polished illustration,NOT hyperreal. Reference is visualstyle only, do NOT copy UI/text/charactersunlessrequested. NO TEXT/LETTERS/NUMBERS/WATERMARKS anywhere. THREE blank horizontalroundedrectangle UI panelBOTTOM SKINS stacked vertically in ONECOLUMN THREE ROWS equallyspacedwithwidecleartransparentgaps,eachsamewidth androughly3:1aspectratio. Top creamyivorysummarycardwithfaintwarmgoldrimandgentlebottomshadow. Middle verylightivoryassetlistcardwiththinwarmbeigerim andsubtlesoftshadow. Bottom warmerivoryrenttablecardwithslightlydarkercreamrim. Flatquietinteriors,noicons,nocharacters,noTEXT,no separators, onlyfinishedpanelbackgroundskins. Fullytransparentoutsideallthreewholepanels, NO backgroundgradient."
+    }
+  ]
+}

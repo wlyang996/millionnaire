@@ -2,6 +2,7 @@
 import { Graphics } from 'cc';
 import { CardType } from '../core/Models';
 import { Theme } from '../core/Theme';
+import { art, CARD_ART } from './Art';
 import { fillCircle, fillPoly, fillRR, line, strokeCircle, strokeRR } from './Kit';
 
 const C = Theme.c;
@@ -12,6 +13,17 @@ export function drawHouse(g: Graphics, cx: number, cy: number, s: number, roof: 
     fillRR(g, cx - s * 0.1, cy + s * 0.2, s * 0.2, s * 0.25, 3, roof);
 }
 
+/** Trophy accent used by the lobby history entrance and settlement banner. */
+export function drawTrophy(g: Graphics, cx: number, cy: number, s: number): void {
+    strokeCircle(g, cx - s * 0.27, cy - s * 0.12, s * 0.2, C.yellowDark, s * 0.08);
+    strokeCircle(g, cx + s * 0.27, cy - s * 0.12, s * 0.2, C.yellowDark, s * 0.08);
+    fillRR(g, cx - s * 0.3, cy - s * 0.4, s * 0.6, s * 0.58, s * 0.2, C.yellowDark);
+    fillRR(g, cx - s * 0.25, cy - s * 0.37, s * 0.5, s * 0.5, s * 0.16, C.yellow);
+    fillRR(g, cx - s * 0.06, cy + s * 0.1, s * 0.12, s * 0.24, 3, C.yellowDark);
+    fillRR(g, cx - s * 0.25, cy + s * 0.3, s * 0.5, s * 0.1, 3, C.yellowDark);
+    line(g, cx - s * 0.16, cy - s * 0.29, cx - s * 0.16, cy - s * 0.05, '#FFF6B8', s * 0.07);
+}
+
 function shield(g: Graphics, cx: number, cy: number, s: number, color: string): void {
     fillPoly(g, [[cx - s * 0.42, cy - s * 0.4], [cx, cy - s * 0.52], [cx + s * 0.42, cy - s * 0.4],
         [cx + s * 0.4, cy + s * 0.1], [cx, cy + s * 0.52], [cx - s * 0.4, cy + s * 0.1]], color);
@@ -19,6 +31,7 @@ function shield(g: Graphics, cx: number, cy: number, s: number, color: string): 
 
 /** 画道具图标，s 为图标外框边长。 */
 export function drawCardIcon(g: Graphics, type: CardType, cx: number, cy: number, s: number): void {
+    if (art(g.node, CARD_ART[type], cx - s / 2, cy - s / 2, s, s)) return;
     switch (type) {
         case 'ROADBLOCK':
             fillRR(g, cx - s * 0.45, cy - s * 0.18, s * 0.9, s * 0.36, 6, C.white);
@@ -93,6 +106,7 @@ export function drawCardIcon(g: Graphics, type: CardType, cx: number, cy: number
 }
 
 export function drawMic(g: Graphics, cx: number, cy: number, s: number, color: string): void {
+    if (art(g.node, 'icon_mic', cx - s / 2, cy - s / 2, s, s)) return;
     fillRR(g, cx - s * 0.16, cy - s * 0.4, s * 0.32, s * 0.56, s * 0.16, color);
     line(g, cx - s * 0.28, cy - s * 0.02, cx - s * 0.28, cy + s * 0.06, color, 4);
     line(g, cx + s * 0.28, cy - s * 0.02, cx + s * 0.28, cy + s * 0.06, color, 4);
@@ -102,12 +116,14 @@ export function drawMic(g: Graphics, cx: number, cy: number, s: number, color: s
 }
 
 export function drawChat(g: Graphics, cx: number, cy: number, s: number, color: string): void {
+    if (art(g.node, 'icon_chat', cx - s / 2, cy - s / 2, s, s)) return;
     fillRR(g, cx - s * 0.4, cy - s * 0.32, s * 0.8, s * 0.55, s * 0.18, color);
     fillPoly(g, [[cx - s * 0.2, cy + s * 0.2], [cx - s * 0.28, cy + s * 0.44], [cx, cy + s * 0.2]], color);
     for (let i = -1; i <= 1; i++) fillCircle(g, cx + i * s * 0.2, cy - s * 0.05, s * 0.05, C.white);
 }
 
 export function drawBack(g: Graphics, cx: number, cy: number, s: number, color: string): void {
+    if (art(g.node, 'icon_back', cx - s / 2, cy - s / 2, s, s)) return;
     line(g, cx + s * 0.12, cy - s * 0.28, cx - s * 0.16, cy, color, 6);
     line(g, cx - s * 0.16, cy, cx + s * 0.12, cy + s * 0.28, color, 6);
 }
@@ -118,12 +134,14 @@ export function drawCheck(g: Graphics, cx: number, cy: number, s: number, color:
 }
 
 export function drawCoin(g: Graphics, cx: number, cy: number, r: number): void {
+    if (art(g.node, 'icon_coin', cx - r, cy - r, r * 2, r * 2)) return;
     fillCircle(g, cx, cy, r, C.yellowDark);
     fillCircle(g, cx, cy - r * 0.06, r * 0.9, C.yellow);
     strokeCircle(g, cx, cy - r * 0.06, r * 0.6, '#FFFFFF99', Math.max(2, r * 0.18));
 }
 
 export function drawCopy(g: Graphics, cx: number, cy: number, s: number, color: string): void {
+    if (art(g.node, 'icon_copy', cx - s / 2, cy - s / 2, s, s)) return;
     strokeRR(g, cx - s * 0.3, cy - s * 0.3, s * 0.45, s * 0.5, 4, color, 3);
     strokeRR(g, cx - s * 0.12, cy - s * 0.12, s * 0.45, s * 0.5, 4, color, 3);
 }

@@ -2,7 +2,7 @@
 import { Node } from 'cc';
 import { SECONDS } from '../core/Rules';
 import { Theme } from '../core/Theme';
-import { ghostButton, primaryButton } from '../ui/Buttons';
+import { secondaryButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { drawCardIcon } from '../ui/Icons';
 import { fillRR, gfx, mk, text } from '../ui/Kit';
@@ -41,7 +41,7 @@ export class RentPopup extends Popup {
             Toast.show('已使用免租卡，本次租金免除');
             this.close();
         }, Theme.font.lg);
-        ghostButton(p, '不使用', 40, 656, w - 80, 76, () => this.pay(), Theme.font.md);
+        secondaryButton(p, '不使用', 40, 656, w - 80, 76, () => this.pay(), Theme.font.md);
         text(p, '超时按"不使用"处理', 40, 732, w - 80, 26, Theme.font.xs, Theme.c.inkFaint);
     }
 

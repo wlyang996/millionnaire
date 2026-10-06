@@ -14,6 +14,7 @@ import com.millionnaire.engine.core.event.RejectionCode;
 import com.millionnaire.engine.core.state.DomainState;
 import com.millionnaire.engine.core.state.EngineState;
 import com.millionnaire.engine.core.state.FlowFrame;
+import com.millionnaire.engine.core.state.FlowOrigin;
 import com.millionnaire.engine.core.state.FlowKind;
 import com.millionnaire.engine.core.state.FlowRequest;
 import com.millionnaire.engine.core.state.FlowState;
@@ -86,12 +87,29 @@ public final class FlowCoordinator {
     /** 开启窗口（暂停当前栈顶）。违反嵌套规则属于模块程序错误。 */
     public static <S extends DomainState> Opened open(DecisionContext<S> ctx, Function<S, FlowState> flow, FlowKind kind,
                                                       String owner, long leadMs, long durationMs, String resumeTag) {
+        return open(ctx, flow, kind, owner, leadMs, durationMs, resumeTag, null);
+    }
+
+    /** 来源由所属模块核验；队列来源只能从尚未消费的出队凭据生成。 */
+    public static <S extends DomainState> Opened open(DecisionContext<S> ctx, Function<S, FlowState> flow, FlowKind kind,
+                                                      String owner, long leadMs, long durationMs, String resumeTag,
+                                                      FlowOrigin origin) {
         FlowState f = flow.apply(ctx.state());
+        if (kind.queued()) {
+            FlowRequest r = f.pendingStart();
+            if (r == null || !atSafePoint(f) || r.kind() != kind || !r.applicant().equals(owner)) {
+                throw new IllegalStateException("queued flow requires a dequeued request at a safe point");
+            }
+            origin = new FlowOrigin(FlowOrigin.Kind.QUEUED, f.safePointNo(), r.requestId(), -1, r.applicant());
+        } else if (f.pendingStart() != null) {
+            throw new IllegalStateException("dequeued request must be consumed by its own window");
+        }
         String error = nestingError(f, kind);
         if (error != null) {
             throw new IllegalStateException(error);
         }
         if (durationMs == 0) {
+            if (kind.queued()) { throw new IllegalStateException("queued flow requires a positive window duration"); }
             return new Opened.Exhausted();
         }
         Optional<FlowFrame> top = f.top();
@@ -102,7 +120,7 @@ public final class FlowCoordinator {
         long id = f.nextWindowId();
         Window w = Window.open(id, ctx.now(), leadMs, durationMs);
         long taskId = ctx.schedule(w.deadline(), taskKind(kind), id);
-        ctx.emit(new WindowOpened(new FlowFrame(id, kind, owner, w, taskId, resumeTag)));
+        ctx.emit(new WindowOpened(new FlowFrame(id, kind, owner, w, taskId, resumeTag, origin)));
         return new Opened.Window(id);
     }
 
@@ -225,22 +243,30 @@ public final class FlowCoordinator {
         return switch (event) {
             case WindowOpened e -> {
                 FlowFrame fr = e.frame();
+                if (fr.kind().queued()) {
+                    FlowRequest r = f.pendingStart();
+                    check(r != null && f.frames().isEmpty() && r.kind() == fr.kind() && r.applicant().equals(fr.owner())
+                            && new FlowOrigin(FlowOrigin.Kind.QUEUED, f.safePointNo(), r.requestId(), -1, r.applicant()).equals(fr.origin()),
+                            "queued window without matching dequeued request/safe point");
+                } else {
+                    check(f.pendingStart() == null, "dequeued request consumed by another flow");
+                }
                 check(fr.windowId() == f.nextWindowId(), "window id must be allocated in order");
                 check(nestingError(f, fr.kind()) == null, "illegal nesting: " + nestingError(f, fr.kind()));
                 check(f.top().map(t -> t.window().paused()).orElse(true), "parent window must be paused first");
                 check(!fr.window().paused() && fr.window().windowId() == fr.windowId(), "new window must be running");
-                yield f.withFrames(Immutable.append(f.frames(), fr)).withNextWindowId(Math.addExact(fr.windowId(), 1));
+                yield f.withFrames(Immutable.append(f.frames(), fr)).withNextWindowId(Math.addExact(fr.windowId(), 1)).withPendingStart(null);
             }
             case WindowPaused e -> {
                 FlowFrame t = top(f, e.windowId());
-                yield replaceTop(f, new FlowFrame(t.windowId(), t.kind(), t.owner(), t.window().pause(e.at()), 0, t.resumeTag()));
+                yield replaceTop(f, new FlowFrame(t.windowId(), t.kind(), t.owner(), t.window().pause(e.at()), 0, t.resumeTag(), t.origin()));
             }
             case WindowResumed e -> {
                 FlowFrame t = top(f, e.windowId());
                 if (!(t.window().resume(e.at()) instanceof Window.Resumption.Reopened r)) {
                     throw new IllegalStateException("exhausted window cannot be resumed");
                 }
-                yield replaceTop(f, new FlowFrame(t.windowId(), t.kind(), t.owner(), r.window(), e.deadlineTaskId(), t.resumeTag()));
+                yield replaceTop(f, new FlowFrame(t.windowId(), t.kind(), t.owner(), r.window(), e.deadlineTaskId(), t.resumeTag(), t.origin()));
             }
             case WindowClosed e -> {
                 top(f, e.windowId());
@@ -253,7 +279,7 @@ public final class FlowCoordinator {
                 yield f.withQueue(Immutable.append(f.queue(), r)).withNextRequestId(Math.addExact(r.requestId(), 1));
             }
             case SafePointEntered e -> {
-                check(e.safePointNo() == f.safePointNo() + 1 && f.frames().isEmpty(), "safe points are numbered in order");
+                check(f.pendingStart() == null && e.safePointNo() == f.safePointNo() + 1 && f.frames().isEmpty(), "safe points are numbered in order");
                 yield f.withSafePoint(e.safePointNo(), f.startedAtSafePoint());
             }
             case FlowRequestCancelled e -> {
@@ -261,10 +287,11 @@ public final class FlowCoordinator {
                 yield f.withQueue(f.queue().stream().filter(q -> q.requestId() != e.requestId()).toList());
             }
             case FlowDequeued e -> {
-                check(f.frames().isEmpty() && !f.queue().isEmpty() && f.queue().get(0).requestId() == e.requestId(),
+                check(f.pendingStart() == null && f.frames().isEmpty() && !f.queue().isEmpty() && f.queue().get(0).requestId() == e.requestId(),
                         "only the queue head can start, and only at a safe point");
                 check(f.safePointNo() > f.startedAtSafePoint(), "at most one flow may start per safe point");
-                yield f.withQueue(f.queue().subList(1, f.queue().size())).withSafePoint(f.safePointNo(), f.safePointNo());
+                yield f.withQueue(f.queue().subList(1, f.queue().size())).withSafePoint(f.safePointNo(), f.safePointNo())
+                        .withPendingStart(f.queue().get(0));
             }
         };
     }
@@ -275,6 +302,7 @@ public final class FlowCoordinator {
      */
     public static List<TaskClaim> validate(EngineState engine, FlowState f) {
         expect(f != null && f.frames() != null && f.queue() != null, "flow fields missing");
+        expect(f.pendingStart() == null, "unconsumed dequeued request at a step boundary");
         expect(f.nextWindowId() >= 1 && f.nextWindowId() < Long.MAX_VALUE
                 && f.nextRequestId() >= 1 && f.nextRequestId() < Long.MAX_VALUE, "flow counters out of range");
         expect(f.safePointNo() >= 0 && f.startedAtSafePoint() >= 0 && f.startedAtSafePoint() <= f.safePointNo(),

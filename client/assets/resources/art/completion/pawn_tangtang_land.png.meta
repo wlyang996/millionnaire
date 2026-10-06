@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "67b23afd-65b9-47aa-8cc9-105c0961eafa",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "67b23afd-65b9-47aa-8cc9-105c0961eafa@6c48a",
+      "displayName": "pawn_tangtang_land",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "67b23afd-65b9-47aa-8cc9-105c0961eafa",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "67b23afd-65b9-47aa-8cc9-105c0961eafa@f9941",
+      "displayName": "pawn_tangtang_land",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 5,
+        "offsetY": -21,
+        "trimX": 76,
+        "trimY": 50,
+        "width": 213,
+        "height": 248,
+        "rawWidth": 355,
+        "rawHeight": 306,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -106.5,
+            -124,
+            0,
+            106.5,
+            -124,
+            0,
+            -106.5,
+            124,
+            0,
+            106.5,
+            124,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            76,
+            256,
+            289,
+            256,
+            76,
+            8,
+            289,
+            8
+          ],
+          "nuv": [
+            0.2140845070422535,
+            0.026143790849673203,
+            0.8140845070422535,
+            0.026143790849673203,
+            0.2140845070422535,
+            0.8366013071895425,
+            0.8140845070422535,
+            0.8366013071895425
+          ],
+          "minPos": [
+            -106.5,
+            -124,
+            0
+          ],
+          "maxPos": [
+            106.5,
+            124,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "67b23afd-65b9-47aa-8cc9-105c0961eafa@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "67b23afd-65b9-47aa-8cc9-105c0961eafa@6c48a"
+  }
+}
