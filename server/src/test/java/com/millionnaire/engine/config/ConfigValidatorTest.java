@@ -180,7 +180,7 @@ class ConfigValidatorTest {
         EconomyConfig e = base.economy();
         EconomyConfig huge = new EconomyConfig(e.startReward(), e.miniGameWinReward(), e.bailCost(), e.eventCashMin(),
                 e.eventCashMax(), e.eventCashStep(), e.eventMoveMinSteps(), 3, Integer.MAX_VALUE, e.maxLevel(),
-                e.handLimit(), e.initialHandSize(), e.orderNumberMax());
+                e.handLimit(), e.initialHandSize(), e.orderNumberMax(), e.offerUnaffordablePurchase());
         List<String> errors = ConfigValidator.validate(new RuleConfig(base.ruleVersion(), base.boards(), base.tiers(),
                 base.station(), huge, base.ratios(), base.cardWeights(), base.eventWeights(), base.timing(), base.room()));
         assertTrue(errors.stream().anyMatch(x -> x.contains("economy.dieFaces must be in 1..100")), errors.toString());
@@ -189,7 +189,7 @@ class ConfigValidatorTest {
                 t.bankruptcyModeCapMinutes(), t.decisionWindowMs(), t.responseWindowMs(), t.discardWindowMs(),
                 t.tradeResponseMs(), t.toothPickMs(), t.auctionDurationMs(), t.auctionExtendMs(), t.auctionMaxMs(),
                 t.debtSegmentMs(), t.heartbeatMs(), t.suspectAfterMs(), t.offlineAfterMs(), t.allOfflineCloseMs(),
-                t.downtimeBudgetMs(), t.recoveryPrepMs(), t.animDiceMs(), t.animPerStepMs(), t.autoActDelayMs());
+                t.downtimeBudgetMs(), t.recoveryPrepMs(), t.animDiceMs(), t.animPerStepMs(), t.autoActDelayMs(), t.endWhenAllAway());
         assertError(new RuleConfig(base.ruleVersion(), base.boards(), base.tiers(), base.station(), base.economy(),
                 base.ratios(), base.cardWeights(), base.eventWeights(), longRoll, base.room()),
                 "timing.rollSecondsOptions must be strictly increasing within 1..3600");

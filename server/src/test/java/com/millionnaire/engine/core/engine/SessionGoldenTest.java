@@ -7,6 +7,9 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 class SessionGoldenTest {
+    private static final String CONFIG_HASH = "d000fa99e15aa858e8bae226f47dd3c014f0ab2b397873ff08e2b45d2d5b7d59";
+    private static final String PREVIOUS_CONFIG_HASH = "f8524a62880278ca3e3a0e6838140e916f28cf1b2498111c53a29ddb38ef709d";
+
     @Test void scriptedSessionDebtToFinalLogHasStableBytes() {
         var t = M3aTest.realDebt();
         t.send(Math.max(t.now + 1, t.window().window().opensAt()), new GameCommand.DeclareBankruptcy(t.game().debt().debtor(), t.window().windowId()));
@@ -24,11 +27,15 @@ class SessionGoldenTest {
             }
             return e;
         }).toList();
+        // 配置新增正式服策略开关后（测试配置均为关闭），配置哈希从 f8524a62… 变为 d000fa99…；其余字节必须不变
         String historicalBytes = t.engine.encodeEvents(historicalEvents)
-                .replace("engine-0.9.1-m3b", "engine-0.8.1-m3a").replace(",\"controlSource\":null", "");
+                .replace("engine-0.9.1-m3b", "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")
+                .replace(CONFIG_HASH, PREVIOUS_CONFIG_HASH);
         assertEquals("46953a081aa15740d69b5fbee5670e036bff181e77ac3130cd3e40e68135e5de",
                 Canonical.sha256Hex(historicalBytes.getBytes(StandardCharsets.UTF_8)),
                 "historical session behavior remains identical after removing the new source metadata");
-        assertEquals("a03bda62d0369e888fff87aab9f831253cd13b840dd4bc48a7f7fb37f0e3fcb3", Canonical.sha256Hex(bytes.getBytes(StandardCharsets.UTF_8)));
+        assertEquals(CONFIG_HASH, t.config.contentHash());
+        assertEquals("a03bda62d0369e888fff87aab9f831253cd13b840dd4bc48a7f7fb37f0e3fcb3",
+                Canonical.sha256Hex(bytes.replace(CONFIG_HASH, PREVIOUS_CONFIG_HASH).getBytes(StandardCharsets.UTF_8)));
     }
 }

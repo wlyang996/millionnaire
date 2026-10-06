@@ -35,7 +35,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 class ReplayTest {
     /** 黄金值：锁定引擎行为 + 规范格式 + 随机协议。有意修改时同步更新，并提升 EngineVersion。 */
-    static final String GOLDEN_FINAL_HASH = "0786fce2b25f7ee2df2d2b0eb848217aedf5bdc2c802f4be9360ae5133e2120f";
+    static final String GOLDEN_FINAL_HASH = "c0e99ed03ae148b34388adda2132084c56d7629855fda94056c18bd9e23d5ef1";
     private static final String GOLDEN_SNAPSHOT_RESOURCE = "/golden/demo-final.snapshot";
 
     private final Scenario scenario = DemoScenarios.full();
@@ -71,7 +71,10 @@ class ReplayTest {
     @Test
     void m3bGoldenSnapshotDiffersFromM3aOnlyInItsVersionBytes() {
         byte[] previous = java.util.Base64.getDecoder().decode("bWlsbGlvbm5haXJlLWVuZ2luZS8xL3NuYXBzaG90Cnsicm9vbUlkIjoicm9vbS0xIiwiY29uZmlnSGFzaCI6ImY4NTI0YTYyODgwMjc4Y2EzZTNhMGU2ODM4MTQwZTkxNmYyOGNmMWIyNDk4MTExYzUzYTI5ZGRiMzhlZjcwOWQiLCJlbmdpbmVWZXJzaW9uIjoiZW5naW5lLTAuOC4xLW0zYSIsImRvbWFpbklkIjoiZGVtby10ZXN0Iiwicm5nUHJvdG9jb2wiOiJ4b3NoaXJvMjU2c3MtbGVtaXJlMzItdjEiLCJub3ciOjYwMDAwLCJsYXN0U2VxIjoyOCwibGFzdFJlY2VpdmVkQXQiOjYwMDAwLCJsYXN0SW5wdXREaWdlc3QiOiJmZDUwMTY5NWYxYmZkYzA2MjhjNDU4MzgzMDA3NDNiOTE5NmUxYWI3NWIyN2I3MmU3YzQ4YzgzMjJiZGM0NDY2IiwiZXZlbnRDb3VudCI6NjMsInRpbWVycyI6eyJ0YXNrcyI6W119LCJuZXh0VGFza0lkIjo3LCJybmciOnsiczAiOjcwMzI4NzIxODkzMjIyMzQ3NDYsInMxIjotNzQ1MDcxMzIzNTMxNTU3OTk3LCJzMiI6MjU5MDU3Nzg4MjY5OTg0NTE1OCwiczMiOjEyNjExNjM4MDU3NDQ5Mjg1NTl9LCJwZW5kaW5nRHJhd3MiOltdLCJkb21haW4iOnsiQHR5cGUiOiJEZW1vU3RhdGUiLCJob3N0SWQiOiJiIiwicGxheWVycyI6WyJiIl0sInJvdW5kIjpudWxsLCJuZXh0V2luZG93SWQiOjUsInJvbGxzIjpbMiw1XX19");
-        byte[] normalized = engine.snapshot(full.state()).replace("engine-0.9.1-m3b", "engine-0.8.1-m3a").getBytes(StandardCharsets.UTF_8);
+        // 配置后来新增了正式服策略开关（EconomyConfig.offerUnaffordablePurchase、TimingConfig.endWhenAllAway），配置哈希随之改变
+        byte[] normalized = engine.snapshot(full.state()).replace("engine-0.9.1-m3b", "engine-0.8.1-m3a")
+                .replace("d000fa99e15aa858e8bae226f47dd3c014f0ab2b397873ff08e2b45d2d5b7d59",
+                        "f8524a62880278ca3e3a0e6838140e916f28cf1b2498111c53a29ddb38ef709d").getBytes(StandardCharsets.UTF_8);
         assertArrayEquals(previous, normalized);
     }
 
@@ -212,7 +215,7 @@ class ReplayTest {
         RuleConfig changed = new RuleConfig(c.ruleVersion(), c.boards(), c.tiers(), c.station(),
                 new EconomyConfig(e.startReward() + 50, e.miniGameWinReward(), e.bailCost(), e.eventCashMin(),
                         e.eventCashMax(), e.eventCashStep(), e.eventMoveMinSteps(), e.eventMoveMaxSteps(), e.dieFaces(),
-                        e.maxLevel(), e.handLimit(), e.initialHandSize(), e.orderNumberMax()),
+                        e.maxLevel(), e.handLimit(), e.initialHandSize(), e.orderNumberMax(), e.offerUnaffordablePurchase()),
                 c.ratios(), c.cardWeights(), c.eventWeights(), c.timing(), c.room());
         EngineState s = runner.runPrefix(5).state();
         Engine<DemoState> other = new Engine<>(changed, DemoDomain.INSTANCE);

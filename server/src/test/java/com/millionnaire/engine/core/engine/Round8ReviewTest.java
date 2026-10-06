@@ -76,7 +76,7 @@ class Round8ReviewTest {
         EconomyConfig e = base.economy();
         EconomyConfig wide = new EconomyConfig(e.startReward(), e.miniGameWinReward(), e.bailCost(), 1,
                 1_000_000_000_000L, 1, e.eventMoveMinSteps(), e.eventMoveMaxSteps(), e.dieFaces(), e.maxLevel(),
-                e.handLimit(), e.initialHandSize(), e.orderNumberMax());
+                e.handLimit(), e.initialHandSize(), e.orderNumberMax(), e.offerUnaffordablePurchase());
         List<String> wideErrors = ConfigValidator.validate(new RuleConfig(base.ruleVersion(), base.boards(), base.tiers(),
                 base.station(), wide, base.ratios(), base.cardWeights(), base.eventWeights(), base.timing(), base.room()));
         assertTrue(wideErrors.stream().anyMatch(x -> x.contains("candidate count 1000000000000 exceeds")), wideErrors.toString());

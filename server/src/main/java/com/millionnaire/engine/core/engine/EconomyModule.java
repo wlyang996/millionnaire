@@ -145,7 +145,7 @@ final class EconomyModule {
     }
 
     /**
-     * 落点当时必须处理的第一项步骤（E1，纯函数，决策与演化共用）：他人未抵押地产 → 缴租；无主且买得起 → 买 / 放弃
+     * 落点当时必须处理的第一项步骤（E1，纯函数，决策与演化共用）：他人未抵押地产 → 缴租；无主且买得起（或配置要求买不起也开窗口）→ 买 / 放弃
      * （指定拍卖地的"发起拍卖"留给 M5）；自己的可升级地产 → 升级；银行格且未到全局时限 → 银行；其余 → 无。
      */
     static LandingStep requiredStep(RuleConfig config, GameState g, String player, int tileIndex) {
@@ -155,7 +155,9 @@ final class EconomyModule {
             case PROPERTY, STATION -> {
                 OwnableState o = g.board().ownable(tileIndex).orElseThrow();
                 if (o.owner() == null) {
-                    yield g.ledger().available(player) >= basePrice(config, tile) ? LandingStep.BUY : null;
+                    // 正式配置下买不起也开购买窗口（界面显示价格、购买按钮置灰并提示现金不足）；购买命令仍按现金拒绝
+                    yield config.economy().offerUnaffordablePurchase()
+                            || g.ledger().available(player) >= basePrice(config, tile) ? LandingStep.BUY : null;
                 } else if (o.owner().equals(player)) {
                     yield canUpgrade(config, board, g, player, o) ? LandingStep.UPGRADE : null;
                 }

@@ -27,11 +27,18 @@ public final class RuleConfigs {
 
     /** 正式配置：rules-v1 数值 + 美术设计稿布局。 */
     public static RuleConfig defaultV1() {
-        return v1(LAYOUT_30, LAYOUT_50);
+        return v1(LAYOUT_30, LAYOUT_50, true);
     }
 
-    /** rules-v1 数值 + 指定的 30 / 50 格布局（测试夹具可用别的合规布局）。 */
+    /** rules-v1 数值 + 指定的 30 / 50 格布局（测试夹具可用别的合规布局）；不启用正式服的对局策略。 */
     public static RuleConfig v1(String layout30, String layout50) {
+        return v1(layout30, layout50, false);
+    }
+
+    /**
+     * @param production 正式服的对局策略：现金不足也开购买窗口（只能放弃）；存活玩家全部暂离 / 托管时直接结束对局
+     */
+    public static RuleConfig v1(String layout30, String layout50, boolean production) {
         Map<CardType, Integer> cards = new TreeMap<>();
         cards.put(CardType.ROADBLOCK, 120);
         cards.put(CardType.RENT_WAIVER, 120);
@@ -63,7 +70,7 @@ public final class RuleConfigs {
                         new TierPricing(Tier.MID, 1000, 600, List.of(200L, 500L, 900L, 1400L), Ratio.percent(70)),
                         new TierPricing(Tier.HIGH, 1500, 900, List.of(300L, 750L, 1350L, 2100L), Ratio.percent(60))),
                 new StationPricing(1000, 200, Ratio.percent(70)),
-                new EconomyConfig(1000, 500, 500, 100, 500, 50, 1, 3, 6, 3, 6, 2, 100),
+                new EconomyConfig(1000, 500, 500, 100, 500, 50, 1, 3, 6, 3, 6, 2, 100, production),
                 new RatioConfig(
                         Ratio.percent(50),   // 标准价值计入升级费 50%
                         Ratio.percent(100),  // 银行抵押：原价 100%
@@ -85,7 +92,8 @@ public final class RuleConfigs {
                         20_000, 3_000, 40_000, 30_000,
                         5_000, 15_000, 30_000, 120_000,
                         600_000, 30_000,
-                        1_500, 250, 1_000),     // 动画与自动动作延时：占位值，待确认
+                        1_500, 250, 1_000,      // 动画与自动动作延时：占位值，待确认
+                        production),
                 // 默认地图、默认初始现金、默认结束模式尚未裁定，此处为占位（见 m0-report 待确认）
                 new RoomOptions(2, List.of(2000L, 3000L, 5000L), BOARD_30, 3000, EndMode.TIME_LIMIT, 30, 15));
     }

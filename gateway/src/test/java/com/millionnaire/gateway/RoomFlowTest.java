@@ -76,6 +76,16 @@ class RoomFlowTest {
                     && m.path("view").path("members").size() == 2);
             assertThat(lobby.path("view").path("hostId").asText()).isEqualTo(aid);
 
+            // 聊天：房间里每个人都收到最近聊天的完整列表；控制字符被清掉；空消息、发得太快被拒
+            JsonNode said = wb.call(wb.msg("CHAT", "chat-1").put("text", " 大家好\u0007 "));
+            assertThat(said.path("ok").asBoolean()).as(said.toString()).isTrue();
+            JsonNode chat = wa.await(m -> "CHAT".equals(m.path("type").asText()) && m.path("lines").size() == 1);
+            assertThat(chat.path("lines").get(0).path("text").asText()).isEqualTo("大家好");
+            assertThat(chat.path("lines").get(0).path("from").asText()).isEqualTo(bid);
+            assertThat(chat.path("lines").get(0).path("nickname").asText()).isEqualTo("糖糖");
+            assertThat(wb.call(wb.msg("CHAT", "chat-2").put("text", "再来")).path("code").asText()).isEqualTo("TOO_FAST");
+            assertThat(wa.call(wa.msg("CHAT", "chat-3").put("text", "   ")).path("code").asText()).isEqualTo("BAD_REQUEST");
+
             // 系统命令不能由客户端发；开局前没有对局
             assertThat(wa.call(wa.msg("GAME", "g0").put("command", "SetControl")).path("code").asText())
                     .isEqualTo("UNKNOWN_COMMAND");

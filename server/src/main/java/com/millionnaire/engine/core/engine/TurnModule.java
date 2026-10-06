@@ -294,6 +294,13 @@ final class TurnModule {
             finish(ctx, "NO_PLAYERS");
             return;
         }
+        // 存活玩家全部暂离（挂机）/ 托管：没人在玩，回合交界处直接结束对局（按当前净资产排名）。
+        // 只是掉线（控制仍是手动）的不算：全员掉线另有 120 秒重连保留（open-decisions #6）
+        if (ctx.config().timing().endWhenAllAway() && g.players().stream().filter(PlayerState::alive)
+                .allMatch(p -> p.control() != com.millionnaire.engine.core.state.ControlMode.MANUAL)) {
+            finish(ctx, "ALL_AWAY");
+            return;
+        }
         ctx.emit(new TurnStarted(Math.addExact(g.turn().turnNo(), 1), next.get()));
         // 回合交界是安全点：最多启动一个排队流程，回合在流程返回后再开始（O12）
         FlowCoordinator.enterSafePoint(ctx, GameModule.FLOW);

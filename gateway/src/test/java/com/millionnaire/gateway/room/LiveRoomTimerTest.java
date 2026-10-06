@@ -77,4 +77,37 @@ class LiveRoomTimerTest {
             rooms.shutdown();
         }
     }
+
+    /** 没人操作：每人连续两次投骰超时后被判定挂机（暂离）；全员挂机后对局在回合交界结束（ALL_AWAY）。 */
+    @Test
+    void playersWhoKeepMissingTheirRollAreMarkedAwayAndAllAwayEndsTheGame() {
+        MutableClock clock = new MutableClock(System.currentTimeMillis());
+        List<String> sent = new CopyOnWriteArrayList<>();
+        RoomStore store = new RoomStore(new StaticListableBeanFactory().getBeanProvider(JdbcTemplate.class), clock);
+        RoomService rooms = new RoomService(store, (player, json) -> sent.add(json), new Wire(new ObjectMapper()), clock);
+        try {
+            LiveRoom room = rooms.create(new User(1, "阿杰"), "c", null).room();
+            assertThat(rooms.join(new User(2, "糖糖"), room.codeNumber(), "j").ok()).isTrue();
+            assertThat(room.submitClient("1", "r1", new SetReady("1", true)).ok()).isTrue();
+            assertThat(room.submitClient("2", "r2", new SetReady("2", true)).ok()).isTrue();
+            assertThat(room.submitClient("1", "s", new StartGame("1")).ok()).isTrue();
+            sent.clear();
+
+            for (int i = 0; i < 200 && room.gameNo().isPresent(); i++) {
+                long due = room.scheduledWakeAt();
+                if (due == Long.MIN_VALUE) {
+                    break;
+                }
+                clock.now = Math.max(clock.now, due);
+                rooms.wake(room, due);
+            }
+
+            assertThat(room.gameNo()).isEmpty();
+            assertThat(room.view("1").lastResult().reason()).isEqualTo("ALL_AWAY");
+            assertThat(sent).anyMatch(m -> m.contains("ControlChanged") && m.contains("\"playerId\":\"1\"") && m.contains("AWAY"));
+            assertThat(sent).anyMatch(m -> m.contains("ControlChanged") && m.contains("\"playerId\":\"2\"") && m.contains("AWAY"));
+        } finally {
+            rooms.shutdown();
+        }
+    }
 }

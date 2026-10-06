@@ -1,6 +1,9 @@
 package com.millionnaire.gateway.room;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.millionnaire.engine.core.command.Command;
+import com.millionnaire.engine.core.command.GameCommand.SetControl;
 import com.millionnaire.engine.core.command.Input;
 import com.millionnaire.engine.core.command.Tick;
 import com.millionnaire.engine.core.engine.Engine;
@@ -14,13 +17,22 @@ import com.millionnaire.engine.core.engine.SessionDomain;
 import com.millionnaire.engine.core.engine.StateValidationException;
 import com.millionnaire.engine.core.engine.StepResult;
 import com.millionnaire.engine.core.event.Event;
+import com.millionnaire.engine.core.event.GameEvent.DiceRolled;
+import com.millionnaire.engine.core.event.GameEvent.JailRolled;
 import com.millionnaire.engine.core.event.KernelEvent;
+import com.millionnaire.engine.core.state.ConnState;
+import com.millionnaire.engine.core.state.ControlMode;
 import com.millionnaire.engine.core.state.EngineState;
 import com.millionnaire.engine.core.state.Member;
+import com.millionnaire.engine.core.state.PlayerState;
 import com.millionnaire.engine.core.state.RoomState;
 import com.millionnaire.engine.core.state.RoomStatus;
 import com.millionnaire.engine.core.state.SessionState;
 import com.millionnaire.engine.core.state.SessionView;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,11 +53,17 @@ import org.slf4j.LoggerFactory;
  *   <li>每步有领域事件时，给本步前后在房间里的每个人推送：对他可见的事件 + 他的最新视图；</li>
  *   <li>同一玩家的同一 requestId 只处理一次，重发时原样返回上次的结论；</li>
  *   <li>内核故障：房间停止并关闭（不自动重试），对局状态只在内存，不做恢复。</li>
+ *   <li>挂机判定：手动玩家连续 {@value #AFK_MISSED_ROLLS} 次让投骰窗口超时（由系统代投），服务端用可信系统命令把他转为暂离（挂机），
+ *       需要他本人点"我回来了"（或做任何业务操作）才恢复；全员挂机 / 托管时引擎会结束对局。</li>
  * </ul>
  */
 public final class LiveRoom {
     private static final Logger log = LoggerFactory.getLogger(LiveRoom.class);
     private static final int MAX_REPLIES = 512;
+    private static final int CHAT_KEEP = 30;
+    private static final int CHAT_MAX_CHARS = 40;
+    private static final long CHAT_MIN_GAP_MS = 800;
+    static final int AFK_MISSED_ROLLS = 2;
 
     /** 一条命令的处理结论；code 为引擎的拒绝原因（ACCEPTED 时为 null）。 */
     public record Reply(String outcome, String code) {
@@ -71,6 +89,11 @@ public final class LiveRoom {
             return size() > MAX_REPLIES;
         }
     };
+    /** 最近的聊天（只在内存，不进引擎、不落库）。 */
+    private final Deque<ObjectNode> chat = new ArrayDeque<>();
+    private final Map<String, Long> lastChatAt = new HashMap<>();
+    /** 挂机判定：每位手动玩家连续被系统代投的次数（亲手投骰即清零）。 */
+    private final Map<String, Integer> missedRolls = new HashMap<>();
     private ScheduledFuture<?> wake;
     private long wakeAt = Long.MIN_VALUE;
     private long lastTime;
@@ -147,6 +170,49 @@ public final class LiveRoom {
         step(new Tick(), Math.max(service.now(), dueAt));
     }
 
+    /**
+     * 聊天：房间成员（含破产观战者）发一句话，推给房间里的每个人。
+     * 推送内容是最近 {@value #CHAT_KEEP} 条的完整列表，客户端直接替换即可（重连后也能补齐）。
+     */
+    public synchronized void chat(String playerId, String nickname, String raw) {
+        if (closed) {
+            throw new ClientException("ROOM_CLOSED", "room is closed");
+        }
+        if (!lobby(runner.committed()).isMember(playerId)) {
+            throw new ClientException("NOT_IN_ROOM", "not a member of this room");
+        }
+        String text = raw == null ? "" : raw.replaceAll("[\\p{Cntrl}\\p{Cf}]", " ").strip();
+        if (text.isEmpty()) {
+            throw new ClientException("BAD_REQUEST", "empty message");
+        }
+        if (text.codePointCount(0, text.length()) > CHAT_MAX_CHARS) {
+            text = text.substring(0, text.offsetByCodePoints(0, CHAT_MAX_CHARS));
+        }
+        long now = service.now();
+        Long last = lastChatAt.get(playerId);
+        if (last != null && now - last < CHAT_MIN_GAP_MS) {
+            throw new ClientException("TOO_FAST", "slow down");
+        }
+        lastChatAt.put(playerId, now);
+        chat.addLast(service.wire().object().put("from", playerId).put("nickname", nickname)
+                .put("text", text).put("at", now));
+        while (chat.size() > CHAT_KEEP) {
+            chat.removeFirst();
+        }
+        String json = chatMessage();
+        for (String p : members(runner.committed())) {
+            service.outbox().send(p, json);
+        }
+    }
+
+    /** 最近聊天的完整列表（连接、重连时补发）。 */
+    public synchronized String chatMessage() {
+        ObjectNode m = service.wire().object().put("type", "CHAT").put("roomCode", code());
+        ArrayNode lines = m.putArray("lines");
+        chat.forEach(lines::add);
+        return service.wire().write(m);
+    }
+
     public synchronized SessionView view(String playerId) {
         return SessionDomain.INSTANCE.project(runner.committed(), playerId);
     }
@@ -216,7 +282,59 @@ public final class LiveRoom {
                 }
             }
         }
+        markAway(missedRolls(r.events(), after), at);
         return r;
+    }
+
+    /** 本步里被系统代投的手动玩家计数；达到阈值的玩家返回（计数清零）。亲手投骰、本来就由系统代管的清零。 */
+    private List<String> missedRolls(List<Event> events, EngineState after) {
+        SessionState s = (SessionState) after.domain();
+        if (!s.inGame()) {
+            missedRolls.clear();
+            return List.of();
+        }
+        List<String> away = new ArrayList<>();
+        for (Event e : events) {
+            String p;
+            boolean auto;
+            if (e instanceof DiceRolled d) {
+                p = d.playerId();
+                auto = d.auto();
+            } else if (e instanceof JailRolled j) {
+                p = j.playerId();
+                auto = j.auto();
+            } else {
+                continue;
+            }
+            PlayerState ps = s.game().player(p).orElse(null);
+            if (ps == null || !auto || !ps.alive() || ps.control() != ControlMode.MANUAL || ps.conn() == ConnState.OFFLINE) {
+                missedRolls.remove(p);
+                continue;
+            }
+            if (missedRolls.merge(p, 1, Integer::sum) >= AFK_MISSED_ROLLS) {
+                missedRolls.remove(p);
+                away.add(p);
+            }
+        }
+        return away;
+    }
+
+    /** 判定挂机：以可信系统命令转为暂离（与玩家自己选"暂离"走同一条命令，结果随推送下发）。 */
+    private void markAway(List<String> players, long at) {
+        for (String p : players) {
+            SessionState s = (SessionState) runner.committed().domain();
+            if (closed || !s.inGame()) {
+                return;
+            }
+            Command c = new SetControl(s.game().gameNo(), p, ControlMode.AWAY);
+            try {
+                engine.admitSystem(c);
+                StepResult r = step(c, at);
+                log.info("room {}: {} missed {} rolls in a row, marked away ({})", code(), p, AFK_MISSED_ROLLS, r.outcome());
+            } catch (RuntimeException e) {
+                log.warn("room {}: cannot mark {} away: {}", code(), p, e.getMessage());
+            }
+        }
     }
 
     private void schedule(EngineState state) {

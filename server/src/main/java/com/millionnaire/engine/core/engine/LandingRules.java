@@ -30,8 +30,9 @@ final class LandingRules {
     }
     static final List<Rule> RULES = List.of(
         new Rule(LandingStep.BUY, Execution.WINDOW, StageTable.Point.BUY, (c, g, l) ->
-                g.board().ownable(l.tile()).map(o -> o.owner() == null && g.ledger().available(g.turn().currentPlayer())
-                        >= EconomyModule.basePrice(c, LobbyModule.board(c, g.settings()).tiles().get(l.tile()))).orElse(false),
+                g.board().ownable(l.tile()).map(o -> o.owner() == null && (c.economy().offerUnaffordablePurchase()
+                        || g.ledger().available(g.turn().currentPlayer())
+                        >= EconomyModule.basePrice(c, LobbyModule.board(c, g.settings()).tiles().get(l.tile())))).orElse(false),
                 (c, g, l) -> g.board().ownable(l.tile()).map(o -> o.owner() == null
                         || o.owner().equals(g.turn().currentPlayer()) && l.bought()).orElse(false), List.of(
                 new Outcome(LandingResult.BOUGHT, List.of(new Successor(LandingStep.UPGRADE, CAN_UPGRADE))),

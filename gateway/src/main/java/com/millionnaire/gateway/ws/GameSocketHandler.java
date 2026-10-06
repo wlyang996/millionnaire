@@ -93,6 +93,14 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     sockets.sendTo(session, wire.write(pong));
                 }
                 case "SYNC" -> sync(session, user);
+                case "CHAT" -> {
+                    LiveRoom room = rooms.roomOf(user.playerId())
+                            .orElseThrow(() -> new ClientException("NOT_IN_ROOM", "join or create a room first"));
+                    room.chat(user.playerId(), user.nickname(), text(msg, "text"));
+                    if (requestId != null) {
+                        sockets.sendTo(session, wire.write(result(requestId, "ACCEPTED", null, room.code())));
+                    }
+                }
                 default -> command(session, user, type, requireRequestId(requestId), msg);
             }
         } catch (ClientException e) {
@@ -192,13 +200,17 @@ public class GameSocketHandler extends TextWebSocketHandler {
                 .put("nickname", user.nickname()).put("serverTime", clock.millis());
         hello.put("roomCode", room.map(LiveRoom::code).orElse(null));
         sockets.sendTo(session, wire.write(hello));
-        room.ifPresent(r -> sockets.sendTo(session, r.snapshot(user.playerId())));
+        room.ifPresent(r -> {
+            sockets.sendTo(session, r.snapshot(user.playerId()));
+            sockets.sendTo(session, r.chatMessage());
+        });
     }
 
     private void sync(WebSocketSession session, User user) {
         Optional<LiveRoom> room = rooms.roomOf(user.playerId());
         if (room.isPresent()) {
             sockets.sendTo(session, room.get().snapshot(user.playerId()));
+            sockets.sendTo(session, room.get().chatMessage());
         } else {
             sockets.sendTo(session, wire.write(wire.object().put("type", "NO_ROOM")));
         }

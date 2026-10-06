@@ -53,7 +53,8 @@
 | `START_GAME` | — | 房主开局（全员准备且人数够） |
 | `GAME` | `command`, `args` | 对局命令，见下表 |
 | `SET_CONTROL` | `mode`: `MANUAL` / `AWAY` / `HOSTED` | 切换自己的控制模式（暂离 / 托管） |
-| `SYNC` | — | 取当前房间的完整快照（不需要 requestId） |
+| `CHAT` | `text`（≤40 字，`requestId` 可选） | 房间聊天（含观战者），同一人至少间隔 0.8 秒，过快回 `TOO_FAST` |
+| `SYNC` | — | 取当前房间的完整快照 + 最近聊天（不需要 requestId） |
 | `PING` | — | 回 `PONG {serverTime}`（不需要 requestId） |
 
 `settings` 形如 `{"boardId":"classic-30","initialCash":3000,"endMode":"TIME_LIMIT","timeLimitMinutes":30,"rollSeconds":15}`（`boardId`：`classic-30` / `classic-50`；`endMode`：`TIME_LIMIT` / `BANKRUPTCY`）。
@@ -82,6 +83,7 @@
 | `RESULT` | `requestId`, `ok`, `outcome`, `code`, `roomCode?`, `message?` | `outcome`：`ACCEPTED` / `REJECTED`（规则拒绝，`code` 为引擎拒绝原因，如 `NOT_YOUR_WINDOW`、`INSUFFICIENT_CASH`）/ `ERROR`（网关错误，`code` 如 `NOT_IN_ROOM`、`ROOM_NOT_FOUND`、`ALREADY_IN_ROOM`、`UNKNOWN_COMMAND`、`UNAUTHENTICATED`、`REQUEST_ID_REQUIRED`） |
 | `UPDATE` | `roomCode`, `version`, `serverTime`, `events`, `view` | 房间每推进一步（含定时推进）推送一次：`events` 是本步对你可见的事件（`{"kind","data"}`，用于动画），`view` 是你的最新完整视图（以它为准渲染）。`version` 单调递增 |
 | `ROOM_CLOSED` | `roomCode`, `reason` | 房间因故障等原因关闭 |
+| `CHAT` | `roomCode`, `lines[{from,nickname,text,at}]` | 最近 30 条聊天的完整列表（有人发言、连接、SYNC 时推送），直接替换本地列表 |
 | `HELLO` / `PONG` / `NO_ROOM` / `REPLACED` | — | 见上文 |
 
 注意：一步的 `UPDATE` 会先于该命令的 `RESULT` 到达。
@@ -90,6 +92,9 @@
 `game` 含 `players`（位置、现金、手牌数、监狱、控制与连接状态）、`board.ownables`、`currentPlayer`、`stage`、`windows[{windowId,kind,owner,opensAt,deadline,paused}]`、`landing`、`debt`、`myHand`（只有自己的手牌）。
 倒计时请用 `deadline - serverTime` 结合本地时钟偏差计算，不要只靠本地计时器。
 
+### 挂机判定
+手动玩家连续 2 次投骰（含狱中判定骰）超时、由系统代投时，网关以可信系统命令把他转为暂离（视图里 `control = AWAY`，事件 `ControlChanged`），客户端据此全屏显示"挂机中"；本人发 `GAME ResumeControl`（或做任何业务操作）恢复。存活玩家全部暂离 / 托管时，引擎在回合交界结束对局（`lastResult.reason = ALL_AWAY`）。
+
 ### 断线与重连
 - 重连后用同一 token 连接即可：服务端自动发 `HELLO` + 房间快照；也可随时发 `SYNC`。
 - 断线期间错过的 `UPDATE` 不补发，以最新快照为准。
@@ -97,4 +102,4 @@
 ## 尚未实现
 - 掉线判定（15 秒疑似、30 秒确认）还没接到引擎的连接命令上，目前断线的玩家按"在线但不操作"处理（超时由引擎自动处理）。
 - 微信登录（云托管 callContainer 会注入 `X-WX-OPENID`，接入时不需要 AppSecret）。
-- 战绩写库（`game_record`）、聊天、房间号加入频率限制、空房间超时关闭。
+- 战绩写库（`game_record`）、聊天落库、房间号加入频率限制、空房间超时关闭。
