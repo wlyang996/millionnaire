@@ -11,3 +11,8 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
       - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+
+millionnaire:
+  auth:
+    # 测试身份登录（POST /api/auth/test-login）。正式上线前在云托管环境变量里设 TEST_LOGIN_ENABLED=false
+    test-login-enabled: ${TEST_LOGIN_ENABLED:true}
