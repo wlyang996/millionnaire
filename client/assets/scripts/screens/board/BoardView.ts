@@ -5,7 +5,7 @@
  * 格子：上部小房屋/图标，下部三字地名（统一取自 core/BoardNames），色条与归属标记保留。
  * 棋子：我的棋子更大，带"我·昵称"气泡与发光底座；逐格跳跃由 hopTo() 按时间插值（BoardScreen 用时间戳驱动）。
  */
-import { Mask, Node, UITransform, Vec3, view } from 'cc';
+import { Label, Mask, Node, UITransform, Vec3, view } from 'cc';
 import { axisCell, boardAxis, eventDeckRect, gridCell, gridFor, GridSpec, ringLength } from '../../core/BoardLayout';
 import { BoardTile, GameView, PropertyState } from '../../core/Models';
 import { Theme, textWidth } from '../../core/Theme';
@@ -171,9 +171,8 @@ export class BoardView {
             if (tile.auctionLot) fillCircle(gg, t - 11, t - 11, 6, Theme.c.red);
         }
         // 下部三字地名，上部图标
-        const fs = Math.max(11, Math.round(t * 0.2));
-        const lh = fs + 4;
-        text(n, tile.name, x0, y0 + ch - lh, cw, lh, fs, Theme.c.ink, { bold: true });
+        const lh = Math.ceil(t * (side === 'left' || side === 'right' ? 0.4 : 0.32));
+        this.drawTileName(n, tile.name, x0, y0 + ch - lh, cw, lh);
         const icx = x0 + cw / 2;
         const icy = y0 + (ch - lh) / 2;
         const isz = Math.min(cw, ch - lh) * 0.9;
@@ -188,6 +187,23 @@ export class BoardView {
             }
         }
         if (tile.type === 'STATION') this.drawOwnerDot(gg, prop, game, t - 12, 12);
+    }
+
+    /** Rasterize small names at 3x; cancel the tile/world stretch on glyphs only.
+     * The text box still fills its original band, and follows camera zoom normally.
+     */
+    private drawTileName(parent: Node, name: string, x: number, y: number, w: number, h: number): void {
+        const sx = parent.scale.x;
+        const sy = parent.scale.y * this.verticalAspect;
+        const uniform = Math.min(sx, sy);
+        const bw = w * sx / uniform;
+        const bh = h * sy / uniform;
+        const font = Math.floor(Math.min(bh * 0.78, (bw - 4) / (textWidth(name, 1) + 0.25)));
+        const density = 3;
+        const label = text(parent, name, x, y, bw * density, bh * density,
+            font * density, Theme.c.ink, { bold: true });
+        label.overflow = Label.Overflow.CLAMP;
+        label.node.setScale(uniform / sx / density, uniform / sy / density, 1);
     }
 
     private drawIcon(gg: ReturnType<typeof gfx>, tile: BoardTile, prop: PropertyState | undefined, cx: number, cy: number, s: number): void {

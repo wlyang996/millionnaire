@@ -80,7 +80,7 @@ export interface GridSpec { cols: number; rows: number; tile: number }
 
 /** Display bands: enlarge the perimeter without changing ring indices or board extent. */
 export function boardAxis(count: number, tile: number): number[] {
-    const border = tile * 1.5;
+    const border = tile * 1.8;
     const inner = (count * tile - 2 * border) / (count - 2);
     return Array.from({ length: count + 1 }, (_, i) =>
         i === 0 ? 0 : i === count ? count * tile : border + (i - 1) * inner);

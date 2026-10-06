@@ -71,3 +71,6 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 # 18／21本轮视觉纠偏记录
 
 普通土地浅色价格卡、四档租金行与当前等级标记已修正；监狱按用户授权补做隔栏近景并修正三张图标操作卡。独立素材位于 `assets-alignment-v1/`；预览与尚未对齐项见 `records/alignment-review-2026-10-06/` 及 `records/special-land-implementation-2026-10-06.md`。接入结构不等于严格对齐整稿。
+# 棋盘土地名清晰度
+
+2026-10-06修正小字号文字贴图被格子拉伸的问题，土地名采用更高栅格精度、等比字形与自适应字号。预览记录见 `records/font-clarity-2026-10-06/`。
