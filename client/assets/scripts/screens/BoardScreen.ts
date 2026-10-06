@@ -18,7 +18,7 @@ import { drawBack, drawClock } from '../ui/Icons';
 import { fillCircle, fillRR, gfx, mk, onTap, setOpacity, setText, text } from '../ui/Kit';
 import { Screen, ScreenId } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
-import { roundedPanel } from '../ui/Widgets';
+import { avatar, roundedPanel } from '../ui/Widgets';
 import { BoardView, CamState } from './board/BoardView';
 import { drawBottom } from './board/BottomBar';
 import { beginDebt } from '../popups/DebtPopup';
@@ -210,8 +210,9 @@ export class BoardScreen extends Screen {
         // 设计稿 01 / 11：白色圆角药丸（x 250–466，y 498–578）+ 黄色秒表；本人"轮到你了 / 剩余 N秒"，他人"X的回合 / 等待X投骰"
         const top = 498;
         const pill = roundedPanel(this.root, cx - 110, top, 220, 80, { fill: '#FFFFFFF2', r: 24 });
-        const ic = mk(pill, 'TurnIcon', 12, 14, 44, 44);
-        drawClock(gfx(ic), 22, 24, 17, Theme.c.yellowDark);
+        // 本人回合：黄色秒表；他人回合：当前玩家头像（设计稿 09 / 03）
+        if (myTurn) drawClock(gfx(mk(pill, 'TurnIcon', 12, 14, 44, 44)), 22, 24, 17, Theme.c.yellowDark);
+        else avatar(pill, 8, 14, 50, cur.avatar, cur.nickname);
         text(pill, myTurn ? '轮到你了' : cur.nickname + '的回合', 58, 6, 156, 40, 28, Theme.c.navy, { bold: true, align: 'l' });
         if (myTurn) {
             text(pill, '剩余', 58, 42, 56, 32, 22, Theme.c.navy, { bold: true, align: 'l' });

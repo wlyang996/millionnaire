@@ -40,7 +40,7 @@ export const CARD_ART: Record<string, string> = {
 
 /** 首屏（昵称 / 头像页）必需：背景、面板、标题木牌、8 个头像、按钮皮肤。 */
 const BOOT_KEYS = [
-    'information_background', 'info_asset_panel', 'title_wood', 'icon_back',
+    'information_background', 'info_asset_panel', 'brand_logo', 'icon_back',
     'avatar_tangtang', 'avatar_keke', 'avatar_ajie', 'avatar_naicha',
     'avatar_akai', 'avatar_yuanyuan', 'avatar_doudou', 'avatar_maomao',
     'button_flat_yellow', 'button_flat_blue', 'button_flat_green', 'button_flat_ivory', 'button_flat_red', 'button_flat_gray',

@@ -1,12 +1,12 @@
 /** 页面 1：登录资料（微信登录 / 昵称输入与检查 / 内置头像选择）。 */
-import { Label } from 'cc';
+import { Graphics, Label } from 'cc';
 import { checkNickname, NICK_MAX } from '../core/Rules';
 import { Theme } from '../core/Theme';
 import { Button, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { EditField } from '../ui/EditField';
 import { drawCheck } from '../ui/Icons';
-import { fillCircle, fillRR, gfx, mk, onTap, setText, strokeRR, text } from '../ui/Kit';
+import { fillCircle, fillPoly, fillRR, gfx, line, mk, onTap, setText, strokeRR, text } from '../ui/Kit';
 import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
@@ -19,6 +19,7 @@ export class ProfileScreen extends Screen {
     private avatarIdx = 0;
     private initialized = false;
     private hint!: Label;
+    private hintIcon!: Graphics;
     private enter!: Button;
     private field!: EditField;
 
@@ -31,19 +32,18 @@ export class ProfileScreen extends Screen {
             this.avatarIdx = st.profile.avatar;
             this.initialized = true;
         }
-        // 木牌标题
-        const sign = mk(this.root, 'Logo', 110, 130, 500, 170);
-        const g = gfx(sign);
-        fillRR(g, 0, 10, 500, 160, 30, '#6B4423');
-        fillRR(g, 0, 0, 500, 160, 30, '#A4723C');
-        strokeRR(g, 0, 0, 500, 160, 30, '#5A3A1A', 5);
-        if (art(sign, 'title_wood', 0, 0, 500, 160, 'stretch')) g.clear();
-        text(sign, '好友桌游', 0, 6, 500, 110, 78, '#FFF3C4', { bold: true });
-        text(sign, '和朋友一起，开启一局新旅程', 0, 108, 500, 44, Theme.font.sm, '#FFE9A8');
+        // 设计稿 03：品牌 Logo（好友桌游 + 骰子）
+        art(this.root, 'brand_logo', 100, 112, 520, 331);
 
         const card = mk(this.root, 'ProfilePanel', 36, 612, 648, 646);
         art(card, 'info_asset_panel', 0, 0, 648, 646, 'panel');
         text(card, '登录资料', 28, 12, 592, 56, 38, '#613C24', { bold: true });
+        // 标题两侧的绿叶
+        const leaves = gfx(mk(card, 'Leaves', 0, 0, 648, 70));
+        for (const [cx, dir] of [[218, -1], [430, 1]] as [number, number][]) {
+            fillPoly(leaves, [[cx, 54], [cx + dir * 14, 24], [cx + dir * 30, 14], [cx + dir * 24, 40]], '#5DAE45');
+            fillPoly(leaves, [[cx, 54], [cx + dir * 30, 40], [cx + dir * 44, 46], [cx + dir * 24, 56]], '#7CC75E');
+        }
 
         // 微信登录
         const logged = st.profile.loggedIn;
@@ -84,7 +84,8 @@ export class ProfileScreen extends Screen {
             this.checkNow();
         });
         if (this.nick) this.field.value = this.nick;
-        this.hint = text(card, '', 28, 180, 592, 36, 21, Theme.c.inkSoft, { align: 'l' });
+        this.hintIcon = gfx(mk(card, 'HintIcon', 28, 184, 28, 28));
+        this.hint = text(card, '', 64, 180, 556, 36, 21, Theme.c.inkSoft, { align: 'l' });
 
 
         this.enter = primaryButton(card, '保存资料', 28, 520, 592, 96, () => {
@@ -106,8 +107,17 @@ export class ProfileScreen extends Screen {
     private checkNow(): void {
         const r = checkNickname(this.nick);
         const ok = r.ok && ctx.store.profile.loggedIn;
-        setText(this.hint, this.nick.trim() ? (r.ok ? '✓ ' : '× ') + r.reason : '昵称需检查，检查通过后可继续',
-            !this.nick.trim() || r.ok ? Theme.c.greenDark : Theme.c.red);
+        const good = !this.nick.trim() || r.ok;
+        setText(this.hint, this.nick.trim() ? r.reason : '昵称需检查，检查通过后可继续', good ? Theme.c.greenDark : Theme.c.red);
+        // 设计稿 03：提示前的圆形对勾（不合法时红色叉）
+        const g = this.hintIcon;
+        g.clear();
+        fillCircle(g, 14, 14, 13, good ? Theme.c.green : Theme.c.red);
+        if (good) drawCheck(g, 14, 14, 18, Theme.c.white, 3);
+        else {
+            line(g, 9, 9, 19, 19, Theme.c.white, 3);
+            line(g, 19, 9, 9, 19, Theme.c.white, 3);
+        }
         this.enter.setEnabled(ok, ctx.store.profile.loggedIn ? r.reason : '请先微信登录');
     }
 

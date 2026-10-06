@@ -6,7 +6,7 @@ import { Theme } from '../../core/Theme';
 import { AssetsPopup } from '../../popups/AssetsPopup';
 import { ChatPopup } from '../../popups/ChatPopup';
 import { surrenderConfirm } from '../../popups/ConfirmPopup';
-import { IconButton, primaryButton } from '../../ui/Buttons';
+import { IconButton, primaryButton, secondaryButton } from '../../ui/Buttons';
 import { ctx } from '../../ui/Ctx';
 import { drawChat, drawCoin, drawMic } from '../../ui/Icons';
 import { fillRR, gfx, mk, onTap, strokeRR, text } from '../../ui/Kit';
@@ -35,7 +35,7 @@ export function drawBottom(root: Node, spectator: boolean): void {
         const input = roundedPanel(footer, 88, 8, 420, 66, { r: 33, fill: '#FFFFFF22', shadow: 0 });
         text(input, '点击输入聊天内容…', 18, 0, 320, 66, Theme.font.sm, Theme.c.white, { align: 'l' });
         onTap(input, () => ctx.popups.open(new ChatPopup()));
-        primaryButton(footer, '返回大厅', 520, 6, 150, 70, () => ctx.screens.go('lobby'), Theme.font.md);
+        secondaryButton(footer, '返回大厅', 520, 6, 150, 70, () => ctx.screens.go('lobby'), Theme.font.md);
         return;
     } else {
         drawHandBar(root, 40, 1102, 660, 90, st.game.myHand, st.isMyTurn());
