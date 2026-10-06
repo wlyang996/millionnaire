@@ -74,3 +74,6 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 # 棋盘土地名清晰度
 
 2026-10-06修正小字号文字贴图被格子拉伸的问题，土地名采用更高栅格精度、等比字形与自适应字号。预览记录见 `records/font-clarity-2026-10-06/`。
+# 外围土地再次扩大
+
+2026-10-07按用户要求将外围土地带加宽20%，同步缩小中间区域。预览与验证记录见 `records/perimeter-2026-10-07/`。
