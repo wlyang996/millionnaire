@@ -20,7 +20,7 @@ public sealed interface KernelEvent extends Event {
 
     /**
      * 输入被接受：推进序号、接收水位与业务时间。digest 为输入规范字节的 SHA-256。
-     * systemCommand 仅记录系统输入；clientCommand 仅记录领域登记的客户端来源（确认破产/认输）。
+     * systemCommand 仅记录系统输入；clientCommand 记录领域登记的业务命令/恢复控制等客户端来源。
      * 演化核对两类来源的类型和摘要后才交给领域建立本步凭据。
      */
     record InputAccepted(long seq, long at, String digest, Command systemCommand, Command clientCommand) implements KernelEvent {

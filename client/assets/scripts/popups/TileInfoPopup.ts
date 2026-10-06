@@ -12,8 +12,9 @@ import { buildSpecialLand, SpecialLandState } from './SpecialLandView';
 const INK = '#101A50';
 
 export class TileInfoPopup extends InformationPage {
-    protected get headingY(): number { return ctx.store.tile(this.tileIndex).type === 'JAIL' ? 174 : 112; }
+    protected get headingY(): number { return ctx.store.tile(this.tileIndex).type === 'JAIL' ? 74 : 112; }
     protected get headingSize(): number { return ctx.store.tile(this.tileIndex).type === 'JAIL' ? 66 : 44; }
+    protected get headingOutline(): number { return ctx.store.tile(this.tileIndex).type === 'JAIL' ? 0 : 3; }
     private specialState: SpecialLandState = { bankMode: 'mortgage', selected: null };
     constructor(private readonly tileIndex: number) {
         super('tile', ({ BANK: '银行 · 抵押与赎回', JAIL: '监狱', REST: '休息区', GAME_ZONE: '游戏中心' } as Record<string, string>)[ctx.store.tile(tileIndex).type] ?? '格子详情');

@@ -68,3 +68,6 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 项目约定：[design/AGENTS.md](../AGENTS.md)。
 
 特殊土地20/21/22/23/25已按用户指定接入对应客户端布局，25覆盖旧起点稿，23用于车站。90件补充素材已导入；银行/出狱业务确认仍待服务端接入。[实施状态](records/special-land-implementation-2026-10-06.md)与[实际预览截图](records/special-land-preview-2026-10-06/README.md)。整页稿与独立场景视角仍有素材差异，未标记为逐像素还原。
+# 18／21本轮视觉纠偏记录
+
+普通土地浅色价格卡、四档租金行与当前等级标记已修正；监狱按用户授权补做隔栏近景并修正三张图标操作卡。独立素材位于 `assets-alignment-v1/`；预览与尚未对齐项见 `records/alignment-review-2026-10-06/` 及 `records/special-land-implementation-2026-10-06.md`。接入结构不等于严格对齐整稿。

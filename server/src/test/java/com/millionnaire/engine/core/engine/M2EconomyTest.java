@@ -292,8 +292,14 @@ class M2EconomyTest {
         assertEquals(start + 60_000, t.window().window().deadline(), "the whole debt window never exceeds 60 s");
         t.send(t.now + 10, new GameCommand.ConnectionSuspected(1, "p2", 1));
         t.send(t.now + 10, new GameCommand.ConnectionConfirmed(1, "p2", 2));
-        assertEquals(Outcome.ACCEPTED, t.send(t.now + 10, new GameCommand.ContinueDebt("p2", w2)).outcome(),
-                "the manual path is locked: going offline does not change it");
+        assertEquals(RejectionCode.CONTROL_NOT_MANUAL, t.send(t.now + 10, new GameCommand.ContinueDebt("p2", w2)).rejection(),
+                "confirmed offline requires trusted reconnect, even on a locked manual debt path");
+        assertEquals(com.millionnaire.engine.core.state.DebtPath.MANUAL, t.game().debt().path(),
+                "going offline still cannot change the locked path");
+        assertEquals(start + 60_000, t.window().window().deadline(), "offline rejection does not extend");
+        t.send(new GameCommand.Reconnected(1, "p2", 3));
+        assertEquals(Outcome.ACCEPTED, t.send(new GameCommand.ContinueDebt("p2", w2)).outcome(),
+                "trusted reconnect can continue the same debt window");
         assertEquals(start + 60_000, t.window().window().deadline(), "continuing does not extend");
         t.tick(start + 60_000);
         assertEquals(LifeState.BANKRUPT, t.game().player("p2").orElseThrow().life());

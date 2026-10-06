@@ -13,32 +13,49 @@ INSERT INTO wx_identity VALUES (X'7778', X'6F70656E31', 1, 0, 0);
 INSERT INTO wx_identity VALUES (X'7778', X'6F70656E32', 2, 0, 0);
 INSERT INTO wx_identity VALUES (X'7778', X'6F70656E3120', 9007199254740991, 0, 0);  -- 'open1 '：字节不同即不同
 
--- （v3 测试版：v2 的服务控制行/租约 CAS 正例已随 service_control 表删除）
+-- 服务控制行：V1 种子存在；方案 Q 的接任 CAS（epoch/renew_count 未变才成功），过期观测值的第二次 CAS 应更新 0 行
+UPDATE service_control SET holder_boot_id = X'000000000000000000000000000000A1', epoch = epoch + 1, renew_count = 0, updated_at = 10
+  WHERE id = 1 AND epoch = 0 AND renew_count = 0;
+UPDATE service_control SET renew_count = renew_count + 1, updated_at = 20
+  WHERE id = 1 AND holder_boot_id = X'000000000000000000000000000000A1' AND epoch = 1;          -- A 续约
+UPDATE service_control SET holder_boot_id = X'000000000000000000000000000000B2', epoch = epoch + 1, renew_count = 0, updated_at = 30
+  WHERE id = 1 AND epoch = 1 AND renew_count = 0;                                              -- B 用过期观测值接任：0 行
+INSERT INTO smoke_assert SELECT 'lease CAS', CASE WHEN (SELECT epoch FROM service_control WHERE id = 1) = 1
+  AND (SELECT renew_count FROM service_control WHERE id = 1) = 1
+  AND (SELECT holder_boot_id FROM service_control WHERE id = 1) = X'000000000000000000000000000000A1' THEN 1 ELSE 0 END FROM DUAL;
+-- 维护触发（运维写入）与新持有者接任时清除
+UPDATE service_control SET drain_notice_at = 100, drain_at = 400, updated_at = 100 WHERE id = 1;
+UPDATE service_control SET holder_boot_id = NULL, drain_notice_at = NULL, drain_at = NULL, updated_at = 500
+  WHERE id = 1 AND holder_boot_id = X'000000000000000000000000000000A1' AND epoch = 1;        -- A 排空后释放
 
 -- 房间：建房 → 关闭（仍占号）→ 冷却期满后释放旧占用 → 新房间复用号码
-INSERT INTO room (room_id,room_code,held_code,created_by,create_request_id,status,created_at,updated_at)
-  VALUES (10, 42, 42, 1, X'0102030405060708090A0B0C0D0E0F10', 'OPEN', 0, 0);
+INSERT INTO room (room_id,room_code,held_code,boot_id,created_by,create_request_id,status,created_at,updated_at)
+  VALUES (10, 42, 42, X'00000000000000000000000000000001', 1, X'0102030405060708090A0B0C0D0E0F10', 'OPEN', 0, 0);
 UPDATE room SET status='CLOSED', closed_at=1000, close_reason='ENGINE', updated_at=1000 WHERE room_id=10 AND status='OPEN';
 UPDATE room SET held_code=NULL WHERE room_id=10 AND held_code=42;
-INSERT INTO room (room_id,room_code,held_code,created_by,create_request_id,status,created_at,updated_at)
-  VALUES (11, 42, 42, 2, X'0102030405060708090A0B0C0D0E0F10', 'OPEN', 2000, 2000);
+INSERT INTO room (room_id,room_code,held_code,boot_id,created_by,create_request_id,status,created_at,updated_at)
+  VALUES (11, 42, 42, X'00000000000000000000000000000002', 2, X'0102030405060708090A0B0C0D0E0F10', 'OPEN', 2000, 2000);
 -- 另一已关闭并已释放号码的房间（多个 NULL 不冲突）
-INSERT INTO room (room_id,room_code,held_code,created_by,create_request_id,status,created_at,updated_at,closed_at,close_reason)
-  VALUES (12, 7, NULL, 1, X'0102030405060708090A0B0C0D0E0F11', 'CLOSED', 0, 0, 5, 'IDLE');
--- 正常关房（v2 此处为启动清扫，测试版不做）：房间 11 因 7 天无人关闭，仍占着号码 42（冷却中）
-UPDATE room SET status='CLOSED', closed_at=3000, close_reason='IDLE', updated_at=3000 WHERE room_id=11 AND status='OPEN';
+INSERT INTO room (room_id,room_code,held_code,boot_id,created_by,create_request_id,status,created_at,updated_at,closed_at,close_reason)
+  VALUES (12, 7, NULL, X'00000000000000000000000000000001', 1, X'0102030405060708090A0B0C0D0E0F11', 'CLOSED', 0, 0, 5, 'RESTART');
+-- 启动清扫：关闭别的进程留下的 OPEN 房间（方案 Q 下只在取得租约之后执行）
+UPDATE room SET status='CLOSED', closed_at=3000, close_reason='RESTART', updated_at=3000
+  WHERE status='OPEN' AND boot_id <> X'00000000000000000000000000000003';
 -- 按号查房只认 OPEN：此时应查不到
-INSERT INTO room (room_id,room_code,held_code,created_by,create_request_id,status,created_at,updated_at)
-  SELECT 13, 99, 99, 1, X'0102030405060708090A0B0C0D0E0F12', 'OPEN', 3000, 3000
+INSERT INTO room (room_id,room_code,held_code,boot_id,created_by,create_request_id,status,created_at,updated_at)
+  SELECT 13, 99, 99, X'00000000000000000000000000000003', 1, X'0102030405060708090A0B0C0D0E0F12', 'OPEN', 3000, 3000
   FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM room WHERE held_code = 42 AND status = 'OPEN');
--- （v3：v2 的"关房对账 RECONCILE"正例已删除，关房对账移入后补清单）
--- 建房的历史唯一性核验：候选 room_id 在 room/game_record/game_log 中都不存在才可用；11 已被占用
+-- 关房对账（I3）：本进程 OPEN 但内存已无的房间以 RECONCILE 关闭
+INSERT INTO room (room_id,room_code,held_code,boot_id,created_by,create_request_id,status,created_at,updated_at)
+  VALUES (14, 55, 55, X'00000000000000000000000000000003', 3, X'0102030405060708090A0B0C0D0E0F13', 'OPEN', 3000, 3000);
+UPDATE room SET status='CLOSED', closed_at=3500, close_reason='RECONCILE', updated_at=3500 WHERE room_id=14 AND status='OPEN';
+-- 建房的历史唯一性核验（G1）：候选 room_id 在 room/game_record/game_log 中都不存在才可用；11 已被占用
 INSERT INTO smoke_assert SELECT 'room id history check', CASE WHEN
   (SELECT COUNT(*) FROM room WHERE room_id = 11) + (SELECT COUNT(*) FROM game_record WHERE room_id = 11)
   + (SELECT COUNT(*) FROM game_log WHERE room_id = 11) > 0 THEN 1 ELSE 0 END FROM DUAL;
 
 -- 战绩：正常结束一局（2 人）+ 中止一局（排名/资产为 NULL）+ 并列一局
--- RecordStore 协议：先按 user_id 升序 SELECT ... FOR UPDATE 锁定参与者行，跳过 status='DELETED' 的人（此处单线程示意）
+-- RecordStore 协议：先按 user_id 升序 SELECT ... FOR SHARE 锁定参与者行，跳过 status='DELETED' 的人（此处单线程示意）
 INSERT INTO game_record (room_id,game_no,outcome,end_reason,end_mode,time_limit_min,board_id,initial_cash,player_count,
   started_at,ended_at,engine_version,config_hash,draft_sha256,created_at)
   VALUES (11, 1, 'FINISHED', 'TIME_UP', 'TIME_LIMIT', 30, 'classic', 15000, 2, 100, 200, 'engine-0.8.1-m3a', 'h',
@@ -126,13 +143,14 @@ DELETE FROM chat_message WHERE sender_live IS NULL AND hold_until < 1;
 
 -- 断言
 INSERT INTO smoke_assert SELECT 'open rooms', CASE WHEN (SELECT COUNT(*) FROM room WHERE status = 'OPEN') = 1 THEN 1 ELSE 0 END FROM DUAL;          -- 只剩 13
-INSERT INTO smoke_assert SELECT 'normal closes', CASE WHEN (SELECT COUNT(*) FROM room WHERE status = 'CLOSED' AND close_reason IS NOT NULL) = 3 THEN 1 ELSE 0 END FROM DUAL; -- 10、11、12（v2 为 restart sweep）
+INSERT INTO smoke_assert SELECT 'restart sweep', CASE WHEN (SELECT COUNT(*) FROM room WHERE close_reason = 'RESTART') = 2 THEN 1 ELSE 0 END FROM DUAL; -- 11、12
 INSERT INTO smoke_assert SELECT 'recent query', CASE WHEN (SELECT COUNT(*) FROM smoke_check) = 2 THEN 1 ELSE 0 END FROM DUAL;
 INSERT INTO smoke_assert SELECT 'trimmed to N', CASE WHEN (SELECT COUNT(*) FROM game_record_player WHERE user_id = 1) = 3 THEN 1 ELSE 0 END FROM DUAL; -- 修剪后 2 行 + 第 4 局 1 行
 INSERT INTO smoke_assert SELECT 'trim removed oldest', CASE WHEN (SELECT MIN(record_id) FROM game_record_player WHERE user_id = 1) = 2 THEN 1 ELSE 0 END FROM DUAL;
 INSERT INTO smoke_assert SELECT 'orphan header removed', CASE WHEN (SELECT COUNT(*) FROM game_record) = 3 THEN 1 ELSE 0 END FROM DUAL;   -- 表头 1 成为孤儿且超边界被删
 INSERT INTO smoke_assert SELECT 'chat kept', CASE WHEN (SELECT COUNT(*) FROM chat_message) = 1 THEN 1 ELSE 0 END FROM DUAL;             -- 只剩保全中的 1 条（用户 1 的消息过期被清）
 INSERT INTO smoke_assert SELECT 'identities', CASE WHEN (SELECT COUNT(*) FROM wx_identity) = 2 THEN 1 ELSE 0 END FROM DUAL;
-INSERT INTO smoke_assert SELECT 'varbinary bytes', CASE WHEN (SELECT LENGTH(create_request_id) FROM room WHERE room_id = 13) = 16 THEN 1 ELSE 0 END FROM DUAL;  -- LENGTH = 字节数（v2 用 boot_id）
-INSERT INTO smoke_assert SELECT 'assert count', CASE WHEN (SELECT COUNT(*) FROM smoke_assert) = 16 THEN 1 ELSE 0 END FROM DUAL;
+INSERT INTO smoke_assert SELECT 'boot_id bytes', CASE WHEN (SELECT LENGTH(boot_id) FROM room WHERE room_id = 13) = 16 THEN 1 ELSE 0 END FROM DUAL;
+INSERT INTO smoke_assert SELECT 'lease released', CASE WHEN (SELECT COUNT(*) FROM service_control WHERE holder_boot_id IS NULL AND drain_at IS NULL) = 1 THEN 1 ELSE 0 END FROM DUAL;
+INSERT INTO smoke_assert SELECT 'assert count', CASE WHEN (SELECT COUNT(*) FROM smoke_assert) = 18 THEN 1 ELSE 0 END FROM DUAL;
 DROP TABLE smoke_check;

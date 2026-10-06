@@ -2,13 +2,14 @@
 import { BlockInputEvents, Node } from 'cc';
 import { Theme } from '../core/Theme';
 import { art } from '../ui/Art';
-import { fillRR, gfx, mk, onTap, paintPanel, text } from '../ui/Kit';
+import { col, fillRR, gfx, mk, onTap, paintPanel, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 
 export abstract class InformationPage extends Popup {
     get coversScreen(): boolean { return true; }
     protected get headingY(): number { return Theme.safeTop + 12; }
     protected get headingSize(): number { return 44; }
+    protected get headingOutline(): number { return 3; }
     protected constructor(id: string, title: string) { super(id, title, Theme.W, Theme.H); }
 
     mount(layer: Node): void {
@@ -23,7 +24,10 @@ export abstract class InformationPage extends Popup {
         fillRR(gfx(back), 0, 0, 64, 64, 32, Theme.c.ivory);
         art(back, 'icon_back', 18, 18, 28, 28);
         onTap(back, () => this.close());
-        text(this.root, this.title, 130, this.headingY, 430, 80, this.headingSize, '#101A50', { bold: true });
+        const heading = text(this.root, this.title, 130, this.headingY, 430, 80, this.headingSize, '#101A50', { bold: true });
+        heading.enableOutline = this.headingOutline > 0;
+        heading.outlineColor = col('#FFFFFF');
+        heading.outlineWidth = this.headingOutline;
     }
 }
 

@@ -60,6 +60,8 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
 
     @Override
     public RejectionCode decide(DecisionContext<SessionState> ctx, Command command) {
+        RejectionCode control = BusinessCommands.beforeCommand(ctx, command);
+        if (control != null) { return control; }
         return switch (command) {
             case RoomCommand c -> LobbyModule.decide(ctx, c);
             case SessionCommand c -> GameModule.decide(ctx, c);
@@ -83,6 +85,10 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
         if (input.command() instanceof SessionCommand.EndGame c) {
             return state.withAbortSource(new SessionState.AbortSource(input.seq(), c));
         }
+        var expectedControl = BusinessCommands.expected(state, input.command());
+        if (expectedControl != null) {
+            state = state.withControlSource(expectedControl);
+        }
         if (state.inGame() && state.game().debt() != null) {
             var g = state.game();
             var d = g.debt();
@@ -102,7 +108,8 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     @Override
     public boolean recordsInputSource(Command command) {
         return Domain.super.recordsInputSource(command) || command instanceof GameCommand.DeclareBankruptcy
-                || command instanceof GameCommand.Surrender;
+                || command instanceof GameCommand.Surrender || command instanceof GameCommand.ResumeControl
+                || BusinessCommands.kind(command) == BusinessCommands.Kind.BUSINESS;
     }
 
     @Override
@@ -123,6 +130,9 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     /** 步边界：对局中回合的步内衔接记录必须为空（C4）。 */
     @Override
     public void checkBoundary(SessionState state) {
+        if (state.controlSource() != null) {
+            throw new IllegalStateException("unconsumed control source at a step boundary");
+        }
         if (state.abortSource() != null) {
             throw new IllegalStateException("unconsumed EndGame source at a step boundary");
         }
@@ -138,6 +148,10 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     public SessionState evolve(SessionState state, Event event, Draws draws, RuleConfig rules) {
         return switch (event) {
             case RoomEvent e -> state.withLobby(LobbyModule.evolve(state.lobby(), e));
+            case GameEvent.ControlChanged e -> {
+                LobbyModule.check(e.equals(state.controlSource()), "control change requires its matching accepted input source");
+                yield GameModule.evolve(state.withControlSource(null), e, draws, rules);
+            }
             case GameEvent e -> GameModule.evolve(state, e, draws, rules);
             default -> throw new IllegalStateException("not a session event: " + event);
         };
@@ -146,6 +160,9 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     @Override
     public void checkEvent(EngineState engine, Event event, RuleConfig rules) {
         SessionState current = (SessionState) engine.domain();
+        if (current.controlSource() != null && !(event instanceof GameEvent.ControlChanged)) {
+            throw new IllegalStateException("control change must immediately follow its accepted input source");
+        }
         if (current.inGame() && current.game().turn().landing() != null) {
             var result = current.game().turn().landing().event();
             if (result != null && result.countPending() && !(event instanceof GameEvent.EventHandCount)) {
@@ -177,6 +194,7 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     public void validate(EngineState engine, SessionState state, RuleConfig config, boolean full) {
         LobbyModule.expect(state != null, "session state missing");
         // 快照/重建结果只允许步边界状态，不能恢复一份可供后续冒用的管理中止凭据。
+        LobbyModule.expect(state.controlSource() == null, "unconsumed control source at a step boundary");
         LobbyModule.expect(state.abortSource() == null, "unconsumed EndGame source at a step boundary");
         LobbyModule.validate(state.lobby(), config);
         List<FlowCoordinator.TaskClaim> claims = GameModule.validate(engine, state, config, full);

@@ -1,0 +1,5 @@
+{
+  "tool": "built-in image_gen",
+  "reason": "Atlas station train clipped at source right edge; regenerate complete standalone cutout",
+  "prompt": "Generate ONE complete transparent isometric river-town STATION hero cutout matching attached stationarchitecture: creamstonebuilding,blueEuropeanstraightgable roof, smallclocktower, flowers, quaybyriver, redgoldtoy locomotive. Use ONE locomotive ONLY, no passengercarriages, keep FULL front/back locomotive withallwheelsvisible. Entirebuilding,entiretrain,entirequay andwaterisland must fitwithin image withatleast8percent TRANSPARENT margin on ALLfour edges. Landscape3:2 composition, scale down subject tofit. No cropping at any edge. No Chinese pagodaroofs,notext,noUI,nobackdrop. Truealpha andcleanantialiasededge. Same artstyle andlighting asreference. Provide standaloneasset suitablelanddetailhero."
+}

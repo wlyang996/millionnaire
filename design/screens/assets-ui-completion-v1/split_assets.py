@@ -33,7 +33,13 @@ for job in jobs:
         if 'rects_normalized' in override:
             x0,y0,x1,y1=override['rects_normalized'][i]
             box=(round(x0*atlas.width),round(y0*atlas.height),round(x1*atlas.width),round(y1*atlas.height))
-        piece=atlas.crop(box); original_size=piece.size
+        frame_source=source
+        if name=='scene_station' and (root/'atlases/scene_station_single.png').exists():
+            frame_source=root/'atlases/scene_station_single.png'
+            piece=Image.open(frame_source).convert('RGBA'); box=(0,0,*piece.size)
+        else:
+            piece=atlas.crop(box)
+        original_size=piece.size
         if job['alpha']:
             if piece.getchannel('A').getextrema()[0]==255:
                 raise RuntimeError('Opaque cutout: '+name)
@@ -41,7 +47,12 @@ for job in jobs:
             bounds=piece.getchannel('A').getbbox()
             if not bounds: raise RuntimeError('Empty sprite: '+name)
             # Motion frames retain the identical cell canvas, avoiding per-frame anchor jitter.
-            if not job.get('motion'): piece=piece.crop(bounds)
+            if not job.get('motion'):
+                piece=piece.crop(bounds)
+            else:
+                # Integer division may differ by one pixel across columns; pad without scaling.
+                fixed=Image.new('RGBA',((atlas.width+cols-1)//cols,(atlas.height+rows-1)//rows))
+                fixed.paste(piece,(0,0)); piece=fixed
             result=Image.new('RGBA',(piece.width+16,piece.height+16))
             result.paste(piece,(8,8)); piece=result
         else:
@@ -50,7 +61,7 @@ for job in jobs:
             piece=ImageOps.fit(piece,(720,1280),method=Image.Resampling.LANCZOS)
         path=root/'png'/(name+'.png');piece.save(path)
         hist=piece.getchannel('A').histogram()
-        rec={'name':name,'category':job['id'],'file':'png/'+path.name,'source':'atlases/'+source.name,
+        rec={'name':name,'category':job['id'],'file':'png/'+path.name,'source':'atlases/'+frame_source.name,
              'source_rect':list(box),'native_cell_size':list(original_size),'alpha_bounds':list(bounds),
              'size':list(piece.size),'motion_fixed_cell':bool(job.get('motion')),'transparent_padding':8 if job['alpha'] else 0,
              'transparent_pixels':hist[0],'partial_alpha_pixels':sum(hist[1:255]),'cleanup':cleanup,

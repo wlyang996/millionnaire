@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-06",
+  "sprites": 90,
+  "expected": 90,
+  "errors": [],
+  "checks": [
+    "file existence",
+    "decodable RGBA",
+    "native size",
+    "SHA-256",
+    "8px transparent padding",
+    "same motion frame canvas"
+  ],
+  "runtime_imported": false,
+  "runtime_tested": false,
+  "visual_review": "16 category contact sheets inspected; source corrections preserved"
+}

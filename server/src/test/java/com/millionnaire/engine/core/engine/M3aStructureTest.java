@@ -44,7 +44,14 @@ class M3aStructureTest {
         t.send(new GameCommand.ConnectionConfirmed(1, "p1", 2));
         assertEquals(d.path(), t.game().debt().path());
         assertEquals(chain, t.game().turn().chain());
-        t.act(w -> new GameCommand.EmergencyMortgage("p1", w, 1));
+        long deadline = t.window().window().deadline();
+        assertEquals(com.millionnaire.engine.core.event.RejectionCode.CONTROL_NOT_MANUAL,
+                t.act(w -> new GameCommand.EmergencyMortgage("p1", w, 1)).rejection());
+        assertEquals(d, t.game().debt(), "offline rejection preserves the exact locked debt");
+        assertEquals(chain, t.game().turn().chain());
+        t.send(new GameCommand.Reconnected(1, "p1", 3));
+        assertEquals(deadline, t.window().window().deadline(), "reconnect never extends the debt window");
+        assertEquals(StepResult.Outcome.ACCEPTED, t.act(w -> new GameCommand.EmergencyMortgage("p1", w, 1)).outcome());
         assertNull(t.game().debt());
         assertEquals(t.state, t.engine.rebuild(t.log));
     }

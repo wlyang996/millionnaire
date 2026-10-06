@@ -111,7 +111,7 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         confirm.setEnabled(false, '银行办理结算尚未接入服务端');
     } else if (tile.type === 'JAIL') {
         // Screen21 has large illustrated operation cards, not small gray capsules.
-        art(p, 'scene_jail_closeup', 0, 106, 720, 556);
+        art(p, 'scene_jail_closeup', 0, 0, 720, 648);
         const panel = informationCard(p, 22, 636, 676, 624, '#FFFEF6', 44);
         const failure = informationCard(panel, 174, 18, 328, 64, '#FFF3D6', 32, false);
         text(failure, '已失败', 28, 6, 138, 52, 32, '#101A50', { bold: true });

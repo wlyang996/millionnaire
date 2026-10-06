@@ -5,13 +5,10 @@ import com.millionnaire.engine.core.state.ControlMode;
 /**
  * 对局命令。客户端命令携带目标窗口 ID 或目标局号；系统命令（控制模式、连接判定）都绑定目标局号，
  * 连接判定还携带外层的观测序号（单调递增），过期观测被拒。每个阶段允许哪些命令由 {@code StageTable} 数据表决定。
- * <p><b>产品决定（M1 收尾，取代 M1d 的"默认拒绝"）</b>：暂离 / 托管期间玩家本人发送 {@link RollDice}，
- * 视为"恢复并投骰"——在同一步内先恢复手动控制（ControlChanged MANUAL），再按手动投骰处理。
- * 到期任务仍然优先：若窗口截止或 AUTO_ACT 已在该输入时刻之前到期，内核先执行到期任务，随后的 RollDice 按已关闭的窗口被拒，
- * 被拒的命令不恢复控制。确认掉线（OFFLINE）未被可信重连（Reconnected）清除时不解除自动控制，RollDice 仍被拒。
- * <p>其他手动操作（付费出狱、买地、升级、抵押、赎回等）在暂离 / 托管期间仍被拒绝，需先 {@link ResumeControl}
- * （决定只覆盖"点击投骰"；其余是否同样自动恢复列入 m2-report 待确认）。债务流程的命令例外：债务成立时锁定为手动路径，
- * 债务人本人的应急抵押 / 确认破产 / 继续不受之后的控制模式变化影响。
+ * <p><b>产品决定（2026-10-06）</b>：暂离 / 托管期间本人提交合法业务命令，在同一步先恢复手动控制再执行。
+ * 业务集合由 BusinessCommands 的穷尽分类统一维护；只读查看与聊天 / 开麦由外层处理，不解除托管。
+ * 到期任务先执行，被拒命令不改变控制；确认掉线必须先经可信 {@link Reconnected}。
+ * 已成立的债务路径与原窗口截止不因恢复控制而改变。
  */
 public sealed interface GameCommand extends Command {
     record DrawEventCard(String actor, long windowId) implements GameCommand { }

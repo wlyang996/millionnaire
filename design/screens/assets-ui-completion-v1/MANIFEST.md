@@ -16,7 +16,11 @@
 - 品牌Logo与四人桌游插画各1件：brand_logo/lobby_friends。
 - 6种结算装饰：result_trophy/result_laurel/result_plaque/minigame_title/result_reward_panel/result_zero_panel；均为无字底图，除Logo明确保留“好友桌游”文字。
 
-合计计划90件；实际数量及逐件SHA-256以sprites.json为准，不计原图和预览为独立素材。
+合计90件独立PNG；实际数量及逐件SHA-256以sprites.json为准，不计原图和预览为独立素材。
+
+最终文件校验通过：90/90件，无缺失图集、无哈希/尺寸/透明留边错误，8组角色帧画布尺寸一致。已查看分类预览并修正裁切；尚未导入运行资源或验证播放效果。
+
+可先查看[素材总览](素材总览.jpg)、[扁平按钮](previews/flat_buttons.jpg)、[角色插画](previews/information_hosts.jpg)、[前四角色跳跃姿态](previews/pawn_motion_1.jpg)、[后四角色跳跃姿态](previews/pawn_motion_2.jpg)、[特殊土地近景](previews/special_scenes_2.jpg)。道具大卡见previews/detail_cards_1/2/3.jpg，聊天和结算分别见previews/chat_skins.jpg及previews/settlement_art.jpg。
 
 ## 状态边界
 
@@ -29,3 +33,5 @@
 ## 验证文件
 
 sprites.json保存来源区域、裁切、alpha清理、固定帧尺寸和SHA-256；crop-overrides.json记录生成图实际排布与数学网格不同的情况。split_assets.py可复现拆分。分类预览用于检查完整边框、角色身份、透明轮廓与图案；预览通过不代表实际动画连贯性或微信真机已通过。
+
+validate_assets.py及qa-report.json记录90件文件完整性、RGBA/尺寸、SHA-256、8px透明边与角色动画帧画布一致性检查。特殊土地最初中式屋檐稿保留在raw/，重做提示词在style-corrections.json；车站图集边缘裁掉列车的版本保留，最终改用独立完整车站，提示词见station-correction.json。未采用的图集区域不作为成品。

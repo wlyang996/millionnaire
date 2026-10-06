@@ -145,17 +145,12 @@ final class TurnModule {
             case GameCommand.DrawEventCard c -> EventModule.decide(ctx, c);
             case GameCommand.DiscardCard c -> EventModule.decide(ctx, c);
             case RollDice c -> {
-                RejectionCode why = checkTurnWindow(ctx, c.actor(), c.windowId(), true);
+                RejectionCode why = checkTurnWindow(ctx, c.actor(), c.windowId());
                 if (why != null) {
                     yield why;
                 }
                 if (!StageTable.rule(StageTable.turnPoint(g)).allows(c)) {
                     yield RejectionCode.WRONG_STAGE;
-                }
-                // 产品决定（M1 收尾）：暂离 / 托管期间本人投骰 = 恢复手动控制并投骰；确认掉线未经重连清除时已在上面拒绝
-                if (g.player(c.actor()).orElseThrow().control() != com.millionnaire.engine.core.state.ControlMode.MANUAL) {
-                    ctx.emit(new ControlChanged(c.actor(), com.millionnaire.engine.core.state.ControlMode.MANUAL));
-                    policyChanged(ctx, c.actor());
                 }
                 act(ctx, false, false);
                 yield null;
@@ -178,6 +173,9 @@ final class TurnModule {
             case ResumeControl c -> {
                 if (c.gameNo() != g.gameNo()) {
                     yield RejectionCode.GAME_MISMATCH;
+                }
+                if (c.actor() != null && g.player(c.actor()).map(p -> p.conn() == ConnState.OFFLINE).orElse(false)) {
+                    yield RejectionCode.CONTROL_NOT_MANUAL;
                 }
                 yield change(ctx, c.actor(), p -> p.control() == com.millionnaire.engine.core.state.ControlMode.MANUAL
                         ? null : new ControlChanged(c.actor(), com.millionnaire.engine.core.state.ControlMode.MANUAL));
@@ -235,15 +233,7 @@ final class TurnModule {
     }
 
     static RejectionCode checkTurnWindow(DecisionContext<SessionState> ctx, String actor, long windowId) {
-        return checkTurnWindow(ctx, actor, windowId, false);
-    }
-
-    /**
-     * 命令必须作用于当前回合窗口：发起者是当前玩家且处于手动控制、窗口开放、是当前回合绑定的窗口。
-     * resumable = true（投骰）时，暂离 / 托管不构成拒绝理由（由调用方恢复手动控制）；确认掉线仍拒绝。
-     */
-    private static RejectionCode checkTurnWindow(DecisionContext<SessionState> ctx, String actor, long windowId,
-                                                 boolean resumable) {
+        // 业务命令在 SessionDomain 入口统一恢复，本层核对恢复后的手动状态与窗口。
         GameState g = game(ctx);
         if (actor == null || g.player(actor).isEmpty()) {
             return RejectionCode.NOT_MEMBER;
@@ -255,7 +245,7 @@ final class TurnModule {
             return RejectionCode.NOT_YOUR_TURN;
         }
         PlayerState self = g.player(actor).orElseThrow();
-        if (resumable ? self.conn() == ConnState.OFFLINE : self.automated()) {
+        if (self.automated()) {
             return RejectionCode.CONTROL_NOT_MANUAL;
         }
         RejectionCode why = FlowCoordinator.checkWindow(g.flow(), windowId, actor, ctx.now());
@@ -284,7 +274,7 @@ final class TurnModule {
      * 控制或连接策略实际变化。只有<b>当前玩家本人</b>的策略变化才撤销并重排其自动任务（任务版本随 taskId 变化）；
      * 其他玩家的切换、重连、疑似断线不得改变当前任务的 ID 与到期时刻（C2）。
      */
-    private static void policyChanged(DecisionContext<SessionState> ctx, String playerId) {
+    static void policyChanged(DecisionContext<SessionState> ctx, String playerId) {
         if (playerId.equals(game(ctx).turn().currentPlayer())) {
             disarm(ctx);
             reconcileAuto(ctx);

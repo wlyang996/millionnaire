@@ -47,7 +47,7 @@ public interface Domain<S extends DomainState> {
 
     /**
      * 仅由 InputAccepted 的演化调用：已登记来源命令的类型与输入摘要已经内核核对。
-     * 方法名沿用系统来源接口；生产会话也用它建立确认破产/认输的客户端来源凭据。
+     * 方法名沿用系统来源接口；生产会话也用它建立控制恢复、确认破产/认输的客户端来源凭据。
      * 领域可据此建立本步来源凭据；拒绝输入不调用，在线拒绝时工作区整体丢弃。
      */
     default S acceptSystemInput(S state, Input input) {

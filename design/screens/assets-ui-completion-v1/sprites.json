@@ -2361,12 +2361,12 @@
         311
       ],
       "size": [
-        331,
-        327
+        332,
+        328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 68766,
+      "transparent_pixels": 69425,
       "partial_alpha_pixels": 39288,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2375,7 +2375,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 1857
       },
-      "sha256": "03f4f2d9981b409f30352d907f805bf3448e3fbb2f49092dde9d1e4228a8b91c",
+      "sha256": "6a6aeeac8129584c32eb602e604b189ec614b2cdd5e137972e88b44ba09e03ef",
       "status": "generated candidate; not imported"
     },
     {
@@ -2401,11 +2401,11 @@
       ],
       "size": [
         332,
-        327
+        328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 72280,
+      "transparent_pixels": 72612,
       "partial_alpha_pixels": 36204,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2414,7 +2414,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 1637
       },
-      "sha256": "3b5f68d8337b1c69150a489b8db6f8d79755904e3bbb9f0e051ce9f123a23e06",
+      "sha256": "151ca2bfee114fb8523b90782eb747aabf75810b04a90e5f00b1e2a85d051716",
       "status": "generated candidate; not imported"
     },
     {
@@ -2439,12 +2439,12 @@
         298
       ],
       "size": [
-        331,
-        327
+        332,
+        328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 68157,
+      "transparent_pixels": 68816,
       "partial_alpha_pixels": 39967,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2453,7 +2453,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 3213
       },
-      "sha256": "d552e3904e89419f2e970d5e8bb2269d7e8967fcc079c4b4b793a83359dbd700",
+      "sha256": "9573961637459dbfb6a4a1490cdc9851db5c949deea19931e3fe82201c405399",
       "status": "generated candidate; not imported"
     },
     {
@@ -2479,11 +2479,11 @@
       ],
       "size": [
         332,
-        327
+        328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 72789,
+      "transparent_pixels": 73121,
       "partial_alpha_pixels": 35655,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2492,7 +2492,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 1721
       },
-      "sha256": "77e532877b96333c55aa1f8a0b6e60f9b88f19fe5dce9441c6a19c3982899b6d",
+      "sha256": "f0bcc7a685ec9a8e78e09ed154e36288fe0c115d5eb37bf1766f9bcc902556cd",
       "status": "generated candidate; not imported"
     },
     {
@@ -2517,12 +2517,12 @@
         312
       ],
       "size": [
-        331,
+        332,
         328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 59708,
+      "transparent_pixels": 60036,
       "partial_alpha_pixels": 48791,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2531,7 +2531,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 4791
       },
-      "sha256": "8f95c5f3a02b14f14c036e8850631aa611624332116210780ab71bb4fad57921",
+      "sha256": "b1bf9afd2887d013c3602c34fec95be6855a5cff77965489b7fb437ebaf44bcc",
       "status": "generated candidate; not imported"
     },
     {
@@ -2595,12 +2595,12 @@
         286
       ],
       "size": [
-        331,
+        332,
         328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 60495,
+      "transparent_pixels": 60823,
       "partial_alpha_pixels": 48019,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2609,7 +2609,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 3457
       },
-      "sha256": "3afb83c019099a7fe21b65d7071d76990c64ad97c2e0ac9842b2a8cb71112e69",
+      "sha256": "c0bbc32f58551ac2e80019f1929342d1e617ddbab6c3ff603e0cad71dc1ef2f4",
       "status": "generated candidate; not imported"
     },
     {
@@ -2673,12 +2673,12 @@
         306
       ],
       "size": [
-        331,
-        327
+        332,
+        328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 68715,
+      "transparent_pixels": 69374,
       "partial_alpha_pixels": 39411,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2687,7 +2687,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 4704
       },
-      "sha256": "924b562d37127e79fae905dd4695c43154639f05f2f12208ca78a03c2693585a",
+      "sha256": "947c4cdc1921cfdb405c7b4d1baad9623a15d9b3b95b1bb35e7d81c33a1b1b86",
       "status": "generated candidate; not imported"
     },
     {
@@ -2713,11 +2713,11 @@
       ],
       "size": [
         332,
-        327
+        328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 71758,
+      "transparent_pixels": 72090,
       "partial_alpha_pixels": 36678,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2726,7 +2726,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 3340
       },
-      "sha256": "b38441c551fd5fa9d2ee1ba44947aa8ff54966c3cea22a82f900099f2761b69a",
+      "sha256": "41b33e6f853a9443f9288af05785f139fff8ea637dfd9b1d36bd9eb80366e42a",
       "status": "generated candidate; not imported"
     },
     {
@@ -2751,12 +2751,12 @@
         269
       ],
       "size": [
-        331,
-        327
+        332,
+        328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 68599,
+      "transparent_pixels": 69258,
       "partial_alpha_pixels": 39575,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2765,7 +2765,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 4008
       },
-      "sha256": "a1d761df760f9db0960dfe1ca1e3395abc1b8d4cc2485466561e21d8f8951fca",
+      "sha256": "b9112f1e62b27fb6550321e14ba425233eac7805c407a67bde58b3b7cf293120",
       "status": "generated candidate; not imported"
     },
     {
@@ -2791,11 +2791,11 @@
       ],
       "size": [
         332,
-        327
+        328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 71385,
+      "transparent_pixels": 71717,
       "partial_alpha_pixels": 37079,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2804,7 +2804,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 3999
       },
-      "sha256": "55c3200d7ba69e449f42b1be90bf7f261e820b8150147c9cf39c7a506b55000d",
+      "sha256": "3945bd5f072d31d52577e1ce03297252f933c5b0462a6def176188b718fc0947",
       "status": "generated candidate; not imported"
     },
     {
@@ -2829,12 +2829,12 @@
         305
       ],
       "size": [
-        331,
+        332,
         328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 58631,
+      "transparent_pixels": 58959,
       "partial_alpha_pixels": 49868,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2843,7 +2843,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 3349
       },
-      "sha256": "9559e2548f90da124d6237446aba870c5b2a554ec60f355b089dc4cbac03ead9",
+      "sha256": "7bd31bd937248fed9404a7fd93fd23a05037a1424509d7842e9ce315fe1d975b",
       "status": "generated candidate; not imported"
     },
     {
@@ -2907,12 +2907,12 @@
         272
       ],
       "size": [
-        331,
+        332,
         328
       ],
       "motion_fixed_cell": true,
       "transparent_padding": 8,
-      "transparent_pixels": 59608,
+      "transparent_pixels": 59936,
       "partial_alpha_pixels": 48903,
       "cleanup": {
         "alpha_core_threshold": 16,
@@ -2921,7 +2921,7 @@
         "preserved_components": 1,
         "removed_alpha_pixels": 2714
       },
-      "sha256": "f2b1112c2077e7a2f615b04d26150658346c2d4e025e0d90620ab4a3627d599d",
+      "sha256": "4af98f3cb612a7ff7f07ee1a1fd24d55c8f965c6d9b42136e33d5115de54706c",
       "status": "generated candidate; not imported"
     },
     {
@@ -2979,27 +2979,27 @@
         724
       ],
       "alpha_bounds": [
-        7,
-        53,
+        28,
+        37,
         724,
-        684
+        704
       ],
       "size": [
-        733,
-        647
+        712,
+        683
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 140447,
-      "partial_alpha_pixels": 333608,
+      "transparent_pixels": 138180,
+      "partial_alpha_pixels": 348033,
       "cleanup": {
         "alpha_core_threshold": 16,
-        "component_min_pixels": 33,
-        "removed_components": 1,
+        "component_min_pixels": 34,
+        "removed_components": 2,
         "preserved_components": 1,
-        "removed_alpha_pixels": 7648
+        "removed_alpha_pixels": 6506
       },
-      "sha256": "472d2d9fa0fecb286bd505b3f6a2e9839eb5639275dd4d55c0e5124c7da18496",
+      "sha256": "5ff1edee711393a6b0149be7c1323c3966101a36c97ebcc3b91296da55c051e3",
       "status": "generated candidate; not imported"
     },
     {
@@ -3019,26 +3019,26 @@
       ],
       "alpha_bounds": [
         47,
-        5,
+        7,
         724,
-        711
+        694
       ],
       "size": [
         693,
-        722
+        703
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 204754,
-      "partial_alpha_pixels": 295384,
+      "transparent_pixels": 171421,
+      "partial_alpha_pixels": 315663,
       "cleanup": {
         "alpha_core_threshold": 16,
-        "component_min_pixels": 29,
-        "removed_components": 2,
+        "component_min_pixels": 31,
+        "removed_components": 6,
         "preserved_components": 1,
-        "removed_alpha_pixels": 8568
+        "removed_alpha_pixels": 16619
       },
-      "sha256": "ab889e7d9b279594c3d5ca1ddf833e1adb932e25633a14b0357b8111bb4fc38e",
+      "sha256": "1516d75129fe96a9bf8e453dafb23ad33b685a7b03445527d9280877a0561f8f",
       "status": "generated candidate; not imported"
     },
     {
@@ -3057,27 +3057,27 @@
         724
       ],
       "alpha_bounds": [
-        23,
-        85,
-        714,
-        715
+        46,
+        73,
+        696,
+        700
       ],
       "size": [
-        707,
-        646
+        666,
+        643
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 138497,
-      "partial_alpha_pixels": 318059,
+      "transparent_pixels": 125855,
+      "partial_alpha_pixels": 302320,
       "cleanup": {
         "alpha_core_threshold": 16,
-        "component_min_pixels": 31,
-        "removed_components": 0,
+        "component_min_pixels": 30,
+        "removed_components": 8,
         "preserved_components": 1,
-        "removed_alpha_pixels": 9085
+        "removed_alpha_pixels": 14177
       },
-      "sha256": "2a8e7f8ec5e51c81bad0067385f8b9843248206b28cd1bb20c6fa800c0cddb09",
+      "sha256": "ca68a282bfc481c9741ce167f42181f45e089aefaf5ca8d1bb6631ffac5149cb",
       "status": "generated candidate; not imported"
     },
     {
@@ -3096,27 +3096,27 @@
         724
       ],
       "alpha_bounds": [
-        19,
-        34,
-        710,
-        670
+        7,
+        74,
+        691,
+        681
       ],
       "size": [
-        707,
-        652
+        700,
+        623
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 153964,
-      "partial_alpha_pixels": 306848,
+      "transparent_pixels": 143519,
+      "partial_alpha_pixels": 292463,
       "cleanup": {
         "alpha_core_threshold": 16,
-        "component_min_pixels": 30,
-        "removed_components": 3,
+        "component_min_pixels": 29,
+        "removed_components": 2,
         "preserved_components": 1,
-        "removed_alpha_pixels": 12366
+        "removed_alpha_pixels": 11709
       },
-      "sha256": "20cf027a897c26df45a66c6f41f033869eade7a347c5ceca262b36172883a1a1",
+      "sha256": "1945a7408dd2320cc0acaf26e1989e7807a87098ea96196214c2e98b37145b6a",
       "status": "generated candidate; not imported"
     },
     {
@@ -3135,66 +3135,66 @@
         724
       ],
       "alpha_bounds": [
-        13,
-        89,
-        724,
-        669
+        16,
+        94,
+        661,
+        681
       ],
       "size": [
-        727,
-        596
+        661,
+        603
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 138733,
-      "partial_alpha_pixels": 294358,
+      "transparent_pixels": 120248,
+      "partial_alpha_pixels": 278113,
       "cleanup": {
         "alpha_core_threshold": 16,
-        "component_min_pixels": 29,
+        "component_min_pixels": 27,
         "removed_components": 6,
         "preserved_components": 1,
-        "removed_alpha_pixels": 13368
+        "removed_alpha_pixels": 12139
       },
-      "sha256": "28c488aecb2a44a54a4793f39400ac3396af3de8fffe9691f7a22714cb2c6da1",
+      "sha256": "ffde6358ce64ac3616cde50b154185a4ade1db0145bd36e2e7b70566ffddfe50",
       "status": "generated candidate; not imported"
     },
     {
       "name": "scene_station",
       "category": "special_scenes_2",
       "file": "png/scene_station.png",
-      "source": "atlases/special_scenes_2.png",
+      "source": "atlases/scene_station_single.png",
       "source_rect": [
-        1448,
         0,
-        2172,
-        724
+        0,
+        1536,
+        1024
       ],
       "native_cell_size": [
-        724,
-        724
+        1536,
+        1024
       ],
       "alpha_bounds": [
-        13,
-        85,
-        721,
-        678
+        115,
+        51,
+        1434,
+        977
       ],
       "size": [
-        724,
-        609
+        1335,
+        942
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 109002,
-      "partial_alpha_pixels": 331768,
+      "transparent_pixels": 493661,
+      "partial_alpha_pixels": 763909,
       "cleanup": {
         "alpha_core_threshold": 16,
-        "component_min_pixels": 32,
-        "removed_components": 3,
+        "component_min_pixels": 75,
+        "removed_components": 1,
         "preserved_components": 1,
-        "removed_alpha_pixels": 14207
+        "removed_alpha_pixels": 10773
       },
-      "sha256": "01322ccc9aa69370a64ef656c9b4b551bc63dca59dee653d7512ef104afde8d3",
+      "sha256": "434b38bb97773bc26a51178a41fef138fbb6e0c6f749ab6ea1cec18b2c03a068",
       "status": "generated candidate; not imported"
     },
     {
@@ -3284,34 +3284,34 @@
         0,
         0,
         610,
-        429
+        513
       ],
       "native_cell_size": [
         610,
-        429
+        513
       ],
       "alpha_bounds": [
         42,
         71,
         599,
-        429
+        486
       ],
       "size": [
         573,
-        374
+        431
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 49377,
-      "partial_alpha_pixels": 164600,
+      "transparent_pixels": 64140,
+      "partial_alpha_pixels": 182344,
       "cleanup": {
         "alpha_core_threshold": 16,
-        "component_min_pixels": 16,
+        "component_min_pixels": 18,
         "removed_components": 5,
         "preserved_components": 1,
-        "removed_alpha_pixels": 6245
+        "removed_alpha_pixels": 6829
       },
-      "sha256": "2cf65dab06941227d22c88fde7640366fd8022e9a694884811f84ff7066595de",
+      "sha256": "46e8d562132aa5a3a6658ab11ac3b397d82d76cdf4d01c58457101a46e5c55ac",
       "status": "generated candidate; not imported"
     },
     {
@@ -3323,34 +3323,34 @@
         610,
         0,
         1220,
-        429
+        513
       ],
       "native_cell_size": [
         610,
-        429
+        513
       ],
       "alpha_bounds": [
-        378,
+        14,
         74,
         591,
-        429
+        459
       ],
       "size": [
-        229,
-        371
+        593,
+        401
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 42647,
-      "partial_alpha_pixels": 42199,
+      "transparent_pixels": 146822,
+      "partial_alpha_pixels": 90707,
       "cleanup": {
         "alpha_core_threshold": 16,
         "component_min_pixels": 16,
-        "removed_components": 13,
-        "preserved_components": 1,
-        "removed_alpha_pixels": 47691
+        "removed_components": 12,
+        "preserved_components": 2,
+        "removed_alpha_pixels": 6083
       },
-      "sha256": "69181ae59412d712063858eeb8143f441f4285916836a8063d1759fe561c4bec",
+      "sha256": "1ff016d6fceeda701686b534d545826177463f5f93c4c68651172a46dede5be3",
       "status": "generated candidate; not imported"
     },
     {
@@ -3360,36 +3360,36 @@
       "source": "atlases/settlement_art.png",
       "source_rect": [
         0,
-        429,
-        610,
-        859
+        513,
+        630,
+        838
       ],
       "native_cell_size": [
-        610,
-        430
+        630,
+        325
       ],
       "alpha_bounds": [
         12,
-        144,
-        610,
-        366
+        60,
+        627,
+        282
       ],
       "size": [
-        614,
+        631,
         238
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 51215,
-      "partial_alpha_pixels": 94724,
+      "transparent_pixels": 54721,
+      "partial_alpha_pixels": 95261,
       "cleanup": {
         "alpha_core_threshold": 16,
         "component_min_pixels": 16,
-        "removed_components": 1,
+        "removed_components": 0,
         "preserved_components": 1,
-        "removed_alpha_pixels": 25735
+        "removed_alpha_pixels": 4632
       },
-      "sha256": "c0de0fb9023d5cf5faf97b9fb3602a19772d935341fec12d2b45ebc6b15e39ac",
+      "sha256": "1f4e7ca119bb0969eb436fb64a3dbb83b4d20dbe162da42899535603d566d3b3",
       "status": "generated candidate; not imported"
     },
     {
@@ -3398,37 +3398,37 @@
       "file": "png/minigame_title.png",
       "source": "atlases/settlement_art.png",
       "source_rect": [
-        610,
-        429,
+        630,
+        513,
         1220,
-        859
+        838
       ],
       "native_cell_size": [
-        610,
-        430
+        590,
+        325
       ],
       "alpha_bounds": [
-        18,
-        110,
-        606,
-        381
+        0,
+        26,
+        586,
+        297
       ],
       "size": [
-        604,
+        602,
         287
       ],
       "motion_fixed_cell": false,
       "transparent_padding": 8,
-      "transparent_pixels": 52706,
-      "partial_alpha_pixels": 120247,
+      "transparent_pixels": 52147,
+      "partial_alpha_pixels": 120232,
       "cleanup": {
         "alpha_core_threshold": 16,
         "component_min_pixels": 16,
-        "removed_components": 4,
+        "removed_components": 0,
         "preserved_components": 1,
-        "removed_alpha_pixels": 12815
+        "removed_alpha_pixels": 2526
       },
-      "sha256": "d102305a780b527241ad668f57f48baebf225f57bc786f3a2e5041310e833a52",
+      "sha256": "119e6c41faf85ecbead7b883ce24e1e3eda458da13a622729d7eb99ee176ddb4",
       "status": "generated candidate; not imported"
     },
     {
@@ -3438,19 +3438,19 @@
       "source": "atlases/settlement_art.png",
       "source_rect": [
         0,
-        859,
+        838,
         610,
         1289
       ],
       "native_cell_size": [
         610,
-        430
+        451
       ],
       "alpha_bounds": [
         23,
-        1,
+        22,
         602,
-        364
+        385
       ],
       "size": [
         595,
@@ -3465,7 +3465,7 @@
         "component_min_pixels": 20,
         "removed_components": 0,
         "preserved_components": 1,
-        "removed_alpha_pixels": 5578
+        "removed_alpha_pixels": 8421
       },
       "sha256": "156a783555c59ffd72ae9f1946a8994c05e5c59fde64c3f427b079091e77ebe2",
       "status": "generated candidate; not imported"
@@ -3477,19 +3477,19 @@
       "source": "atlases/settlement_art.png",
       "source_rect": [
         610,
-        859,
+        838,
         1220,
         1289
       ],
       "native_cell_size": [
         610,
-        430
+        451
       ],
       "alpha_bounds": [
         8,
-        1,
+        22,
         587,
-        364
+        385
       ],
       "size": [
         595,
@@ -3504,7 +3504,7 @@
         "component_min_pixels": 20,
         "removed_components": 0,
         "preserved_components": 1,
-        "removed_alpha_pixels": 6945
+        "removed_alpha_pixels": 9436
       },
       "sha256": "08a055075d2c70c299faf436f0104ac588b7bf8742aac4d73581297ae404d006",
       "status": "generated candidate; not imported"
