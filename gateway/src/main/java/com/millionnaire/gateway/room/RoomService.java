@@ -117,6 +117,11 @@ public class RoomService {
         return room.submitClient(pid, requestId, new Join(pid, user.nickname()));
     }
 
+    /** 地图模板（格子类型、档位、指定拍卖地、人数容量），客户端据此画棋盘，不自己写死布局。 */
+    public java.util.List<com.millionnaire.engine.config.BoardTemplate> boards() {
+        return engine.config().boards();
+    }
+
     public Optional<LiveRoom> roomOf(String playerId) {
         return Optional.ofNullable(byPlayer.get(playerId));
     }

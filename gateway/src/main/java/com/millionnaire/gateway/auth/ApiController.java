@@ -83,6 +83,12 @@ public class ApiController {
                 .body(room.get().snapshot(user.get().playerId()));
     }
 
+    /** 地图模板：[{id, minPlayers, maxPlayers, tiles:[{index, type, tier, auctionDesignated}]}]，无需登录。 */
+    @GetMapping("/boards")
+    public java.util.List<com.millionnaire.engine.config.BoardTemplate> boards() {
+        return rooms.boards();
+    }
+
     private Optional<User> user(String authorization) {
         return tokens.fromAuthorization(authorization).flatMap(users::find);
     }

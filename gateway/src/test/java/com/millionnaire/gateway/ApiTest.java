@@ -42,5 +42,12 @@ class ApiTest {
         assertThat(http.exchange("/api/room", HttpMethod.GET, new HttpEntity<>(h), Map.class).getStatusCode())
                 .isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(http.getForEntity("/api/me", Map.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        java.util.List<Map<String, Object>> boards = http.getForObject("/api/boards", java.util.List.class);
+        assertThat(boards).extracting(b -> b.get("id")).containsExactly("classic-30", "classic-50");
+        java.util.List<Map<String, Object>> tiles = (java.util.List<Map<String, Object>>) boards.get(0).get("tiles");
+        assertThat(tiles).hasSize(30);
+        assertThat(tiles.get(0).get("type")).isEqualTo("START");
+        assertThat(tiles.get(1)).containsEntry("type", "PROPERTY").containsEntry("tier", "LOW");
     }
 }
