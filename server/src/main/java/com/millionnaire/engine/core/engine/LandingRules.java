@@ -35,7 +35,8 @@ final class LandingRules {
                         >= EconomyModule.basePrice(c, LobbyModule.board(c, g.settings()).tiles().get(l.tile())))).orElse(false),
                 (c, g, l) -> g.board().ownable(l.tile()).map(o -> o.owner() == null
                         || o.owner().equals(g.turn().currentPlayer()) && l.bought()).orElse(false), List.of(
-                new Outcome(LandingResult.BOUGHT, List.of(new Successor(LandingStep.UPGRADE, CAN_UPGRADE))),
+                new Outcome(LandingResult.BOUGHT, List.of(new Successor(LandingStep.UPGRADE,
+                        (c, g, l) -> c.economy().upgradeAfterPurchase() && CAN_UPGRADE.allows(c, g, l)))),
                 new Outcome(LandingResult.DECLINED, List.of()))),
         new Rule(LandingStep.UPGRADE, Execution.WINDOW, StageTable.Point.UPGRADE, CAN_UPGRADE,
                 (c, g, l) -> g.board().ownable(l.tile()).map(o -> g.turn().currentPlayer().equals(o.owner()) && !o.mortgaged()

@@ -36,7 +36,8 @@ public final class RuleConfigs {
     }
 
     /**
-     * @param production 正式服的对局策略：现金不足也开购买窗口（只能放弃）；存活玩家全部暂离 / 托管时直接结束对局
+     * @param production 正式服的对局策略：现金不足也开购买窗口（只能放弃）；买下后不能在同一次落点立即升级；
+     *                   存活玩家全部暂离 / 托管时直接结束对局
      */
     public static RuleConfig v1(String layout30, String layout50, boolean production) {
         Map<CardType, Integer> cards = new TreeMap<>();
@@ -70,7 +71,7 @@ public final class RuleConfigs {
                         new TierPricing(Tier.MID, 1000, 600, List.of(200L, 500L, 900L, 1400L), Ratio.percent(70)),
                         new TierPricing(Tier.HIGH, 1500, 900, List.of(300L, 750L, 1350L, 2100L), Ratio.percent(60))),
                 new StationPricing(1000, 200, Ratio.percent(70)),
-                new EconomyConfig(1000, 500, 500, 100, 500, 50, 1, 3, 6, 3, 6, 2, 100, production),
+                new EconomyConfig(1000, 500, 500, 100, 500, 50, 1, 3, 6, 3, 6, 2, 100, production, !production),
                 new RatioConfig(
                         Ratio.percent(50),   // 标准价值计入升级费 50%
                         Ratio.percent(100),  // 银行抵押：原价 100%

@@ -270,7 +270,7 @@ final class EconomyModule {
         LandingState l = g.turn().landing();
         Tile tile = board(ctx).tiles().get(l.tile());
         ctx.emit(new PropertyBought(g.turn().currentPlayer(), l.tile(), basePrice(ctx.config(), tile)));
-        // 买后可立即付费升一级（已裁决 6）；之后的建造卡免费升级为 M4 保留
+        // 买后是否可立即付费升一级由配置决定（旧裁决 6 为可以；2026-10-07 起正式规则为不可以）；建造卡免费升级为 M4 保留
         offerUpgrade(ctx, 0);
     }
 
@@ -807,7 +807,7 @@ final class EconomyModule {
                         "purchase mismatch");
                 Ledger ledger = g.ledger().transfer(e.playerId(), Ledger.SYSTEM, e.price(), PURCHASE, "tile-" + e.tile());
                 GameState bought = g.withLedger(ledger).withBoard(g.board().with(o.owned(e.playerId())));
-                // 买下之后必须处理的下一步：可升级则必须开升级窗口（已裁决 6）
+                // 买下之后的下一步：配置允许且可升级时开升级窗口（正式规则不开）
                 yield bought.withTurn(t.withLanding(LandingRules.consume(rules, bought, l, LandingResult.BOUGHT)));
             }
             case PurchaseDeclined e -> {

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * 正式配置特有的规则（legacy 测试配置关闭）：
- * 现金不足也开购买窗口（只能放弃）；存活玩家全部暂离 / 托管时在回合交界结束对局（ALL_AWAY）。
+ * 现金不足也开购买窗口（只能放弃）；买下后不能在同一次落点立即升级；存活玩家全部暂离 / 托管时在回合交界结束对局（ALL_AWAY）。
  * 30 格测试棋盘：1 L（500）。p1 抽 90、p2 抽 10，p1 先行动。
  */
 class ProductionRulesTest {
@@ -77,6 +77,27 @@ class ProductionRulesTest {
         t.tick(t.window().window().deadline());
         assertEquals("p2", t.current());
         assertEquals(400, t.cash("p1"));
+    }
+
+    @Test
+    void boughtLandCannotBeUpgradedInTheSameLandingOnlyOnALaterOne() {
+        assertFalse(RuleConfigs.defaultV1().economy().upgradeAfterPurchase());
+        assertTrue(TestBoards.legacyV1().economy().upgradeAfterPurchase());
+        Table t = table(1, 5, 1);
+        t.rollOnly();                                                               // p1 → 1（L，无主）
+        assertEquals(LandingStep.BUY, t.game().turn().landing().step());
+        t.act(w -> new GameCommand.BuyProperty("p1", w));
+        assertEquals("p1", t.game().board().ownable(1).orElseThrow().owner());
+        assertEquals("p2", t.current(), "no upgrade window right after buying");
+        t.rollOnly();                                                               // p2 → 5（无主）：放弃
+        while (t.session().inGame() && "p2".equals(t.current())) {
+            t.pass();
+        }
+        craft(t, g -> g.withPlayer(g.player("p1").orElseThrow().at(0)));
+        t.rollOnly();                                                               // p1 再到 1：自己的地，可以升级
+        assertEquals(LandingStep.UPGRADE, t.game().turn().landing().step());
+        t.act(w -> new GameCommand.UpgradeProperty("p1", w));
+        assertEquals(1, t.game().board().ownable(1).orElseThrow().level());
     }
 
     @Test

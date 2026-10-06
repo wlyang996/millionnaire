@@ -180,7 +180,7 @@ class ConfigValidatorTest {
         EconomyConfig e = base.economy();
         EconomyConfig huge = new EconomyConfig(e.startReward(), e.miniGameWinReward(), e.bailCost(), e.eventCashMin(),
                 e.eventCashMax(), e.eventCashStep(), e.eventMoveMinSteps(), 3, Integer.MAX_VALUE, e.maxLevel(),
-                e.handLimit(), e.initialHandSize(), e.orderNumberMax(), e.offerUnaffordablePurchase());
+                e.handLimit(), e.initialHandSize(), e.orderNumberMax(), e.offerUnaffordablePurchase(), e.upgradeAfterPurchase());
         List<String> errors = ConfigValidator.validate(new RuleConfig(base.ruleVersion(), base.boards(), base.tiers(),
                 base.station(), huge, base.ratios(), base.cardWeights(), base.eventWeights(), base.timing(), base.room()));
         assertTrue(errors.stream().anyMatch(x -> x.contains("economy.dieFaces must be in 1..100")), errors.toString());
