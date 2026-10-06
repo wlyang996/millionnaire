@@ -17,8 +17,9 @@ import { ResultScreen } from './screens/ResultScreen';
 import { RoomScreen } from './screens/RoomScreen';
 import { TeethScreen } from './screens/TeethScreen';
 import { ctx } from './ui/Ctx';
-import { preloadArt } from './ui/Art';
-import { mk, text } from './ui/Kit';
+import { bootArt, startBackgroundArt } from './ui/Art';
+import { EditField } from './ui/EditField';
+import { fillRR, gfx, mk, setText, text } from './ui/Kit';
 import { PopupManager } from './ui/PopupManager';
 import { ScreenManager } from './ui/ScreenManager';
 import { Toast } from './ui/Toast';
@@ -90,11 +91,36 @@ export class App {
             scenario: (p: Partial<Scenario>) => ctx.store.patchScenario(p),
             layout: () => formatIssues(checkLayout(), 40),
         };
-        const loading = text(root, '正在加载小镇…', 0, 560, Theme.W, 80, Theme.font.lg);
-        void preloadArt().then((missing) => {
-            loading.node.destroy();
+        // 加载页：只等首屏必需的图（带进度），其余进入首屏后在后台加载
+        const loading = mk(root, 'Loading', 0, 0, Theme.W, Theme.H);
+        text(loading, '正在加载小镇…', 0, 520, Theme.W, 70, Theme.font.lg, Theme.c.ink, { bold: true });
+        const barW = Theme.W - 220;
+        const barH = 28;
+        const bar = gfx(mk(loading, 'Bar', 110, 610, barW, barH));
+        const pct = text(loading, '0%', 0, 652, Theme.W, 50, Theme.font.md, Theme.c.inkSoft);
+        const progress = (done: number, total: number) => {
+            const k = total > 0 ? done / total : 1;
+            bar.clear();
+            fillRR(bar, 0, 0, barW, barH, barH / 2, '#FFFFFFB0');
+            if (k > 0) fillRR(bar, 0, 0, Math.max(barH, barW * k), barH, barH / 2, Theme.c.blue);
+            setText(pct, Math.round(k * 100) + '%');
+        };
+        void bootArt(progress).then((missing) => {
+            loading.destroy();
             s.go('profile');
             if (missing.length) Toast.show('部分美术加载失败，请刷新重试');
+            // 页面用到、但当时还没加载的图到达后重绘当前页；正在输入时等输入结束再重绘
+            let waiting = false;
+            const redraw = () => {
+                if (EditField.editing === 0) return ctx.screens.refresh();
+                if (waiting) return; // 输入期间到达的多批图合并成输入结束后的一次重绘
+                waiting = true;
+                setTimeout(() => {
+                    waiting = false;
+                    redraw();
+                }, 500);
+            };
+            startBackgroundArt(redraw);
         });
     }
 

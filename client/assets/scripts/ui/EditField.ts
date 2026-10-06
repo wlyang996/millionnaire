@@ -27,6 +27,8 @@ function domEnv(): Dom | null {
 }
 
 export class EditField {
+    /** 网页上正在输入的输入框个数（>0 时不做美术到达引起的整页重绘，避免打断输入）。 */
+    static editing = 0;
     readonly node: Node;
     private readonly box: EditBox | null = null;
     private readonly bg: Node;
@@ -127,6 +129,7 @@ export class EditField {
         el.addEventListener('blur', () => this.closeDom());
         env.document.body.appendChild(el);
         this.input = el;
+        EditField.editing++;
         this.placeInput();
         env.addEventListener('resize', this.relayout);
         this.paint(true);
@@ -137,6 +140,7 @@ export class EditField {
         const el = this.input;
         if (!el) return;
         this.input = null;
+        EditField.editing = Math.max(0, EditField.editing - 1);
         domEnv()?.removeEventListener('resize', this.relayout);
         this.current = el.value;
         el.remove();

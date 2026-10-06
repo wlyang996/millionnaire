@@ -1,4 +1,10 @@
-/** Design PNGs are loaded once before the first screen. Text and hit areas remain live UI. */
+/**
+ * 美术图加载与绘制。文字与点击区域仍是实时 UI。
+ * - 启动：只加载首屏（昵称 / 头像页）必需的图（BOOT_KEYS，约 5MB），加载页显示进度；
+ * - 进入首屏后：其余图按"大厅 → 棋盘 → 其他"的顺序在后台慢慢加载（同时最多 4 张）；
+ * - 页面画到还没加载的图时先用代码绘制的占位，并把这张图插到队首立即加载，到达后通知界面重绘；
+ * - 每张图 20 秒超时、失败重试一次，单张图卡住不会让整个游戏卡在加载页。
+ */
 import { Node, resources, Sprite, SpriteFrame } from 'cc';
 import { ART_PATHS } from './ArtCatalog';
 import { mk, setOpacity } from './Kit';
@@ -10,7 +16,11 @@ const characters = ['tangtang', 'keke', 'ajie', 'naicha', 'akai', 'yuanyuan', 'd
 /** 原图宽高比（宽 / 高）；未加载时 null。 */
 export function artRatio(key: string): number | null {
     const frame = frames.get(key);
-    return frame ? frame.originalSize.width / frame.originalSize.height : null;
+    if (!frame) {
+        want(key);
+        return null;
+    }
+    return frame.originalSize.width / frame.originalSize.height;
 }
 
 export function characterKey(idx: number, pawn = false): string {
@@ -26,16 +36,138 @@ export const CARD_ART: Record<string, string> = {
     FORCED_PURCHASE: 'card_forced_purchase', DEMOLISH: 'card_demolish', CLEAR_LAND: 'card_clear_land',
 };
 
-export async function preloadArt(): Promise<string[]> {
-    const missing: string[] = [];
-    await Promise.all(Object.entries(ART_PATHS).map(([key, path]) => new Promise<void>((resolve) => {
-        resources.load(path + '/spriteFrame', SpriteFrame, (err, frame) => {
-            if (err || !frame) { missing.push(key); console.warn('UI art missing:', key, err); }
-            else frames.set(key, frame);
-            resolve();
+// ------------------------------------------------------------ 加载
+
+/** 首屏（昵称 / 头像页）必需：背景、面板、标题木牌、8 个头像、按钮皮肤。 */
+const BOOT_KEYS = [
+    'information_background', 'info_asset_panel', 'title_wood', 'icon_back',
+    'avatar_tangtang', 'avatar_keke', 'avatar_ajie', 'avatar_naicha',
+    'avatar_akai', 'avatar_yuanyuan', 'avatar_doudou', 'avatar_maomao',
+    'button_flat_yellow', 'button_flat_blue', 'button_flat_green', 'button_flat_ivory', 'button_flat_red', 'button_flat_gray',
+];
+
+/** 后台加载的先后：先大厅 / 房间，再棋盘与对局弹窗，其余（详情页、场景大图等）最后。 */
+const BACKGROUND_ORDER: (string | RegExp)[] = [
+    'board_town', 'icon_settings', 'icon_house', 'icon_copy', 'icon_share', 'icon_mic', 'icon_chat', 'icon_coin',
+    /^pawn_[a-z]+$/, /^house_lv\d$/, 'icon_bank', 'icon_jail', 'event_card_back', 'event_card_fan', 'croc_open',
+    /^dice_/, /^event_/, /^card_(?!detail|face)/, /^icon_clock/, /^info_/, 'scene_jail_closeup',
+];
+
+const LOAD_TIMEOUT_MS = 20000;
+const BACKGROUND_PARALLEL = 4;
+
+const queue: string[] = [];
+const queued = new Set<string>();
+const inflight = new Set<string>();
+const attempts = new Map<string, number>();
+/** 页面画过但当时还没加载的图：到达后需要重绘。 */
+const requested = new Set<string>();
+let onArrived: (() => void) | null = null;
+let arrivedTimer: ReturnType<typeof setTimeout> | null = null;
+let backgroundStarted = false;
+
+function rank(key: string): number {
+    const i = BACKGROUND_ORDER.findIndex((p) => (typeof p === 'string' ? p === key : p.test(key)));
+    return i < 0 ? BACKGROUND_ORDER.length : i;
+}
+
+/** 加载一张图；超时或失败返回 false（超时后若图片仍然到达，照样收下并通知重绘）。 */
+function loadOne(key: string): Promise<boolean> {
+    return new Promise((resolve) => {
+        let settled = false;
+        const settle = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(ok);
+        };
+        const timer = setTimeout(() => {
+            console.warn('UI art timeout:', key);
+            settle(false);
+        }, LOAD_TIMEOUT_MS);
+        resources.load(ART_PATHS[key] + '/spriteFrame', SpriteFrame, (err, frame) => {
+            if (err || !frame) {
+                console.warn('UI art missing:', key, err);
+                settle(false);
+                return;
+            }
+            frames.set(key, frame);
+            arrived(key);
+            settle(true);
         });
-    })));
+    });
+}
+
+function arrived(key: string): void {
+    if (!requested.delete(key) || arrivedTimer) return;
+    // 同一批到达的图合并成一次重绘
+    arrivedTimer = setTimeout(() => {
+        arrivedTimer = null;
+        onArrived?.();
+    }, 250);
+}
+
+function start(key: string): void {
+    queued.delete(key);
+    if (frames.has(key) || inflight.has(key)) return;
+    inflight.add(key);
+    void loadOne(key).then((ok) => {
+        inflight.delete(key);
+        if (!ok && !frames.has(key) && (attempts.get(key) ?? 0) < 1) {
+            attempts.set(key, 1);
+            queued.add(key);
+            queue.push(key); // 失败的放到队尾再试一次
+        }
+        pump();
+    });
+}
+
+function pump(): void {
+    if (!backgroundStarted) return;
+    while (inflight.size < BACKGROUND_PARALLEL && queue.length) start(queue.shift()!);
+}
+
+/** 页面要用但还没加载：插队立即加载，到达后通知重绘。 */
+function want(key: string): void {
+    if (frames.has(key) || !ART_PATHS[key]) return;
+    requested.add(key);
+    if (inflight.has(key)) return;
+    const i = queue.indexOf(key);
+    if (i >= 0) queue.splice(i, 1);
+    start(key);
+}
+
+/** 启动加载：只加载首屏必需的图，onProgress(已完成, 总数)。返回加载失败的图。 */
+export async function bootArt(onProgress: (done: number, total: number) => void): Promise<string[]> {
+    const keys = BOOT_KEYS.filter((k) => ART_PATHS[k] && !frames.has(k));
+    const missing: string[] = [];
+    let done = 0;
+    onProgress(0, keys.length);
+    await Promise.all(keys.map(async (k) => {
+        inflight.add(k);
+        if (!(await loadOne(k))) missing.push(k);
+        inflight.delete(k);
+        onProgress(++done, keys.length);
+    }));
     return missing;
+}
+
+/** 首屏出来之后：其余图按优先级在后台加载；页面用到的图到达后调用 onArrive（已合并、节流）。 */
+export function startBackgroundArt(onArrive: () => void): void {
+    onArrived = onArrive;
+    backgroundStarted = true;
+    const rest = Object.keys(ART_PATHS).filter((k) => !frames.has(k) && !inflight.has(k) && !queued.has(k));
+    rest.sort((a, b) => rank(a) - rank(b));
+    for (const k of rest) {
+        queued.add(k);
+        queue.push(k);
+    }
+    pump();
+}
+
+/** 后台加载进度（调试 / 显示用）。 */
+export function artLoadState(): { loaded: number; total: number } {
+    return { loaded: frames.size, total: Object.keys(ART_PATHS).length };
 }
 
 /** The outer box uses our top-left coordinates; the sprite inside preserves its aspect ratio. */
@@ -49,7 +181,10 @@ export interface ArtOpts {
 export function art(parent: Node, key: string, x: number, y: number, w: number, h: number,
     fit: 'contain' | 'stretch' | 'capsule' | 'panel' = 'contain', dim = false, opts: ArtOpts = {}): Node | null {
     const frame = frames.get(key);
-    if (!frame) return null;
+    if (!frame) {
+        want(key); // 还没加载：先用占位，插队加载，到达后界面重绘
+        return null;
+    }
     const box = mk(parent, 'Art:' + key, x, y, w, h);
     if (fit === 'panel') {
         const cacheKey = 'panel:' + key;

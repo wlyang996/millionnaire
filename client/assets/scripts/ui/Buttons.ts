@@ -66,7 +66,7 @@ export class Button {
             setText(this.label, this.label.string, k.text);
             return;
         }
-        // Missing artwork is reported by preloadArt; do not invent a replacement skin.
+        // 皮肤属首屏必需图（启动时加载）；万一没有，不另画替代皮肤。
         setText(this.label, this.label.string, k.text);
     }
 
