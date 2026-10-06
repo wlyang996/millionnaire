@@ -119,6 +119,30 @@ export interface GameView {
     properties: PropertyState[];
     lastDice: number;
     chat: ChatLine[];
+    /** [联机] 当前落点（服务端 PublicLanding）；演示模式不设 */
+    landing?: LandingInfo | null;
+    /** [联机] 进行中的债务（服务端 PublicDebt）；演示模式不设 */
+    debt?: DebtInfo | null;
+}
+
+/** [联机] 当前落点：格号、等待的步骤（如 BUY / UPGRADE）、决策是否仍待做 */
+export interface LandingInfo {
+    landingId: number;
+    tile: number;
+    step: string;
+    decisionPending: boolean;
+}
+
+/** [联机] 进行中的债务 */
+export interface DebtInfo {
+    debtId: number;
+    debtor: string;
+    creditor: string | null;
+    amount: number;
+    segment: number;
+    continued: boolean;
+    continueAvailable: boolean;
+    windowId: number;
 }
 
 /** 结算名次（Standing）。并列按 1/1/3 编号。 */
