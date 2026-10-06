@@ -37,6 +37,8 @@ export class EditField {
     private placeholderText = '';
     private input: HTMLInputElement | null = null;
     private readonly relayout = () => this.placeInput();
+    /** 回车（网页）/ 键盘"完成"（小游戏）时调用，聊天用来直接发送。 */
+    onEnter: (() => void) | null = null;
 
     constructor(
         parent: Node, x: number, y: number, w: number, h: number, placeholder: string,
@@ -74,6 +76,7 @@ export class EditField {
             this.paint(false);
             onChange(eb.string);
         });
+        n.on('editing-return', () => this.onEnter?.());
         this.box = box;
         this.node = n;
     }
@@ -89,6 +92,11 @@ export class EditField {
             if (this.input) this.input.value = s;
             this.render();
         }
+    }
+
+    /** 收起网页输入框（所在弹窗关闭时调用，避免 <input> 留在页面上）。 */
+    blur(): void {
+        this.closeDom();
     }
 
     // ------------------------------------------------------------ 网页输入
@@ -111,7 +119,10 @@ export class EditField {
             this.onChange(this.current);
         });
         el.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key === 'Enter') el.blur();
+            if (e.key !== 'Enter') return;
+            this.current = el.value;
+            if (this.onEnter) this.onEnter();
+            else el.blur();
         });
         el.addEventListener('blur', () => this.closeDom());
         env.document.body.appendChild(el);
@@ -129,6 +140,7 @@ export class EditField {
         domEnv()?.removeEventListener('resize', this.relayout);
         this.current = el.value;
         el.remove();
+        if (!this.bg.isValid) return;
         this.paint(false);
         this.render();
         this.onChange(this.current);
@@ -138,7 +150,8 @@ export class EditField {
     private placeInput(): void {
         const env = domEnv();
         const el = this.input;
-        if (!env || !el || !this.bg.isValid) return;
+        if (!env || !el) return;
+        if (!this.bg.isValid) return void this.closeDom();
         const canvas = env.document.getElementById('GameCanvas') ?? env.document.querySelector('canvas');
         if (!canvas) return;
         const r = canvas.getBoundingClientRect();

@@ -5,7 +5,7 @@
  * - 对局开始 / 结束时请求跳页（board / result）。
  */
 import type { MockStore } from '../core/MockStore';
-import { OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
+import { ChatLine, OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
@@ -14,7 +14,8 @@ import { adaptSession, lastDiceFrom } from './ViewAdapter';
 
 export type Cue =
     | { kind: 'dice'; playerId: string; value: number }
-    | { kind: 'move'; playerId: string; from: number; steps: number };
+    | { kind: 'move'; playerId: string; from: number; steps: number }
+    | { kind: 'jail'; playerId: string };
 
 export type Route = 'lobby' | 'room' | 'board' | 'spectator' | 'result';
 
@@ -26,7 +27,7 @@ const MESSAGES: Record<string, string> = {
     UNCHANGED: '设置没有变化', INVALID_NICKNAME: '昵称不合法', NOT_YOUR_TURN: '还没轮到你', NOT_YOUR_WINDOW: '还没轮到你',
     WINDOW_NOT_OPEN: '请稍等动画结束', WRONG_STAGE: '当前不能这样操作', INSUFFICIENT_CASH: '现金不足',
     NOT_AVAILABLE: '该功能尚未开放', CONTROL_NOT_MANUAL: '托管中，请先恢复手动', NO_ACTIVE_WINDOW: '操作已过期',
-    WINDOW_MISMATCH: '操作已过期', TIMEOUT: '网络超时，请重试', OFFLINE: '网络未连接', UNAUTHENTICATED: '请重新登录',
+    WINDOW_MISMATCH: '操作已过期', TIMEOUT: '网络超时，请重试', OFFLINE: '网络未连接', UNAUTHENTICATED: '请重新登录', TOO_FAST: '发言太快了，歇一下', NOT_IN_ROOM: '你不在房间里',
     ROOM_HALTED: '房间出现故障已关闭', MAX_LEVEL: '已满级', MORTGAGED: '已抵押的资产不能这样操作',
 };
 
@@ -45,6 +46,8 @@ export class OnlineSession {
     onRoute: ((r: Route) => void) | null = null;
     onToast: ((msg: string) => void) | null = null;
     private hadGame = false;
+    /** 房间最近聊天（服务端 CHAT 推送的完整列表）。 */
+    chat: ChatLine[] = [];
 
     constructor(private readonly store: MockStore, baseUrl: string = serverUrl()) {
         this.client = new GameClient(baseUrl);
@@ -55,6 +58,7 @@ export class OnlineSession {
         };
         this.client.onNotice = (m) => {
             if (m.type === 'HELLO' && !m.roomCode) this.leaveLocally();
+            else if (m.type === 'CHAT') this.receiveChat(m.lines);
             else if (m.type === 'ROOM_CLOSED') {
                 this.onToast?.('房间已关闭');
                 this.leaveLocally();
@@ -112,6 +116,13 @@ export class OnlineSession {
         return this.check(await this.client.game(command, args));
     }
 
+    /** 发一句聊天；过快、过长由服务端拒绝或截断。 */
+    async say(text: string): Promise<ResultMsg> {
+        const t = text.trim();
+        if (!t) return { type: 'RESULT', requestId: null, ok: false, outcome: 'ERROR', code: 'BAD_REQUEST' } as ResultMsg;
+        return this.check(await this.client.chat(t));
+    }
+
     async setControl(mode: 'MANUAL' | 'AWAY' | 'HOSTED'): Promise<ResultMsg> {
         return this.check(await this.client.setControl(mode));
     }
@@ -147,12 +158,15 @@ export class OnlineSession {
                 this.cues.push({ kind: 'dice', playerId: String(d.playerId), value: Number(d.value) });
             } else if (e.kind === 'PlayerMoved' && Number(d.steps) > 0) {
                 this.cues.push({ kind: 'move', playerId: String(d.playerId), from: Number(d.from), steps: Number(d.steps) });
+            } else if (e.kind === 'PlayerJailed') {
+                this.cues.push({ kind: 'jail', playerId: String(d.playerId) });
             }
         }
         this.trackEventDraw(u);
         this.lastDice = lastDiceFrom(u.events, this.lastDice);
         const s = adaptSession(u.view, this.boards, this.lastDice);
         s.roomId = u.roomCode; // 界面上的"房间号"是六位房间号
+        if (s.game) s.game.chat = this.chat;
         this.store.session = s;
         const hasGame = !!s.game;
         if (hasGame && !this.hadGame) {
@@ -195,8 +209,20 @@ export class OnlineSession {
         }
     }
 
+    private receiveChat(raw: unknown): void {
+        const lines = Array.isArray(raw) ? raw : [];
+        this.chat = lines.map((l: { nickname?: unknown; text?: unknown }) => ({
+            from: String(l.nickname ?? ''), text: String(l.text ?? ''),
+        }));
+        this.store.roomChat = this.chat;
+        if (this.store.session.game) this.store.session.game.chat = this.chat;
+        this.store.emit();
+    }
+
     private leaveLocally(): void {
         this.hadGame = false;
+        this.chat = [];
+        this.store.roomChat = this.chat;
         this.store.eventDraw = EVENT_IDLE;
         this.cues.length = 0;
         this.store.session = emptySession(this.store.session?.settings);

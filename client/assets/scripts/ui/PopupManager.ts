@@ -57,6 +57,11 @@ export class PopupManager {
         this.top?.close();
     }
 
+    /** 关闭指定类别的弹窗（如转入托管后撤下待决策弹窗）。 */
+    closeIds(ids: string[]): void {
+        for (const p of this.stack.slice()) if (ids.indexOf(p.popupId) >= 0) p.close();
+    }
+
     closeAll(): void {
         for (const p of this.stack.slice()) p.close();
     }

@@ -70,6 +70,10 @@ export class MockStore {
         this.listeners.push(fn);
     }
 
+    offChange(fn: Listener): void {
+        this.listeners = this.listeners.filter((l) => l !== fn);
+    }
+
     emit(): void {
         for (const l of this.listeners) l();
     }

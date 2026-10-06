@@ -7,6 +7,12 @@ const frames = new Map<string, SpriteFrame>();
 const capsuleFrames = new Map<string, SpriteFrame>();
 export const AVATAR_NAMES = ['糖糖', '可可', '阿杰', '奶茶', '阿凯', '圆圆', '豆豆', '毛毛'];
 const characters = ['tangtang', 'keke', 'ajie', 'naicha', 'akai', 'yuanyuan', 'doudou', 'maomao'];
+/** 原图宽高比（宽 / 高）；未加载时 null。 */
+export function artRatio(key: string): number | null {
+    const frame = frames.get(key);
+    return frame ? frame.originalSize.width / frame.originalSize.height : null;
+}
+
 export function characterKey(idx: number, pawn = false): string {
     return (pawn ? 'pawn_' : 'avatar_') + characters[((idx % 8) + 8) % 8];
 }
@@ -33,8 +39,15 @@ export async function preloadArt(): Promise<string[]> {
 }
 
 /** The outer box uses our top-left coordinates; the sprite inside preserves its aspect ratio. */
+export interface ArtOpts {
+    /** 父节点的纵横缩放比（显示时 y 方向相对 x 方向的拉伸，如棋盘世界的纵向拉伸）；contain 时据此抵消，保持原图比例。 */
+    aspect?: number;
+    /** contain 时贴底对齐（人物脚踩地面），默认居中。 */
+    bottom?: boolean;
+}
+
 export function art(parent: Node, key: string, x: number, y: number, w: number, h: number,
-    fit: 'contain' | 'stretch' | 'capsule' | 'panel' = 'contain', dim = false): Node | null {
+    fit: 'contain' | 'stretch' | 'capsule' | 'panel' = 'contain', dim = false, opts: ArtOpts = {}): Node | null {
     const frame = frames.get(key);
     if (!frame) return null;
     const box = mk(parent, 'Art:' + key, x, y, w, h);
@@ -78,10 +91,12 @@ export function art(parent: Node, key: string, x: number, y: number, w: number, 
         return box;
     }
     const size = frame.originalSize;
-    const scale = Math.min(w / size.width, h / size.height);
+    const a = opts.aspect && opts.aspect > 0 ? opts.aspect : 1;
+    // 在"显示空间"里等比缩放（框高按 a 换算成显示高度），再换回本地坐标
+    const scale = Math.min(w / size.width, (h * a) / size.height);
     const sw = fit === 'contain' ? size.width * scale : w;
-    const sh = fit === 'contain' ? size.height * scale : h;
-    const image = mk(box, 'Image', (w - sw) / 2, (h - sh) / 2, sw, sh);
+    const sh = fit === 'contain' ? (size.height * scale) / a : h;
+    const image = mk(box, 'Image', (w - sw) / 2, opts.bottom ? h - sh : (h - sh) / 2, sw, sh);
     const sprite = image.addComponent(Sprite);
     sprite.sizeMode = Sprite.SizeMode.CUSTOM;
     sprite.spriteFrame = frame;

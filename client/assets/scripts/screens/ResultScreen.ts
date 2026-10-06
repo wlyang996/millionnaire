@@ -58,7 +58,7 @@ export class ResultScreen extends Screen {
             text(row, String(r.netWorth), 458, 0, 180, rowH, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
         });
         list.setContentHeight(res.standings.length * rowH);
-        text(this.root, res.reason + ' · 并列按 1、1、3 编号', 24, 926, 672, 30, Theme.font.xs, Theme.c.ink);
+        text(this.root, reasonText(res.reason) + ' · 并列按 1、1、3 编号', 24, 926, 672, 30, Theme.font.xs, Theme.c.ink);
 
         // 再来一局
         primaryButton(this.root, '回原房间再来一局', 24, 960, 672, 104, () => {
@@ -71,4 +71,13 @@ export class ResultScreen extends Screen {
         onTap(room, () => Toast.show('房间号：' + s.roomId + '（演示）'));
         ghostButton(this.root, '返回大厅', 24, 1160, 672, 84, () => ctx.screens.go('lobby'), Theme.font.md);
     }
+}
+
+/** 服务端结束原因 → 中文（未知原因原样显示）。 */
+function reasonText(reason: string): string {
+    const map: Record<string, string> = {
+        TIME_UP: '时间到，按净资产排名', NO_PLAYERS: '没有可继续的玩家',
+        ALL_AWAY: '全员挂机或托管，本局提前结束',
+    };
+    return map[reason] ?? reason;
 }

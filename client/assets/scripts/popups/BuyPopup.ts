@@ -30,19 +30,18 @@ export class BuyPopup extends Popup {
             text(p, '低价 ' + TIERS.LOW.price + ' · 中价 ' + TIERS.MID.price + ' · 高价 ' + TIERS.HIGH.price, 40, 402, w - 80, 42, Theme.font.sm, Theme.c.inkSoft);
             infoRow(p, 40, 446, w - 80, '未升级租金', rentOf(tile.tier ?? 'LOW', 0));
         }
-        text(p, '现金 ' + cash + '，买后剩余 ' + (cash - price), 40, 508, w - 80, 36, Theme.font.sm, cash >= price ? Theme.c.inkSoft : Theme.c.red, { bold: true });
+        text(p, cash >= price ? '现金 ' + cash + '，买后剩余 ' + (cash - price) : '现金不足：现有 ' + cash + '，还差 ' + (price - cash), 40, 508, w - 80, 36, Theme.font.sm, cash >= price ? Theme.c.inkSoft : Theme.c.red, { bold: true });
         const lot = !!tile.auctionLot && !station;
         const buy: Button = primaryButton(p, '购买 ' + price, 40, 556, w - 80, 92, () => {
             if (st.online && this.windowId !== undefined) {
                 // 联机：由服务端扣款、转产权，结果随推送刷新
                 this.close();
-                void st.online.act('BuyProperty', { windowId: this.windowId }).then((r) => r.ok && Toast.show('已购买，花费 ' + price));
+                void st.online.act('BuyProperty', { windowId: this.windowId }); // 成功不再提示（地块上直接显示归属）
                 return;
             }
             if (!st.spend(price)) return Toast.show('现金不足');
             const prop = st.prop(this.tileIndex);
             if (prop) prop.owner = 'p1';
-            Toast.show('已购买，花费 ' + price);
             this.close();
             st.emit();
         }, Theme.font.lg);

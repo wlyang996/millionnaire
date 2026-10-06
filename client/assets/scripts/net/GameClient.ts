@@ -46,7 +46,7 @@ export class GameClient {
     onUpdate: ((u: UpdateMsg) => void) | null = null;
     /** 连接状态变化。 */
     onState: ((s: LinkState) => void) | null = null;
-    /** 其他服务端消息：HELLO / ROOM_CLOSED / NO_ROOM / REPLACED。 */
+    /** 其他服务端消息：HELLO / CHAT / ROOM_CLOSED / NO_ROOM / REPLACED。 */
     onNotice: ((m: { type: string; [k: string]: unknown }) => void) | null = null;
 
     private ws: Socket | null = null;
@@ -134,6 +134,11 @@ export class GameClient {
 
     setControl(mode: 'MANUAL' | 'AWAY' | 'HOSTED'): Promise<ResultMsg> {
         return this.request('SET_CONTROL', { mode });
+    }
+
+    /** 房间聊天（服务端推 CHAT 完整列表，经 onNotice 交出）。 */
+    chat(text: string): Promise<ResultMsg> {
+        return this.request('CHAT', { text });
     }
 
     sync(): void {

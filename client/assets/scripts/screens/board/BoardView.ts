@@ -13,7 +13,7 @@ import { drawHouse, drawPips } from '../../ui/Icons';
 import { col, fillCircle, fillPoly, fillRR, gfx, line, mk, place, setOpacity, strokeRR, text } from '../../ui/Kit';
 import { avatar } from '../../ui/Widgets';
 import { drawEventDeck } from './EventDeck';
-import { art, characterKey } from '../../ui/Art';
+import { art, artRatio, characterKey } from '../../ui/Art';
 
 export interface CamState { scale: number; vx: number; vy: number; follow: boolean; boardId: string }
 
@@ -33,6 +33,9 @@ export class BoardView {
     private ys: number[] = [];
     /** Fill the portrait viewport with rectangular tiles while retaining the exact ring/grid data. */
     private verticalAspect = 1;
+    /** 本次绘制中有主地产的房子（格子画完后统一画到房屋层）。 */
+    private houses: { key: string; n: Node; icx: number; icy: number; isz: number;
+        dot: { x: number; y: number }; ownerColor: string | null }[] = [];
     cam: CamState;
     private pinchDist = 0;
     private moved = 0;
@@ -89,16 +92,18 @@ export class BoardView {
         this.drawCenter(ww, wh);
         const tilesNode = mk(this.world, 'Tiles', 0, 0, ww, wh);
         this.cellToIndex.clear();
+        this.houses = [];
         for (const t of game.tiles) {
             const c = gridCell(t.index, g);
             this.cellToIndex.set(c.col + ',' + c.row, t.index);
             this.drawTile(tilesNode, t, game);
         }
+        this.drawHouses(mk(this.world, 'Houses', 0, 0, ww, wh));
         // 事件牌堆：棋盘内圈左上角的装饰（design/screens/11、10），在格子之上、棋子之下
         const dr = eventDeckRect(g, this.fit);
         dr.x += this.xs[1] - g.tile;
         dr.y += this.ys[1] - g.tile;
-        drawEventDeck(this.world, dr.x, dr.y, dr.w, dr.h, deckMode);
+        drawEventDeck(this.world, dr.x, dr.y, dr.w, dr.h, deckMode, this.verticalAspect);
         this.tokens.clear();
         const tokens = mk(this.world, 'Tokens', 0, 0, ww, wh);
         this.drawTokens(tokens, game, myId, myName);
@@ -114,7 +119,19 @@ export class BoardView {
         const innerH = wh - border * 2;
         const n = mk(this.world, 'Center', border, border, innerW, innerH);
         const gg = gfx(n);
-        if (art(n, 'board_town', 0, 0, innerW, innerH, 'stretch')) return;
+        // 小镇底图等比铺满（cover）并裁到内圈：世界节点纵向有拉伸，按"显示比例"算图框，原图不再被压扁 / 拉宽
+        const ratio = artRatio('board_town');
+        if (ratio) {
+            const va = this.verticalAspect;
+            const dh = Math.max(innerW / ratio, innerH * va); // 显示高度
+            const lw = dh * ratio;
+            const lh = dh / va;
+            const clip = mk(n, 'TownClip', 0, 0, innerW, innerH);
+            const mask = clip.addComponent(Mask);
+            mask.type = Mask.Type.GRAPHICS_RECT;
+            if (art(clip, 'board_town', (innerW - lw) / 2, (innerH - lh) / 2, lw, lh, 'stretch')) return;
+            clip.destroy();
+        }
         fillRR(gg, 0, 0, ww - t, wh - t, 26, '#BFE8A3');
         fillRR(gg, 8, 8, ww - t - 16, wh - t - 16, 20, '#A9DC8B');
         for (let i = 0; i < 16; i++) {
@@ -122,6 +139,49 @@ export class BoardView {
             const y = 30 + ((i * 151) % (wh - t - 60));
             fillCircle(gg, x, y, t * 0.22, '#5DB45A');
             fillCircle(gg, x - 3, y - 4, t * 0.15, '#78CC6E');
+        }
+    }
+
+    /**
+     * 立体房子：按原图比例画在所有格子之上，比格内图标大，底边落在图标区下沿、向上探出格子。
+     * 从上到下、从左到右排序后绘制，下方格子的房子盖住上方的，前后关系自然；不超出棋盘边缘。
+     * 归属色点画在所有房子之上（原来的位置会被房子挡住）。
+     */
+    private drawHouses(layer: Node): void {
+        const va = this.verticalAspect;
+        const ww = this.g.cols * this.g.tile;
+        const list = this.houses.slice().sort((a, b) => a.n.position.y === b.n.position.y
+            ? a.n.position.x - b.n.position.x : b.n.position.y - a.n.position.y);
+        for (const h of list) {
+            const ratio = artRatio(h.key);
+            if (!ratio) continue;
+            const sx = h.n.scale.x;
+            const sy = h.n.scale.y;
+            const baseX = h.n.position.x + h.icx * sx;
+            const baseY = -h.n.position.y + (h.icy + h.isz / 2 + h.isz * 0.08) * sy;
+            // 显示尺寸：约 1.35 个图标高，宽不超过格子显示宽度的 1.08 倍；顶部不超出棋盘上沿
+            const cellW = this.g.tile * sx;
+            const iconH = h.isz * sy * va;
+            let dh = Math.min(Math.max(iconH * 1.35, cellW * 0.9 / ratio), (baseY - 2) * va);
+            if (dh * ratio > cellW * 1.08) dh = cellW * 1.08 / ratio;
+            const lw = dh * ratio;
+            const lh = dh / va;
+            const x = Math.max(0, Math.min(ww - lw, baseX - lw / 2));
+            art(layer, h.key, x, baseY - lh, lw, lh, 'stretch');
+        }
+        const dots = gfx(mk(layer, 'OwnerDots', 0, 0, ww, this.g.rows * this.g.tile));
+        for (const h of list) {
+            if (!h.ownerColor) continue;
+            const cx = h.n.position.x + h.dot.x * h.n.scale.x;
+            const cy = -h.n.position.y + h.dot.y * h.n.scale.y;
+            const r = 8 * h.n.scale.x;
+            // 世界节点纵向有拉伸：竖直半径按比例放大，显示为正圆
+            dots.fillColor = col('#FFFFFF');
+            dots.ellipse(cx, -cy, r, r / va);
+            dots.fill();
+            dots.fillColor = col(h.ownerColor);
+            dots.ellipse(cx, -cy, r * 0.75, (r * 0.75) / va);
+            dots.fill();
         }
     }
 
@@ -178,9 +238,20 @@ export class BoardView {
         const isz = Math.min(cw, ch - lh) * 0.9;
         const iconKey = tile.type === 'PROPERTY' ? 'house_lv' + (prop?.level ?? 0)
             : ({ BANK: 'icon_bank', JAIL: 'icon_jail', EVENT: 'event_card_back', GAME_ZONE: 'croc_open' } as Record<string, string>)[tile.type];
-        if (!iconKey || !art(n, iconKey, icx - isz / 2, icy - isz / 2, isz, isz)) this.drawIcon(gg, tile, prop, icx, icy, isz);
+        // 格子节点与世界节点都有非等比缩放：图标按显示比例等比画，不再被压扁 / 拉长
+        const aspect = (n.scale.y * this.verticalAspect) / n.scale.x;
+        const housed = isProp && !!prop?.owner && !prop.mortgaged && !!iconKey && !!artRatio(iconKey);
+        if (housed) {
+            // 有主地产：立体房子画在格子之上的房屋层（更大，向上探出格子），这里只留地基阴影
+            gg.fillColor = col('#00000022');
+            gg.ellipse(icx, -(icy + isz * 0.36), isz * 0.42, isz * 0.12 / aspect);
+            gg.fill();
+            this.houses.push({ key: iconKey, n, icx, icy, isz, dot: { x: x0 + 8, y: y0 + 8 }, ownerColor: this.ownerColor(prop, game) });
+        } else if (!iconKey || !art(n, iconKey, icx - isz / 2, icy - isz / 2, isz, isz, 'contain', false, { aspect })) {
+            this.drawIcon(gg, tile, prop, icx, icy, isz);
+        }
         if (isProp && prop && prop.owner) {
-            this.drawOwnerDot(gg, prop, game, x0 + 8, y0 + 8);
+            if (!housed) this.drawOwnerDot(gg, prop, game, x0 + 8, y0 + 8);
             if (prop.mortgaged) {
                 fillRR(gg, m, m, t - 2 * m, t - 2 * m, 8, '#4A556099');
                 text(n, '押', 0, 0, t, t - lh, Math.round(t * 0.4), Theme.c.white, { bold: true });
@@ -252,11 +323,16 @@ export class BoardView {
     }
 
     private drawOwnerDot(gg: ReturnType<typeof gfx>, prop: PropertyState | undefined, game: GameView, x: number, y: number): void {
-        if (!prop || !prop.owner) return;
-        const idx = game.players.findIndex((p) => p.playerId === prop.owner);
-        if (idx < 0) return;
+        const color = this.ownerColor(prop, game);
+        if (!color) return;
         fillCircle(gg, x, y, 8, '#FFFFFF');
-        fillCircle(gg, x, y, 6, OWNER_COLORS[game.players[idx].avatar % 8]);
+        fillCircle(gg, x, y, 6, color);
+    }
+
+    private ownerColor(prop: PropertyState | undefined, game: GameView): string | null {
+        if (!prop || !prop.owner) return null;
+        const owner = game.players.find((p) => p.playerId === prop.owner);
+        return owner ? OWNER_COLORS[owner.avatar % 8] : null;
     }
 
     /** 某格在棋盘上的宽高（四角大格、两侧扁格、上下窄格不一样）。 */
@@ -305,10 +381,26 @@ export class BoardView {
                 gg.ellipse(s / 2, -(s * 0.92), s * 0.34, s * 0.11);
                 gg.fill();
             }
-            if (!art(n, characterKey(p.avatar, true), 0, -s * 0.5, s, s * 1.5))
+            if (!art(n, characterKey(p.avatar, true), 0, -s * 0.5, s, s * 1.5, 'contain', false, { aspect: this.verticalAspect, bottom: true }))
                 avatar(n, 0, 0, s, p.avatar, p.nickname, { ring: me ? Theme.c.blue : cur ? Theme.c.yellow : undefined });
+            if (p.inJail) this.drawBars(n, s);
             if (me) this.drawBubble(n, s, '我·' + myName);
             this.tokens.set(p.playerId, { node: n, s, offX, offY });
+        }
+    }
+
+    /** 在监狱里：人物前面一排铁栏杆。 */
+    private drawBars(token: Node, s: number): void {
+        const b = mk(token, 'JailBars', -s * 0.08, -s * 0.42, s * 1.16, s * 1.42);
+        const g = gfx(b);
+        const w = s * 1.16;
+        const h = s * 1.42;
+        fillRR(g, 0, 0, w, s * 0.1, 3, '#4A5260');
+        fillRR(g, 0, h - s * 0.1, w, s * 0.1, 3, '#4A5260');
+        for (let i = 0; i < 5; i++) {
+            const x = w * (0.1 + i * 0.2);
+            line(g, x, s * 0.06, x, h - s * 0.06, '#3A404C', Math.max(3, s * 0.07));
+            line(g, x - s * 0.012, s * 0.08, x - s * 0.012, h - s * 0.08, '#C9D1DB', Math.max(1, s * 0.02));
         }
     }
 

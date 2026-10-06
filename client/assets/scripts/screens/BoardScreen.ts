@@ -3,7 +3,7 @@
  * 演示流程：点击骰子→骰子翻滚(约 1.2s)→逐格跳跃(每步约 550ms)→按落点弹出买地/升级/租金/事件/虎口拔牙；
  * 对手回合默认不自动演进（演示面板可打开"自动演进"）。动画均由时间戳驱动，点数由 MockStore 决定。
  */
-import { Label, Node } from 'cc';
+import { BlockInputEvents, Label, Node } from 'cc';
 import { Countdown, formatMMSS } from '../core/Clock';
 import { eventViewMode } from '../core/EventDraw';
 import { matchClockOpacity, matchClockState } from '../core/MatchClock';
@@ -11,7 +11,7 @@ import { GameView, PlayerView } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { TileInfoPopup } from '../popups/TileInfoPopup';
 import { AssetsPopup } from '../popups/AssetsPopup';
-import { ghostButton, IconButton } from '../ui/Buttons';
+import { ghostButton, IconButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { DiceView } from '../ui/DiceView';
 import { drawBack, drawClock } from '../ui/Icons';
@@ -27,6 +27,7 @@ import { ConfirmPopup } from '../popups/ConfirmPopup';
 import { UpgradePopup } from '../popups/UpgradePopup';
 import { DiscardPopup } from '../popups/DiscardPopup';
 import { EventOverlay } from './board/EventOverlay';
+import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
 import { CashChange, CashChangeNode, connBadge, drawPlayerBar } from './board/PlayerBar';
 
@@ -61,6 +62,9 @@ export class BoardScreen extends Screen {
     private openedFor = -1;
     /** 联机：回合倒计时对应的服务端窗口 */
     private cdWindow = -1;
+    /** 入狱动画（谁、何时开始）；页面重建后按时间戳续播 */
+    private jail: { name: string; start: number } | null = null;
+    private jailOv: JailOverlay | null = null;
 
     constructor(private readonly spectator: boolean) {
         super();
@@ -113,6 +117,8 @@ export class BoardScreen extends Screen {
 
         this.buildOverlays();
         drawBottom(this.root, this.spectator);
+        this.buildAwayOverlay();
+        this.jailOv = this.jail ? new JailOverlay(this.root, this.jail.name, this.jail.start) : null;
         this.tickTexts();
     }
 
@@ -158,9 +164,35 @@ export class BoardScreen extends Screen {
         if (me.life !== 'ALIVE') return null;
         if (me.conn === 'SUSPECT') return { text: '网络不稳定：15 秒无消息显示"疑似断线"，30 秒无消息确认掉线并自动投骰' };
         if (me.conn === 'OFFLINE') return { text: '你已被判定掉线：自动投骰，不买地不升级；重连后可恢复手动' };
-        if (me.control === 'HOSTED') return { text: '托管中：自动投骰，现金够会买地/升级，不主动用卡', action: '取消托管' };
-        if (me.control === 'AWAY') return { text: '暂离中：自动投骰；需要你明确恢复才会取消', action: '我回来了' };
-        return null;
+        return null; // 暂离 / 托管：全屏遮罩（buildAwayOverlay）
+    }
+
+    /** 我被判定挂机（暂离，服务端在连续两次投骰超时后判定）或托管：全屏遮罩，挡住棋盘操作，只留"恢复手动"按钮。 */
+    private buildAwayOverlay(): void {
+        const st = ctx.store;
+        if (this.spectator) return;
+        const me = st.me();
+        if (!me || me.life !== 'ALIVE' || me.control === 'MANUAL') return;
+        const hosted = me.control === 'HOSTED';
+        const ov = mk(this.root, 'AwayOverlay', 0, 0, Theme.W, Theme.H);
+        fillRR(gfx(ov), 0, 0, Theme.W, Theme.H, 0, '#0E1420CC');
+        ov.addComponent(BlockInputEvents);
+        const cy = 520;
+        const badge = mk(ov, 'Badge', Theme.W / 2 - 90, cy - 200, 180, 180);
+        const bg = gfx(badge);
+        fillCircle(bg, 90, 90, 90, hosted ? '#4DA3F055' : '#FFB54755');
+        fillCircle(bg, 90, 90, 70, hosted ? Theme.c.blue : Theme.c.orange);
+        text(badge, hosted ? '托' : 'Zz', 0, 0, 180, 180, 76, Theme.c.white, { bold: true });
+        text(ov, hosted ? '托管中' : '挂机中', 0, cy, Theme.W, 110, 88, Theme.c.white, { bold: true });
+        text(ov, hosted ? '系统正在替你操作：自动投骰，现金够会买地 / 升级，不主动用卡'
+            : '连续没有投骰，已被判定挂机。系统正在替你操作：自动投骰，现金够会买地 / 升级',
+            60, cy + 120, Theme.W - 120, 80, Theme.font.md, '#D6DEE8', { wrap: true, lineHeight: 36 });
+        text(ov, '全员都挂机或托管时，本局会直接结束', 60, cy + 196, Theme.W - 120, 40, Theme.font.sm, '#AAB6C4');
+        primaryButton(ov, hosted ? '取消托管' : '我回来了', Theme.W / 2 - 170, cy + 268, 340, 96, () => {
+            if (st.online) return void st.online.act('ResumeControl', { gameNo: st.game.gameNo });
+            me.control = 'MANUAL';
+            st.emit();
+        }, Theme.font.lg);
     }
 
     /** 中央回合提示与可点击骰子；按用户修正取消独立投骰按钮。 */
@@ -473,6 +505,17 @@ export class BoardScreen extends Screen {
         this.tickTexts();
         st.eventTick();
         this.eventOv?.tick(Date.now());
+        if (!this.spectator && !me_manual(st.me()) && ctx.popups.count > 0) {
+            ctx.popups.closeIds(['buy', 'upgrade', 'bank', 'debt', 'discard', 'auction']);
+        }
+        if (this.jailOv) {
+            // 入狱动画期间暂停后续动画与弹窗
+            this.jailOv.tick(Date.now());
+            if (!this.jailOv.done) return;
+            this.jailOv.root.destroy();
+            this.jailOv = null;
+            this.jail = null;
+        }
         if (this.move) {
             this.tickMove();
             return;
@@ -485,6 +528,9 @@ export class BoardScreen extends Screen {
             const who = st.player(cue.playerId);
             if (cue.kind === 'dice') {
                 if (this.dice) this.dice.play(cue.value, () => Toast.show((cue.playerId === this.myId ? '你' : who?.nickname ?? '玩家') + '掷出 ' + cue.value + ' 点'));
+            } else if (cue.kind === 'jail') {
+                this.jail = { name: cue.playerId === this.myId ? '你' : who?.nickname ?? '玩家', start: Date.now() };
+                this.jailOv = new JailOverlay(this.root, this.jail.name, this.jail.start);
             } else this.startMove(cue.playerId, cue.steps, false, false, cue.from);
             return;
         }
@@ -496,7 +542,7 @@ export class BoardScreen extends Screen {
         const st = ctx.store;
         const online = st.online!;
         const g = st.game;
-        if (this.spectator || ctx.popups.count > 0 || online.cues.length > 0) return;
+        if (this.spectator || ctx.popups.count > 0 || online.cues.length > 0 || !me_manual(st.me())) return;
         const w = online.myWindow();
         if (!w || !online.isOpen(w) || w.windowId === this.openedFor) return;
         const id = w.windowId;

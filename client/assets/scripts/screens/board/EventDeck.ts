@@ -51,9 +51,10 @@ export function drawCardBack(n: Node, w: number, h: number, withMark = true): vo
 /**
  * 事件牌堆。(x,y,w,h) 为世界坐标（左上角，y 向下）里的占位框；mode='fan' 为默认三张扇形，'single' 为抽卡状态的单张小卡。
  */
-export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: number, mode: 'fan' | 'single'): Node {
+/** @param aspect 父节点显示时的纵横拉伸比（棋盘世界纵向有拉伸），美术图按它抵消、保持原比例 */
+export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: number, mode: 'fan' | 'single', aspect = 1): Node {
     const root = mk(parent, 'EventDeck', x, y, w, h);
-    if (mode === 'fan' && art(root, 'event_card_fan', 0, 0, w, h - 20)) {
+    if (mode === 'fan' && art(root, 'event_card_fan', 0, 0, w, h - 20, 'contain', false, { aspect })) {
         text(root, '事件卡', 0, h - 24, w, 24, 16, '#654011', { bold: true });
         return root;
     }

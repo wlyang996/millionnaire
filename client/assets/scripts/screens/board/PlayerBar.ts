@@ -10,7 +10,7 @@ export interface StatusBadge { text: string; bg: string; fg: string }
 export interface CashChange { amount: number; until: number }
 export interface CashChangeNode { node: Node; badge: Node | null; until: number }
 
-/** 连接/控制状态标记：已掉线·自动投骰 / 疑似断线 / 托管中 / 暂离。破产单独标记。 */
+/** 连接/控制状态标记：已掉线·自动投骰 / 疑似断线 / 托管中 / 挂机（暂离）。破产单独标记。 */
 export function statusBadge(p: PlayerView): StatusBadge | null {
     if (p.life === 'BANKRUPT') return { text: '已破产', bg: Theme.c.redSoft, fg: Theme.c.redDark };
     if (p.life === 'SURRENDERED') return { text: '已认输', bg: '#E9EDF1', fg: Theme.c.inkSoft };
@@ -21,7 +21,7 @@ export function connBadge(conn: ConnState, control: ControlMode): StatusBadge | 
     if (conn === 'OFFLINE') return { text: '已掉线·自动投骰', bg: '#E1E5EA', fg: Theme.c.inkSoft };
     if (conn === 'SUSPECT') return { text: '疑似断线', bg: '#FFE9A8', fg: '#7A5A00' };
     if (control === 'HOSTED') return { text: '托管中', bg: Theme.c.blue, fg: Theme.c.white };
-    if (control === 'AWAY') return { text: '暂离', bg: '#E3D6FF', fg: '#5B3BA6' };
+    if (control === 'AWAY') return { text: '挂机', bg: '#E3D6FF', fg: '#5B3BA6' };
     return null;
 }
 
