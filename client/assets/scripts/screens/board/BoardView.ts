@@ -21,6 +21,13 @@ interface Pt { x: number; y: number }
 interface TouchLike { getUILocation(): Pt }
 interface BoardEvt { getAllTouches(): TouchLike[]; getUIDelta(): Pt; getUILocation(): Pt; getScrollY?(): number }
 interface Fx { node: Node; start: number; dur: number; kind: 'dust' | 'pulse' }
+type Pose = 'crouch' | 'airborne' | 'land' | 'ready';
+/** 棋子：idle 为站立立绘；跳跃时切换分镜 02 的四个姿态帧（同一 355×306 画布、脚底基线一致），在脚底支点做挤压拉伸。 */
+interface Token {
+    node: Node; s: number; offX: number; offY: number; avatar: number;
+    body: Node; idle: Node | null; poses: Map<Pose, Node> | null; pose: Pose | null;
+}
+const POSE_CANVAS = { w: 355, h: 306, figure: 288, feet: 298 };
 
 const OWNER_COLORS = Theme.avatarColors;
 
@@ -50,7 +57,7 @@ export class BoardView {
     private pinchDist = 0;
     private moved = 0;
     private target: Pt | null = null;
-    private tokens = new Map<string, { node: Node; s: number; offX: number; offY: number }>();
+    private tokens = new Map<string, Token>();
     private fxLayer: Node | null = null;
     private highlight: number | null = null;
     private fx: Fx[] = [];
@@ -365,11 +372,13 @@ export class BoardView {
                 gg.ellipse(s / 2, -(s * 0.92), s * 0.34, s * 0.11);
                 gg.fill();
             }
-            if (!art(n, characterKey(p.avatar, true), 0, -s * 0.5, s, s * 1.5, 'contain', false, { aspect: this.verticalAspect, bottom: true }))
-                avatar(n, 0, 0, s, p.avatar, p.nickname, { ring: me ? Theme.c.blue : cur ? Theme.c.yellow : undefined });
+            // 支点节点放在脚底：挤压拉伸以脚为中心，不会"浮起来"
+            const body = mk(n, 'Body', s / 2, s, 0, 0);
+            const idle = art(body, characterKey(p.avatar, true), -s / 2, -s * 1.5, s, s * 1.5, 'contain', false, { bottom: true });
+            if (!idle) avatar(n, 0, 0, s, p.avatar, p.nickname, { ring: me ? Theme.c.blue : cur ? Theme.c.yellow : undefined });
             if (p.inJail) this.drawBars(n, s);
             if (me) this.drawBubble(n, s, '我·' + myName);
-            this.tokens.set(p.playerId, { node: n, s, offX, offY });
+            this.tokens.set(p.playerId, { node: n, s, offX, offY, avatar: p.avatar, body, idle, poses: null, pose: null });
         }
     }
 
@@ -401,21 +410,85 @@ export class BoardView {
     }
 
     /**
-     * 逐格跳跃：从格 a 跳到相邻格 b，k∈[0,1) 为这一步内的进度（由时间戳算出）。
-     * 连续缓入缓出，小幅抬脚；保留同格偏移，避免起步与落地时突然错位。
+     * 逐格跳跃（分镜 02：蓄力 → 起跳腾空 → 落地 → 回弹），k∈[0,1) 为这一步内的进度（由时间戳算出）。
+     * 位置全程连续：蓄力时原地压低、腾空沿弧线平滑过去、落地挤压再回弹；抬升 0.16 格（用户修正值）。
      */
     hopTo(id: string, a: number, b: number, k: number): Pt | null {
         const tk = this.tokens.get(id);
         if (!tk) return null;
         const A = this.tileCenter(a);
         const B = this.tileCenter(b);
-        const progress = Math.max(0, Math.min(1, k));
-        const eased = progress * progress * (3 - 2 * progress);
-        const x = A.x + (B.x - A.x) * eased;
-        const y = A.y + (B.y - A.y) * eased;
-        const yo = -this.g.tile * 0.16 * Math.sin(Math.PI * progress);
-        place(tk.node, x + tk.offX - tk.s / 2, y + tk.offY - tk.s / 2 + yo);
+        const p = Math.max(0, Math.min(1, k));
+        const CROUCH = 0.14;
+        const AIR = 0.82;
+        const LAND = 0.94;
+        let u = 0;
+        let lift = 0;
+        let sx = 1;
+        let sy = 1;
+        let pose: Pose;
+        if (p < CROUCH) {
+            const q = p / CROUCH;
+            pose = 'crouch';
+            sx = 1 + 0.06 * q;
+            sy = 1 - 0.08 * q;
+        } else if (p < AIR) {
+            const q = (p - CROUCH) / (AIR - CROUCH);
+            pose = 'airborne';
+            u = 0.5 - 0.5 * Math.cos(Math.PI * q);
+            const arc = Math.sin(Math.PI * q);
+            lift = this.g.tile * 0.16 * arc;
+            sx = 1 + 0.06 * (1 - q) - 0.04 * arc;
+            sy = 1 - 0.08 * (1 - q) + 0.06 * arc;
+        } else if (p < LAND) {
+            const q = (p - AIR) / (LAND - AIR);
+            pose = 'land';
+            u = 1;
+            sx = 1 + 0.07 * Math.sin(Math.PI * q);
+            sy = 1 - 0.09 * Math.sin(Math.PI * q);
+        } else {
+            pose = 'ready';
+            u = 1;
+        }
+        const x = A.x + (B.x - A.x) * u;
+        const y = A.y + (B.y - A.y) * u;
+        place(tk.node, x + tk.offX - tk.s / 2, y + tk.offY - tk.s / 2 - lift);
+        tk.body.setScale(sx, sy, 1);
+        this.showPose(tk, pose);
         return { x, y };
+    }
+
+    /** 走完：回到站立立绘、取消挤压。 */
+    endHop(id: string): void {
+        const tk = this.tokens.get(id);
+        if (!tk) return;
+        tk.body.setScale(1, 1, 1);
+        this.showPose(tk, null);
+    }
+
+    /** 切换姿态帧：按站立立绘的人物高度缩放画布，脚底对齐支点；素材未到时保持站立立绘。 */
+    private showPose(tk: Token, pose: Pose | null): void {
+        if (tk.pose === pose) return;
+        if (pose && !tk.poses) {
+            const name = characterKey(tk.avatar, true);
+            const poses = new Map<Pose, Node>();
+            // 站立立绘带蓝色底座：人物（发顶到脚底）约占图高 83%，脚踩在离图底约 15% 处；姿态帧按人物身高缩放并对齐脚底
+            const imgH = tk.s * 1.5;
+            const scale = (imgH * 0.834) / POSE_CANVAS.figure;
+            const feetUp = imgH * 0.15;
+            const cw = POSE_CANVAS.w * scale;
+            const chh = POSE_CANVAS.h * scale;
+            for (const ps of ['crouch', 'airborne', 'land', 'ready'] as Pose[]) {
+                const n = art(tk.body, name + '_' + ps, -cw / 2, -(POSE_CANVAS.feet * scale + feetUp), cw, chh, 'stretch');
+                if (!n) return; // 姿态帧还没加载完：本次仍用站立立绘
+                n.active = false;
+                poses.set(ps, n);
+            }
+            tk.poses = poses;
+        }
+        tk.pose = pose;
+        if (tk.idle) tk.idle.active = !pose || !tk.poses;
+        tk.poses?.forEach((n, ps) => { n.active = ps === pose; });
     }
 
     /** 落地尘土（在格 index 上）。 */

@@ -77,6 +77,18 @@ export class BoardScreen extends Screen {
         this.lastCurrent = '';
     }
 
+    /** 骰子翻滚或人物跳跃时推迟整页重建（重建会打断动画、造成卡顿），动画结束后补一次。 */
+    private dirty = false;
+
+    refresh(): void {
+        if (this.move || (this.dice && this.dice.playing)) {
+            this.dirty = true;
+            return;
+        }
+        this.dirty = false;
+        super.refresh();
+    }
+
     private get myId(): string {
         return ctx.store.myId;
     }
@@ -299,6 +311,7 @@ export class BoardScreen extends Screen {
         }
         if (step >= m.steps) {
             this.move = null;
+            this.view.endHop(m.id);
             const st = ctx.store;
             if (st.online) {
                 // 联机：位置已是服务端结果，动画结束后按真实视图重绘
@@ -420,6 +433,10 @@ export class BoardScreen extends Screen {
         const st = ctx.store;
         const g = st.game;
         if (!this.view || !g) return;
+        if (this.dirty && !this.move && !(this.dice && this.dice.playing)) {
+            this.refresh();
+            return;
+        }
         this.tickCashChanges();
         this.view.tick(dt);
         this.dice?.setReady(this.canRoll());
