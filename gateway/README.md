@@ -29,6 +29,9 @@
 | GET | `/api/me` | 头 `Authorization: Bearer <token>`；返回 `{"userId","nickname","roomCode"}` |
 | GET | `/api/room` | 当前房间快照，形状同 WebSocket 的 `UPDATE`（`events` 为空）；不在房间 404 |
 | GET | `/health`、`/health/db` | 存活与数据库诊断 |
+| GET | `/dev` | 联机测试台：一个页面开多个玩家，点按钮建房、加入、准备、开局、执行对局命令（页面在 `src/main/resources/static/dev/`） |
+
+`/api/**` 允许跨域（H5 客户端可部署在别的站点），令牌只走 `Authorization` 头，不用 Cookie。
 
 ## WebSocket `/ws`
 

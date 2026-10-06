@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>联机测试台</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --line:#e3e5ea; --ink:#1f2328; --mute:#6b7280; --ok:#16a34a; --bad:#dc2626; --acc:#2563eb; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.5 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  header h1 { font-size:16px; margin:0 12px 0 0; }
+  main { display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:12px; padding:12px 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  input, select { font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:6px; min-width:0; }
+  button { font:inherit; padding:5px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
+  button.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+  button:disabled { opacity:.45; cursor:default; }
+  .tag { font-size:12px; padding:1px 6px; border-radius:10px; background:#eef2ff; color:#3730a3; }
+  .tag.off { background:#fee2e2; color:#991b1b; } .tag.on { background:#dcfce7; color:#166534; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  td, th { border-bottom:1px solid var(--line); padding:3px 4px; text-align:left; }
+  .me { font-weight:600; }
+  .mute { color:var(--mute); font-size:12px; }
+  .log { height:220px; overflow:auto; background:#0f172a; color:#e2e8f0; border-radius:6px; padding:6px; font:12px/1.45 ui-monospace,Menlo,Consolas,monospace; }
+  .log div { white-space:pre-wrap; word-break:break-all; border-bottom:1px solid #1e293b; padding:2px 0; }
+  .log .out { color:#93c5fd; } .log .err { color:#fca5a5; } .log .ok { color:#86efac; }
+  .win { border:1px dashed var(--acc); border-radius:6px; padding:6px; }
+  details summary { cursor:pointer; color:var(--mute); }
+</style>
+</head>
+<body>
+<header>
+  <h1>联机测试台</h1>
+  <span class="mute">服务地址</span>
+  <input id="base" size="40" placeholder="留空 = 当前站点">
+  <input id="nick" size="10" placeholder="昵称" value="玩家1">
+  <button class="primary" id="add">加一个玩家</button>
+  <span class="mute">每个玩家一个独立的登录与 WebSocket 连接；协议见 gateway/README.md</span>
+</header>
+<main id="players"></main>
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const WINDOW_COMMANDS = ["RollDice","BuyProperty","DeclinePurchase","UpgradeProperty","SkipUpgrade","FinishBank",
+  "PayBail","DrawEventCard","ContinueDebt","DeclareBankruptcy","StartLandAuction"];
+const TILE_COMMANDS = ["BankMortgage","Redeem","EmergencyMortgage"];
+let seq = 0;
+const rid = () => Date.now().toString(36) + "-" + (++seq);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function baseUrl() {
+  const b = $("#base").value.trim().replace(/\/+$/, "");
+  return b || location.origin;
+}
+
+class Player {
+  constructor(nickname) {
+    this.nickname = nickname; this.token = null; this.userId = null; this.ws = null;
+    this.update = null; this.offset = 0; this.roomCode = null;
+    this.el = document.createElement("section"); this.el.className = "card";
+    $("#players").appendChild(this.el);
+    this.render();
+    this.timer = setInterval(() => this.renderWindows(), 500);
+  }
+  log(text, cls = "") {
+    const d = document.createElement("div"); d.className = cls; d.textContent = text;
+    const box = $(".log", this.el); box.appendChild(d); box.scrollTop = box.scrollHeight;
+    while (box.childElementCount > 300) box.firstChild.remove();
+  }
+  async login() {
+    try {
+      const r = await fetch(baseUrl() + "/api/auth/test-login", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nickname: this.nickname }) });
+      const body = await r.json();
+      if (!r.ok) { this.log("登录失败 " + JSON.stringify(body), "err"); return; }
+      this.token = body.token; this.userId = body.userId;
+      this.log("登录成功 userId=" + body.userId, "ok"); this.connect();
+    } catch (e) { this.log("登录请求失败：" + e, "err"); }
+  }
+  connect() {
+    const url = baseUrl().replace(/^http/, "ws") + "/ws?token=" + encodeURIComponent(this.token);
+    this.ws = new WebSocket(url);
+    this.ws.onopen = () => { this.log("WebSocket 已连接", "ok"); this.renderHeader(); };
+    this.ws.onclose = e => { this.log("连接关闭 " + e.code + " " + (e.reason || ""), "err"); this.renderHeader(); };
+    this.ws.onmessage = e => this.receive(JSON.parse(e.data));
+  }
+  send(msg) {
+    if (!this.ws || this.ws.readyState !== 1) { this.log("未连接", "err"); return; }
+    if (!("requestId" in msg) && !["SYNC","PING"].includes(msg.type)) msg.requestId = rid();
+    this.log("→ " + JSON.stringify(msg), "out"); this.ws.send(JSON.stringify(msg));
+  }
+  game(command, args) { this.send({ type: "GAME", command, args }); }
+  receive(m) {
+    if (m.type === "UPDATE") {
+      this.update = m; this.roomCode = m.roomCode; this.offset = m.serverTime - Date.now();
+      const kinds = m.events.map(e => e.kind).join(", ");
+      this.log("← UPDATE v" + m.version + (kinds ? "  [" + kinds + "]" : "  (快照)"));
+      this.renderState();
+    } else if (m.type === "RESULT") {
+      this.log("← RESULT " + m.requestId + " " + m.outcome + (m.code ? " " + m.code : "") + (m.message ? " — " + m.message : ""),
+        m.ok ? "ok" : "err");
+      if (m.roomCode) { this.roomCode = m.roomCode; this.renderHeader(); }
+    } else {
+      if (m.type === "HELLO" && m.roomCode) this.roomCode = m.roomCode;
+      if (m.type === "ROOM_CLOSED" || m.type === "NO_ROOM") { this.roomCode = null; this.update = null; this.renderState(); }
+      this.log("← " + JSON.stringify(m));
+    }
+    this.renderHeader();
+  }
+  render() {
+    this.el.innerHTML = `
+      <div class="row" data-k="head"></div>
+      <div class="row">
+        <button data-a="login" class="primary">登录并连接</button>
+        <button data-a="create">建房</button>
+        <input data-k="code" size="7" placeholder="房间号"><button data-a="join">加入</button>
+        <button data-a="ready">准备</button><button data-a="unready">取消准备</button>
+        <button data-a="start">开局</button><button data-a="leave">离开</button><button data-a="sync">同步</button>
+      </div>
+      <div class="row">
+        <select data-k="mode"><option>MANUAL</option><option>AWAY</option><option>HOSTED</option></select>
+        <button data-a="control">切换控制模式</button>
+        <button data-a="surrender">认输</button>
+      </div>
+      <div data-k="state" class="mute">尚未进入房间</div>
+      <div data-k="windows"></div>
+      <details><summary>自定义对局命令</summary>
+        <div class="row" style="margin-top:6px">
+          <input data-k="cmd" size="14" placeholder="命令，如 RollDice">
+          <input data-k="args" size="22" placeholder='参数 JSON，如 {"windowId":1}'>
+          <button data-a="custom">发送</button>
+        </div>
+      </details>
+      <div class="log"></div>`;
+    this.el.addEventListener("click", e => {
+      const a = e.target.dataset.a; if (!a) return;
+      const v = k => $(`[data-k="${k}"]`, this.el).value.trim();
+      const g = this.update?.view?.game;
+      ({
+        login: () => this.login(),
+        create: () => this.send({ type: "CREATE_ROOM" }),
+        join: () => this.send({ type: "JOIN_ROOM", roomCode: v("code") }),
+        ready: () => this.send({ type: "READY", ready: true }),
+        unready: () => this.send({ type: "READY", ready: false }),
+        start: () => this.send({ type: "START_GAME" }),
+        leave: () => this.send({ type: "LEAVE_ROOM" }),
+        sync: () => this.send({ type: "SYNC" }),
+        control: () => this.send({ type: "SET_CONTROL", mode: v("mode") }),
+        surrender: () => g ? this.game("Surrender", { gameNo: g.gameNo }) : this.log("没有进行中的对局", "err"),
+        custom: () => { try { this.game(v("cmd"), v("args") ? JSON.parse(v("args")) : {}); } catch (err) { this.log("参数不是合法 JSON", "err"); } },
+        win: () => this.game(e.target.dataset.cmd, { windowId: Number(e.target.dataset.win) }),
+        tile: () => { const t = $(`[data-k="tile-${e.target.dataset.win}"]`, this.el).value;
+                      this.game(e.target.dataset.cmd, { windowId: Number(e.target.dataset.win), tile: Number(t) }); },
+        discard: () => { const i = $(`[data-k="idx-${e.target.dataset.win}"]`, this.el).value;
+                         this.game("DiscardCard", { windowId: Number(e.target.dataset.win), index: Number(i) }); },
+      })[a]?.();
+    });
+    this.renderHeader();
+  }
+  renderHeader() {
+    const open = this.ws && this.ws.readyState === 1;
+    $('[data-k="head"]', this.el).innerHTML =
+      `<strong>${esc(this.nickname)}</strong>` +
+      `<span class="tag ${open ? "on" : "off"}">${open ? "在线" : "离线"}</span>` +
+      (this.userId ? `<span class="mute">userId ${esc(this.userId)}</span>` : "") +
+      (this.roomCode ? `<span class="tag">房间 ${esc(this.roomCode)}</span>` : "");
+  }
+  renderState() {
+    const box = $('[data-k="state"]', this.el);
+    const v = this.update?.view;
+    if (!v) { box.textContent = "尚未进入房间"; $('[data-k="windows"]', this.el).innerHTML = ""; return; }
+    const name = id => (v.members.find(m => m.playerId === id) || {}).nickname || id;
+    let html = `<div>状态 ${esc(v.status)} · 房主 ${esc(name(v.hostId))} · 已完成 ${v.gamesPlayed} 局 · `
+      + `${esc(v.settings.boardId)} / 初始 ${v.settings.initialCash} / ${esc(v.settings.endMode)}</div>`;
+    if (!v.game) {
+      html += "<table><tr><th>成员</th><th>准备</th></tr>" + v.members.map(m =>
+        `<tr class="${m.playerId === this.userId ? "me" : ""}"><td>${esc(m.nickname)}</td><td>${m.ready ? "✔" : ""}</td></tr>`).join("") + "</table>";
+    } else {
+      const g = v.game;
+      html += `<div>第 ${g.gameNo} 局 · 回合 ${g.turnNo} · 当前 <strong>${esc(name(g.currentPlayer))}</strong> · 阶段 ${esc(g.stage)} · ${esc(g.phase)}</div>`;
+      html += "<table><tr><th>玩家</th><th>位置</th><th>现金</th><th>手牌</th><th>状态</th></tr>" + g.players.map(p =>
+        `<tr class="${p.playerId === this.userId ? "me" : ""}"><td>${esc(name(p.playerId))}</td><td>${p.position}</td><td>${p.cash}</td>`
+        + `<td>${p.handCount}</td><td>${esc(p.life)}${p.inJail ? " 狱中" : ""} ${esc(p.control)} ${esc(p.conn)}</td></tr>`).join("") + "</table>";
+      const owned = g.board.ownables.filter(o => o.owner);
+      if (owned.length) html += `<div class="mute">产权：${owned.map(o => `${o.tile}号→${esc(name(o.owner))}${o.level ? " Lv" + o.level : ""}${o.mortgaged ? " 押" : ""}`).join("，")}</div>`;
+      if (g.landing) html += `<div class="mute">落点 ${g.landing.tile} 号格 · ${esc(g.landing.step)}${g.landing.decisionPending ? " · 待决策" : ""}</div>`;
+      if (g.debt) html += `<div class="mute">债务 ${g.debt.amount}（债务人 ${esc(name(g.debt.debtor))}，第 ${g.debt.segment} 段）</div>`;
+      if (g.myHand.length) html += `<div class="mute">我的手牌：${g.myHand.map(esc).join("，")}</div>`;
+    }
+    if (v.lastResult) html += `<details><summary>上一局结算</summary><pre class="mute">${esc(JSON.stringify(v.lastResult, null, 1))}</pre></details>`;
+    box.innerHTML = html;
+    this.renderWindows(true);
+  }
+  renderWindows(force) {
+    const g = this.update?.view?.game, box = $('[data-k="windows"]', this.el);
+    if (!g) { if (force) box.innerHTML = ""; return; }
+    const now = Date.now() + this.offset;
+    const mine = g.windows.filter(w => w.owner === this.userId);
+    const others = g.windows.filter(w => w.owner !== this.userId);
+    const secs = ms => Math.max(0, Math.ceil(ms / 1000));
+    const label = w => w.paused ? "暂停" : now < w.opensAt ? `${secs(w.opensAt - now)} 秒后开启` : `剩 ${secs(w.deadline - now)} 秒`;
+    // 倒计时每 0.5 秒刷新；按钮区只在视图变化时重建，避免打断输入
+    if (!force) { box.querySelectorAll("[data-cd]").forEach(el => {
+      const w = g.windows.find(x => String(x.windowId) === el.dataset.cd); if (w) el.textContent = label(w); }); return; }
+    box.innerHTML = mine.map(w => `<div class="win"><div>我的窗口 #${w.windowId} ${esc(w.kind)} · <span data-cd="${w.windowId}">${label(w)}</span></div>
+        <div class="row">${WINDOW_COMMANDS.map(c => `<button data-a="win" data-cmd="${c}" data-win="${w.windowId}">${c}</button>`).join("")}</div>
+        <div class="row"><input data-k="tile-${w.windowId}" size="4" placeholder="格号">${TILE_COMMANDS.map(c =>
+          `<button data-a="tile" data-cmd="${c}" data-win="${w.windowId}">${c}</button>`).join("")}
+          <input data-k="idx-${w.windowId}" size="3" placeholder="序号"><button data-a="discard" data-win="${w.windowId}">DiscardCard</button></div></div>`).join("")
+      + others.map(w => `<div class="mute">等待：#${w.windowId} ${esc(w.kind)}（${esc(w.owner)}）<span data-cd="${w.windowId}">${label(w)}</span></div>`).join("");
+  }
+}
+
+let count = 0;
+$("#add").addEventListener("click", () => {
+  const n = $("#nick").value.trim() || ("玩家" + (count + 1));
+  new Player(n); count++;
+  $("#nick").value = "玩家" + (count + 1);
+});
+</script>
+</body>
+</html>
