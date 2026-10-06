@@ -1,6 +1,5 @@
 /** 落点处理（演示）：按落点格弹出买地/升级/租金响应/欠款/事件/虎口拔牙。 */
 import { Card } from '../../core/Models';
-import { ME } from '../../core/MockStore';
 import { rentOf, stationRent } from '../../core/Rules';
 import { BuyPopup } from '../../popups/BuyPopup';
 import { beginDebt } from '../../popups/DebtPopup';
@@ -16,7 +15,7 @@ export function handleLanding(i: number): void {
     const me = st.me();
     if (t.type === 'PROPERTY' || t.type === 'STATION') {
         if (!prop || !prop.owner) ctx.popups.open(new BuyPopup(i));
-        else if (prop.owner === ME) {
+        else if (prop.owner === st.myId) {
             if (t.type === 'PROPERTY' && !prop.mortgaged) ctx.popups.open(new UpgradePopup(i));
             else Toast.show('自己的资产：无需缴租');
         } else if (!prop.mortgaged) {
@@ -35,7 +34,7 @@ export function handleLanding(i: number): void {
         ctx.screens.push('teeth');
     } else if (t.type === 'EVENT') {
         // 事件格：触发事件卡抽卡流程（仅本人界面中央出现问号卡背，点击卡片翻开；见 core/EventDraw.ts）
-        st.eventStart(ME);
+        st.eventStart(st.myId);
     } else if (t.type === 'BANK') Toast.show(t.name + '：可手动抵押 / 赎回（点"我的资产"）');
     else if (t.type === 'JAIL') Toast.show('路过' + t.name + '，不关押');
     else Toast.show(t.type === 'REST' ? t.name + '：无事发生' : '回到' + t.name);

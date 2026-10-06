@@ -1,5 +1,5 @@
 /**
- * 应用入口（演示模式，不连后端）：创建 Canvas/Camera，按层级装配
+ * 应用入口（默认联机；H5 加 ?demo=1 为演示模式）：创建 Canvas/Camera，按层级装配
  *   screens(页面) < capsule(微信胶囊占位) < popups(弹窗) < demo(☰ 菜单) < toast。
  * 由 LobbyBootstrap 组件在 onLoad 里调用 start()，每帧调用 update()。
  */
@@ -22,6 +22,8 @@ import { mk, text } from './ui/Kit';
 import { PopupManager } from './ui/PopupManager';
 import { ScreenManager } from './ui/ScreenManager';
 import { Toast } from './ui/Toast';
+import { onlineEnabled } from './net/Config';
+import { emptySession, OnlineSession } from './net/OnlineSession';
 
 export class App {
     start(host: Node): void {
@@ -49,6 +51,15 @@ export class App {
         // 设计画面根节点：左上角锚点，位于 Canvas 左上
         const root = mk(canvasNode, 'Root', -Theme.W / 2, -Theme.H / 2, Theme.W, Theme.H);
         const store = new MockStore();
+        if (onlineEnabled()) {
+            // 联机模式（默认）：数据来自服务端；H5 地址加 ?demo=1 回到演示模式
+            const online = new OnlineSession(store);
+            store.online = online;
+            store.nowSource = () => online.now();
+            store.session = emptySession();
+            online.onRoute = (r) => ctx.screens.go(r);
+            online.onToast = (m) => Toast.show(m);
+        }
         ctx.store = store;
         ctx.clock = store.clock;
         ctx.root = root;

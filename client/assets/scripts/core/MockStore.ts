@@ -7,6 +7,7 @@ import { Clock } from './Clock';
 import { remainingSecFromMs } from './MatchClock';
 import { advanceEvent, clickCard, closeResult, EVENT_IDLE, EventDrawState, EventResult, triggerEvent } from './EventDraw';
 import { Theme } from './Theme';
+import type { OnlineSession } from '../net/OnlineSession';
 import {
     AuctionView, BoardTile, Card, CardType, ChatLine, ConnState, ControlMode, DebtView, GameResult, GameView,
     HistoryEntry, Member, PlayerView, Profile, PropertyState, RoomSettings, SessionView,
@@ -34,7 +35,13 @@ export interface Scenario {
 type Listener = () => void;
 
 export class MockStore {
-    readonly clock = new Clock();
+    /** 时间源：演示为本机时间；联机后换成服务器时间（倒计时按服务端截止时刻显示）。 */
+    nowSource: () => number = () => Date.now();
+    readonly clock = new Clock(() => this.nowSource());
+    /** 我的 playerId：演示为 'p1'；联机登录后为服务端 userId。 */
+    myId: string = ME;
+    /** 联机会话；为 null 时是演示模式（本类的数据全部本地生成）。 */
+    online: OnlineSession | null = null;
     profile: Profile = { nickname: '', avatar: 0, loggedIn: false };
     scenario: Scenario = { players: 8, boardSize: 50, turn: 'me', spectator: false, conn: 'mixed', host: true, handCount: 6 };
     session!: SessionView;
@@ -66,6 +73,7 @@ export class MockStore {
 
     // ---------- 场景 ----------
     patchScenario(p: Partial<Scenario>): void {
+        if (this.online) return; // 联机时数据只来自服务端
         const next = { ...this.scenario, ...p };
         if (next.boardSize === 30 && next.players > maxPlayers(30)) {
             if (p.boardSize === 30) next.players = 4; // 切到 30 格：人数收敛
@@ -78,6 +86,7 @@ export class MockStore {
     }
 
     rebuild(): void {
+        if (this.online) return;
         const sc = this.scenario;
         const prevSettings = this.session?.settings;
         const settings: RoomSettings = prevSettings
@@ -186,7 +195,7 @@ export class MockStore {
     }
 
     me(): PlayerView {
-        return this.game.players.find((p) => p.playerId === ME) as PlayerView;
+        return this.game.players.find((p) => p.playerId === this.myId) as PlayerView;
     }
 
     player(id: string): PlayerView | undefined {
@@ -202,7 +211,7 @@ export class MockStore {
     }
 
     isMyTurn(): boolean {
-        return this.game.currentPlayer === ME && this.me().life === 'ALIVE';
+        return this.game.currentPlayer === this.myId && this.me()?.life === 'ALIVE';
     }
 
     /** 某玩家拥有的资产（含格子信息） */
@@ -245,6 +254,10 @@ export class MockStore {
 
     // ---------- 动作（演示用的本地状态变更） ----------
     setReady(id: string, ready: boolean): void {
+        if (this.online) {
+            if (id === this.myId) void this.online.ready(ready);
+            return;
+        }
         const m = this.session.members.find((x) => x.playerId === id);
         if (m) m.ready = ready;
         this.emit();
@@ -252,6 +265,10 @@ export class MockStore {
 
     /** 修改设置：全员需重新准备（房主视为已准备）。 */
     setSetting(patch: Partial<RoomSettings>): void {
+        if (this.online) {
+            void this.online.settings({ ...this.session.settings, ...patch });
+            return;
+        }
         this.session.settings = { ...this.session.settings, ...patch };
         for (const m of this.session.members) m.ready = m.playerId === this.session.hostId;
         if (patch.boardId) {
@@ -261,7 +278,11 @@ export class MockStore {
     }
 
     removeMember(id: string): void {
-        if (id === ME) return;
+        if (id === this.myId) return;
+        if (this.online) {
+            void this.online.kick(id);
+            return;
+        }
         this.session.members = this.session.members.filter((m) => m.playerId !== id);
         this.scenario = { ...this.scenario, players: this.session.members.length };
         this.emit();
@@ -274,6 +295,10 @@ export class MockStore {
 
     setProfile(p: Partial<Profile>): void {
         this.profile = { ...this.profile, ...p };
+        if (this.online) {
+            this.emit();
+            return;
+        }
         const m = this.session.members[0];
         if (m && this.profile.nickname) m.nickname = this.profile.nickname;
         if (m) m.avatar = this.profile.avatar;
@@ -287,7 +312,8 @@ export class MockStore {
 
     /** 我已破产？ */
     isSpectator(): boolean {
-        return this.me().life !== 'ALIVE';
+        const me = this.me();
+        return !!me && me.life !== 'ALIVE';
     }
 
     // ---------- 事件卡 ----------
@@ -392,6 +418,10 @@ export class MockStore {
 
     /** 认输/破产：现金与资产系统回收，转为观战。 */
     surrender(life: 'SURRENDERED' | 'BANKRUPT' = 'SURRENDERED'): void {
+        if (this.online) {
+            if (this.session.game) void this.online.act('Surrender', { gameNo: this.session.game.gameNo });
+            return;
+        }
         const me = this.me();
         me.life = life;
         me.cash = 0;

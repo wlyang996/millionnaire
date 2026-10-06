@@ -1,4 +1,14 @@
-# Cocos 客户端（演示模式，不连后端）
+# Cocos 客户端（默认联机；`?demo=1` 为演示模式）
+
+## 联机模式（2026-10-07 起默认）
+- 服务地址默认是云托管 prod（`net/Config.ts`）。H5 预览可在地址后加 `?server=http://localhost:8080` 连本地后台，加 `?demo=1` 回到不联网的演示模式（美术评审用）。
+- 流程：登录资料页填昵称 → "保存资料"即测试身份登录并连接 → 大厅创建房间 / 输入房号加入 → 房间里准备、房主开局 → 进入棋盘。
+- 数据全部来自服务端推送（`net/OnlineSession.ts` 把服务端视图写进 `MockStore.session`），点骰子只发命令；骰子和走棋动画由服务端的 DiceRolled / PlayerMoved 事件驱动，所有人一致。
+- 已接入：登录、建房、加入、离开、准备、改设置、踢人、开局、投骰、出狱（掷骰 / 付费）、买地 / 放弃、升级 / 跳过、银行结束、事件格抽卡、欠款确认破产 / 继续、弃牌、托管恢复、认输、结算。
+- 尚未接入（仍是演示界面）：应急抵押选择、拍卖、交易、道具主动使用、虎口拔牙、聊天、语音、微信登录与分享；头像暂按 playerId 自动分配。
+- 网络核心（`net/`）不依赖 cc，可在 Node 中直接测试。
+
+## 演示模式（原说明）
 
 工程路径：F:\work\millionnaire\client。编辑器：Cocos Creator 3.8.8，场景 `assets/scenes/Lobby.scene`（未改动），
 入口脚本 `assets/scripts/LobbyBootstrap.ts` → `App.ts`。**整套界面由 TS 在运行时创建**，使用 Sprite 位图美术、Graphics 面板和 Label 动态文字。2026-10-06 已从 `design/screens/` 导入 86 个原始 PNG 到 `assets/resources/art/`，首次页面显示前预加载；昵称、价格、倒计时和点击区域仍由代码创建。

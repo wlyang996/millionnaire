@@ -3,7 +3,6 @@ import { Node } from 'cc';
 import { standardValue } from '../core/Rules';
 import { Theme } from '../core/Theme';
 import { art, informationCharacterKey } from '../ui/Art';
-import { ME } from '../core/MockStore';
 import { ctx } from '../ui/Ctx';
 import { mk, onTap, text } from '../ui/Kit';
 import { ScrollList } from '../ui/ScrollList';
@@ -13,8 +12,8 @@ import { TileInfoPopup } from './TileInfoPopup';
 import { tierName } from './Common';
 
 export class AssetsPopup extends InformationPage {
-    constructor(private readonly playerId: string = ME) {
-        super('assets', playerId === ME ? '我的资产' : (ctx.store.player(playerId)?.nickname ?? '玩家') + '的资产');
+    constructor(private readonly playerId: string = ctx.store.myId) {
+        super('assets', playerId === ctx.store.myId ? '我的资产' : (ctx.store.player(playerId)?.nickname ?? '玩家') + '的资产');
     }
 
     protected buildBody(p: Node, w: number, h: number): void {

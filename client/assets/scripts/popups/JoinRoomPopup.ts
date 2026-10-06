@@ -7,6 +7,7 @@ import { fillRR, gfx, mk, setText, strokeRR, text } from '../ui/Kit';
 import { Keypad } from '../ui/Keypad';
 import { Popup } from '../ui/Popup';
 import { Toast } from '../ui/Toast';
+import { describe } from '../net/OnlineSession';
 
 export class JoinRoomPopup extends Popup {
     private code = '';
@@ -49,6 +50,18 @@ export class JoinRoomPopup extends Popup {
     private join(): void {
         if (this.code.length < 6) {
             setText(this.err, '请输入完整的 6 位房间号');
+            return;
+        }
+        const online = ctx.store.online;
+        if (online) {
+            const code = this.code;
+            setText(this.err, '正在加入…', Theme.c.inkSoft);
+            void online.join(code).then((r) => {
+                if (r.ok) {
+                    this.close();
+                    ctx.screens.push('room');
+                } else setText(this.err, describe(r.code), Theme.c.red);
+            });
             return;
         }
         if (this.code === '000000') return void setText(this.err, '房间不存在或已关闭');

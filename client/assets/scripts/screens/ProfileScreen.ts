@@ -51,7 +51,7 @@ export class ProfileScreen extends Screen {
             if (st.profile.loggedIn) return;
             st.setProfile({ loggedIn: true });
             if (!this.nick) this.nick = '微信用户';
-            Toast.show('微信登录成功（演示，未连接微信）');
+            Toast.show(st.online ? '测试登录：填写昵称后保存即可联机（暂未接入微信）' : '微信登录成功（演示，未连接微信）');
             this.rebuild();
         }, Theme.font.lg);
 
@@ -92,7 +92,13 @@ export class ProfileScreen extends Screen {
             if (!st.profile.loggedIn) return Toast.show('请先微信登录');
             if (!r.ok) return Toast.show(r.reason);
             st.setProfile({ nickname: this.nick.trim(), avatar: this.avatarIdx });
-            ctx.screens.go('lobby');
+            if (!st.online) return ctx.screens.go('lobby');
+            // 联机：测试身份登录并连接服务器
+            this.enter.setEnabled(false, '正在连接服务器…');
+            st.online.login(this.nick.trim()).then(() => ctx.screens.go('lobby'), (e: { code?: string }) => {
+                Toast.show(e && e.code === 'INVALID_NICKNAME' ? '昵称不合法，请换一个' : '连接服务器失败，请稍后重试');
+                this.checkNow();
+            });
         });
         this.checkNow();
     }

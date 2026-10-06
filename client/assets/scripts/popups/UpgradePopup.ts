@@ -11,7 +11,8 @@ import { art } from '../ui/Art';
 import { coinText, infoRow, rentTable, tileHero, tileSubtitle } from './Common';
 
 export class UpgradePopup extends Popup {
-    constructor(private readonly tileIndex: number) {
+    /** @param windowId 联机时为服务端的落点决策窗口；演示时不传 */
+    constructor(private readonly tileIndex: number, private readonly windowId?: number) {
         super('upgrade', '升级地产', 640, 800, SECONDS.upgrade);
     }
 
@@ -40,6 +41,11 @@ export class UpgradePopup extends Popup {
         }
         text(p, '最多三级 · 每次升一级 · 抵押的地产不能升级', 40, 570, w - 80, 30, Theme.font.xs, Theme.c.inkFaint);
         const b = primaryButton(p, full ? '已满级' : '升级 ' + cost, 40 + (w - 100) * 0.38 + 20, 620, (w - 100) * 0.62, 92, () => {
+            if (st.online && this.windowId !== undefined) {
+                this.close();
+                void st.online.act('UpgradeProperty', { windowId: this.windowId }).then((r) => r.ok && Toast.show('升级成功：' + next + ' 级'));
+                return;
+            }
             if (!st.spend(cost)) return Toast.show('现金不足');
             if (prop) {
                 prop.level = next;
@@ -50,7 +56,10 @@ export class UpgradePopup extends Popup {
             st.emit();
         }, Theme.font.lg);
         b.setEnabled(!full && cash >= cost, full ? '已是最高等级' : '现金不足');
-        ghostButton(p, '放弃', 40, 620, (w - 100) * 0.38, 92, () => this.close(), Theme.font.md);
+        ghostButton(p, '放弃', 40, 620, (w - 100) * 0.38, 92, () => {
+            if (st.online && this.windowId !== undefined) void st.online.act('SkipUpgrade', { windowId: this.windowId });
+            this.close();
+        }, Theme.font.md);
         text(p, '现金 ' + cash + (full ? '' : '，升级后剩余 ' + (cash - cost)), 40, 724, w - 80, 36, Theme.font.sm, Theme.c.inkSoft);
     }
 

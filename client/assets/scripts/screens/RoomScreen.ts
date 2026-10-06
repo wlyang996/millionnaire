@@ -20,11 +20,20 @@ export class RoomScreen extends Screen {
     protected build(): void {
         const st = ctx.store;
         const s = st.session;
-        const isHost = s.hostId === 'p1';
+        const isHost = s.hostId === st.myId;
         const cap = maxPlayers(boardSizeOf(s.settings.boardId));
         this.backdrop('sky');
         art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
-        this.header('好友房间', () => ctx.screens.go('lobby'));
+        this.header('好友房间', () => {
+            // 联机：返回即离开房间（最后一人离开时房间关闭）
+            if (st.online && s.roomId) void st.online.leave().then((r) => r.ok && ctx.screens.go('lobby'));
+            else ctx.screens.go('lobby');
+        });
+        if (st.online && !s.members.some((m) => m.playerId === st.myId)) {
+            text(this.root, '你不在任何房间里', 0, 560, Theme.W, 80, Theme.font.lg, Theme.c.inkSoft);
+            primaryButton(this.root, '返回大厅', 140, 680, 440, 100, () => ctx.screens.go('lobby'), Theme.font.lg);
+            return;
+        }
 
         // 房间号卡
         const code = roundedPanel(this.root, 24, 96, 672, 130);
@@ -97,36 +106,37 @@ export class RoomScreen extends Screen {
         void drawChat;
 
         // 底部按钮
-        const me = s.members.find((m) => m.playerId === 'p1') as Member;
+        const me = s.members.find((m) => m.playerId === st.myId) as Member;
         const ready = st.allReady();
         let main: Button;
         if (isHost) {
             main = primaryButton(this.root, ready ? '开始游戏' : '等待全员准备', 24, 1136, 440, 100, () => {
+                if (st.online) return void st.online.start(); // 开局后服务端推送对局视图，自动进入棋盘
                 st.patchScenario({ players: s.members.length });
                 Toast.show('对局开始（演示）');
                 ctx.screens.go('board');
             }, Theme.font.lg);
             main.setEnabled(ready, s.members.length < 2 ? '至少 2 人才能开局' : '需全员准备后才能开局');
         } else {
-            main = primaryButton(this.root, me.ready ? '已准备，等待开局' : '准备', 24, 1136, 440, 100, () => st.setReady('p1', true), Theme.font.lg);
+            main = primaryButton(this.root, me.ready ? '已准备，等待开局' : '准备', 24, 1136, 440, 100, () => st.setReady(st.myId, true), Theme.font.lg);
             main.setEnabled(!me.ready, '已准备');
         }
         const sec = new Button(this.root, me.ready ? '取消准备' : (isHost ? '准备' : '未准备'), 480, 1136, 216, 100, 'ghost',
-            () => st.setReady('p1', !me.ready), Theme.font.md);
+            () => st.setReady(st.myId, !me.ready), Theme.font.md);
         sec.setEnabled(isHost || me.ready, '请先点击左侧"准备"');
     }
 
     private drawMember(cell: Node, m: Member, isHost: boolean): void {
         const st = ctx.store;
         const s = st.session;
-        const isMe = m.playerId === 'p1';
+        const isMe = m.playerId === st.myId;
         avatar(cell, 33, 0, 84, m.avatar, m.nickname, { ring: m.ready ? Theme.c.green : undefined });
         if (m.playerId === s.hostId) chip(cell, 8, 0, '房主', Theme.c.orange, Theme.c.white, Theme.font.xs);
         text(cell, m.nickname + (isMe ? '(我)' : ''), 0, 88, 150, 32, Theme.font.sm, Theme.c.ink, { bold: true });
         const rc = m.ready ? chip(cell, 26, 124, '✓ 已准备', Theme.c.greenSoft, Theme.c.greenDark, Theme.font.xs)
             : chip(cell, 26, 124, '○ 未准备', '#E9EDF1', Theme.c.inkSoft, Theme.font.xs);
         // 演示：点别人的准备标签可切换其准备状态（真实环境由对方自己操作）
-        if (!isMe) onTap(rc.node, () => {
+        if (!isMe && !st.online) onTap(rc.node, () => {
             Toast.show('演示：切换 ' + m.nickname + ' 的准备状态');
             st.setReady(m.playerId, !m.ready);
         });

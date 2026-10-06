@@ -11,7 +11,8 @@ import { AuctionPopup } from './AuctionPopup';
 import { coinText, infoRow, rentTable, tileHero, tileSubtitle } from './Common';
 
 export class BuyPopup extends Popup {
-    constructor(private readonly tileIndex: number) {
+    /** @param windowId 联机时为服务端的落点决策窗口；演示时不传 */
+    constructor(private readonly tileIndex: number, private readonly windowId?: number) {
         super('buy', ctx.store.tile(tileIndex).type === 'STATION' ? '购买车站' : '购买地产', 640, 780, SECONDS.buy);
     }
 
@@ -32,6 +33,12 @@ export class BuyPopup extends Popup {
         text(p, '现金 ' + cash + '，买后剩余 ' + (cash - price), 40, 508, w - 80, 36, Theme.font.sm, cash >= price ? Theme.c.inkSoft : Theme.c.red, { bold: true });
         const lot = !!tile.auctionLot && !station;
         const buy: Button = primaryButton(p, '购买 ' + price, 40, 556, w - 80, 92, () => {
+            if (st.online && this.windowId !== undefined) {
+                // 联机：由服务端扣款、转产权，结果随推送刷新
+                this.close();
+                void st.online.act('BuyProperty', { windowId: this.windowId }).then((r) => r.ok && Toast.show('已购买，花费 ' + price));
+                return;
+            }
             if (!st.spend(price)) return Toast.show('现金不足');
             const prop = st.prop(this.tileIndex);
             if (prop) prop.owner = 'p1';
@@ -43,6 +50,7 @@ export class BuyPopup extends Popup {
         if (lot) {
             secondaryButton(p, '发起拍卖', 40, 664, (w - 100) / 2, 80, () => {
                 this.close();
+                if (st.online && this.windowId !== undefined) return void st.online.act('StartLandAuction', { windowId: this.windowId });
                 ctx.popups.open(new AuctionPopup(this.tileIndex, true));
             }, Theme.font.md);
             ghostButton(p, '放弃', 40 + (w - 100) / 2 + 20, 664, (w - 100) / 2, 80, () => this.giveUp(), Theme.font.md);
@@ -56,11 +64,14 @@ export class BuyPopup extends Popup {
     }
 
     private giveUp(): void {
+        const online = ctx.store.online;
+        if (online && this.windowId !== undefined) void online.act('DeclinePurchase', { windowId: this.windowId });
         Toast.show('已放弃购买');
         this.close();
     }
 
     protected onExpire(): void {
+        // 联机时由服务端在窗口截止时按放弃处理
         Toast.show('操作超时，视为放弃');
         this.close();
     }

@@ -1,5 +1,4 @@
 /** 页面 6：结算。净资产排名（并列按 1、1、3 编号），没有"胜负"列；破产标记；可回原房间再来一局。 */
-import { ME } from '../core/MockStore';
 import { Theme } from '../core/Theme';
 import { ghostButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -18,7 +17,11 @@ export class ResultScreen extends Screen {
 
     protected build(): void {
         const st = ctx.store;
-        const res = st.buildResult();
+        const res = st.online ? st.session.lastResult : st.buildResult();
+        if (!res) {
+            text(this.root, '暂无结算结果', 0, 560, Theme.W, 80, Theme.font.lg, Theme.c.inkSoft);
+            return;
+        }
         const s = st.session;
         this.backdrop('sky');
         const hd = mk(this.root, 'Header', 150, 24, 360, 60);
@@ -41,7 +44,7 @@ export class ResultScreen extends Screen {
         const rowH = 66;
         res.standings.forEach((r, i) => {
             const row = mk(list.content, 'Row' + i, 0, i * rowH, 672, rowH);
-            const isMe = r.playerId === ME;
+            const isMe = r.playerId === st.myId;
             const g = gfx(row);
             fillRR(g, 12, 4, 648, rowH - 8, 16, isMe ? '#FFF1C9' : '#FFFFFFAA');
             const medal = r.rank <= 3 && !r.bankrupt ? MEDAL[r.rank - 1] : Theme.c.grayDark;

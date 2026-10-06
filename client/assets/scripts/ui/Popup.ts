@@ -32,6 +32,14 @@ export abstract class Popup {
         this.cd = seconds > 0 ? new Countdown(ctx.clock) : null;
     }
 
+    /** 联机：按服务端窗口的截止时刻倒计时（打开前调用；时间基准为 ctx.clock，联机时即服务器时间）。 */
+    private deadlineAt: number | null = null;
+
+    withDeadline(deadlineMs: number): this {
+        this.deadlineAt = deadlineMs;
+        return this;
+    }
+
     /** 由 PopupManager 调用：创建节点树并开始计时。 */
     mount(layer: Node): void {
         this.root = mk(layer, 'Popup:' + this.popupId, 0, 0, Theme.W, Theme.H);
@@ -50,7 +58,8 @@ export abstract class Popup {
         if (this.cd) {
             const r = Theme.popupRing;
             this.ring = new CountdownBadge(this.panel, this.pw - r.size - r.inset, r.inset + 6, r.size - 10, 48);
-            this.cd.start(this.seconds);
+            if (this.deadlineAt !== null) this.cd.setDeadline(this.deadlineAt, this.seconds);
+            else this.cd.start(this.seconds);
             this.ring.update(this.cd);
         }
         this.body = mk(this.panel, 'Body', 0, 0, this.pw, this.ph);

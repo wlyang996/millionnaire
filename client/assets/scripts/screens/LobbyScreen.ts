@@ -47,6 +47,12 @@ export class LobbyScreen extends Screen {
 
         // 主按钮
         const create = primaryButton(this.root, '创建房间', 48, 668, 624, 112, () => {
+            if (st.online) {
+                void st.online.createRoom().then((r) => {
+                    if (r.ok) ctx.screens.push('room');
+                });
+                return;
+            }
             st.patchScenario({ host: true });
             ctx.screens.push('room');
         }, Theme.font.xl);
@@ -66,6 +72,11 @@ export class LobbyScreen extends Screen {
             text(card, '房间 ' + st.session.roomId + (st.isSpectator() ? ' · 观战中' : ' · 进行中'), 110, 58, 360, 36, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
             text(card, '›', 554, 20, 50, 68, Theme.font.xl, Theme.c.inkSoft);
             onTap(card, () => ctx.screens.go(st.isSpectator() ? 'spectator' : 'board'));
+        } else if (st.online && st.session.roomId) {
+            // 联机：已在房间里（大厅阶段）
+            text(card, '返回房间 ' + st.session.roomId, 110, 0, 420, 108, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
+            text(card, '›', 554, 20, 50, 68, Theme.font.xl, Theme.c.inkSoft);
+            onTap(card, () => ctx.screens.push('room'));
         } else {
             text(card, '当前没有进行中的对局', 0, 0, 624, 108, Theme.font.md, Theme.c.inkSoft);
         }
