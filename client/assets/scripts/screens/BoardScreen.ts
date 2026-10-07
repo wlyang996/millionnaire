@@ -20,6 +20,7 @@ import { Screen, ScreenId } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, roundedPanel } from '../ui/Widgets';
 import { boardMarks, BoardView, CamState } from './board/BoardView';
+import { drawFlowBanners, FlowBanners } from './board/FlowBanners';
 import { drawBottom } from './board/BottomBar';
 import { BuyPopup } from '../popups/BuyPopup';
 import { UpgradePopup } from '../popups/UpgradePopup';
@@ -64,6 +65,7 @@ export class BoardScreen extends Screen {
     private eventOv: EventOverlay | null = null;
     private pendingFine = 0;
     private cashGame = '';
+    private banners: FlowBanners | null = null;
     private cashSnapshot = new Map<string, number>();
     private cashChanges = new Map<string, CashChange>();
     private cashChangeNodes: CashChangeNode[] = [];
@@ -138,6 +140,8 @@ export class BoardScreen extends Screen {
         if (this.cam.follow && cur && !this.move) this.view.focusTile(cur.position, false);
 
         this.buildOverlays();
+        // 设计稿 28 / 29：交易等待、排队申请、拍卖 / 交易结果横幅（玩家条下方，不拦截棋盘）
+        this.banners = drawFlowBanners(this.root, 74 + (game.players.length > 4 ? 144 : 68) + 12);
         drawBottom(this.root, this.spectator, this.cashChanges.get(this.myId), this.cashChangeNodes);
         this.buildAwayOverlay();
         this.jailOv = this.jail ? new JailOverlay(this.root, this.jail.name, this.jail.start) : null;
@@ -453,6 +457,10 @@ export class BoardScreen extends Screen {
             return;
         }
         this.tickCashChanges();
+        if (this.banners?.tick(Date.now())) {
+            st.flowResult = null;
+            this.dirty = true;
+        }
         this.view.tick(dt);
         this.dice?.setReady(this.canRoll());
         this.dice?.update();

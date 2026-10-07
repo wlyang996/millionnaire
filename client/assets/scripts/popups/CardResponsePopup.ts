@@ -1,62 +1,106 @@
 /**
- * 攻击卡的响应窗（10 秒，O4：只在持有对应响应卡时弹出）。版式沿用设计稿 04 的"租金响应"：
- * 攻击者头像（金色圈）、"某某对你的 X 使用了降级"、效果说明（等级变化 / 清地 / 强购价）、响应卡票券、
- * 竖排"使用房屋保护 / 拒绝购买"与"不使用"，底部"超时不使用"。设计稿未单独画这张，按租金响应的版式补齐（已在汇总中说明）。
+ * 攻击卡的响应窗（10 秒，O4：只在持有对应响应卡时弹出）。设计稿 26（拒绝购买 / 房屋保护-降级 / 房屋保护-清地）与 30（房屋保护-拆楼）：
+ * 棋盘底部面板（与 14 号稿主动卡面板同位置）：左上攻击者头像"某某 发起攻击"、右上红色倒计时；标题"被强制购房 / 被降级 / 被拆楼 / 被清地"；
+ * 左侧攻击卡插画，右侧地块变化（等级 / 租金 / 出价）；下方防御卡说明条；"不使用 / 使用房屋保护（拒绝购买）"；底注"超时不使用 · 不占主动用卡机会"。
  */
 import { Node } from 'cc';
 import { CARD_NAMES, ResponseInfo } from '../core/Models';
-import { Theme } from '../core/Theme';
-import { art } from '../ui/Art';
+import { rentOf, standardValue, TIERS } from '../core/Rules';
+import { textWidth, Theme } from '../core/Theme';
+import { art, CARD_ART } from '../ui/Art';
 import { primaryButton, softButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
-import { fillRR, gfx, mk, strokeRR, text } from '../ui/Kit';
+import { fillRR, gfx, mk, place, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 import { avatar } from '../ui/Widgets';
-import { box } from './Common';
+import { inlineRow } from './Common';
 import { forcedPrice } from './CardUse';
 
-const W = 520;
-const H = 700;
+const W = 692;
+const H = 470;
+
+const TITLES: Record<string, string> = {
+    FORCED_PURCHASE: '被强制购房', DOWNGRADE: '被降级', DEMOLISH: '被拆楼', CLEAR_LAND: '被清地',
+};
 
 export class CardResponsePopup extends Popup {
     private sent = false;
 
     constructor(private readonly r: ResponseInfo) {
-        super('card-response', CARD_NAMES[r.response], W, H, 10);
+        super('card-response', '', W, H, 10);
+    }
+
+    mount(layer: Node): void {
+        super.mount(layer);
+        place(this.panel, (Theme.W - W) / 2, 1192 - H);
+    }
+
+    protected buildTitle(): void {
+        // 标题在主体里（攻击者一行 + 图标标题）
     }
 
     protected buildBody(p: Node): void {
         const st = ctx.store;
-        const attacker = st.player(this.r.attacker);
-        const tile = st.tile(this.r.tile);
-        const prop = st.prop(this.r.tile);
+        const r = this.r;
+        const attacker = st.player(r.attacker);
+        const tile = st.tile(r.tile);
+        const prop = st.prop(r.tile);
         const level = prop ? prop.level : 0;
-        avatar(p, (W - 124) / 2, 70, 124, attacker ? attacker.avatar : 1, attacker ? attacker.nickname : '', { ring: '#F5B82E' });
-        text(p, (attacker ? attacker.nickname : '对手') + ' 对你的' + tile.name, 0, 198, W, 32, 26, Theme.c.navy, { bold: true });
-        text(p, '使用了' + CARD_NAMES[this.r.attack], 0, 230, W, 32, 26, Theme.c.payRed, { bold: true });
-        box(p, 24, 270, W - 48, 96, Theme.c.boxBeige, 18);
-        const effect = this.r.attack === 'DOWNGRADE' ? tile.name + ' ' + level + '级 → ' + (level - 1) + '级'
-            : this.r.attack === 'DEMOLISH' ? tile.name + ' ' + level + '级 → 0级（保留所有权）'
-                : this.r.attack === 'CLEAR_LAND' ? tile.name + ' 将被清除等级与所有权'
-                    : '以 ' + forcedPrice(this.r.tile) + ' 强制买下 ' + tile.name;
-        text(p, effect, 24, 270, W - 48, 96, 28, Theme.c.navy, { bold: true, wrap: true });
-        this.ticket(p, (W - 260) / 2, 384, 260, 104);
-        primaryButton(p, '使用' + CARD_NAMES[this.r.response], 24, 516, W - 48, 70, () => this.answer(true), 30);
-        softButton(p, '不使用', 24, 596, W - 48, 66, () => this.answer(false), 30);
-        text(p, '超时不使用', 0, 668, W, 26, 20, Theme.c.noteGray);
-    }
-
-    /** 响应卡票券：蓝色圆角卡、白色内框、盾牌图标与卡名，略微倾斜。 */
-    private ticket(p: Node, x: number, y: number, w: number, h: number): void {
-        const holder = mk(p, 'Ticket', x + w / 2, y + h / 2, 0, 0);
-        holder.setRotationFromEuler(0, 0, 4);
-        const n = mk(holder, 'Card', -w / 2, -h / 2, w, h);
-        const g = gfx(n);
-        fillRR(g, 0, 6, w, h - 6, 16, '#1F5FC9');
-        fillRR(g, 0, 0, w, h - 6, 16, '#3E8EF2');
-        strokeRR(g, 8, 8, w - 16, h - 22, 10, '#FFFFFFAA', 3);
-        art(n, 'icon_shield', 16, (h - 6) / 2 - 34, 68, 68);
-        text(n, CARD_NAMES[this.r.response], 88, 0, w - 100, h - 6, 34, Theme.c.white, { bold: true });
+        const tier = tile.tier ?? 'LOW';
+        // 攻击者
+        avatar(p, 24, 16, 56, attacker ? attacker.avatar : 1, attacker ? attacker.nickname : '', { ring: '#F5B82E' });
+        text(p, (attacker ? attacker.nickname : '对手') + ' 发起攻击', 92, 16, 360, 56, 26, Theme.c.navy, { bold: true, align: 'l' });
+        // 标题
+        const title = TITLES[r.attack] ?? CARD_NAMES[r.attack];
+        const tw = textWidth(title, 40);
+        const tx = (W - 66 - tw) / 2;
+        art(p, 'icon_house', tx, 84, 54, 54);
+        text(p, title, tx + 66, 80, tw + 10, 64, 40, Theme.c.navy, { bold: true, align: 'l' });
+        // 左：攻击卡插画；右：变化
+        art(p, CARD_ART[r.attack], 24, 150, 170, 170);
+        const ix = 214;
+        const iw = W - ix - 24;
+        const line = (y: number, label: string, from: string, to: string | null, color = Theme.c.payRed) => {
+            const parts = [{ t: label, size: 28 }, { t: from, size: 32, color: '#2F86E8' }];
+            if (to !== null) parts.push({ t: '→', size: 28 }, { t: to, size: 32, color });
+            inlineRow(p, ix + iw / 2, y, 52, parts, 12);
+        };
+        switch (r.attack) {
+            case 'FORCED_PURCHASE': {
+                const station = tile.type === 'STATION';
+                const std = standardValue(station, tile.tier, station ? 0 : TIERS[tier].upgrade * level);
+                line(156, tile.name, station ? '车站' : level + '级', null);
+                text(p, '标准价值', ix + 20, 212, 200, 48, 26, Theme.c.navy, { align: 'l' });
+                text(p, String(std), ix + iw - 220, 212, 200, 48, 32, '#2F86E8', { bold: true, align: 'r' });
+                text(p, '对方出价', ix + 20, 262, 200, 48, 26, Theme.c.navy, { align: 'l' });
+                text(p, String(forcedPrice(r.tile)), ix + iw - 220, 262, 200, 48, 36, Theme.c.payRed, { bold: true, align: 'r' });
+                break;
+            }
+            case 'DOWNGRADE':
+                line(170, tile.name, level + '级', Math.max(0, level - 1) + '级');
+                line(236, '租金', String(rentOf(tier, level)), String(rentOf(tier, Math.max(0, level - 1))));
+                break;
+            case 'DEMOLISH':
+                line(156, tile.name, level + '级', '0级');
+                line(212, '租金', String(rentOf(tier, level)), String(rentOf(tier, 0)));
+                text(p, '所有权仍归你', ix, 266, iw, 44, 26, Theme.c.greenDark, { bold: true });
+                break;
+            case 'CLEAR_LAND':
+                line(170, tile.name, level + '级', '无主');
+                text(p, '清除等级与所有权', ix, 236, iw, 52, 30, Theme.c.payRed, { bold: true });
+                break;
+            default:
+                break;
+        }
+        // 防御卡说明条
+        const d = mk(p, 'Defense', 24, 326, W - 48, 50);
+        fillRR(gfx(d), 0, 0, W - 48, 50, 14, '#FFF1E2');
+        art(d, CARD_ART[r.response], 10, 3, 44, 44);
+        text(d, CARD_NAMES[r.response], 64, 0, 140, 50, 26, Theme.c.payRed, { bold: true, align: 'l' });
+        text(d, '使用后本次' + (CARD_NAMES[r.attack] ?? '') + '无效', 204, 0, W - 48 - 214, 50, 22, Theme.c.navy, { align: 'l' });
+        softButton(p, '不使用', 24, 386, 220, 64, () => this.answer(false), 28);
+        primaryButton(p, '使用' + CARD_NAMES[r.response], 264, 386, W - 288, 64, () => this.answer(true), 30);
+        text(p, '超时不使用 · 不占主动用卡机会', 0, 448, W, 22, 18, Theme.c.noteGray);
     }
 
     private answer(use: boolean): void {

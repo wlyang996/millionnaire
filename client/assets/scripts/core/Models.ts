@@ -181,6 +181,24 @@ export interface ResponseInfo {
 }
 
 /** [联机] 查询卡结果（只发给使用者）：目标玩家使用时的手牌快照 */
+/** [联机] 我已提交、尚未开始的拍卖卡 / 交易卡申请（设计稿 29 排队横幅）。 */
+export interface PendingRequest {
+    kind: 'AUCTION' | 'TRADE';
+    requestId: number;
+}
+
+/** [联机] 拍卖 / 交易的结果提示（设计稿 29 结果卡），until 为隐藏时刻（Date.now()）。 */
+export interface FlowResult {
+    kind: 'AUCTION_SOLD' | 'AUCTION_PASSED' | 'TRADE_DONE' | 'TRADE_DECLINED' | 'TRADE_TIMEOUT';
+    tile: number;
+    price: number;
+    /** 拍卖：得主；交易：卖家。 */
+    a: string;
+    /** 交易：买家。 */
+    b: string;
+    until: number;
+}
+
 export interface QueryResult {
     target: string;
     cards: CardType[];

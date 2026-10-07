@@ -19,6 +19,9 @@ export type Cue =
     /** 事件卡：waiting = 落到事件格等待抽卡；否则为翻牌结果。排在走棋提示之后，人物落地后才显示。 */
     | { kind: 'event'; playerId: string; actor: string; waiting: boolean; result: EventResult | null };
 
+/** 拍卖 / 交易结果卡显示时长。 */
+const RESULT_MS = 3500;
+
 export type Route = 'lobby' | 'room' | 'board' | 'spectator' | 'result';
 
 /** 常见错误码的中文说明（未列出的显示原码）。 */
@@ -222,6 +225,7 @@ export class OnlineSession {
         const waiting = !!g && !!g.landing && g.landing.step === 'EVENT' && g.landing.decisionPending;
         if (!g) {
             this.store.eventDraw = EVENT_IDLE;
+            this.store.myRequest = null;
             this.eventWaitQueued = false;
         } else if (!waiting) {
             this.eventWaitQueued = false;
@@ -308,23 +312,35 @@ export class OnlineSession {
                 case 'LandAuctionChosen':
                     notice = name(d.playerId) + '对' + tile(d.tile) + '发起了拍卖';
                     break;
+                // 设计稿 29：自己的申请显示排队横幅；拍卖 / 交易结果显示结果卡（不再用文字提示）
                 case 'AuctionRequested':
-                    notice = name(d.applicant) + '申请拍卖' + tile(d.tile) + '，下个回合交界开拍';
-                    break;
-                case 'AuctionSettled':
-                    notice = name(d.winner) + '以 ' + Number(d.price) + ' 拍得' + tile(d.tile);
+                    if (String(d.applicant) === this.myId) this.store.myRequest = { kind: 'AUCTION', requestId: Number(d.requestId) };
+                    else notice = name(d.applicant) + '申请拍卖' + tile(d.tile) + '，当前操作结束后开拍';
                     break;
                 case 'TradeRequested':
-                    notice = name(d.seller) + '申请把' + tile(d.tile) + '以 ' + Number(d.price) + ' 卖给' + name(d.buyer) + '，下个回合交界开始';
+                    if (String(d.seller) === this.myId) this.store.myRequest = { kind: 'TRADE', requestId: Number(d.requestId) };
                     break;
-                case 'TradeCompleted':
-                    notice = name(d.buyer) + '以 ' + Number(d.price) + ' 买下了' + name(d.seller) + '的' + tile(d.tile);
+                case 'AuctionStarted':
+                case 'TradeStarted':
+                    this.store.myRequest = null;
                     break;
-                case 'TradeDeclined':
-                    notice = name(d.buyer) + (d.auto ? '未答复，交易取消' : '拒绝了交易');
+                case 'FlowRequestCancelled':
+                    if (this.store.myRequest && this.store.myRequest.requestId === Number(d.requestId)) {
+                        this.store.myRequest = null;
+                        notice = '申请已失效（资产或玩家状态变化），未退还用卡机会';
+                    }
+                    break;
+                case 'AuctionSettled':
+                    this.store.flowResult = { kind: 'AUCTION_SOLD', tile: Number(d.tile), price: Number(d.price), a: String(d.winner), b: '', until: Date.now() + RESULT_MS };
                     break;
                 case 'AuctionPassed':
-                    notice = tile(d.tile) + '无人出价，流拍';
+                    this.store.flowResult = { kind: 'AUCTION_PASSED', tile: Number(d.tile), price: 0, a: '', b: '', until: Date.now() + RESULT_MS };
+                    break;
+                case 'TradeCompleted':
+                    this.store.flowResult = { kind: 'TRADE_DONE', tile: Number(d.tile), price: Number(d.price), a: String(d.seller), b: String(d.buyer), until: Date.now() + RESULT_MS };
+                    break;
+                case 'TradeDeclined':
+                    this.store.flowResult = { kind: d.auto ? 'TRADE_TIMEOUT' : 'TRADE_DECLINED', tile: Number(d.tile), price: 0, a: '', b: String(d.buyer), until: Date.now() + RESULT_MS };
                     break;
                 default:
                     break;
@@ -371,6 +387,8 @@ export class OnlineSession {
         this.store.eventDraw = EVENT_IDLE;
         this.store.toothResult = null;
         this.store.queryResult = null;
+        this.store.myRequest = null;
+        this.store.flowResult = null;
         this.cues.length = 0;
         this.store.session = emptySession(this.store.session?.settings);
         this.store.emit();

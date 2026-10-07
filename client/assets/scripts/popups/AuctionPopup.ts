@@ -12,7 +12,7 @@ import { Theme } from '../core/Theme';
 import { art } from '../ui/Art';
 import { Button, primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
-import { fillRR, gfx, mk, onTap, setText, strokeRR, text } from '../ui/Kit';
+import { fillCircle, fillRR, gfx, mk, onTap, setText, strokeRR, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
@@ -124,9 +124,40 @@ export class AuctionPopup extends Popup {
         fillRR(gfx(mk(p, 'Sep', W / 2 - 1, 396, 2, 28)), 0, 0, 2, 28, 1, Theme.c.panelLine);
         inlineRow(p, X + (IW * 3) / 4, 388, 44, [{ t: '封顶价', size: 24, color: Theme.c.noteGray }, { coin: 30 }, { t: String(this.cap), size: 28 }]);
 
+        if (iAmHost) {
+            // 设计稿 27 卖家 / 发起人观看：没有步进器与出价按钮，换成说明条
+            const card = a!.kind === 'CARD';
+            const info = box(p, X, 446, IW, 182, card ? '#FFF1E2' : '#FDECEC', 20);
+            const ic = gfx(mk(info, 'Info', 28, 67, 48, 48));
+            fillCircle(ic, 24, 24, 24, card ? '#C9862B' : Theme.c.payRed);
+            text(info, 'i', 28, 67, 48, 48, 30, Theme.c.white, { bold: true });
+            text(info, card ? '你是卖家，不能出价' : '你已放弃购买资格', 92, 40, IW - 110, 50, 30, Theme.c.navy, { bold: true, align: 'l' });
+            text(info, card ? '成交款全部归你' : '成交后得成交价 10%', 92, 94, IW - 110, 44, 26, card ? '#8A5A14' : Theme.c.payRed,
+                { bold: true, align: 'l' });
+        } else this.bidControls(p, a, X, IW, avail);
+
+        // 我的现金 | 我的冻结资金 | 可用现金
+        fillRR(gfx(mk(p, 'Line', X, 646, IW, 2)), 0, 0, IW, 2, 1, Theme.c.panelLine);
+        const cols: [string, number][] = [['我的现金', me.cash], ['我的冻结资金', this.frozen], ['可用现金', avail]];
+        const cw = IW / 3;
+        cols.forEach(([k, v], i) => {
+            text(p, k, X + i * cw, 658, cw, 34, 22, Theme.c.noteGray, { bold: true });
+            inlineRow(p, X + i * cw + cw / 2, 694, 44, [{ coin: 32 }, { t: String(v), size: 32 }], 8);
+            if (i > 0) fillRR(gfx(mk(p, 'Sep', X + i * cw - 1, 668, 2, 62)), 0, 0, 2, 62, 1, Theme.c.panelLine);
+        });
+
+        // 规则说明
+        const note = box(p, X, 754, IW, 140, Theme.c.boxGray, 18);
+        noteLines(note, IW, ['报价需足额可用现金，不可抵押参拍', '最后 3 秒出价恢复到 3 秒，总时长最多 40 秒', '最高报价冻结资金，被超过立即解冻']);
+        void this.byInitiator;
+    }
+
+    /** 出价区（设计稿 05）：步进器 − [金币 出价] + 与"出价 / 一口价"。卖家 / 发起人看不到这一块。 */
+    private bidControls(p: Node, a: AuctionInfo | null, X: number, IW: number, avail: number): void {
+        const st = ctx.store;
         // 步进器：− [金币 出价] +
         const stp = box(p, X, 446, IW, 72, Theme.c.boxGray, 18);
-        const step = (label: string, x: number, d: number) => {
+        const step =(label: string, x: number, d: number) => {
             const b = mk(stp, 'Step' + label, x, 6, 84, 60);
             text(b, label, 0, 0, 84, 60, 48, Theme.c.noteGray, { bold: true });
             onTap(b, () => {
@@ -143,26 +174,10 @@ export class AuctionPopup extends Popup {
         // 出价（蓝）/ 一口价（黄）
         const bw = (IW - 18) / 2;
         const own = this.highBidder === st.myId ? this.frozen : 0;
-        const hostNote = a && a.kind === 'CARD' ? '卖家不能出价' : '发起人已放弃购买资格，不能出价';
         const bid: Button = secondaryButton(p, '出价', X, 536, bw, 92, () => this.placeBid(this.myBid), 32).withCoin(this.myBid);
-        bid.setEnabled(!iAmHost && !this.sending && this.myBid <= avail + own, iAmHost ? hostNote : '可用现金不足（报价需足额，不可抵押）');
+        bid.setEnabled(!this.sending && this.myBid <= avail + own, '可用现金不足（报价需足额，不可抵押）');
         const buy: Button = primaryButton(p, '一口价', X + bw + 18, 536, bw, 92, () => this.placeBid(this.cap), 32).withCoin(this.cap);
-        buy.setEnabled(!iAmHost && !this.sending && this.cap <= avail + own, iAmHost ? hostNote : '可用现金不足（需足额，不可抵押）');
-
-        // 我的现金 | 我的冻结资金 | 可用现金
-        fillRR(gfx(mk(p, 'Line', X, 646, IW, 2)), 0, 0, IW, 2, 1, Theme.c.panelLine);
-        const cols: [string, number][] = [['我的现金', me.cash], ['我的冻结资金', this.frozen], ['可用现金', avail]];
-        const cw = IW / 3;
-        cols.forEach(([k, v], i) => {
-            text(p, k, X + i * cw, 658, cw, 34, 22, Theme.c.noteGray, { bold: true });
-            inlineRow(p, X + i * cw + cw / 2, 694, 44, [{ coin: 32 }, { t: String(v), size: 32 }], 8);
-            if (i > 0) fillRR(gfx(mk(p, 'Sep', X + i * cw - 1, 668, 2, 62)), 0, 0, 2, 62, 1, Theme.c.panelLine);
-        });
-
-        // 规则说明
-        const note = box(p, X, 754, IW, 140, Theme.c.boxGray, 18);
-        noteLines(note, IW, ['报价需足额可用现金，不可抵押参拍', '最后 3 秒出价恢复到 3 秒，总时长最多 40 秒', '最高报价冻结资金，被超过立即解冻']);
-        void this.byInitiator;
+        buy.setEnabled(!this.sending && this.cap <= avail + own, '可用现金不足（需足额，不可抵押）');
     }
 
     protected onTick(): void {
