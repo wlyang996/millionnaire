@@ -84,8 +84,8 @@ export class OnlineSession {
     }
 
     /** 测试身份登录并连接；失败时抛出带 code 的错误。 */
-    async login(nickname: string): Promise<void> {
-        await this.client.login(nickname);
+    async login(nickname: string, avatar?: number): Promise<void> {
+        await this.client.login(nickname, avatar);
         this.boards = await this.client.boards();
         this.store.myId = this.client.userId!;
         this.leaveLocally();
@@ -204,7 +204,7 @@ export class OnlineSession {
         }
         this.trackMinigame(u);
         this.lastDice = lastDiceFrom(u.events, this.lastDice);
-        const s = adaptSession(u.view, this.boards, this.lastDice);
+        const s = adaptSession(u.view, this.boards, this.lastDice, u.avatars ?? {});
         s.roomId = u.roomCode; // 界面上的"房间号"是六位房间号
         if (s.game) s.game.chat = this.chat;
         this.store.session = s;

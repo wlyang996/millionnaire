@@ -99,7 +99,7 @@ export class ProfileScreen extends Screen {
             if (!st.online) return ctx.screens.go('lobby');
             // 联机：测试身份登录并连接服务器
             this.enter.setEnabled(false, '正在连接服务器…');
-            st.online.login(this.nick.trim()).then(() => ctx.screens.go('lobby'), (e: { code?: string }) => {
+            st.online.login(this.nick.trim(), this.avatarIdx).then(() => ctx.screens.go('lobby'), (e: { code?: string }) => {
                 Toast.show(e && e.code === 'INVALID_NICKNAME' ? '昵称不合法，请换一个' : '连接服务器失败，请稍后重试');
                 this.checkNow();
             });

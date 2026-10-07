@@ -37,7 +37,8 @@ public class ApiController {
         this.testLoginEnabled = testLoginEnabled;
     }
 
-    public record TestLogin(String nickname) {
+    /** avatar：所选头像序号 0～7（可省略，省略时按玩家 ID 取默认头像）。 */
+    public record TestLogin(String nickname, Integer avatar) {
     }
 
     /** 测试身份登录：每次创建一个新用户（不依赖微信）。上线前用 TEST_LOGIN_ENABLED=false 关闭。 */
@@ -50,11 +51,12 @@ public class ApiController {
         if (nickname == null || !rooms.validNickname(nickname)) {
             return error(HttpStatus.BAD_REQUEST, "INVALID_NICKNAME");
         }
-        User user = users.create(nickname);
+        User user = users.create(nickname, body.avatar() == null ? -1 : body.avatar());
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("token", tokens.issue(user.id()));
         out.put("userId", user.playerId());
         out.put("nickname", user.nickname());
+        out.put("avatar", user.avatar());
         return ResponseEntity.ok(out);
     }
 

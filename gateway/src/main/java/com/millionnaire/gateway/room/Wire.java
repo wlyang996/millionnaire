@@ -68,6 +68,12 @@ public class Wire {
 
     /** 一步之后发给某个观察者的消息：本步对他可见的事件 + 他的最新视图。 */
     public String update(String roomCode, long version, long serverTime, List<Event> events, SessionView view) {
+        return update(roomCode, version, serverTime, events, view, java.util.Map.of());
+    }
+
+    /** @param avatars 玩家所选头像（玩家 ID → 序号 0～7）；没选的不在表里。 */
+    public String update(String roomCode, long version, long serverTime, List<Event> events, SessionView view,
+                         java.util.Map<String, Integer> avatars) {
         ObjectNode n = object();
         n.put("type", "UPDATE");
         n.put("roomCode", roomCode);
@@ -85,6 +91,8 @@ public class Wire {
             }
         }
         n.set("view", json.valueToTree(view));
+        ObjectNode av = n.putObject("avatars");
+        avatars.forEach(av::put);
         return write(n);
     }
 

@@ -13,7 +13,7 @@ import { boardSizeOf, TIERS } from '../core/Rules';
 import { BoardTemplate, SEvent, SGame, SView } from './Protocol';
 
 /** playerId → 头像编号 0..7（同一玩家在所有人屏幕上一致）。 */
-export function avatarOf(playerId: string): number {
+export function defaultAvatar(playerId: string): number {
     let h = 0;
     for (let i = 0; i < playerId.length; i++) h = (h * 31 + playerId.charCodeAt(i)) >>> 0;
     return h % 8;
@@ -43,7 +43,13 @@ export function lastDiceFrom(events: SEvent[], previous: number): number {
     return previous;
 }
 
-export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice: number): SessionView {
+export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice: number,
+    chosen: Record<string, number> = {}): SessionView {
+    // 玩家所选头像优先（服务端随推送下发），没选的按玩家 ID 取默认头像
+    const avatarOf = (id: string): number => {
+        const a = chosen[id];
+        return typeof a === 'number' && a >= 0 && a < 8 ? a : defaultAvatar(id);
+    };
     const members: Member[] = v.members.map((m) => ({
         playerId: m.playerId, nickname: m.nickname, ready: m.ready, avatar: avatarOf(m.playerId),
     }));
@@ -68,13 +74,14 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
         hostId: v.hostId ?? '',
         members,
         settings,
-        game: v.game ? adaptGame(v.game, boards, lastDice, nick) : null,
+        game: v.game ? adaptGame(v.game, boards, lastDice, nick, avatarOf) : null,
         gamesPlayed: v.gamesPlayed,
         lastResult,
     };
 }
 
-function adaptGame(g: SGame, boards: BoardTemplate[] | null, lastDice: number, nick: (id: string) => string): GameView {
+function adaptGame(g: SGame, boards: BoardTemplate[] | null, lastDice: number, nick: (id: string) => string,
+    avatarOf: (id: string) => number): GameView {
     const tiles = tilesFor(g.board.boardId, boards);
     const players: PlayerView[] = g.players.map((p) => ({
         playerId: p.playerId, nickname: nick(p.playerId), avatar: avatarOf(p.playerId), position: p.position,

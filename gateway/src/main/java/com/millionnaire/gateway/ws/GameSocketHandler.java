@@ -204,6 +204,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
             sockets.sendTo(session, wire.write(result(null, "ERROR", "UNAUTHENTICATED", null)));
             return;
         }
+        rooms.rememberAvatar(user);
         // 同一连接换了账号：旧账号不再经这条连接收消息
         if (session.getAttributes().get(USER) instanceof Long previous && previous != uid) {
             sockets.unbind(Long.toString(previous), session);

@@ -274,7 +274,7 @@ public final class LiveRoom {
     public synchronized String snapshot(String playerId) {
         EngineState s = runner.committed();
         return service.wire().update(code(), s.lastSeq(), service.now(), List.of(),
-                SessionDomain.INSTANCE.project(s, playerId));
+                SessionDomain.INSTANCE.project(s, playerId), service.avatarsOf(members(s)));
     }
 
     public synchronized boolean isMember(String playerId) {
@@ -325,11 +325,12 @@ public final class LiveRoom {
             // 离开或被踢的人也收到这一步（含自己的 PlayerLeft），之后不再推送
             Set<String> audience = new LinkedHashSet<>(membersBefore);
             audience.addAll(membersAfter);
+            Map<String, Integer> avatars = service.avatarsOf(audience);
             for (String p : audience) {
                 try {
                     List<Event> visible = EventProjector.project(r.events(), p);
                     service.outbox().send(p, service.wire().update(code(), after.lastSeq(), at, visible,
-                            SessionDomain.INSTANCE.project(after, p)));
+                            SessionDomain.INSTANCE.project(after, p), avatars));
                 } catch (RuntimeException e) {
                     log.error("room {} cannot push seq {} to {}", code(), after.lastSeq(), p, e);
                 }

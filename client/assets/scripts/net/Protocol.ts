@@ -147,6 +147,8 @@ export interface UpdateMsg {
     serverTime: number;
     events: SEvent[];
     view: SView;
+    /** 玩家所选头像（玩家 ID → 序号 0～7）；没选的不在表里，按玩家 ID 取默认头像。旧后台没有这个字段。 */
+    avatars?: Record<string, number>;
 }
 
 export interface ResultMsg {

@@ -42,6 +42,8 @@ public class RoomService {
     private final EngineState nicknameProbe;
     private final Map<Integer, LiveRoom> byCode = new ConcurrentHashMap<>();
     private final Map<String, LiveRoom> byPlayer = new ConcurrentHashMap<>();
+    /** 玩家所选头像（序号 0～7）；没选的不在表里，客户端按玩家 ID 取默认头像。只用于显示，不进引擎状态。 */
+    private final Map<String, Integer> avatars = new ConcurrentHashMap<>();
     private final ScheduledExecutorService timers;
     private final RoomStore store;
     private final Outbox outbox;
@@ -110,7 +112,27 @@ public class RoomService {
         return r.outcome() == StepResult.Outcome.ACCEPTED;
     }
 
+    /** 记下玩家所选头像（建房、加房、加机器人、连上 WebSocket 时调用）。 */
+    public void rememberAvatar(User user) {
+        if (user.avatar() >= 0) {
+            avatars.put(user.playerId(), user.avatar());
+        }
+    }
+
+    /** 这些玩家里选过头像的：玩家 ID → 头像序号（随 UPDATE 推送）。 */
+    public Map<String, Integer> avatarsOf(java.util.Collection<String> players) {
+        Map<String, Integer> out = new java.util.TreeMap<>();
+        for (String p : players) {
+            Integer a = avatars.get(p);
+            if (a != null) {
+                out.put(p, a);
+            }
+        }
+        return out;
+    }
+
     public synchronized Created create(User user, String requestId, RoomSettings settings) {
+        rememberAvatar(user);
         String pid = user.playerId();
         LiveRoom current = byPlayer.get(pid);
         if (current != null) {
@@ -144,6 +166,7 @@ public class RoomService {
     }
 
     public synchronized LiveRoom.Reply join(User user, int code, String requestId) {
+        rememberAvatar(user);
         String pid = user.playerId();
         LiveRoom room = byCode.get(code);
         if (room == null) {
@@ -158,6 +181,7 @@ public class RoomService {
 
     /** 房主给自己的房间加一个测试机器人（机器人是一个新建的测试用户）。 */
     public LiveRoom.Reply addBot(User host, String requestId, User bot) {
+        rememberAvatar(bot);
         LiveRoom room = byPlayer.get(host.playerId());
         if (room == null) {
             throw new ClientException("NOT_IN_ROOM", "join or create a room first");

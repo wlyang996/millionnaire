@@ -61,9 +61,10 @@ export class GameClient {
     constructor(readonly baseUrl: string, private readonly socketFactory: SocketFactory = defaultSocket) {}
 
     /** 测试身份登录；失败时抛出带 code 的错误（如 INVALID_NICKNAME）。 */
-    async login(nickname: string): Promise<void> {
+    /** @param avatar 所选头像序号 0～7（服务端记下，随推送下发给房间所有人）。 */
+    async login(nickname: string, avatar?: number): Promise<void> {
         const r = await requestJson<{ token: string; userId: string; nickname: string; code?: string }>(
-            'POST', this.baseUrl + '/api/auth/test-login', { nickname });
+            'POST', this.baseUrl + '/api/auth/test-login', avatar === undefined ? { nickname } : { nickname, avatar });
         if (r.status !== 200 || !r.body?.token) {
             throw Object.assign(new Error('login failed'), { code: r.body?.code ?? 'HTTP_' + r.status });
         }
