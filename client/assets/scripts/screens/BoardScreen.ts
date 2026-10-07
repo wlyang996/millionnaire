@@ -27,6 +27,7 @@ import { ConfirmPopup } from '../popups/ConfirmPopup';
 import { UpgradePopup } from '../popups/UpgradePopup';
 import { BankPopup } from '../popups/BankPopup';
 import { DiscardPopup } from '../popups/DiscardPopup';
+import { JailPopup } from '../popups/JailPopup';
 import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
@@ -552,6 +553,10 @@ export class BoardScreen extends Screen {
             else if (landing.step === 'BANK') ctx.popups.open(new BankPopup(id));
             else if (landing.step === 'EVENT') this.openedFor = -1; // 事件格不弹窗：棋盘中央的卡牌由 eventDraw 驱动，点卡即抽
             else this.openedFor = -1; // 其他步骤由服务端自动推进
+        } else if (w.kind === 'TURN' && g.stage === 'JAIL_DECISION') {
+            // 设计稿 15 右：出狱判定页；掷骰交回棋盘页播放骰子动画
+            this.openedFor = id;
+            ctx.popups.open(new JailPopup(id, () => this.startRoll()));
         } else if (w.kind === 'DEBT' && g.debt && g.debt.debtor === this.myId) {
             this.openedFor = id;
             const d = g.debt;
