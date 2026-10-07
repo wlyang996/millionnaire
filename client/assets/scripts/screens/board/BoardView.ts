@@ -40,8 +40,11 @@ const TIER_BASE: Record<string, [string, string]> = {
     HIGH: [Theme.c.tierHigh, '#8550E0'],
 };
 
-/** 棋子样式：figure = 现有全身人物（默认）；badge / mini 为待用户挑选的备选样式（见 drawAltToken）。 */
-export const tokenStyle = { value: 'figure' as 'figure' | 'badge' | 'mini' };
+/**
+ * 棋子样式：badge = 头像立牌（用户 2026-10-07 选定，默认）；figure = 原全身人物；mini = 全身人物缩小（对比用，未采用）。
+ * 对比图见 design/screens/ui/棋子样式对比-v1.png。
+ */
+export const tokenStyle = { value: 'badge' as 'figure' | 'badge' | 'mini' };
 
 /** 定点移动（设计稿 13 第二张）：从 from 往前 1～6 格标号高亮，selected 为当前选中的步数。 */
 export interface StepMarks { from: number; selected: number }
@@ -484,7 +487,8 @@ export class BoardView {
             const c = this.tileCenter(p.position);
             const me = p.playerId === myId;
             if (tokenStyle.value !== 'figure') {
-                this.drawAltToken(parent, p, k, c, me, myName);
+                const together = order.filter((x) => x.life === 'ALIVE' && x.position === p.position).length;
+                this.drawAltToken(parent, p, k, together, c, me, myName);
                 continue;
             }
             // 按格子大小收窄人物，脚踩在格子中心略偏下（人物立绘的脚在节点顶 + s 处，见下方 art 的摆放）
@@ -522,13 +526,21 @@ export class BoardView {
      * 备选棋子样式（供用户比较，默认不启用）：
      * badge = 头像立牌（圆形头像 + 玩家色描边 + 立杆 + 彩色圆底座）；mini = 现有人物缩到约 0.6 格高、站在玩家色底座上（模拟 Q 版人偶比例）。
      */
-    private drawAltToken(parent: Node, p: PlayerView, k: number, c: Pt, me: boolean, myName: string): void {
+    private drawAltToken(parent: Node, p: PlayerView, k: number, together: number, c: Pt, me: boolean, myName: string): void {
         const t = this.g.tile;
         const color = OWNER_COLORS[((p.avatar % 8) + 8) % 8];
         const badge = tokenStyle.value === 'badge';
-        const s = Math.round(t * (badge ? (me ? 0.72 : 0.6) : (me ? 0.52 : 0.44)));
-        const offX = ((k % 3) - 1) * s * (badge ? 0.7 : 0.62);
-        const offY = Math.floor(k / 3) * s * 0.35 + t * 0.12 - s / 2;
+        // 同格人多时整体缩小并收紧：一行最多 4 个、最多两行，都落在这一格附近（"我"最后画，盖在最上）
+        const shrink = together > 4 ? 0.72 : together > 2 ? 0.84 : 1;
+        const s = Math.round(t * shrink * (badge ? (me ? 0.72 : 0.6) : (me ? 0.52 : 0.44)));
+        const perRow = Math.min(4, together);
+        const rows = Math.ceil(together / 4);
+        const col0 = k % 4;
+        const row = Math.floor(k / 4);
+        const inRow = row < rows - 1 ? perRow : together - row * 4;
+        const step = t * (together > 2 ? 0.26 : 0.34);
+        const offX = together <= 1 ? 0 : (col0 - (inRow - 1) / 2) * step;
+        const offY = (rows > 1 ? (row - 0.5) * t * 0.28 : 0) + t * 0.12 - s / 2;
         const n = mk(parent, 'Token:' + p.playerId, c.x + offX - s / 2, c.y + offY - s / 2, s, s);
         const gg = gfx(n);
         // 底座：投影 + 深色侧面 + 浅色顶面（"我"用蓝色发光底座）
@@ -568,17 +580,18 @@ export class BoardView {
             idle = art(body, characterKey(p.avatar, true), -s / 2, -s * 1.5, s, s * 1.5, 'contain', false, { bottom: true });
             if (!idle) idle = avatar(body, -s / 2, -s, s, p.avatar, p.nickname);
         }
-        if (p.inJail) this.drawBars(n, s);
+        if (p.inJail) this.drawBars(n, s, badge ? 1.06 : 1.42);
         if (me) this.drawBubble(n, badge ? s * 0.9 : s * 1.1, '我·' + myName);
         this.tokens.set(p.playerId, { node: n, s, offX, offY, avatar: p.avatar, body, idle, poses: badge ? new Map() : null, pose: null });
     }
 
     /** 在监狱里：人物前面一排铁栏杆。 */
-    private drawBars(token: Node, s: number): void {
-        const b = mk(token, 'JailBars', -s * 0.08, -s * 0.42, s * 1.16, s * 1.42);
+    private drawBars(token: Node, s: number, height = 1.42): void {
+        // height：栏杆高度（以棋子边长计），底边对齐棋子节点底部；全身人物 1.42，头像立牌只罩住圆牌
+        const b = mk(token, 'JailBars', -s * 0.08, s - s * height, s * 1.16, s * height);
         const g = gfx(b);
         const w = s * 1.16;
-        const h = s * 1.42;
+        const h = s * height;
         fillRR(g, 0, 0, w, s * 0.1, 3, '#4A5260');
         fillRR(g, 0, h - s * 0.1, w, s * 0.1, 3, '#4A5260');
         for (let i = 0; i < 5; i++) {
