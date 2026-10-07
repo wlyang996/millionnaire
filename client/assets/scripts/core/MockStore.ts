@@ -10,7 +10,7 @@ import { Theme } from './Theme';
 import type { OnlineSession } from '../net/OnlineSession';
 import {
     AuctionView, BoardTile, Card, CardType, ChatLine, ConnState, ControlMode, DebtView, GameResult, GameView,
-    HistoryEntry, Member, MinigameOutcome, PlayerView, Profile, PropertyState, RoomSettings, SessionView,
+    HistoryEntry, Member, MinigameOutcome, PlayerView, Profile, PropertyState, QueryResult, RoomSettings, SessionView,
 } from './Models';
 import {
     auctionParams, boardSizeOf, emergencyMortgage, landPrice, maxPlayers, netWorth, rankStandings, standardValue, START_BONUS,
@@ -61,6 +61,8 @@ export class MockStore {
     eventDraw: EventDrawState = EVENT_IDLE;
     /** [联机] 最近一次虎口拔牙的结果（棋盘页据此进入结果页） */
     toothResult: MinigameOutcome | null = null;
+    /** [联机] 最近一次查询卡结果（只发给我；棋盘页弹出结果后标记已看） */
+    queryResult: QueryResult | null = null;
     private listeners: Listener[] = [];
 
     constructor() {

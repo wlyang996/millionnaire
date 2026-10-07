@@ -2,6 +2,7 @@
  * 租金响应（10 秒），按设计稿 04"支付租金"：地主头像（金色圈）、"某某的档位 · 等级"、应付租金（红色大字）、
  * 免租卡票券 + "免除本次租金"，竖排"使用免租卡 / 不使用"，底部"超时不使用"。
  * 仅持有免租卡时出现；响应先于付款与现金不足判定。
+ * 联机：传入服务端的落点窗口，"使用免租卡 / 不使用"发送 RespondCard；超时由服务端按"不使用"处理（随后缴租或进入欠款）。
  */
 import { Node } from 'cc';
 import { SECONDS } from '../core/Rules';
@@ -19,7 +20,11 @@ const W = 480;
 const H = 700;
 
 export class RentPopup extends Popup {
-    constructor(private readonly tileIndex: number, private readonly ownerName: string, private readonly amount: number) {
+    private sent = false;
+
+    /** @param windowId 联机时为服务端的免租响应窗口（落点 RESPONSE 步骤）；演示时不传 */
+    constructor(private readonly tileIndex: number, private readonly ownerName: string, private readonly amount: number,
+                private readonly windowId?: number) {
         super('rent', '支付租金', W, H, SECONDS.rent);
     }
 
@@ -37,8 +42,8 @@ export class RentPopup extends Popup {
         inlineRow(p, W / 2, 288, 62, [{ coin: 46 }, { t: String(this.amount), size: 60, color: Theme.c.payRed }], 12);
         this.ticket(p, (W - 241) / 2, 366, 241, 104);
         text(p, '免除本次租金', 0, 478, W, 30, 22, Theme.c.navy, { bold: true });
-        primaryButton(p, '使用免租卡', 20, 516, W - 40, 66, () => this.close(), 30);
-        softButton(p, '不使用', 20, 590, W - 40, 66, () => this.pay(), 30);
+        primaryButton(p, '使用免租卡', 20, 516, W - 40, 66, () => this.answer(true), 30);
+        softButton(p, '不使用', 20, 590, W - 40, 66, () => this.answer(false), 30);
         text(p, '超时不使用', 0, 662, W, 26, 20, Theme.c.noteGray);
     }
 
@@ -55,6 +60,26 @@ export class RentPopup extends Popup {
         text(n, '免租卡', 92, 0, w - 104, h - 6, 40, Theme.c.white, { bold: true });
     }
 
+    private answer(use: boolean): void {
+        const st = ctx.store;
+        if (st.online && this.windowId !== undefined) {
+            if (this.sent) return;
+            this.sent = true;
+            this.close();
+            void st.online.act('RespondCard', { windowId: this.windowId, use });
+            return;
+        }
+        if (use) {
+            // 演示：用掉一张免租卡
+            const i = st.game.myHand.findIndex((c) => c.type === 'RENT_WAIVER');
+            if (i >= 0) st.game.myHand.splice(i, 1);
+            this.close();
+            st.emit();
+            return;
+        }
+        this.pay();
+    }
+
     private pay(): void {
         const st = ctx.store;
         this.close();
@@ -63,6 +88,19 @@ export class RentPopup extends Popup {
     }
 
     protected onExpire(): void {
+        if (ctx.store.online && this.windowId !== undefined) {
+            this.close(); // 服务端按"不使用"处理
+            return;
+        }
         this.pay();
+    }
+
+    /** 联机：免租窗口结束（已回应 / 超时）后关闭。 */
+    tick(): void {
+        super.tick();
+        const online = ctx.store.online;
+        if (this.closed || !online || this.windowId === undefined) return;
+        const w = online.myWindow('TURN');
+        if (!w || w.windowId !== this.windowId) this.close();
     }
 }

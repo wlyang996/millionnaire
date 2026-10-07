@@ -125,6 +125,33 @@ export interface GameView {
     debt?: DebtInfo | null;
     /** [联机] 进行中的虎口拔牙（服务端 PublicMinigame，危险牙保密）；演示模式不设 */
     minigame?: MinigameInfo | null;
+    /** [联机] 道具：本轮已用掉主动用卡机会的玩家、等待中的攻击响应 */
+    cards?: CardsInfo | null;
+    /** [联机] 棋盘上的路障所在格 */
+    roadblocks?: number[];
+}
+
+/** [联机] 道具的公开部分 */
+export interface CardsInfo {
+    chanceUsed: string[];
+    response: ResponseInfo | null;
+}
+
+/** [联机] 等待中的攻击响应：attacker 对 owner 的 tile 用了 attack，owner 可用 response（窗口 windowId） */
+export interface ResponseInfo {
+    attacker: string;
+    owner: string;
+    tile: number;
+    attack: CardType;
+    response: CardType;
+    windowId: number;
+}
+
+/** [联机] 查询卡结果（只发给使用者）：目标玩家使用时的手牌快照 */
+export interface QueryResult {
+    target: string;
+    cards: CardType[];
+    seen: boolean;
 }
 
 /** [联机] 进行中的虎口拔牙：参与者按选牙顺序；picks 为已按下的牙（按先后）；picker 为当前选牙者及其窗口 */

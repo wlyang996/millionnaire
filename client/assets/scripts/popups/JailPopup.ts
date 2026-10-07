@@ -3,7 +3,7 @@
  * 羊皮纸"已关押 / 已失败 N 次"；黄色"掷出狱骰"、蓝色"支付 500 出狱"，持有出狱卡时显示绿色"使用出狱卡 (×N)"；
  * 底部说明"偶数释放 · 连续 3 次失败自动释放 / 出狱后另投一次移动骰"。
  * 掷骰交给棋盘页（关闭本页后播骰子动画，联机发 RollDice）；支付保释联机发 PayBail。
- * 出狱卡的主动使用服务端尚未提供命令，按钮置灰。关闭后仍可直接点棋盘中央的骰子。
+ * 出狱卡：联机发送 UseCard（占用本回合主动用卡机会，O9），演示本地释放。关闭后仍可直接点棋盘中央的骰子。
  */
 import { Node } from 'cc';
 import { Theme } from '../core/Theme';
@@ -70,12 +70,26 @@ export class JailPopup extends Popup {
         const cards = st.game.myHand.filter((c) => c.type === 'JAIL_RELEASE').length;
         let ny = by + 200;
         if (cards > 0) {
-            const use = new Button(p, '使用出狱卡（×' + cards + '）', 60, ny, w - 120, 80, 'success', () => undefined, 32);
-            use.setEnabled(false, '出狱卡的使用即将开放');
+            const used = !!st.online && !!st.game.cards?.chanceUsed.includes(st.myId);
+            const use = new Button(p, '使用出狱卡（×' + cards + '）', 60, ny, w - 120, 80, 'success', () => this.useCard(), 32);
+            use.setEnabled(!used, '本回合已经用过道具了');
             ny += 96;
         }
         const note = box(p, 40, Math.max(ny + 8, H - 112), w - 80, 96, Theme.c.boxBeige, 18);
         noteLines(note, w - 80, ['偶数释放 · 连续 3 次失败自动释放', '出狱后另投一次移动骰'], 8, true);
+    }
+
+    private useCard(): void {
+        const st = ctx.store;
+        this.close();
+        if (st.online && this.windowId !== undefined) {
+            void st.online.act('UseCard', { windowId: this.windowId, card: 'JAIL_RELEASE', target: null, steps: 0 });
+            return;
+        }
+        const i = st.game.myHand.findIndex((c) => c.type === 'JAIL_RELEASE');
+        if (i >= 0) st.game.myHand.splice(i, 1);
+        st.me().inJail = false;
+        st.emit();
     }
 
     private payBail(): void {

@@ -109,5 +109,12 @@ function adaptGame(g: SGame, boards: BoardTemplate[] | null, lastDice: number, n
         landing: g.landing,
         debt: g.debt,
         minigame: g.minigame ?? null,
+        cards: g.cards ? {
+            chanceUsed: g.cards.chanceUsed,
+            response: g.cards.response ? {
+                ...g.cards.response, attack: g.cards.response.attack as CardType, response: g.cards.response.response as CardType,
+            } : null,
+        } : null,
+        roadblocks: (g.board.roadblocks ?? []).map((r) => r.tile),
     };
 }

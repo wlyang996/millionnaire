@@ -28,6 +28,10 @@ import { beginDebt, DebtPopup } from '../popups/DebtPopup';
 import { DebtSecondPopup } from '../popups/DebtSecondPopup';
 import { DiscardPopup } from '../popups/DiscardPopup';
 import { JailPopup } from '../popups/JailPopup';
+import { RentPopup } from '../popups/RentPopup';
+import { CardResponsePopup } from '../popups/CardResponsePopup';
+import { QueryResultPopup } from '../popups/QueryPopups';
+import { rentAt } from '../popups/CardUse';
 import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
@@ -240,6 +244,12 @@ export class BoardScreen extends Screen {
         onTap(this.dice.node, () => {
             if (this.canRoll()) this.startRoll();
         }, false);
+        // 落点结算后的用卡阶段（服务端只在手里有此刻能用的卡时开启）：可点手牌用卡，或直接结束回合
+        const postWin = st.online && myTurn && game.stage === 'LANDING' && !game.landing ? st.online.myWindow('TURN') : undefined;
+        if (postWin) {
+            text(this.root, '落点已结算，可使用道具', cx - 220, 736, 440, 40, Theme.font.sm, Theme.c.ink, { bold: true });
+            primaryButton(this.root, '结束回合', cx - 120, 780, 240, 80, () => void st.online!.act('FinishTurn', { windowId: postWin.windowId }), Theme.font.lg);
+        }
         const jailWin = st.online && myTurn && game.stage === 'JAIL_DECISION' ? st.online.myWindow('TURN') : undefined;
         if (jailWin) {
             text(this.root, '点骰子掷出狱判定（偶数出狱）', cx - 220, 736, 440, 40, Theme.font.sm, Theme.c.ink, { bold: true });
@@ -510,7 +520,8 @@ export class BoardScreen extends Screen {
         st.eventTick();
         this.eventOv?.tick(Date.now());
         if (!this.spectator && !me_manual(st.me()) && ctx.popups.count > 0) {
-            ctx.popups.closeIds(['buy', 'upgrade', 'bank', 'discard', 'auction']); // 债务窗口锁定为手动流程，掉线 / 托管不关
+            // 债务窗口锁定为手动流程，掉线 / 托管不关；响应窗转托管后由服务端自动处理
+            ctx.popups.closeIds(['buy', 'upgrade', 'bank', 'discard', 'auction', 'rent', 'card-response']);
         }
         if (this.jailOv) {
             // 入狱动画期间暂停后续动画与弹窗
@@ -527,6 +538,13 @@ export class BoardScreen extends Screen {
         if (this.dice && this.dice.playing) return;
         // 事件卡翻牌与结果展示期间不播后续走棋（先看清结果再移动）
         if (st.eventDraw.phase === 'FLIPPING' || st.eventDraw.phase === 'RESULT') return;
+        // 查询卡结果（只发给我）：弹出手牌快照
+        const qr = st.queryResult;
+        if (qr && !qr.seen && online.cues.length === 0) {
+            qr.seen = true;
+            ctx.popups.open(new QueryResultPopup(st.player(qr.target)?.nickname ?? '玩家', qr.cards));
+            return;
+        }
         // 虎口拔牙（落到游戏区、走棋动画播完后）：所有人进入小游戏页；刚结束的也去看一眼结果
         const tr = st.toothResult;
         if (ctx.screens.currentId === this.id && online.cues.length === 0 && (g.minigame || (tr && !tr.seen))) {
@@ -564,6 +582,11 @@ export class BoardScreen extends Screen {
             else if (landing.step === 'BANK') ctx.popups.open(new BankPopup(id));
             else if (landing.step === 'EVENT') this.openedFor = -1; // 事件格不弹窗：棋盘中央的卡牌由 eventDraw 驱动，点卡即抽
             else if (landing.step === 'DISCARD') ctx.popups.open(new DiscardPopup(id).withDeadline(w.deadline)); // 事件得卡超出上限
+            else if (landing.step === 'RESPONSE') {
+                // 免租响应（设计稿 04）：持有免租卡时才有这一步
+                const owner = st.player(st.prop(landing.tile)?.owner ?? '');
+                ctx.popups.open(new RentPopup(landing.tile, owner ? owner.nickname : '对手', rentAt(landing.tile), id).withDeadline(w.deadline));
+            }
             else this.openedFor = -1; // 其他步骤由服务端自动推进
         } else if (w.kind === 'TURN' && g.stage === 'JAIL_DECISION') {
             // 设计稿 15 右：出狱判定页；掷骰交回棋盘页播放骰子动画
@@ -577,6 +600,10 @@ export class BoardScreen extends Screen {
             const creditor = d.creditor ?? null;
             if (d.segment >= 2 && !d.continued) ctx.popups.open(new DebtSecondPopup(d.amount, creditor, od));
             else ctx.popups.open(new DebtPopup(d.amount, creditor, d.segment >= 2 ? 2 : 1, 0, od));
+        } else if (w.kind === 'RESPONSE' && g.cards?.response && g.cards.response.owner === this.myId) {
+            // 有人对我的地产用了降级 / 拆楼 / 清地 / 强购，我持有房屋保护 / 拒绝购买
+            this.openedFor = id;
+            ctx.popups.open(new CardResponsePopup(g.cards.response).withDeadline(w.deadline));
         } else if (w.kind === 'DISCARD') {
             this.openedFor = id;
             ctx.popups.open(new DiscardPopup(id).withDeadline(w.deadline));

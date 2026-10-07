@@ -5,11 +5,11 @@
  * - 对局开始 / 结束时请求跳页（board / result）。
  */
 import type { MockStore } from '../core/MockStore';
-import { ChatLine, OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
+import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
-import { BoardTemplate, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
+import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
 import { adaptSession, lastDiceFrom } from './ViewAdapter';
 
 export type Cue =
@@ -30,6 +30,8 @@ const MESSAGES: Record<string, string> = {
     WINDOW_MISMATCH: '操作已过期', TIMEOUT: '网络超时，请重试', OFFLINE: '网络未连接', UNAUTHENTICATED: '请重新登录', TOO_FAST: '发言太快了，歇一下', NOT_IN_ROOM: '你不在房间里',
     UNKNOWN_TYPE: '服务器版本较旧，请先发布最新后台', BOTS_DISABLED: '机器人只在测试环境可用', IN_GAME: '对局进行中不能加机器人',
     ROOM_HALTED: '房间出现故障已关闭', MAX_LEVEL: '已满级', MORTGAGED: '已抵押的资产不能这样操作',
+    NO_CARD: '手里没有这张道具', CARD_USED: '本回合已经用过道具了', NO_TARGET: '当前位置不能使用这张道具',
+    NOT_ALLOWED: '这张道具不能这样使用', DRAINING: '本局时间已到，不能再用道具',
 };
 
 export function describe(code: string | null | undefined): string {
@@ -136,7 +138,7 @@ export class OnlineSession {
     }
 
     /** 对局命令；被拒时自动提示原因。 */
-    async act(command: GameCommandName, args: Record<string, number> = {}): Promise<ResultMsg> {
+    async act(command: GameCommandName, args: GameArgs = {}): Promise<ResultMsg> {
         return this.check(await this.client.game(command, args));
     }
 
@@ -193,6 +195,7 @@ export class OnlineSession {
         s.roomId = u.roomCode; // 界面上的"房间号"是六位房间号
         if (s.game) s.game.chat = this.chat;
         this.store.session = s;
+        this.trackCards(u, s);
         const hasGame = !!s.game;
         if (hasGame && !this.hadGame) {
             this.cues.length = 0; // 开局前的事件不做动画
@@ -234,6 +237,62 @@ export class OnlineSession {
         }
     }
 
+    /** 道具事件：查询结果只给我（弹结果页）；其余用卡、抵挡、免租等给所有人一句提示。 */
+    private trackCards(u: UpdateMsg, s: SessionView): void {
+        const g = s.game;
+        if (!g) return;
+        const name = (id: unknown) => (String(id) === this.myId ? '你' : g.players.find((p) => p.playerId === String(id))?.nickname ?? '玩家');
+        const tile = (i: unknown) => g.tiles[Number(i)]?.name ?? '';
+        const card = (c: unknown) => CARD_NAMES[String(c) as CardType] ?? String(c);
+        let notice = '';
+        for (const e of u.events) {
+            const d = e.data ?? {};
+            switch (e.kind) {
+                case 'QueryRevealed':
+                    this.store.queryResult = {
+                        target: String(d.target), cards: Array.isArray(d.cards) ? (d.cards as unknown[]).map((c) => String(c) as CardType) : [],
+                        seen: false,
+                    };
+                    break;
+                case 'CardUsed':
+                    if (!d.active) break;
+                    if (d.card === 'ROADBLOCK') notice = name(d.playerId) + '在' + tile(d.tile) + '放置了路障';
+                    else if (d.card === 'FIXED_MOVE') notice = name(d.playerId) + '使用了定点移动';
+                    else if (d.card === 'JAIL_RELEASE') notice = name(d.playerId) + '使用出狱卡出狱';
+                    else if (d.card === 'QUERY') notice = name(d.playerId) + '查询了' + name(d.target) + '的手牌';
+                    else if (d.card !== 'BUILD') notice = name(d.playerId) + '对' + name(d.target) + '的' + tile(d.tile) + '使用了' + card(d.card);
+                    break;
+                case 'ResponseOffered':
+                    notice = '等待' + name(d.owner) + '决定是否使用' + card(d.response);
+                    break;
+                case 'AttackBlocked':
+                    notice = name(d.owner) + '用' + card(d.response) + '挡住了' + name(d.attacker) + '的' + card(d.attack);
+                    break;
+                case 'PropertyBuilt':
+                    notice = name(d.playerId) + '用建造卡把' + tile(d.tile) + '升到 ' + Number(d.level) + ' 级';
+                    break;
+                case 'PropertyDowngraded':
+                    notice = tile(d.tile) + '被降到 ' + Number(d.level) + ' 级';
+                    break;
+                case 'PropertyDemolished':
+                    notice = tile(d.tile) + '的楼被拆光了，所有者仍是' + name(d.owner);
+                    break;
+                case 'PropertyCleared':
+                    notice = tile(d.tile) + '被清地，变为无主';
+                    break;
+                case 'PropertyForceBought':
+                    notice = name(d.buyer) + '以 ' + Number(d.price) + ' 强制买下了' + tile(d.tile);
+                    break;
+                case 'RentWaived':
+                    notice = name(d.payer) + '用免租卡免除了本次租金';
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (notice) this.onToast?.(notice);
+    }
+
     /** 小游戏结束（MinigameEnded）：记下输家、危险牙与全部按牙顺序，供结果页展示（视图里小游戏已清除）。 */
     private trackMinigame(u: UpdateMsg): void {
         const prev = this.store.session.game?.minigame ?? null;
@@ -271,6 +330,7 @@ export class OnlineSession {
         this.store.roomChat = this.chat;
         this.store.eventDraw = EVENT_IDLE;
         this.store.toothResult = null;
+        this.store.queryResult = null;
         this.cues.length = 0;
         this.store.session = emptySession(this.store.session?.settings);
         this.store.emit();

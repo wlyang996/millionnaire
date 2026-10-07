@@ -7,7 +7,7 @@ import { Button } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { fillRR, gfx, mk, onTap, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
-import { Toast } from '../ui/Toast';
+import { cardUsable, openCardUse } from './CardUse';
 
 interface RuleRow { icon: string; caption: string }
 const RESPONSE_CARDS: CardType[] = ['RENT_WAIVER', 'REFUSE_PURCHASE', 'HOUSE_PROTECTION'];
@@ -85,23 +85,14 @@ export class CardDetailPage extends Popup {
         new Button(p, '关闭', response ? 142 : 28, actionY, response ? w - 284 : 258, 100,
             'disabled', () => this.close(), 36);
         if (!response) {
+            // 使用：关掉详情，按卡种打开确认面板（路障 / 定点移动 / 地产类）或查询选人页（设计稿 13 / 14）
+            const usable = this.canUse ? cardUsable(this.type) : { ok: false, reason: '只能在自己的回合使用' };
             const action = new Button(p, this.type === 'FIXED_MOVE' ? '选择落点' : '使用', 300, actionY, w - 328, 100,
                 'primary', () => {
-                    if (!this.available()) { Toast.show('当前不是这张道具的使用时机'); return; }
-                    // Keep the existing demo behavior; selecting targets and settling cards is separate work.
-                    Toast.show(this.type === 'FIXED_MOVE' ? '选择落点功能待接入' : '道具使用为演示，尚未结算');
+                    this.close();
+                    openCardUse(this.type);
                 }, 36);
-            action.setEnabled(this.available(), '当前不是这张道具的使用时机');
+            action.setEnabled(usable.ok, usable.reason);
         }
-    }
-
-    private available(): boolean {
-        const st = ctx.store;
-        const me = st.me();
-        if (!this.canUse || !st.isMyTurn() || me.control !== 'MANUAL' || me.conn === 'OFFLINE'
-            || !st.game.myHand.some(card => card.type === this.type)) return false;
-        if (this.type === 'FIXED_MOVE') return st.game.stage === 'PRE_ROLL' && !me.inJail;
-        if (this.type === 'JAIL_RELEASE') return me.inJail;
-        return st.game.stage === 'PRE_ROLL' || st.game.stage === 'LANDING';
     }
 }

@@ -7,7 +7,7 @@
  * - 时间：用每条 UPDATE / PONG 的 serverTime 估算与服务器的时钟偏差，倒计时用 serverNow()。
  */
 import { requestJson } from './Http';
-import { BoardTemplate, GameCommandName, HelloMsg, ResultMsg, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
+import { BoardTemplate, GameArgs, GameCommandName, HelloMsg, ResultMsg, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
 
 export type LinkState = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
 
@@ -140,7 +140,7 @@ export class GameClient {
         return this.request('START_GAME');
     }
 
-    game(command: GameCommandName, args: Record<string, number> = {}): Promise<ResultMsg> {
+    game(command: GameCommandName, args: GameArgs = {}): Promise<ResultMsg> {
         return this.request('GAME', { command, args });
     }
 

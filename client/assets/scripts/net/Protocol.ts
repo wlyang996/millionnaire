@@ -76,12 +76,19 @@ export interface SMinigame {
     windowId: number;
 }
 
+export interface SCards {
+    chanceUsed: string[];
+    response: {
+        attacker: string; owner: string; tile: number; attack: string; response: string; windowId: number;
+    } | null;
+}
+
 export interface SGame {
     gameNo: number;
     phase: 'RUNNING' | 'DRAINING';
     players: SPlayer[];
     orderDraws: { playerId: string; draws: number[] }[];
-    board: { boardId: string; ownables: SOwnable[] };
+    board: { boardId: string; ownables: SOwnable[]; roadblocks?: { id: number; tile: number; owner: string }[] };
     turnNo: number;
     currentPlayer: string | null;
     stage: string;
@@ -92,6 +99,8 @@ export interface SGame {
     myHand: string[];
     /** 进行中的虎口拔牙（旧版后台没有该字段） */
     minigame?: SMinigame | null;
+    /** 道具（旧版后台没有该字段） */
+    cards?: SCards | null;
 }
 
 export interface SStanding {
@@ -178,4 +187,8 @@ export interface BoardTemplate {
 export type GameCommandName =
     | 'RollDice' | 'PayBail' | 'DrawEventCard' | 'DiscardCard' | 'BuyProperty' | 'DeclinePurchase'
     | 'StartLandAuction' | 'UpgradeProperty' | 'SkipUpgrade' | 'BankMortgage' | 'Redeem' | 'EmergencyMortgage'
-    | 'FinishBank' | 'ContinueDebt' | 'DeclareBankruptcy' | 'ResumeControl' | 'Surrender' | 'PickTooth';
+    | 'FinishBank' | 'ContinueDebt' | 'DeclareBankruptcy' | 'ResumeControl' | 'Surrender' | 'PickTooth'
+    | 'UseCard' | 'RespondCard' | 'FinishTurn';
+
+/** GAME 命令参数（数字、玩家 ID、卡种或是否使用）。 */
+export type GameArgs = Record<string, number | string | boolean | null>;

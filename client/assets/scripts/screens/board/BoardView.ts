@@ -258,6 +258,11 @@ export class BoardView {
             }
         }
         if (tile.type === 'STATION') this.drawOwnerDot(gg, prop, game, m + bw - 9, m + 9);
+        // 路障（设计稿 13）：格子右上角的路障图标
+        if ((game.roadblocks ?? []).includes(tile.index)) {
+            const rs = Math.max(18, Math.round(bw * 0.46));
+            art(n, 'icon_roadblock', m + bw - rs + 2, m - 4, rs, rs);
+        }
     }
 
     /** 地名：按格子宽度自适应字号，2 倍栅格再缩回，小字也清楚。 */
