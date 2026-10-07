@@ -436,8 +436,12 @@ final class TurnModule {
     static void moveAndLand(DecisionContext<SessionState> ctx, MoveSegment segment, long carriedLeadMs) {
         String player = game(ctx).turn().currentPlayer();
         BoardTemplate board = board(ctx);
-        int to = segment.to();
-        ctx.emit(new PlayerMoved(player, segment.from(), to, segment.distance(), game(ctx).turn().chain().chainId(), segment.number(), segment.kind()));
+        MoveSegment actual = MovementRules.resolve(segment, game(ctx).board(), player, board.size());
+        int to = actual.to();
+        ctx.emit(new PlayerMoved(player, actual.from(), to, actual.distance(), game(ctx).turn().chain().chainId(), actual.number(), actual.kind(), actual.plannedDistance(), actual.stoppedBy()));
+        if (actual.stoppedBy() != null) {
+            ctx.emit(new GameEvent.RoadblockTriggered(player, game(ctx).turn().turnNo(), game(ctx).turn().chain().chainId(), actual.number(), actual.stoppedBy()));
+        }
         // O1：前进经过或落在起点才领奖，每回合最多一次；开局不领
         if (game(ctx).turn().track().rewardDue()) {
             ctx.emit(new StartRewardPaid(player, ctx.config().economy().startReward(), game(ctx).turn().turnNo()));
@@ -819,33 +823,56 @@ final class TurnModule {
                         "die " + e.value() + " does not match " + d);
                 yield g.withTurn(t.withTrack(k.die(e.value())));
             }
+            case GameEvent.MovementEffectCommitted e -> MovementEffects.commit(g, e, rules);
+            case GameEvent.RoadblockPlaced e -> MovementEffects.place(g, e);
+            case GameEvent.RoadblockTriggered e -> MovementEffects.trigger(g, e);
             case MoveChainStarted e -> {
                 check(t.chain() == null && t.landing() == null && t.stage() == TurnStage.PRE_ROLL
                         && g.flow().frames().isEmpty() && current(g, e.playerId()) && e.turnNo() == t.turnNo()
-                        && e.chainId() == Math.addExact(t.lastChainId(), 1) && k.pendingDie() > 0
+                        && e.chainId() == Math.addExact(t.lastChainId(), 1)
+                        && (k.pendingDie() > 0 && k.movementEffect() == null || k.pendingDie() == 0 && k.movementEffect() != null
+                            && k.movementEffect().kind() == com.millionnaire.engine.core.state.MovementEffect.Kind.TARGETED)
                         && e.origin() == g.player(e.playerId()).orElseThrow().position(), "move chain source mismatch");
                 yield g.withTurn(t.withChain(new MoveChain(e.chainId(), e.turnNo(), e.playerId(), e.origin(), false,
-                        t.startRewardGiven(), List.of(), 0)));
+                        t.startRewardGiven(), List.of(), 0, List.of(new com.millionnaire.engine.core.state.MovePlan(
+                            k.movementEffect() == null ? MoveKind.DICE : MoveKind.TARGETED,
+                            k.movementEffect() == null ? k.pendingDie() : k.movementEffect().distance(), 0, -1)))));
             }
             case PlayerMoved e -> {
                 PlayerState p = g.player(e.playerId()).orElseThrow();
                 MoveChain chain = t.chain();
-                // M3b/M3c 在这里增加已核验的事件/卡来源，不允许用 kind 自我声明来源。
                 check(current(g, e.playerId()) && chain != null && e.chainId() == chain.chainId()
-                        && p.position() == e.from() && t.landing() == null && g.flow().frames().isEmpty()
-                        && (e.kind() == MoveKind.DICE ? chain.segments().isEmpty() && e.segmentNo() == 1
-                            && k.pendingDie() != 0 && e.steps() == k.pendingDie()
-                            : k.eventMove() != null && k.eventMove().playerId().equals(e.playerId())
-                                && k.eventMove().landingId() == t.lastLandingId() && k.eventMove().cursor() == 1
-                                && e.kind() == k.eventMove().kind() && e.steps() == k.eventMove().distance()
-                                && chain.eventDrawn() && e.segmentNo() == chain.segments().size() + 1),
+                        && p.position() == e.from() && t.landing() == null && g.flow().frames().isEmpty(),
                         "move does not follow the committed source/chain");
-                MoveSegment segment = e.kind() == MoveKind.TO_JAIL
+                int planned;
+                if (e.kind() == MoveKind.DICE) {
+                    check(chain.segments().isEmpty() && e.segmentNo() == 1 && k.pendingDie() > 0 && k.movementEffect() == null,
+                            "dice movement source mismatch");
+                    planned = k.pendingDie();
+                } else if (e.kind() == MoveKind.TARGETED) {
+                    var source = k.movementEffect();
+                    check(source != null && source.kind() == com.millionnaire.engine.core.state.MovementEffect.Kind.TARGETED
+                            && source.playerId().equals(e.playerId()) && source.turnNo() == t.turnNo() && source.from() == e.from()
+                            && k.pendingDie() == 0 && chain.segments().isEmpty() && e.segmentNo() == 1,
+                            "targeted movement source mismatch");
+                    planned = source.distance();
+                } else {
+                    check(k.eventMove() != null && k.eventMove().playerId().equals(e.playerId())
+                            && k.eventMove().landingId() == t.lastLandingId() && k.eventMove().cursor() == 1
+                            && e.kind() == k.eventMove().kind() && chain.eventDrawn()
+                            && e.segmentNo() == chain.segments().size() + 1, "event movement source mismatch");
+                    planned = k.eventMove().distance();
+                }
+                check(e.plannedDistance() == planned, "movement planned distance mismatch");
+                MoveSegment plan = e.kind() == MoveKind.TO_JAIL
                         ? MovementRules.jailJump(e.segmentNo(), e.from(), jailIndex(board), board.size())
-                        : MovementRules.segment(e.segmentNo(), e.kind(), e.from(), e.steps(), board.size());
+                        : MovementRules.segment(e.segmentNo(), e.kind(), e.from(), planned, board.size());
+                MoveSegment segment = MovementRules.resolve(plan, g.board(), e.playerId(), board.size());
+                check(e.steps() == segment.distance(), "move does not follow the committed source/chain: actual distance mismatch");
                 check(e.to() == segment.to(), "move endpoint mismatch");
+                check(java.util.Objects.equals(e.stoppedBy(), segment.stoppedBy()), "movement stop source mismatch");
                 boolean reward = chain.canReward(segment) && !t.startRewardGiven();
-                yield g.withPlayer(p.at(e.to())).withTurn(t.withChain(chain.append(segment)).withTrack(k.moved(e.to(), reward)));
+                yield g.withPlayer(p.at(e.to())).withTurn(t.withChain(chain.append(segment)).withTrack(k.moved(e.to(), reward, segment.stoppedBy())));
             }
             case StartRewardPaid e -> {
                 check(k.rewardDue() && t.chain() != null && !t.chain().startRewardGiven() && !t.startRewardGiven() && current(g, e.playerId()) && e.amount() == rules.economy().startReward()
@@ -978,6 +1005,7 @@ final class TurnModule {
                     && (!t.stage().beforeRoll() || g.flow().frames().size() > 1), "draining without pending settlement");
         }
         validateChain(g, config);
+        MovementEffects.validate(g, config);
         PlayerState cur = g.player(t.currentPlayer()).orElse(null);
         // 当前玩家只有在他人流程进行中认输时才可能已被淘汰（回合在流程返回后结束，E2 / 待确认默认 5）
         LobbyModule.expect(cur != null && (cur.life() == LifeState.ALIVE || EconomyModule.flowsRunning(g)),
@@ -1032,16 +1060,19 @@ final class TurnModule {
                 && c.startRewardGiven() == t.startRewardGiven()
                 && c.segments() != null && c.segments().size() >= 1 && c.segments().size() <= 2 && !t.stage().beforeRoll(), "move chain invalid");
         MoveSegment segment = c.segments().get(0);
-        LobbyModule.expect(segment != null && segment.kind() == MoveKind.DICE && segment.number() == 1
-                && segment.from() == c.origin() && segment.distance() <= config.economy().dieFaces()
+        LobbyModule.expect(segment != null && (segment.kind() == MoveKind.DICE || segment.kind() == MoveKind.TARGETED) && segment.number() == 1
+                && segment.from() == c.origin() && segment.plannedDistance() >= 1 && segment.plannedDistance() <= config.economy().dieFaces()
                 && MovementRules.valid(c, size)
+                && c.plans().getFirst().landingId() == 0 && c.plans().getFirst().cursor() == -1
                 && c.segments().getLast().to() == g.player(c.playerId()).orElseThrow().position(), "move chain segment/flags invalid");
         if (c.segments().size() == 2) {
             var second = c.segments().getLast();
             LobbyModule.expect(c.eventDrawn() && LobbyModule.board(config, g.settings()).tiles().get(segment.to()).type() == TileType.EVENT
                     && (second.kind() == MoveKind.EVENT_FORWARD || second.kind() == MoveKind.EVENT_BACKWARD)
-                    && second.distance() >= config.economy().eventMoveMinSteps() && second.distance() <= config.economy().eventMoveMaxSteps(),
+                    && second.plannedDistance() >= config.economy().eventMoveMinSteps() && second.plannedDistance() <= config.economy().eventMoveMaxSteps(),
                     "event movement segment invalid");
+            LobbyModule.expect(c.plans().getLast().landingId() >= 1 && c.plans().getLast().landingId() < t.lastLandingId()
+                    && c.plans().getLast().cursor() == 1, "event movement plan source invalid");
         } else {
             LobbyModule.expect(c.eventDrawn() == (t.landing() != null && t.landing().event() != null), "move chain invalid");
         }

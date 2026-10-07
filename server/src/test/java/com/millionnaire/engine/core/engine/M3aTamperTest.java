@@ -58,9 +58,9 @@ class M3aTamperTest {
         changed(t, GameEvent.MoveChainStarted.class, e -> new GameEvent.MoveChainStarted(e.chainId(), e.turnNo() + 1, e.playerId(), e.origin()));
         changed(t, GameEvent.MoveChainStarted.class, e -> new GameEvent.MoveChainStarted(e.chainId(), e.turnNo(), "p2", e.origin()));
         changed(t, GameEvent.MoveChainStarted.class, e -> new GameEvent.MoveChainStarted(e.chainId(), e.turnNo(), e.playerId(), e.origin() + 1));
-        changed(t, GameEvent.PlayerMoved.class, e -> new GameEvent.PlayerMoved(e.playerId(), e.from(), e.to(), e.steps(), e.chainId() + 1, e.segmentNo(), e.kind()));
-        changed(t, GameEvent.PlayerMoved.class, e -> new GameEvent.PlayerMoved(e.playerId(), e.from(), e.to(), e.steps(), e.chainId(), e.segmentNo() + 1, e.kind()));
-        changed(t, GameEvent.PlayerMoved.class, e -> new GameEvent.PlayerMoved(e.playerId(), e.from(), e.to(), e.steps(), e.chainId(), e.segmentNo(), MoveKind.EVENT_FORWARD));
+        changed(t, GameEvent.PlayerMoved.class, e -> new GameEvent.PlayerMoved(e.playerId(), e.from(), e.to(), e.steps(), e.chainId() + 1, e.segmentNo(), e.kind(), e.plannedDistance(), e.stoppedBy()));
+        changed(t, GameEvent.PlayerMoved.class, e -> new GameEvent.PlayerMoved(e.playerId(), e.from(), e.to(), e.steps(), e.chainId(), e.segmentNo() + 1, e.kind(), e.plannedDistance(), e.stoppedBy()));
+        changed(t, GameEvent.PlayerMoved.class, e -> new GameEvent.PlayerMoved(e.playerId(), e.from(), e.to(), e.steps(), e.chainId(), e.segmentNo(), MoveKind.EVENT_FORWARD, e.plannedDistance(), e.stoppedBy()));
         changed(t, GameEvent.LandingStarted.class, e -> new GameEvent.LandingStarted(e.landingId(), e.playerId(), e.tile(), e.chainId() + 1));
         changed(t, GameEvent.LandingStepEntered.class, e -> new GameEvent.LandingStepEntered(e.landingId(), e.step(), e.payment(), e.cursor() + 1));
     }

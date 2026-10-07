@@ -1,0 +1,25 @@
+INSERT INTO app_user VALUES (1,'a',0,'ACTIVE',0,0,0,NULL);
+INSERT INTO room (room_id,room_code,created_by,create_request_id,owner_user_id,phase,member_count,created_at,updated_at)
+  VALUES (10, 42, 1, X'0102030405060708', 1, 'LOBBY', 1, 0, 0);
+INSERT INTO room_code_lease VALUES (42, 10, 'ACTIVE', NULL, 0);
+INSERT INTO room_head (room_id,writer_epoch,writer_instance_id,writer_token,revision,last_input_seq,last_event_index,last_batch_mac,
+  last_received_at,last_commit_at,engine_version,config_hash,domain_id,rng_protocol,key_id,mac_version,status,created_at,updated_at)
+  VALUES (10,1,'i',X'00112233445566778899AABBCCDDEEFF',1,1,3,X'0000000000000000000000000000000000000000000000000000000000000000',
+  0,0,'v',X'0000000000000000000000000000000000000000000000000000000000000000','d','r',1,2,'ACTIVE',0,0);
+INSERT INTO event_batch VALUES (10,1,0,0,2,0,'v',1,1,1,2,10,X'0000000000000000000000000000000000000000000000000000000000000000',X'00',
+  X'0000000000000000000000000000000000000000000000000000000000000000',X'0000000000000000000000000000000000000000000000000000000000000000',NULL,0);
+INSERT INTO event_batch VALUES (10,1,1,2,2,0,'v',1,1,1,2,10,X'0000000000000000000000000000000000000000000000000000000000000000',X'00',
+  X'0000000000000000000000000000000000000000000000000000000000000000',X'0000000000000000000000000000000000000000000000000000000000000000',NULL,0);
+INSERT INTO input_receipt VALUES (10,1,1,X'61626364656667686970',  'CLIENT',1,'Join',X'0000000000000000000000000000000000000000000000000000000000000000',
+  X'0000000000000000000000000000000000000000000000000000000000000000',0,'ACCEPTED',NULL,1,10,X'0000000000000000000000000000000000000000000000000000000000000000',X'00',0);
+INSERT INTO game_record (room_id,segment_no,game_no,status,end_mode,board_id,initial_cash,player_count,started_at,start_seq,engine_version,config_hash,created_at,updated_at)
+  VALUES (10,1,1,'PLAYING','TIME_LIMIT','b',1000,2,5,2,'v',X'00',0,0);
+UPDATE game_record SET status='ABORTED', ended_at=9, end_reason='ADMIN_X', end_source='ADMIN' WHERE room_id=10;
+INSERT INTO game_record_player VALUES (1,1,0,'a','ABORTED',9,NULL,NULL,NULL,'ALIVE',NULL,NULL);
+UPDATE room_head SET status='PREP', prep_ends_at=100 WHERE room_id=10;
+UPDATE room_head SET status='RECOVERING', prep_ends_at=NULL, outage_started_at=50, current_recovery_id=X'00112233445566778899AABBCCDDEEFF' WHERE room_id=10;
+UPDATE room_head SET status='ACTIVE', outage_started_at=NULL, current_recovery_id=NULL WHERE room_id=10;
+INSERT INTO room_recovery (attempt_id,room_id,kind,writer_epoch,writer_token,phase,started_at,outage_started_at,outage_evidence)
+  VALUES (X'00112233445566778899AABBCCDDEEFF',10,'CLAIM',1,X'00112233445566778899AABBCCDDEEFF','OPEN',0,0,'LAST_COMMIT');
+INSERT INTO room_recovery (attempt_id,room_id,kind,writer_epoch,writer_token,phase,started_at,outage_started_at,outage_evidence)
+  VALUES (X'00112233445566778899AABBCCDDEEF0',10,'UNKNOWN',1,X'00112233445566778899AABBCCDDEEFF','OPEN',0,0,'FAILED_ATTEMPT');

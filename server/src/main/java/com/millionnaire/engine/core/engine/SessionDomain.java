@@ -160,6 +160,28 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     @Override
     public void checkEvent(EngineState engine, Event event, RuleConfig rules) {
         SessionState current = (SessionState) engine.domain();
+        if (event instanceof GameEvent.MovementEffectCommitted e) {
+            LobbyModule.check(e.source() != null && e.source().at() == engine.now(), "internal movement source time mismatch");
+        }
+        if (current.inGame()) {
+            var track = current.game().turn().track();
+            if (track.roadblockDue() != null && !(event instanceof GameEvent.RoadblockTriggered)) {
+                throw new IllegalStateException("stopped movement must immediately trigger its roadblock");
+            }
+            var source = track.movementEffect();
+            if (source != null && source.kind() == com.millionnaire.engine.core.state.MovementEffect.Kind.ROADBLOCK
+                    && !(event instanceof GameEvent.RoadblockPlaced)) {
+                throw new IllegalStateException("placement must immediately consume its movement source");
+            }
+            if (source != null && source.kind() == com.millionnaire.engine.core.state.MovementEffect.Kind.TARGETED) {
+                boolean closing = event instanceof GameEvent.AutoActDisarmed || event instanceof com.millionnaire.engine.core.event.KernelEvent.TaskCancelled
+                        || event instanceof GameEvent.WindowClosed;
+                if (current.game().turn().chain() != null ? !(event instanceof GameEvent.PlayerMoved)
+                        : !closing && !(event instanceof GameEvent.MoveChainStarted)) {
+                    throw new IllegalStateException("targeted source must close its window and start its movement");
+                }
+            }
+        }
         if (current.controlSource() != null && !(event instanceof GameEvent.ControlChanged)) {
             throw new IllegalStateException("control change must immediately follow its accepted input source");
         }

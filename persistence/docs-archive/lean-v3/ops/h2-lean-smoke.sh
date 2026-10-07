@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# 精简版 · 测试版（v4）V1 DDL 冒烟：在 H2 1.4.200 (MODE=MySQL) 上执行 V1__lean_baseline.sql、一个正例（含断言）、约束负例与对照组。
-# 用法：bash persistence/ops/h2-lean-smoke.sh   （需 JDK 21 与本地仓库中的 h2-1.4.200.jar；可用 H2_JAR 覆盖）
+# 精简版 · 测试版（v3）V1 DDL 冒烟：在 H2 1.4.200 (MODE=MySQL) 上执行 V1__lean_baseline.sql、一个正例（含断言）、约束负例与对照组。
+# 用法：bash persistence/ops/h2-lean-smoke.sh   （需 JDK 17+ 与本地仓库中的 h2-1.4.200.jar；可用 H2_JAR 覆盖）
 # 只证明 H2 语法与 CHECK/UNIQUE/FK 行为；不证明 MySQL 的排序规则、长度、锁与事务语义 [未验证-MySQL]。
 # v2 版本归档：persistence/docs-archive/lean-v2/h2-lean-smoke.v2.sh.txt
 #
@@ -25,9 +25,6 @@
 #   * 正例断言改为向带 CHECK(ok=1) 的 smoke_assert 表插入结果，MySQL 8.0.16+ 同样会报错（不再依赖 H2 的除零报错）。
 #   * MySQL 上复跑时预期错误码对应：23513→3819、23505→1062、23506→1452、23503→1451、22001→1406、22003|22004→1264
 #     （1406/1264 仅在 STRICT_TRANS_TABLES 下报错，非严格模式会截断——见设计 §7.3）。
-# v4：保留原72个neg/ctl和17条正例断言；历史核验加chat，修剪改两步；新增明细见db-v4-response.md。
-# 5.7忽略CHECK：反转清单见mysql57-check-reversal.md；smoke_assert须改成JDBC/JUnit读值断言。
-# 末尾Java探针只测H2的锁超时/rollback/修剪分页，不证明真实Store/队列/MySQL。
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 JAR="${H2_JAR:-$HOME/.m2/repository/com/h2database/h2/1.4.200/h2-1.4.200.jar}"
@@ -36,7 +33,7 @@ TMP="$(mktemp -d)"
 sed 's/\${table_options}//' "$HERE/../src/main/resources/db/migration/V1__lean_baseline.sql" > "$TMP/v1.sql"
 cat "$TMP/v1.sql" "$HERE/h2-lean-smoke-positive.sql" > "$TMP/t.sql"
 run() { java -cp "$JAR" org.h2.tools.RunScript -url "$URL" -script "$1" >"$TMP/out.txt" 2>&1; }
-if run "$TMP/t.sql"; then echo "POSITIVE OK assertions=24"; else echo "POSITIVE FAILED"; cat "$TMP/out.txt"; rm -rf "$TMP"; exit 1; fi
+if run "$TMP/t.sql"; then echo "POSITIVE OK"; else echo "POSITIVE FAILED"; cat "$TMP/out.txt"; rm -rf "$TMP"; exit 1; fi
 fails=0; total=0
 # neg <名称> <预期错误码正则> <SQL>
 neg() {
@@ -147,14 +144,4 @@ ctl "KNOWN GAP B3: detached held chat row insertable for deleted user (ChatStore
 # 断言机制本身会报错（v1 为除零，v2 改为 smoke_assert 的 CHECK）
 neg "assertion mechanism fires"         $CK  "INSERT INTO smoke_assert VALUES ('mechanism', 0);"
 neg "assertion: NULL subquery fails"    $CK  "INSERT INTO smoke_assert SELECT 'null', CASE WHEN (SELECT MAX(room_id) FROM room WHERE room_id < 0) = 1 THEN 1 ELSE 0 END FROM DUAL;"
-# ===== v4 新增负例/对照（原72条完整保留） =====
-neg "I2 old chat primary key collision" $UK "$C (99,1,3,'new','PASS',NULL,1,0);"
-neg "R1 orphan request remains unique" $UK "$R (21,89,89,1,X'0102030405060708090A0B0C0D0E0F12','OPEN',0,0);"
-neg "R2 user_live 0 matches tombstone but CHECK rejects" $CK "$P (4,1,2,700,2,0,0,'BANKRUPT',0);"
-neg "R2 sender_live 0 matches tombstone but CHECK rejects" $CK "$C (11,10,2,'x','PASS',NULL,0,0);"
-ctl "I2 different room chat accepted" "$C (98,1,3,'new','PASS',NULL,1,0);"
-ctl "R1 genuinely new request accepted" "$R (21,89,89,1,X'0102030405060708090A0B0C0D0E0F99','OPEN',0,0);"
-# JAVA source launcher: no Maven/class file, fresh in-memory DB only.
-if java -cp "$JAR" "$HERE/h2-lean-protocol-smoke.java" "$TMP/v1.sql"; then :
-else fails=$((fails+1)); fi
 rm -rf "$TMP"; echo "cases=$total failures=$fails"; exit $fails

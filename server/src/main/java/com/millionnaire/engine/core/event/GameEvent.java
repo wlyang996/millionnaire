@@ -116,8 +116,12 @@ public sealed interface GameEvent extends Event {
     }
 
     /** 移动段：链编号、段序号与来源种类随日志重建；M3a 仅接纳已核对骰子的段。 */
-    record PlayerMoved(String playerId, int from, int to, int steps, long chainId, int segmentNo, MoveKind kind)
+    record PlayerMoved(String playerId, int from, int to, int steps, long chainId, int segmentNo, MoveKind kind,
+                       int plannedDistance, com.millionnaire.engine.core.state.Roadblock stoppedBy)
             implements GameEvent, PublicEvent {
+        public PlayerMoved(String playerId, int from, int to, int steps, long chainId, int segmentNo, MoveKind kind) {
+            this(playerId, from, to, steps, chainId, segmentNo, kind, steps, null);
+        }
         public PlayerMoved(String playerId, int from, int to, int steps) {
             this(playerId, from, to, steps, 0, 0, MoveKind.DICE);
         }
@@ -125,6 +129,14 @@ public sealed interface GameEvent extends Event {
 
     /** 骰子行动开始一条移动链；重定向沿用链编号，不能伪造新行动。 */
     record MoveChainStarted(long chainId, long turnNo, String playerId, int origin) implements GameEvent, PublicEvent { }
+
+    /** Internal mechanism source, not evidence of card ownership or a player-accessible command. */
+    record MovementEffectCommitted(com.millionnaire.engine.core.state.MovementEffect source) implements GameEvent { }
+    record RoadblockPlaced(String playerId, long turnNo, long windowId, com.millionnaire.engine.core.state.Roadblock roadblock)
+            implements GameEvent, PublicEvent { }
+    /** Must immediately follow the verified stopped movement; removes exactly that board object. */
+    record RoadblockTriggered(String playerId, long turnNo, long chainId, int segmentNo,
+                             com.millionnaire.engine.core.state.Roadblock roadblock) implements GameEvent, PublicEvent { }
 
     /** 起点奖励（系统 → 玩家，经账本记账）；每回合最多一次。 */
     record StartRewardPaid(String playerId, long amount, long turnNo) implements GameEvent, PublicEvent {

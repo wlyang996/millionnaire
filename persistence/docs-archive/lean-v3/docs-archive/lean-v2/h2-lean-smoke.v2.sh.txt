@@ -1,23 +1,7 @@
 #!/usr/bin/env bash
-# 精简版 · 测试版（v4）V1 DDL 冒烟：在 H2 1.4.200 (MODE=MySQL) 上执行 V1__lean_baseline.sql、一个正例（含断言）、约束负例与对照组。
-# 用法：bash persistence/ops/h2-lean-smoke.sh   （需 JDK 21 与本地仓库中的 h2-1.4.200.jar；可用 H2_JAR 覆盖）
+# 精简版（Lean v2）V1 DDL 冒烟：在 H2 1.4.200 (MODE=MySQL) 上执行 V1__lean_baseline.sql、一个正例（含断言）、约束负例与对照组。
+# 用法：bash persistence/ops/h2-lean-smoke.sh   （需 JDK 17+ 与本地仓库中的 h2-1.4.200.jar；可用 H2_JAR 覆盖）
 # 只证明 H2 语法与 CHECK/UNIQUE/FK 行为；不证明 MySQL 的排序规则、长度、锁与事务语义 [未验证-MySQL]。
-# v2 版本归档：persistence/docs-archive/lean-v2/h2-lean-smoke.v2.sh.txt
-#
-# v3 收口（测试版不做发版/重启善后/故障恢复；service_control 表与 room.boot_id 列已删除）——删除的用例（81 → 72）：
-#   负例 "short boot_id"                       ：v1 原有；被测列 room.boot_id 已删除（只服务于启动清扫）
-#   负例 "control row: id 2"                   ：service_control 表已删除（维护触发/方案 Q 租约）
-#   负例 "control row: dup id 1"               ：同上
-#   负例 "control row: drain_at w/o notice"    ：同上
-#   负例 "control row: drain before notice"    ：同上
-#   负例 "control row: holder 15 bytes"        ：同上
-#   负例 "control row: negative epoch"         ：同上
-#   对照 "control drain window"                ：同上
-#   对照 "control close RECONCILE"             ：关闭原因 RECONCILE 只服务于关房对账（已移入后补清单），已从 CHECK 取值中删除
-#   正例中：删除租约 CAS 与 "lease CAS"/"lease released" 两条断言（同上）；删除房间 14 的 RECONCILE 关闭；
-#           启动清扫改为正常 IDLE 关房，断言 "restart sweep" 改写为 "normal closes"；断言 "boot_id bytes" 改写为
-#           "varbinary bytes"（改测 create_request_id，仍验证 LENGTH = 字节数）。正例断言 19 → 17 条。
-#   其余用例全部保留，只把房间 INSERT 的列表去掉 boot_id。
 #
 # v2 变化（评审 G3）：
 #   * 负例必须以"预期的 H2 错误码"失败才算通过（23513 CHECK、23505 唯一、23506 外键缺父、23503 外键有子、
@@ -25,9 +9,6 @@
 #   * 正例断言改为向带 CHECK(ok=1) 的 smoke_assert 表插入结果，MySQL 8.0.16+ 同样会报错（不再依赖 H2 的除零报错）。
 #   * MySQL 上复跑时预期错误码对应：23513→3819、23505→1062、23506→1452、23503→1451、22001→1406、22003|22004→1264
 #     （1406/1264 仅在 STRICT_TRANS_TABLES 下报错，非严格模式会截断——见设计 §7.3）。
-# v4：保留原72个neg/ctl和17条正例断言；历史核验加chat，修剪改两步；新增明细见db-v4-response.md。
-# 5.7忽略CHECK：反转清单见mysql57-check-reversal.md；smoke_assert须改成JDBC/JUnit读值断言。
-# 末尾Java探针只测H2的锁超时/rollback/修剪分页，不证明真实Store/队列/MySQL。
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 JAR="${H2_JAR:-$HOME/.m2/repository/com/h2database/h2/1.4.200/h2-1.4.200.jar}"
@@ -36,7 +17,7 @@ TMP="$(mktemp -d)"
 sed 's/\${table_options}//' "$HERE/../src/main/resources/db/migration/V1__lean_baseline.sql" > "$TMP/v1.sql"
 cat "$TMP/v1.sql" "$HERE/h2-lean-smoke-positive.sql" > "$TMP/t.sql"
 run() { java -cp "$JAR" org.h2.tools.RunScript -url "$URL" -script "$1" >"$TMP/out.txt" 2>&1; }
-if run "$TMP/t.sql"; then echo "POSITIVE OK assertions=24"; else echo "POSITIVE FAILED"; cat "$TMP/out.txt"; rm -rf "$TMP"; exit 1; fi
+if run "$TMP/t.sql"; then echo "POSITIVE OK"; else echo "POSITIVE FAILED"; cat "$TMP/out.txt"; rm -rf "$TMP"; exit 1; fi
 fails=0; total=0
 # neg <名称> <预期错误码正则> <SQL>
 neg() {
@@ -51,9 +32,10 @@ ctl() {
   if run "$TMP/c.sql"; then echo "ok accepted: $1"; else echo "FAIL(rejected control): $1"; head -2 "$TMP/out.txt"; fails=$((fails+1)); fi
 }
 CK=23513; UK=23505; FKP=23506; FKC=23503
+B16="X'00000000000000000000000000000009'"
 SHA="X'5555555555555555555555555555555555555555555555555555555555555555'"
 U="INSERT INTO app_user VALUES"
-R="INSERT INTO room (room_id,room_code,held_code,created_by,create_request_id,status,created_at,updated_at) VALUES"
+R="INSERT INTO room (room_id,room_code,held_code,boot_id,created_by,create_request_id,status,created_at,updated_at) VALUES"
 G="INSERT INTO game_record (room_id,game_no,outcome,end_reason,end_mode,time_limit_min,board_id,initial_cash,player_count,started_at,ended_at,engine_version,config_hash,draft_sha256,created_at) VALUES"
 P="INSERT INTO game_record_player VALUES"
 C="INSERT INTO chat_message (room_id,msg_no,sender_user_id,content,sec_status,hold_until,sender_live,created_at) VALUES"
@@ -73,14 +55,15 @@ neg "empty openid"                      $CK  "INSERT INTO wx_identity VALUES (X'
 neg "identity for missing user (FK)"    $FKP "INSERT INTO wx_identity VALUES (X'7778', X'6F70656E38', 777, 0, 0);"
 neg "delete user with identity (FK)"    $FKC "DELETE FROM app_user WHERE user_id=1;"
 # 房间
-neg "two holders of same code"          $UK  "$R (20, 99, 99, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
-neg "closed-but-cooling code reused"    $UK  "$R (20, 42, 42, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
-neg "OPEN without held_code"            $CK  "$R (20, 5, NULL, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
-neg "held_code != room_code"            $CK  "$R (20, 5, 6, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
-neg "room code 7 digits"                $CK  "$R (20, 1000000, 1000000, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
-neg "dup create request"                $UK  "$R (20, 5, 5, 1, X'0102030405060708090A0B0C0D0E0F10', 'OPEN', 0, 0);"
-neg "short create_request_id"           $CK  "$R (20, 5, 5, 1, X'01', 'OPEN', 0, 0);"
-neg "room creator missing (FK)"         $FKP "$R (20, 5, 5, 777, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
+neg "two holders of same code"          $UK  "$R (20, 99, 99, $B16, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
+neg "closed-but-cooling code reused"    $UK  "$R (20, 42, 42, $B16, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
+neg "OPEN without held_code"            $CK  "$R (20, 5, NULL, $B16, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
+neg "held_code != room_code"            $CK  "$R (20, 5, 6, $B16, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
+neg "room code 7 digits"                $CK  "$R (20, 1000000, 1000000, $B16, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
+neg "dup create request"                $UK  "$R (20, 5, 5, $B16, 1, X'0102030405060708090A0B0C0D0E0F10', 'OPEN', 0, 0);"
+neg "short boot_id"                     $CK  "$R (20, 5, 5, X'01', 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
+neg "short create_request_id"           $CK  "$R (20, 5, 5, $B16, 1, X'01', 'OPEN', 0, 0);"
+neg "room creator missing (FK)"         $FKP "$R (20, 5, 5, $B16, 777, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
 neg "closed without closed_at"          $CK  "UPDATE room SET status='CLOSED', close_reason='ADMIN' WHERE room_id=13;"
 neg "closed with unknown reason"        $CK  "UPDATE room SET status='CLOSED', closed_at=1, close_reason='WHATEVER' WHERE room_id=13;"
 neg "open with closed_at"               $CK  "UPDATE room SET closed_at=1 WHERE room_id=13;"
@@ -118,6 +101,12 @@ neg "B3 late record row, deleted user"  $FKP "$P (4, 1, 2, 700, 2, 0, 0, 'BANKRU
 neg "B3 chat from deleted user"         $FKP "$C (11, 9, 2, 'z', 'PASS', NULL, 1, 0);"
 neg "chat detached without hold"        $CK  "$C (11, 9, 1, 'z', 'PASS', NULL, NULL, 0);"
 neg "player row: user_live 0"           "$CK|$FKP" "$P (3, 5, 9007199254740991, 500, 3, 1, 1, 'ALIVE', 0);"
+neg "control row: id 2"                 $CK  "INSERT INTO service_control (id, epoch, renew_count, updated_at) VALUES (2, 0, 0, 0);"
+neg "control row: dup id 1"             $UK  "INSERT INTO service_control (id, epoch, renew_count, updated_at) VALUES (1, 0, 0, 0);"
+neg "control row: drain_at w/o notice"  $CK  "UPDATE service_control SET drain_at=5 WHERE id=1;"
+neg "control row: drain before notice"  $CK  "UPDATE service_control SET drain_notice_at=10, drain_at=5 WHERE id=1;"
+neg "control row: holder 15 bytes"      $CK  "UPDATE service_control SET holder_boot_id=X'000000000000000000000000000001' WHERE id=1;"
+neg "control row: negative epoch"       $CK  "UPDATE service_control SET epoch=-1 WHERE id=1;"
 neg "record: draft_sha256 31 bytes"     $CK  "$G (11, 9, 'FINISHED', 'TIME_UP', 'BANKRUPTCY', NULL, 'classic', 1, 2, 0, 0, 'v', 'h', X'00000000000000000000000000000000000000000000000000000000000000', 0);"
 neg "record: game_no beyond INT"        "22003|22004" "$G (11, 2147483648, 'FINISHED', 'TIME_UP', 'BANKRUPTCY', NULL, 'classic', 1, 2, 0, 0, 'v', 'h', $SHA, 0);"
 neg "log: game_no 0"                    $CK  "$L (11, 0, 'FINISHED', 'PUBLIC_EVENTS', 'GZIP_EVLOG1', 'v', 'h', 0, 0, $Z32, X'00', 0, 0);"
@@ -126,7 +115,7 @@ neg "chat: msg_no 0"                    $CK  "$C (11, 0, 1, 'z', 'PASS', NULL, 1
 
 # ===== 对照组 =====
 # v1 原有 7 条（按新列改写）
-ctl "control room"   "$R (20, 98, 98, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
+ctl "control room"   "$R (20, 98, 98, $B16, 1, X'0102030405060708090A0B0C0D0E0FAA', 'OPEN', 0, 0);"
 ctl "control close"  "UPDATE room SET status='CLOSED', closed_at=1, close_reason='ADMIN' WHERE room_id=13;"
 ctl "control record" "$G (11, 9, 'FINISHED', 'TIME_UP', 'BANKRUPTCY', NULL, 'classic', 1, 2, 0, 0, 'v', 'h', $SHA, 0);"
 ctl "control player" "$P (3, 2, 9007199254740991, 500, 3, 1, 1, 'ALIVE', 1);"
@@ -134,10 +123,12 @@ ctl "control log"    "$L (11, 3, 'FINISHED', 'PUBLIC_EVENTS', 'GZIP_EVLOG1', 'v'
 ctl "control chat"   "$C (11, 9, 1, REPEAT('x', 200), 'PASS', NULL, 1, 0);"
 ctl "control wx"     "INSERT INTO wx_identity VALUES (X'7778', X'6F70656E39', 3, 0, 0);"
 # v2 新增
+ctl "control close RECONCILE"          "UPDATE room SET status='CLOSED', closed_at=1, close_reason='RECONCILE' WHERE room_id=13;"
 ctl "control late row for live user"   "$P (4, 1, 3, 700, 2, 0, 0, 'BANKRUPT', 1);"
 ctl "control chat from live user"      "$C (11, 9, 3, 'z', 'PASS', NULL, 1, 0);"
 ctl "control BANNED keeps live_mark"   "UPDATE app_user SET status='BANNED' WHERE user_id=3;"
 ctl "control tombstone w/o children"   "UPDATE app_user SET status='DELETED', deleted_at=1, live_mark=0, nickname='x' WHERE user_id=3;"
+ctl "control drain window"             "UPDATE service_control SET drain_notice_at=1, drain_at=2 WHERE id=1;"
 ctl "control game_no INT max"          "$G (11, 2147483647, 'FINISHED', 'TIME_UP', 'BANKRUPTCY', NULL, 'classic', 1, 2, 0, 0, 'v', 'h', $SHA, 0);"
 # 已知 DDL 缺口（DDL 接受，必须由 Store 协议挡住；列出以免被误认为数据库已保证）
 ctl "KNOWN GAP I7: FINISHED header + NULL-result row, ended_at mismatch (RecordStore validates)" \
@@ -147,14 +138,4 @@ ctl "KNOWN GAP B3: detached held chat row insertable for deleted user (ChatStore
 # 断言机制本身会报错（v1 为除零，v2 改为 smoke_assert 的 CHECK）
 neg "assertion mechanism fires"         $CK  "INSERT INTO smoke_assert VALUES ('mechanism', 0);"
 neg "assertion: NULL subquery fails"    $CK  "INSERT INTO smoke_assert SELECT 'null', CASE WHEN (SELECT MAX(room_id) FROM room WHERE room_id < 0) = 1 THEN 1 ELSE 0 END FROM DUAL;"
-# ===== v4 新增负例/对照（原72条完整保留） =====
-neg "I2 old chat primary key collision" $UK "$C (99,1,3,'new','PASS',NULL,1,0);"
-neg "R1 orphan request remains unique" $UK "$R (21,89,89,1,X'0102030405060708090A0B0C0D0E0F12','OPEN',0,0);"
-neg "R2 user_live 0 matches tombstone but CHECK rejects" $CK "$P (4,1,2,700,2,0,0,'BANKRUPT',0);"
-neg "R2 sender_live 0 matches tombstone but CHECK rejects" $CK "$C (11,10,2,'x','PASS',NULL,0,0);"
-ctl "I2 different room chat accepted" "$C (98,1,3,'new','PASS',NULL,1,0);"
-ctl "R1 genuinely new request accepted" "$R (21,89,89,1,X'0102030405060708090A0B0C0D0E0F99','OPEN',0,0);"
-# JAVA source launcher: no Maven/class file, fresh in-memory DB only.
-if java -cp "$JAR" "$HERE/h2-lean-protocol-smoke.java" "$TMP/v1.sql"; then :
-else fails=$((fails+1)); fi
 rm -rf "$TMP"; echo "cases=$total failures=$fails"; exit $fails
