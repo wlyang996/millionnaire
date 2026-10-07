@@ -101,6 +101,8 @@ export interface SGame {
     minigame?: SMinigame | null;
     /** 道具（旧版后台没有该字段） */
     cards?: SCards | null;
+    /** 交易（旧版后台没有该字段） */
+    trade?: { seller: string; buyer: string; tile: number; price: number; windowId: number } | null;
     /** 拍卖（旧版后台没有该字段） */
     auction?: {
         kind: 'LAND' | 'CARD'; tile: number; seller: string | null; initiator: string | null; basis: number; start: number;
@@ -193,7 +195,7 @@ export type GameCommandName =
     | 'RollDice' | 'PayBail' | 'DrawEventCard' | 'DiscardCard' | 'BuyProperty' | 'DeclinePurchase'
     | 'StartLandAuction' | 'UpgradeProperty' | 'SkipUpgrade' | 'BankMortgage' | 'Redeem' | 'EmergencyMortgage'
     | 'FinishBank' | 'ContinueDebt' | 'DeclareBankruptcy' | 'ResumeControl' | 'Surrender' | 'PickTooth'
-    | 'UseCard' | 'RespondCard' | 'FinishTurn' | 'RequestAuction' | 'Bid';
+    | 'UseCard' | 'RespondCard' | 'FinishTurn' | 'RequestAuction' | 'Bid' | 'RequestTrade' | 'AnswerTrade';
 
 /** GAME 命令参数（数字、玩家 ID、卡种或是否使用）。 */
 export type GameArgs = Record<string, number | string | boolean | null>;

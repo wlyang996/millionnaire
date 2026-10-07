@@ -131,6 +131,17 @@ export interface GameView {
     roadblocks?: number[];
     /** [联机] 进行中的拍卖 */
     auction?: AuctionInfo | null;
+    /** [联机] 进行中的交易（交易卡） */
+    trade?: TradeInfo | null;
+}
+
+/** [联机] 进行中的交易：seller 以 price 把 tile 卖给 buyer；windowId 为交易窗口（买家答复）。 */
+export interface TradeInfo {
+    seller: string;
+    buyer: string;
+    tile: number;
+    price: number;
+    windowId: number;
 }
 
 /**

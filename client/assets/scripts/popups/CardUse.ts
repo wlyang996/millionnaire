@@ -64,7 +64,7 @@ export function cardUsable(type: CardType): Usable {
     if (RESPONSE_CARDS.includes(type)) return no('响应时使用');
     if (!g.myHand.some((c) => c.type === type)) return no('手里没有这张道具');
     if (type === 'AUCTION') return auctionUsable();
-    if (type === 'TRADE') return no('交易卡即将开放');
+    if (type === 'TRADE') return tradeUsable();
     if (!st.isMyTurn()) return no('只能在自己的回合使用');
     if (me.control !== 'MANUAL' || me.conn === 'OFFLINE') return no('托管中不能用卡');
     const online = st.online;
@@ -119,6 +119,17 @@ function auctionUsable(): Usable {
     return st.assetsOf(st.myId).some((a) => !a.p.mortgaged) ? yes : no('没有未抵押的地产或车站');
 }
 
+/** 交易卡：可非自己回合申请（排队到回合交界开始），占用主动用卡机会；要有未抵押的资产和其他存活玩家。 */
+function tradeUsable(): Usable {
+    const st = ctx.store;
+    const me = st.me();
+    if (me.control !== 'MANUAL' || me.conn === 'OFFLINE') return no('托管中不能用卡');
+    if (!st.online) return no('交易卡需联机使用');
+    if (st.game.cards?.chanceUsed.includes(st.myId)) return no('本回合已经用过道具了');
+    if (!st.game.players.some((p) => p.life === 'ALIVE' && p.playerId !== st.myId)) return no('没有可交易的玩家');
+    return st.assetsOf(st.myId).some((a) => !a.p.mortgaged) ? yes : no('没有未抵押的地产或车站');
+}
+
 /** 发送用卡（联机）或在演示里本地结算。 */
 export function sendCard(type: CardType, target: string | null = null, steps = 0): void {
     const st = ctx.store;
@@ -162,6 +173,10 @@ export function openCardUse(type: CardType): void {
     }
     if (type === 'AUCTION') {
         ctx.popups.open(new AuctionAssetPopup());
+        return;
+    }
+    if (type === 'TRADE') {
+        ctx.popups.open(new TradeSetupPopup());
         return;
     }
     if (type === 'JAIL_RELEASE') {
@@ -384,5 +399,101 @@ export class AuctionAssetPopup extends Popup {
             if (a) void ctx.store.online?.act('RequestAuction', { tile: a.tile.index });
         }, 34);
         b.setEnabled(this.sel >= 0, '请先选择要拍卖的资产');
+    }
+}
+
+// ================================================================ 交易卡：发起交易
+
+/**
+ * 发起交易（设计稿无单独页面，沿用拍卖选资产与查询选人的样式）：选一块我未抵押的资产、选买家、定价
+ * （标准价值 50% 向上取整 ～ 2.5 倍向下取整，默认标准价值，步长 50），"申请交易"发送 RequestTrade；排队到下一个回合交界开始。
+ */
+export class TradeSetupPopup extends Popup {
+    private sel = -1;
+    private buyer = '';
+    private price = 0;
+
+    constructor() {
+        super('trade-setup', '发起交易', 640, 1000);
+    }
+
+    private assets() {
+        const st = ctx.store;
+        return st.assetsOf(st.myId).filter((a) => !a.p.mortgaged);
+    }
+
+    private std(i: number): number {
+        const a = this.assets()[i];
+        const station = a.tile.type === 'STATION';
+        return standardValue(station, a.tile.tier, station ? 0 : TIERS[a.tile.tier ?? 'LOW'].upgrade * a.p.level);
+    }
+
+    protected buildBody(p: Node, w: number, h: number): void {
+        const st = ctx.store;
+        const list = this.assets();
+        const rowH = 84;
+        text(p, '1. 选择资产', 24, 80, w - 48, 36, 24, Theme.c.navy, { bold: true, align: 'l' });
+        const sl = new ScrollList(p, 24, 118, w - 48, 3 * rowH);
+        list.forEach((a, i) => {
+            const on = this.sel === i;
+            const n = mk(sl.content, 'Asset' + i, 0, i * rowH, w - 48, rowH - 8);
+            const g = gfx(n);
+            fillRR(g, 0, 0, w - 48, rowH - 8, 16, on ? '#EAF4FF' : Theme.c.white);
+            strokeRR(g, 1, 1, w - 50, rowH - 10, 16, on ? '#3E8EF2' : Theme.c.panelLine, on ? 4 : 2);
+            text(n, a.tile.name + (a.tile.type === 'STATION' ? ' · 车站' : ' · ' + a.p.level + '级') + ' · 标准价值 ' + this.std(i),
+                20, 0, w - 88, rowH - 8, 24, Theme.c.navy, { bold: true, align: 'l' });
+            onTap(n, () => {
+                this.sel = i;
+                this.price = this.std(i);
+                this.rebuildBody();
+            }, false);
+        });
+        sl.setContentHeight(list.length * rowH);
+        text(p, '2. 选择买家', 24, 380, w - 48, 36, 24, Theme.c.navy, { bold: true, align: 'l' });
+        const others = st.game.players.filter((x) => x.life === 'ALIVE' && x.playerId !== st.myId);
+        const cell = (w - 48) / 4;
+        others.slice(0, 8).forEach((pl, i) => {
+            const n = mk(p, 'B' + i, 24 + (i % 4) * cell + 4, 420 + Math.floor(i / 4) * 130, cell - 8, 122);
+            const g = gfx(n);
+            fillRR(g, 0, 0, cell - 8, 122, 16, Theme.c.white);
+            if (this.buyer === pl.playerId) strokeRR(g, 1, 1, cell - 10, 120, 16, '#2F86E8', 5);
+            avatar(n, (cell - 8 - 76) / 2, 8, 76, pl.avatar, pl.nickname);
+            text(n, pl.nickname, 0, 88, cell - 8, 28, 20, Theme.c.navy, { bold: true });
+            onTap(n, () => {
+                this.buyer = pl.playerId;
+                this.rebuildBody();
+            }, false);
+        });
+        const py = 690;
+        text(p, '3. 定价', 24, py, w - 48, 36, 24, Theme.c.navy, { bold: true, align: 'l' });
+        const ok = this.sel >= 0 && this.sel < list.length;
+        const std = ok ? this.std(this.sel) : 0;
+        const min = Math.ceil(std / 2);
+        const max = Math.floor(std * 5 / 2);
+        const stp = mk(p, 'Price', 24, py + 40, w - 48, 72);
+        fillRR(gfx(stp), 0, 0, w - 48, 72, 18, Theme.c.boxGray);
+        const step = (label: string, x: number, d: number) => {
+            const b = mk(stp, 'Step' + label, x, 6, 84, 60);
+            text(b, label, 0, 0, 84, 60, 48, Theme.c.noteGray, { bold: true });
+            onTap(b, () => {
+                if (!ok) return;
+                this.price = Math.max(min, Math.min(max, this.price + d * 50));
+                this.rebuildBody();
+            });
+        };
+        step('−', 4, -1);
+        step('+', w - 48 - 88, 1);
+        text(stp, ok ? String(this.price) : '—', 92, 6, w - 48 - 184, 60, 40, Theme.c.payRed, { bold: true });
+        text(p, ok ? '可定价 ' + min + ' ～ ' + max + '（标准价值的 50%～2.5 倍）' : '先选择资产', 24, py + 118, w - 48, 30, 20, Theme.c.noteGray);
+        text(p, '买家 15 秒内同意且现金足额才成交 · 拒绝或超时保留交易卡', 24, h - 156, w - 48, 30, 20, Theme.c.noteGray);
+        softButton(p, '取消', 24, h - 116, 220, 88, () => this.close(), 32);
+        const b = primaryButton(p, '申请交易', 264, h - 116, w - 288, 88, () => {
+            const a = this.assets()[this.sel];
+            const buyer = this.buyer;
+            const price = this.price;
+            this.close();
+            if (a) void ctx.store.online?.act('RequestTrade', { tile: a.tile.index, buyer, price });
+        }, 34);
+        b.setEnabled(ok && !!this.buyer, !ok ? '请先选择资产' : '请选择买家');
     }
 }

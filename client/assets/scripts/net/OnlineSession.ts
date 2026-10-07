@@ -295,6 +295,15 @@ export class OnlineSession {
                 case 'AuctionSettled':
                     notice = name(d.winner) + '以 ' + Number(d.price) + ' 拍得' + tile(d.tile);
                     break;
+                case 'TradeRequested':
+                    notice = name(d.seller) + '申请把' + tile(d.tile) + '以 ' + Number(d.price) + ' 卖给' + name(d.buyer) + '，下个回合交界开始';
+                    break;
+                case 'TradeCompleted':
+                    notice = name(d.buyer) + '以 ' + Number(d.price) + ' 买下了' + name(d.seller) + '的' + tile(d.tile);
+                    break;
+                case 'TradeDeclined':
+                    notice = name(d.buyer) + (d.auto ? '未答复，交易取消' : '拒绝了交易');
+                    break;
                 case 'AuctionPassed':
                     notice = tile(d.tile) + '无人出价，流拍';
                     break;

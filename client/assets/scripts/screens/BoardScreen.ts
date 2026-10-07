@@ -33,6 +33,7 @@ import { CardResponsePopup } from '../popups/CardResponsePopup';
 import { QueryResultPopup } from '../popups/QueryPopups';
 import { rentAt } from '../popups/CardUse';
 import { AuctionPopup } from '../popups/AuctionPopup';
+import { TradePopup } from '../popups/TradePopup';
 import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
@@ -543,6 +544,14 @@ export class BoardScreen extends Screen {
         if (g.auction && online.cues.length === 0 && !this.spectator && me_manual(st.me()) && st.me().life === 'ALIVE'
             && !ctx.popups.has('auction')) {
             ctx.popups.open(new AuctionPopup(g.auction.tile, g.auction.kind === 'LAND'));
+            return;
+        }
+        // 交易卡：我是买家时弹出交易确认（设计稿 04）
+        const td = g.trade;
+        if (td && td.buyer === this.myId && online.cues.length === 0 && me_manual(st.me()) && !ctx.popups.has('trade')) {
+            const w = g.windows.find((x) => x.windowId === td.windowId);
+            const pop = new TradePopup(td.tile, td.seller, td.price);
+            ctx.popups.open(w ? pop.withDeadline(w.deadline) : pop);
             return;
         }
         // 查询卡结果（只发给我）：弹出手牌快照

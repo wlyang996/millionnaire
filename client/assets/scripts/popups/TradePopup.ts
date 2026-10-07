@@ -2,6 +2,7 @@
  * 交易确认（买家，15 秒），按设计稿 04"交易确认"：卖家（金色圈）→ 买家（蓝色圈）、地产插画与"档位 · 等级"胶囊、
  * 白色信息卡（标准价值 / 卖家出价（红）/ 价格范围 + 说明）、我的可用现金，底部"拒绝 / 同意 (金币) 价格"及说明。
  * 价格范围 = 标准价值的 50%～2.5 倍；同意且现金足额才成交，超时拒绝。
+ * 联机：数据取服务端 game.trade，倒计时跟交易窗口，同意 / 拒绝发送 AnswerTrade；交易结束（视图里没有交易）自动关闭。
  */
 import { Node } from 'cc';
 import { SECONDS, standardValue, tradeRange } from '../core/Rules';
@@ -59,9 +60,10 @@ export class TradePopup extends Popup {
         box(p, 20, 534, W - 40, 42, Theme.c.boxGray, 14);
         const mine = mk(p, 'Mine', 20, 534, W - 40, 42);
         this.row(mine, 0, '我的可用现金', String(available), Theme.c.navy, true, 42);
-        softButton(p, '拒绝', 15, 586, 170, 66, () => this.close(), 30);
+        softButton(p, '拒绝', 15, 586, 170, 66, () => this.answer(false), 30);
         const ok = primaryButton(p, '同意', 200, 586, W - 200 - 14, 66, () => {
             if (available < this.price) return;
+            if (st.online) return this.answer(true);
             st.spend(this.price);
             if (prop) prop.owner = st.myId;
             this.close();
@@ -82,7 +84,23 @@ export class TradePopup extends Popup {
         }
     }
 
+    private answer(accept: boolean): void {
+        const st = ctx.store;
+        const t = st.game?.trade;
+        this.close();
+        if (st.online && t) void st.online.act('AnswerTrade', { windowId: t.windowId, accept });
+    }
+
     protected onExpire(): void {
         this.close();
+    }
+
+    /** 联机：交易结束（成交 / 拒绝 / 超时）后关闭。 */
+    tick(): void {
+        super.tick();
+        const st = ctx.store;
+        if (this.closed || !st.online) return;
+        const t = st.game?.trade;
+        if (!t || t.tile !== this.tileIndex) this.close();
     }
 }
