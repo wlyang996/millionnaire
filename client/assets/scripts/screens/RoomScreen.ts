@@ -11,7 +11,7 @@ import { fillCircle, fillRR, gfx, line, mk, onTap, strokeCircle, strokeRR, text 
 import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, chip, roundedPanel, Segmented } from '../ui/Widgets';
-import { art, characterKey } from '../ui/Art';
+import { art, informationCharacterKey } from '../ui/Art';
 
 export class RoomScreen extends Screen {
     readonly id = 'room' as const;
@@ -136,7 +136,8 @@ export class RoomScreen extends Screen {
         fillRR(cg, 0, 3, 104, 104, 20, Theme.c.shadow);
         fillRR(cg, 0, 0, 104, 104, 20, Theme.avatarColors[((m.avatar % 8) + 8) % 8] + '55');
         strokeRR(cg, 1, 1, 102, 102, 20, '#FFFFFF', 3);
-        if (!art(card, characterKey(m.avatar), 4, 4, 96, 96)) avatar(card, 10, 10, 84, m.avatar, m.nickname);
+        // 半身人物图（透明底）直接站在色块上；素材未到时退回圆形头像
+        if (!art(card, informationCharacterKey(m.avatar), 6, 4, 92, 100)) avatar(card, 10, 10, 84, m.avatar, m.nickname);
         if (m.playerId === s.hostId) {
             const tag = mk(cell, 'Host', 86, -8, 56, 30);
             fillRR(gfx(tag), 0, 0, 56, 30, 12, Theme.c.orange);

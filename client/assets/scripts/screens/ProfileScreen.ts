@@ -10,7 +10,7 @@ import { fillCircle, fillPoly, fillRR, gfx, line, mk, onTap, setText, strokeRR, 
 import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
-import { art, AVATAR_NAMES } from '../ui/Art';
+import { art, AVATAR_NAMES, informationCharacterKey } from '../ui/Art';
 
 export class ProfileScreen extends Screen {
     readonly id = 'profile' as const;
@@ -62,8 +62,11 @@ export class ProfileScreen extends Screen {
             const cy = 260 + Math.floor(i / 4) * 128;
             const cell = mk(card, 'AvatarCell', cx, cy, 138, 120);
             const sel = i === this.avatarIdx;
+            // 设计稿 03：圆角方形人物卡（头像底色的浅色 + 半身人物图），下方名字
             fillRR(gfx(cell), 0, 0, 138, 120, 18, sel ? Theme.c.white : '#F2E9D6');
-            avatar(cell, 24, 4, 90, i, AVATAR_NAMES[i]);
+            const tile = mk(cell, 'Tile', 22, 4, 94, 88);
+            fillRR(gfx(tile), 0, 0, 94, 88, 16, Theme.avatarColors[i % 8] + '55');
+            if (!art(tile, informationCharacterKey(i), 4, 2, 86, 86)) avatar(cell, 24, 4, 90, i, AVATAR_NAMES[i]);
             text(cell, AVATAR_NAMES[i], 0, 94, 138, 26, Theme.font.xs, sel ? Theme.c.blueDark : Theme.c.ink, { bold: sel });
             if (sel) {
                 const gg = gfx(mk(cell, 'Sel', 0, 0, 138, 120));
