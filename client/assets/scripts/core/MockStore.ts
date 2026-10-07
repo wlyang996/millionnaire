@@ -216,7 +216,7 @@ export class MockStore {
     }
 
     player(id: string): PlayerView | undefined {
-        return this.game.players.find((p) => p.playerId === id);
+        return this.session.game?.players.find((p) => p.playerId === id); // 没有对局（大厅、房间）时为空，不抛错
     }
 
     tile(i: number): BoardTile {

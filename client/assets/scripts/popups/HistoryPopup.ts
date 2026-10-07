@@ -52,8 +52,10 @@ export class HistoryPopup extends Popup {
         onTap(close, () => this.close(), false);
 
         // 本人角色 + 木牌
-        const me = ctx.store.online ? ctx.store.me() : undefined;
-        art(p, informationCharacterKey(me ? me.avatar : ctx.store.profile.avatar), 24, 76, 150, 170);
+        // 大厅里打开时还没有对局：只在对局中取对局里的头像，否则用资料里的头像
+        const st = ctx.store;
+        const me = st.online && st.session.game ? st.player(st.myId) : undefined;
+        art(p, informationCharacterKey(me ? me.avatar : st.profile.avatar), 24, 76, 150, 170);
         const sign = mk(p, 'Sign', 170, 132, w - 200, 86);
         const sg = gfx(sign);
         fillRR(sg, 0, 6, w - 200, 80, 18, '#7A4E25');
