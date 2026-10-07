@@ -68,17 +68,21 @@ public class Wire {
 
     /** 一步之后发给某个观察者的消息：本步对他可见的事件 + 他的最新视图。 */
     public String update(String roomCode, long version, long serverTime, List<Event> events, SessionView view) {
-        return update(roomCode, version, serverTime, events, view, java.util.Map.of());
+        return update(roomCode, version, serverTime, events, view, java.util.Map.of(), 0);
     }
 
-    /** @param avatars 玩家所选头像（玩家 ID → 序号 0～7）；没选的不在表里。 */
+    /**
+     * @param avatars  玩家所选头像（玩家 ID → 序号 0～7）；没选的不在表里。
+     * @param configId 房间绑定的游戏参数版本（客户端据此拉取 /api/configs/{id}/client）。
+     */
     public String update(String roomCode, long version, long serverTime, List<Event> events, SessionView view,
-                         java.util.Map<String, Integer> avatars) {
+                         java.util.Map<String, Integer> avatars, long configId) {
         ObjectNode n = object();
         n.put("type", "UPDATE");
         n.put("roomCode", roomCode);
         n.put("version", version);
         n.put("serverTime", serverTime);
+        n.put("configId", configId);
         ArrayNode ev = n.putArray("events");
         for (Event e : events) {
             ObjectNode o = ev.addObject();

@@ -91,6 +91,8 @@ public final class LiveRoom {
 
     private final RoomService service;
     private final Engine<SessionState> engine;
+    /** 建房时绑定的游戏参数版本（0 = 内置默认）；客户端按它拉取地名与价格表。 */
+    private final long configId;
     private final RoomRunner<SessionState> runner;
     private final long roomId;
     private final int code;
@@ -117,10 +119,11 @@ public final class LiveRoom {
     private long lastTime;
     private boolean closed;
 
-    LiveRoom(RoomService service, Engine<SessionState> engine, long roomId, int code, String createdBy,
+    LiveRoom(RoomService service, Engine<SessionState> engine, long configId, long roomId, int code, String createdBy,
              String createRequestId, EngineState genesis, long at) {
         this.service = service;
         this.engine = engine;
+        this.configId = configId;
         this.roomId = roomId;
         this.code = code;
         this.createdBy = createdBy;
@@ -274,7 +277,7 @@ public final class LiveRoom {
     public synchronized String snapshot(String playerId) {
         EngineState s = runner.committed();
         return service.wire().update(code(), s.lastSeq(), service.now(), List.of(),
-                SessionDomain.INSTANCE.project(s, playerId), service.avatarsOf(members(s)));
+                SessionDomain.INSTANCE.project(s, playerId), service.avatarsOf(members(s)), configId);
     }
 
     public synchronized boolean isMember(String playerId) {
@@ -330,7 +333,7 @@ public final class LiveRoom {
                 try {
                     List<Event> visible = EventProjector.project(r.events(), p);
                     service.outbox().send(p, service.wire().update(code(), after.lastSeq(), at, visible,
-                            SessionDomain.INSTANCE.project(after, p), avatars));
+                            SessionDomain.INSTANCE.project(after, p), avatars, configId));
                 } catch (RuntimeException e) {
                     log.error("room {} cannot push seq {} to {}", code(), after.lastSeq(), p, e);
                 }
@@ -446,7 +449,7 @@ public final class LiveRoom {
             boolean timed = set.endMode() == EndMode.TIME_LIMIT;
             service.gameEnded(new GameRecords.Draft(roomId, ended.gameNo(), ended.reason(), set.endMode().name(),
                     timed ? set.timeLimitMinutes() : null, set.boardId(), set.initialCash(), g.startedAt(),
-                    Math.max(at, g.startedAt()), service.configHash(), seats));
+                    Math.max(at, g.startedAt()), engine.configHash(), seats));
         }
     }
 

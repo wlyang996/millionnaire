@@ -7,7 +7,7 @@
  * - 时间：用每条 UPDATE / PONG 的 serverTime 估算与服务器的时钟偏差，倒计时用 serverNow()。
  */
 import { requestJson } from './Http';
-import { BoardTemplate, GameArgs, GameCommandName, HelloMsg, ResultMsg, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
+import { BoardTemplate, ClientConfig, GameArgs, GameCommandName, HelloMsg, ResultMsg, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
 
 export type LinkState = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
 
@@ -104,6 +104,13 @@ export class GameClient {
     async boards(): Promise<BoardTemplate[]> {
         const r = await requestJson<BoardTemplate[]>('GET', this.baseUrl + '/api/boards');
         if (r.status !== 200 || !r.body) throw new Error('cannot load boards');
+        return r.body;
+    }
+
+    /** 某个参数版本的地名、价格与租金表（无需登录；已发布版本不变）。 */
+    async clientConfig(configId: number): Promise<ClientConfig> {
+        const r = await requestJson<ClientConfig>('GET', this.baseUrl + '/api/configs/' + configId + '/client');
+        if (r.status !== 200 || !r.body) throw new Error('cannot load config ' + configId);
         return r.body;
     }
 

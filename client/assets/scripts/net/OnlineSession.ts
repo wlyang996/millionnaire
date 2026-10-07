@@ -7,6 +7,8 @@
 import type { MockStore } from '../core/MockStore';
 import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
+import { applyServerNames } from '../core/BoardNames';
+import { applyServerRules, BAIL_COST } from '../core/Rules';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
 import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
@@ -63,6 +65,10 @@ export class OnlineSession {
     private eventWaitQueued = false;
     /** 房间最近聊天（服务端 CHAT 推送的完整列表）。 */
     chat: ChatLine[] = [];
+    /** 已套用的参数版本（地名、价格），-1 = 未套用（用内置默认）；以及正在拉取的版本。 */
+    private configId = -1;
+    private configLoading = -1;
+    private lastUpdate: UpdateMsg | null = null;
 
     constructor(private readonly store: MockStore, baseUrl: string = serverUrl()) {
         this.client = new GameClient(baseUrl);
@@ -192,6 +198,28 @@ export class OnlineSession {
         return this.check(await this.client.setControl(mode));
     }
 
+    /** 房间绑定的参数版本变了：拉取地名与价格表，套用后按最近一条推送重画（失败时沿用当前显示）。 */
+    private useConfig(configId: number | undefined): void {
+        if (configId === undefined || configId === this.configId || configId === this.configLoading) return;
+        this.configLoading = configId;
+        this.client.clientConfig(configId).then((c) => {
+            if (this.configLoading !== configId) return;
+            applyServerRules(c);
+            applyServerNames(c.tileNames);
+            this.configId = configId;
+            this.configLoading = -1;
+            const u = this.lastUpdate;
+            if (!u) return;
+            const s = adaptSession(u.view, this.boards, this.lastDice, u.avatars ?? {});
+            s.roomId = u.roomCode;
+            if (s.game) s.game.chat = this.chat;
+            this.store.session = s;
+            this.store.emit();
+        }).catch(() => {
+            if (this.configLoading === configId) this.configLoading = -1;
+        });
+    }
+
     // ------------------------------------------------------------ 查询
     now(): number {
         return this.client.serverNow();
@@ -229,7 +257,7 @@ export class OnlineSession {
                 const text = e.kind === 'JailFailed' ? who + '没掷出偶数，未能出狱（已失败 ' + Number(d.failures) + ' 次）'
                     : d.reason === 'EVEN_ROLL' ? who + '掷出偶数，出狱！'
                         : d.reason === 'THIRD_FAILURE' ? who + '连续 3 次未掷出偶数，按规则释放出狱'
-                            : d.reason === 'BAIL' ? who + '支付 500 出狱' : '';
+                            : d.reason === 'BAIL' ? who + '支付 ' + BAIL_COST + ' 出狱' : '';
                 if (text) this.cues.push({ kind: 'notice', playerId: pid, text }); // 出狱卡另有"使用出狱卡出狱"的提示
             } else if (e.kind === 'PlayerMoved' && Number(d.steps) > 0) {
                 // 事件后退：步数记为负，棋盘页逐格往回跳
@@ -243,6 +271,8 @@ export class OnlineSession {
         }
         this.trackMinigame(u);
         this.lastDice = lastDiceFrom(u.events, this.lastDice);
+        this.lastUpdate = u;
+        this.useConfig(u.configId);
         const s = adaptSession(u.view, this.boards, this.lastDice, u.avatars ?? {});
         s.roomId = u.roomCode; // 界面上的"房间号"是六位房间号
         if (s.game) s.game.chat = this.chat;

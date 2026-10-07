@@ -2,6 +2,8 @@ package com.millionnaire.gateway;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.millionnaire.gateway.config.GameConfigs;
+import com.millionnaire.gateway.config.SettingsMapper;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +28,17 @@ class DbProfileTest {
     void migrationAppliedAndDiagnosticsUp() {
         Map<String, Object> r = controller.db();
         assertThat(r.get("db")).isEqualTo("UP");
-        assertThat(r.get("flywayVersion")).isEqualTo("1");
+        assertThat(r.get("flywayVersion")).isEqualTo("2");
         assertThat(r.get("appUserRows")).isEqualTo(0L);
+
+        // V2 参数表：发布写入 game_config 与当前指针，按 ID 读回
+        assertThat(configs.activeId()).isEqualTo(GameConfigs.DEFAULT_ID);
+        GameConfigs.Published p = configs.publish(SettingsMapper.defaults(), "db", "test", 0, null);
+        assertThat(configs.activeId()).isEqualTo(p.configId());
+        assertThat(configs.load(p.configId()).orElseThrow().settings()).isEqualTo(p.settings());
+        assertThat(configs.current().engine().configHash()).isEqualTo(p.ruleHash());
     }
+
+    @Autowired
+    GameConfigs configs;
 }

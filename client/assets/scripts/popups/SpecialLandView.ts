@@ -1,7 +1,7 @@
 /** Separate layouts from screens 20,21,22,23,25; supplied sprites, live values. */
 import { Node } from 'cc';
 import { Theme } from '../core/Theme';
-import { landPrice, START_BONUS, STATION } from '../core/Rules';
+import { BAIL_COST, landPrice, START_BONUS, STATION } from '../core/Rules';
 import { art } from '../ui/Art';
 import { Button } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -123,7 +123,7 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         const cards = st.game.myHand.filter(c => c.type === 'JAIL_RELEASE').length;
         const actions = [
             { skin: 'button_flat_yellow', icon: 'dice_5', label: '掷骰判定', color: '#101A50' },
-            { skin: 'button_flat_blue', icon: 'info_cash', label: '支付500\n出狱', color: '#FFFFFF' },
+            { skin: 'button_flat_blue', icon: 'info_cash', label: '支付' + BAIL_COST + '\n出狱', color: '#FFFFFF' },
             { skin: 'button_flat_green', icon: 'card_jail_release', label: '使用出狱卡', color: '#101A50' },
         ];
         actions.forEach((a, i) => {

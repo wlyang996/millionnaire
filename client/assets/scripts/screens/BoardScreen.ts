@@ -39,6 +39,7 @@ import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
 import { CASH_DELTA_MS, CashChange, CashChangeNode, drawPlayerBar, tickCashDelta } from './board/PlayerBar';
+import { BAIL_COST } from '../core/Rules';
 
 /** 设计稿 01：棋盘区 y≈262–1095（视口 256–1098），手牌栏 1102–1192，页脚 1198–1280。 */
 const VP_Y = 256;
@@ -260,7 +261,7 @@ export class BoardScreen extends Screen {
         const jailWin = st.online && myTurn && game.stage === 'JAIL_DECISION' ? st.online.myWindow('TURN') : undefined;
         if (jailWin) {
             text(this.root, '点骰子掷出狱判定（偶数出狱）', cx - 220, 736, 440, 40, Theme.font.sm, Theme.c.ink, { bold: true });
-            ghostButton(this.root, '付 500 出狱', cx - 110, 780, 220, 64, () => void st.online!.act('PayBail', { windowId: jailWin.windowId }), Theme.font.md);
+            ghostButton(this.root, '付 ' + BAIL_COST + ' 出狱', cx - 110, 780, 220, 64, () => void st.online!.act('PayBail', { windowId: jailWin.windowId }), Theme.font.md);
         }
     }
 

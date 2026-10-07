@@ -2,6 +2,8 @@
  * 联机协议的服务端数据形状（与 gateway/README.md 一致）。纯 TS，不依赖 cc。
  * 服务端视图（S 前缀）经 ViewAdapter 转成 core/Models 的客户端模型后再给界面用。
  */
+import type { ServerRules } from '../core/Rules';
+
 
 export interface SMember {
     playerId: string;
@@ -151,6 +153,14 @@ export interface UpdateMsg {
     view: SView;
     /** 玩家所选头像（玩家 ID → 序号 0～7）；没选的不在表里，按玩家 ID 取默认头像。旧后台没有这个字段。 */
     avatars?: Record<string, number>;
+    /** 房间绑定的游戏参数版本（0 = 内置默认）；客户端按它拉取地名与价格表。旧后台没有这个字段。 */
+    configId?: number;
+}
+
+/** GET /api/configs/{id}/client：地名、价格与租金表、固定费用。 */
+export interface ClientConfig extends ServerRules {
+    configId: number;
+    tileNames: { [boardId: string]: string[] };
 }
 
 export interface ResultMsg {

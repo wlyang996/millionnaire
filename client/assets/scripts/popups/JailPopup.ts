@@ -13,10 +13,10 @@ import { ctx } from '../ui/Ctx';
 import { fillCircle, fillRR, gfx, line, mk, onTap, strokeRR, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 import { box, noteLines } from './Common';
+import { BAIL_COST } from '../core/Rules';
 
 const W = 680;
 const H = 1100;
-const BAIL = 500;
 const SCENE_W = 540;
 const SCENE_H = Math.round(SCENE_W * 1207 / 1303);
 
@@ -64,9 +64,9 @@ export class JailPopup extends Popup {
             this.onRoll();
         }, 38);
         art(roll.node, 'dice_5', 70, 14, 62, 62);
-        const pay: Button = secondaryButton(p, '支付 ' + BAIL + ' 出狱', 60, by + 108, w - 120, 80, () => this.payBail(), 32);
+        const pay: Button = secondaryButton(p, '支付 ' + BAIL_COST + ' 出狱', 60, by + 108, w - 120, 80, () => this.payBail(), 32);
         art(pay.node, 'icon_coin', 112, 14, 46, 46); // 文字约宽 220、居中在 x 170 起，金币放在其左侧
-        pay.setEnabled((me ? me.cash : 0) >= BAIL, '现金不足 ' + BAIL);
+        pay.setEnabled((me ? me.cash : 0) >= BAIL_COST, '现金不足 ' + BAIL_COST);
         const cards = st.game.myHand.filter((c) => c.type === 'JAIL_RELEASE').length;
         let ny = by + 200;
         if (cards > 0) {
@@ -100,7 +100,7 @@ export class JailPopup extends Popup {
             return;
         }
         const me = st.me();
-        if (!st.spend(BAIL)) return;
+        if (!st.spend(BAIL_COST)) return;
         me.inJail = false;
         st.emit();
     }

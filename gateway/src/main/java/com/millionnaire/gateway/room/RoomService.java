@@ -1,6 +1,5 @@
 package com.millionnaire.gateway.room;
 
-import com.millionnaire.engine.config.RuleConfigs;
 import com.millionnaire.engine.core.command.Input;
 import com.millionnaire.engine.core.command.RoomCommand.ChangeSettings;
 import com.millionnaire.engine.core.command.RoomCommand.Join;
@@ -12,6 +11,7 @@ import com.millionnaire.engine.core.state.RoomSettings;
 import com.millionnaire.engine.core.state.SessionState;
 import com.millionnaire.gateway.auth.Ids;
 import com.millionnaire.gateway.auth.UserStore.User;
+import com.millionnaire.gateway.config.GameConfigs;
 import com.millionnaire.gateway.record.GameRecords;
 import jakarta.annotation.PreDestroy;
 import java.time.Clock;
@@ -38,7 +38,10 @@ public class RoomService {
     public record Created(LiveRoom room, LiveRoom.Reply settings) {
     }
 
-    private final Engine<SessionState> engine = new Engine<>(RuleConfigs.defaultV1(), SessionDomain.INSTANCE);
+    /** 游戏参数发布版本：建房时取当前生效版本，房间整局沿用（对局中途发布不影响已开的房间）。 */
+    private final GameConfigs configs;
+    /** 昵称校验用的引擎（加入规则与参数无关）。 */
+    private final Engine<SessionState> engine;
     private final EngineState nicknameProbe;
     private final Map<Integer, LiveRoom> byCode = new ConcurrentHashMap<>();
     private final Map<String, LiveRoom> byPlayer = new ConcurrentHashMap<>();
@@ -56,16 +59,24 @@ public class RoomService {
 
     /** 不连数据库的测试用：战绩只在内存；不自动做连接判定（测试里手动调用 {@link #checkConnections()}）。 */
     public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock) {
-        this(store, outbox, wire, clock, GameRecords.inMemory(clock), new Presence(), false);
+        this(store, outbox, wire, clock, GameRecords.inMemory(clock), new Presence(), GameConfigs.inMemory(clock), false);
+    }
+
+    /** 不连数据库的测试用，指定参数版本库（测试发布新版本后建房）。 */
+    public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock, GameConfigs configs) {
+        this(store, outbox, wire, clock, GameRecords.inMemory(clock), new Presence(), configs, false);
     }
 
     @Autowired
-    public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock, GameRecords records, Presence presence) {
-        this(store, outbox, wire, clock, records, presence, true);
+    public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock, GameRecords records, Presence presence,
+                       GameConfigs configs) {
+        this(store, outbox, wire, clock, records, presence, configs, true);
     }
 
     private RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock, GameRecords records, Presence presence,
-                        boolean monitorConnections) {
+                        GameConfigs configs, boolean monitorConnections) {
+        this.configs = configs;
+        this.engine = configs.byId(GameConfigs.DEFAULT_ID).orElseThrow().engine();
         this.records = records;
         this.presence = presence;
         this.store = store;
@@ -147,8 +158,9 @@ public class RoomService {
         long now = now();
         LiveRoom room;
         try {
-            EngineState genesis = engine.create(Long.toString(roomId), Ids.seed(), now).state();
-            room = new LiveRoom(this, engine, roomId, code, pid, requestId, genesis, now);
+            GameConfigs.Active cfg = configs.current();
+            EngineState genesis = cfg.engine().create(Long.toString(roomId), Ids.seed(), now).state();
+            room = new LiveRoom(this, cfg.engine(), cfg.configId(), roomId, code, pid, requestId, genesis, now);
         } catch (RuntimeException e) {
             store.close(roomId, code, "FAULT"); // 不留孤儿 OPEN 行
             throw e;
@@ -241,10 +253,6 @@ public class RoomService {
     /** 局结束：提交战绩草稿（异步落库）。 */
     void gameEnded(GameRecords.Draft draft) {
         records.submit(draft);
-    }
-
-    String configHash() {
-        return engine.configHash();
     }
 
     long now() {

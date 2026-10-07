@@ -97,6 +97,17 @@ export const DESIGN_50: { cols: number; rows: number; tiles: DesignTile[] } = {
     ],
 };
 
+/** 后台发布的地名（按格子数）；没有时用设计稿地名。 */
+const overrides: { [size: number]: string[] } = {};
+
 export function boardNames(size: 30 | 50): string[] {
-    return (size === 30 ? DESIGN_30 : DESIGN_50).tiles.map((t) => t.name);
+    return overrides[size] ?? (size === 30 ? DESIGN_30 : DESIGN_50).tiles.map((t) => t.name);
+}
+
+/** 用房间绑定的参数版本覆盖地名（地图 ID → 逐格名称）；长度不符的忽略。 */
+export function applyServerNames(names: { [boardId: string]: string[] }): void {
+    for (const id of Object.keys(names)) {
+        const size = id === 'classic-30' ? 30 : id === 'classic-50' ? 50 : 0;
+        if (size && names[id].length === size) overrides[size] = names[id].slice();
+    }
 }

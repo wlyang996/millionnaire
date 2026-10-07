@@ -19,10 +19,35 @@ export const TIERS: Record<Tier, TierRule> = {
 };
 
 export const STATION = { price: 1000, rentEach: 200, mortgageRatio: 0.7 };
-export const START_BONUS = 1000;
+// 下面三项与 TIERS / STATION 的价格、租金可由后台发布的参数覆盖（applyServerRules），默认值与内置配置一致
+export let START_BONUS = 1000;
 export const MAX_LEVEL = 3;
 export const MAX_HAND = 6;
-export const MINIGAME_REWARD = 500;
+export let MINIGAME_REWARD = 500;
+export let BAIL_COST = 500;
+
+/** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
+export interface ServerRules {
+    tiers: { tier: Tier; basePrice: number; upgradeCost: number; rents: number[] }[];
+    station: { price: number; rentPerStation: number };
+    fees: { startReward: number; miniGameWinReward: number; bailCost: number };
+}
+
+/** 用房间绑定的参数版本覆盖价格、租金与固定费用（就地修改，已引用 TIERS / STATION 的地方随之生效）。 */
+export function applyServerRules(r: ServerRules): void {
+    for (const t of r.tiers) {
+        const rule = TIERS[t.tier];
+        if (!rule || t.rents.length !== 4) continue;
+        rule.price = t.basePrice;
+        rule.upgrade = t.upgradeCost;
+        rule.rent = [t.rents[0], t.rents[1], t.rents[2], t.rents[3]];
+    }
+    STATION.price = r.station.price;
+    STATION.rentEach = r.station.rentPerStation;
+    START_BONUS = r.fees.startReward;
+    MINIGAME_REWARD = r.fees.miniGameWinReward;
+    BAIL_COST = r.fees.bailCost;
+}
 export const INITIAL_CASH_OPTIONS = [2000, 3000, 5000];
 export const TIME_LIMIT_OPTIONS = [15, 30, 60];
 export const ROLL_SECONDS_OPTIONS = [15, 30, 45, 60];
