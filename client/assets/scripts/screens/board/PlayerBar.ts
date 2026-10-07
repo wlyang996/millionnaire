@@ -87,14 +87,20 @@ export function drawPlayerBar(parent: Node, x: number, y: number, players: Playe
         }
         const ink = dead ? Theme.c.inkFaint : Theme.c.navy;
         text(cell, p.nickname, 66, 6, cw - 70, 26, 20, ink, { bold: true, align: 'l' });
-        const coin = gfx(mk(cell, 'Coin', 66, 36, 22, 22));
-        drawCoin(coin, 11, 11, 10);
-        text(cell, String(p.cash), 92, 33, cw - 96, 28, 22, ink, { bold: true, align: 'l' });
-        const b = statusBadge(p) ?? (p.playerId === drawingId ? { text: '正在抽取事件卡', bg: '#FFF1C9', fg: '#7A5A00' } : null);
+        const b = statusBadge(p) ?? (p.playerId === drawingId ? { text: '抽卡中', bg: '#FFF1C9', fg: '#7A5A00' } : null);
         if (b) {
-            const bn = mk(cell, 'Badge', 64, ch - 17, cw - 68, 16);
-            fillRR(gfx(bn), 0, 0, cw - 68, 16, 8, b.bg);
-            text(bn, b.text, 2, 0, cw - 72, 16, 12, b.fg, { bold: true });
+            // 设计稿 06（连接状态）：状态胶囊占据现金那一行；"已掉线·自动投骰"分两行
+            const lines = b.text.split('·');
+            const two = lines.length > 1;
+            const bh = two ? 34 : 26;
+            const bw = cw - 72;
+            const bn = mk(cell, 'Badge', 66, two ? 31 : 35, bw, bh);
+            fillRR(gfx(bn), 0, 0, bw, bh, 9, b.bg);
+            text(bn, two ? lines.join('\n') : b.text, 2, 0, bw - 4, bh, two ? 13 : 16, b.fg, { bold: true, lineHeight: 15 });
+        } else {
+            const coin = gfx(mk(cell, 'Coin', 66, 36, 22, 22));
+            drawCoin(coin, 11, 11, 10);
+            text(cell, String(p.cash), 92, 33, cw - 96, 28, 22, ink, { bold: true, align: 'l' });
         }
         const change = changes.get(p.playerId);
         // 浮在现金正上方（昵称那一行），向上飘出卡片
