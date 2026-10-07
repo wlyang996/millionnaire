@@ -26,6 +26,7 @@ export interface RoomSettings {
     endMode: EndMode;
     timeLimitMinutes: number; // 15 | 30 | 60
     rollSeconds: number; // 15 | 30 | 45 | 60
+    initialCards: number; // 开局每人道具数：0 = 不发（默认），1～6
 }
 
 /** 房间成员（Member）。avatar / speaking 为客户端展示字段 [待服务端]。 */

@@ -60,6 +60,7 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
         endMode: v.settings.endMode,
         timeLimitMinutes: v.settings.timeLimitMinutes,
         rollSeconds: v.settings.rollSeconds,
+        initialCards: v.settings.initialCards ?? 0,
     };
     const lastResult: GameResult | null = v.lastResult && {
         gameNo: v.lastResult.gameNo,

@@ -20,8 +20,10 @@ class SessionGoldenTest {
         String raw = t.engine.encodeEvents(t.log);
         assertEquals(raw, t.engine.encodeEvents(t.engine.decodeEvents(raw)));
         // 虎口拔牙接入（engine-0.11.0-m6a）不改变这段债务会话：换回 m3c 版本号后，以下历史黄金值逐字节不变
-        String bytes = raw.replace("engine-0.11.0-m6a", "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH);
-        assertEquals(1, raw.split("engine-0.11.0-m6a", -1).length - 1, "only the version header changes");
+        // 开局道具数接入（engine-0.12.0-m6b）给房间设置加了 initialCards；旧局沿用配置（-1），去掉这个字段后与历史字节一致
+        String bytes = raw.replace("engine-0.12.0-m6b", "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
+                .replace(",\"initialCards\":-1", "");
+        assertEquals(1, raw.split("engine-0.12.0-m6b", -1).length - 1, "only the version header changes");
         // Preserve the historical behavioral golden after removing only this revision's source metadata.
         var historicalEvents = t.log.stream().map(e -> {
             if (e instanceof com.millionnaire.engine.core.event.KernelEvent.InputAccepted a
@@ -34,8 +36,9 @@ class SessionGoldenTest {
         }).toList();
         // 配置新增正式服策略开关后（测试配置沿用旧规则），配置哈希从 f8524a62… 变为 15be5a0b…；其余字节必须不变
         String historicalBytes = t.engine.encodeEvents(historicalEvents).replace(CARDS_CONFIG_HASH, CONFIG_HASH)
+                .replace(",\"initialCards\":-1", "")
                 .replaceAll(",\"plannedDistance\":\\d+,\"stoppedBy\":null", "")
-                .replace("engine-0.11.0-m6a", "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")
+                .replace("engine-0.12.0-m6b", "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")
                 .replace(CONFIG_HASH, PREVIOUS_CONFIG_HASH);
         assertEquals("46953a081aa15740d69b5fbee5670e036bff181e77ac3130cd3e40e68135e5de",
                 Canonical.sha256Hex(historicalBytes.getBytes(StandardCharsets.UTF_8)),

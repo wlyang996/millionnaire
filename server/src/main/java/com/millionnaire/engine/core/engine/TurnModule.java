@@ -123,11 +123,12 @@ final class TurnModule {
         ctx.emit(new TurnOrderFixed(TurnOrder.order(game(ctx).orderDraws())));
     }
 
-    /** 开局发牌（R2）：按行动顺序，每人连续抽 initialHandSize 张（加权、同种可重复）；牌面私发，张数公开。 */
+    /** 开局发牌（R2）：按行动顺序，每人连续抽房间设置的张数（默认沿用 initialHandSize；0 = 不发）；牌面私发，张数公开。 */
     private static void deal(DecisionContext<SessionState> ctx) {
         int total = CardDeck.totalWeight(ctx.config());
+        int count = game(ctx).settings().dealCount(ctx.config());
         for (PlayerState p : game(ctx).players()) {
-            for (int k = 0; k < ctx.config().economy().initialHandSize(); k++) {
+            for (int k = 0; k < count; k++) {
                 ctx.emit(new CardDealt(p.playerId(), CardDeck.pick(ctx.config(), ctx.draw(DrawPoint.INITIAL_CARD, total))));
             }
             ctx.emit(new CardsDealt(p.playerId(), game(ctx).player(p.playerId()).orElseThrow().hand().size()));
@@ -802,7 +803,7 @@ final class TurnModule {
                 Draw d = draws.take(DrawPoint.INITIAL_CARD);
                 PlayerState p = g.player(e.recipient()).orElseThrow(() -> new IllegalStateException("deal to unknown player"));
                 String expectedRecipient = g.players().stream()
-                        .filter(x -> x.hand().size() < rules.economy().initialHandSize()).map(PlayerState::playerId)
+                        .filter(x -> x.hand().size() < g.settings().dealCount(rules)).map(PlayerState::playerId)
                         .findFirst().orElse(null);
                 check(e.recipient().equals(expectedRecipient), "cards are dealt in turn order, consecutively per player");
                 check(d.bound() == CardDeck.totalWeight(rules) && CardDeck.pick(rules, d.value()) == e.card()
@@ -811,7 +812,7 @@ final class TurnModule {
             }
             case CardsDealt e -> {
                 check(t.turnNo() == 0 && g.player(e.playerId()).orElseThrow().hand().size() == e.handCount()
-                        && e.handCount() == rules.economy().initialHandSize(), "hand count mismatch");
+                        && e.handCount() == g.settings().dealCount(rules), "hand count mismatch");
                 yield g;
             }
             case GameClockStarted e -> {

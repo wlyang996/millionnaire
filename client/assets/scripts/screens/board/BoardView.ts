@@ -8,7 +8,7 @@
 import { Label, Mask, Node, UITransform, Vec3, view } from 'cc';
 import { axisCell, gridCell, gridFor, GridSpec, ringLength } from '../../core/BoardLayout';
 import { BoardTile, GameView, PlayerView, PropertyState } from '../../core/Models';
-import { Theme, textWidth } from '../../core/Theme';
+import { playerColor, Theme, textWidth } from '../../core/Theme';
 import { drawHouse, drawPips } from '../../ui/Icons';
 import { col, fillCircle, fillPoly, fillRR, gfx, line, mk, place, setOpacity, strokeRR, text } from '../../ui/Kit';
 import { avatar } from '../../ui/Widgets';
@@ -103,6 +103,8 @@ export class BoardView {
     private tokens = new Map<string, Token>();
     private fxLayer: Node | null = null;
     private marksLayer: Node | null = null;
+    /** 本次绘制的玩家（座位顺序，取玩家颜色用）。 */
+    private players: PlayerView[] = [];
     private highlight: number | null = null;
     private fx: Fx[] = [];
     private cellToIndex = new Map<string, number>();
@@ -350,6 +352,12 @@ export class BoardView {
         fillRR(gg, m, m, bw, bh - 3, r, baseColor);
         const fh = bh - band;
         fillRR(gg, m, m, bw, fh, r, face);
+        // 有主的地产 / 车站：格面染上所有者的颜色并描边（与玩家条色条、棋子底座同色）
+        const ownerCol = prop && prop.owner ? this.ownerColor(prop, game) : null;
+        if (ownerCol) {
+            fillRR(gg, m, m, bw, fh, r, ownerCol + '55');
+            strokeRR(gg, m + 1.5, m + 1.5, bw - 3, bh - 3, r, ownerCol, 3);
+        }
         if (this.highlight === tile.index) {
             fillRR(gg, m - 1, m - 1, bw + 2, bh + 2, r + 1, '#FFD64655');
             strokeRR(gg, m, m, bw, fh, r, Theme.c.yellow, 3);
@@ -452,7 +460,7 @@ export class BoardView {
     private ownerColor(prop: PropertyState | undefined, game: GameView): string | null {
         if (!prop || !prop.owner) return null;
         const owner = game.players.find((p) => p.playerId === prop.owner);
-        return owner ? OWNER_COLORS[owner.avatar % 8] : null;
+        return owner ? playerColor(game.players, owner.playerId) : null;
     }
 
     /** 某格在棋盘上的宽高（四角大格、两侧扁格、上下窄格不一样）。 */
@@ -478,6 +486,7 @@ export class BoardView {
 
     // ---------- 棋子 ----------
     private drawTokens(parent: Node, game: GameView, myId: string, myName: string): void {
+        this.players = game.players;
         const t = this.g.tile;
         const seen: Record<number, number> = {};
         // 我的人物站在发光底座上、比其他人略大；立绘高约 1.5 倍节点边长（用户反馈原先 1 格偏大，收小到约 0.7 格）
@@ -532,7 +541,7 @@ export class BoardView {
      */
     private drawAltToken(parent: Node, p: PlayerView, k: number, together: number, c: Pt, me: boolean, myName: string): void {
         const t = this.g.tile;
-        const color = OWNER_COLORS[((p.avatar % 8) + 8) % 8];
+        const color = playerColor(this.players, p.playerId) ?? OWNER_COLORS[((p.avatar % 8) + 8) % 8];
         const badge = tokenStyle.value === 'badge';
         // 同格人多时整体缩小并收紧：一行最多 4 个、最多两行，都落在这一格附近（"我"最后画，盖在最上）
         const shrink = together > 4 ? 0.72 : together > 2 ? 0.84 : 1;

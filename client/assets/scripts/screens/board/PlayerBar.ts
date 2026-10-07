@@ -8,7 +8,7 @@ import { ConnState, ControlMode, PlayerView } from '../../core/Models';
 import { Theme } from '../../core/Theme';
 import { drawCoin } from '../../ui/Icons';
 import { fillCircle, fillRR, gfx, mk, onTap, place, setOpacity, strokeRR, text } from '../../ui/Kit';
-import { textWidth } from '../../core/Theme';
+import { playerColor, textWidth } from '../../core/Theme';
 import { avatar } from '../../ui/Widgets';
 
 export interface StatusBadge { text: string; bg: string; fg: string }
@@ -79,7 +79,10 @@ export function drawPlayerBar(parent: Node, x: number, y: number, players: Playe
         fillRR(g, 0, 3, cw, ch, 14, Theme.c.shadow);
         fillRR(g, 0, 0, cw, ch, 14, dead ? '#E3E7EB' : cur ? '#FFF6D6' : '#FFFFFFEE');
         if (cur) strokeRR(g, 1, 1, cw - 2, ch - 2, 14, Theme.c.yellow, 3);
-        avatar(cell, 5, 6, 56, p.avatar, p.nickname, { dim: dead });
+        // 玩家颜色（与其地块底色、棋子底座一致）：头像描边 + 卡片底部色条
+        const color = playerColor(players, p.playerId);
+        avatar(cell, 5, 6, 56, p.avatar, p.nickname, { dim: dead, ring: dead ? undefined : color ?? undefined });
+        if (color && !dead) fillRR(g, 14, ch - 7, cw - 28, 5, 2.5, color);
         if (p.playerId === myId) {
             const badge = mk(cell, 'MeBadge', 2, 2, 24, 24);
             fillCircle(gfx(badge), 12, 12, 12, Theme.c.blue);

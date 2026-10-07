@@ -96,3 +96,13 @@ export function textWidth(str: string, size: number): number {
     }
     return Math.ceil(w);
 }
+
+/**
+ * 玩家颜色（用户 2026-10-07：自己的地要有和自己一样的颜色）：按对局里的座位顺序取 avatarColors，同局 8 人各不相同
+ * （按头像取色会因为选了同一个头像而撞色）。地块底色、归属圆点、棋子底座、玩家条色条都用它。
+ */
+export function playerColor(players: { playerId: string }[], playerId: string | null | undefined): string | null {
+    if (!playerId) return null;
+    const i = players.findIndex((p) => p.playerId === playerId);
+    return i < 0 ? null : Theme.avatarColors[i % Theme.avatarColors.length];
+}

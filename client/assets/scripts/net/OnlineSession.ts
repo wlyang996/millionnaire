@@ -429,6 +429,6 @@ export class OnlineSession {
 export function emptySession(settings?: RoomSettings): SessionView {
     return {
         roomId: '', status: 'LOBBY', hostId: '', members: [], game: null, gamesPlayed: 0, lastResult: null,
-        settings: settings ?? { boardId: 'classic-30', initialCash: 3000, endMode: 'TIME_LIMIT', timeLimitMinutes: 30, rollSeconds: 15 },
+        settings: settings ?? { boardId: 'classic-30', initialCash: 3000, endMode: 'TIME_LIMIT', timeLimitMinutes: 30, rollSeconds: 15, initialCards: 0 },
     };
 }

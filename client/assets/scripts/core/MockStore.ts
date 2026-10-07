@@ -108,7 +108,7 @@ export class MockStore {
         const prevSettings = this.session?.settings;
         const settings: RoomSettings = prevSettings
             ? { ...prevSettings, boardId: sc.boardSize === 30 ? 'classic-30' : 'classic-50' }
-            : { boardId: sc.boardSize === 30 ? 'classic-30' : 'classic-50', initialCash: 3000, endMode: 'TIME_LIMIT', timeLimitMinutes: 30, rollSeconds: 15 };
+            : { boardId: sc.boardSize === 30 ? 'classic-30' : 'classic-50', initialCash: 3000, endMode: 'TIME_LIMIT', timeLimitMinutes: 30, rollSeconds: 15, initialCards: 0 };
         const members: Member[] = [];
         for (let i = 0; i < sc.players; i++) {
             members.push({

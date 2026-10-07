@@ -195,7 +195,8 @@ final class LobbyModule {
                 && config.board(n.boardId()).isPresent()
                 && config.room().initialCashOptions().contains(n.initialCash())
                 && config.timing().timeLimitMinutesOptions().contains(n.timeLimitMinutes())
-                && config.timing().rollSecondsOptions().contains(n.rollSeconds());
+                && config.timing().rollSecondsOptions().contains(n.rollSeconds())
+                && (n.initialCards() == RoomSettings.AS_CONFIG || n.initialCards() >= 0 && n.initialCards() <= config.economy().handLimit());
     }
 
     /**

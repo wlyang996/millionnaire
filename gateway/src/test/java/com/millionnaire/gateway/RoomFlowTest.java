@@ -97,6 +97,12 @@ class RoomFlowTest {
             // 非房主不能开局
             assertThat(wb.call(wb.msg("START_GAME", "x1")).path("code").asText()).isEqualTo("NOT_HOST");
 
+            // 正式配置建房默认不发开局道具；这里改成每人 2 张，用来验证发牌事件只发给本人
+            JsonNode settings = wa.lastUpdate().path("view").path("settings").deepCopy();
+            assertThat(settings.path("initialCards").asInt(-9)).isEqualTo(0);
+            ((com.fasterxml.jackson.databind.node.ObjectNode) settings).put("initialCards", 2);
+            JsonNode changed = wa.call(wa.msg("UPDATE_SETTINGS", "set1").set("settings", settings));
+            assertThat(changed.path("ok").asBoolean()).as(changed.toString()).isTrue();
             assertThat(wa.call(wa.msg("READY", "r1").put("ready", true)).path("ok").asBoolean()).isTrue();
             assertThat(wb.call(wb.msg("READY", "r2").put("ready", true)).path("ok").asBoolean()).isTrue();
             JsonNode started = wa.call(wa.msg("START_GAME", "start"));

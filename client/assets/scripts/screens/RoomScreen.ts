@@ -66,34 +66,39 @@ export class RoomScreen extends Screen {
 
         // 设置
         const set = roundedPanel(this.root, 24, 622, 672, 408);
-        const rows = 5;
-        const rowH = 78;
+        const rows = 6;
+        const rowH = 66;
         const lockHint = '仅房主可修改设置';
-        const mk1 = (label: string, i: number) => text(set, label, 24, 14 + i * rowH, 150, rowH - 8, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
+        const mk1 = (label: string, i: number) => text(set, label, 24, 8 + i * rowH, 150, rowH - 8, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
         const segX = 180;
         const segW = 672 - segX - 20;
         const n = s.members.length;
         mk1('地图', 0);
-        const map = new Segmented(set, segX, 20, segW, 56, [
+        const map = new Segmented(set, segX, 12, segW, 50, [
             { label: '30格', value: 'classic-30', disabled: n > 4, note: '30 格最多 4 人（当前 ' + n + ' 人）' },
             { label: '50格', value: 'classic-50' },
         ], s.settings.boardId, (v) => st.setSetting({ boardId: v as 'classic-30' | 'classic-50' }));
-        if (n > 4) text(set, n + ' 人时 30 格不可选', segX, 78, segW, 22, Theme.font.xs, Theme.c.red, { align: 'l' });
+        if (n > 4) text(set, n + ' 人时 30 格不可选', segX, 62, segW, 18, Theme.font.xs, Theme.c.red, { align: 'l' });
         mk1('初始资金', 1);
-        const cash = new Segmented(set, segX, 20 + rowH, segW, 56, INITIAL_CASH_OPTIONS.map((v) => ({ label: String(v), value: v })), s.settings.initialCash,
+        const cash = new Segmented(set, segX, 12 + rowH, segW, 50, INITIAL_CASH_OPTIONS.map((v) => ({ label: String(v), value: v })), s.settings.initialCash,
             (v) => st.setSetting({ initialCash: v as number }));
         mk1('结束模式', 2);
-        const mode = new Segmented(set, segX, 20 + rowH * 2, segW, 56, [{ label: '限时', value: 'TIME_LIMIT' }, { label: '破产', value: 'BANKRUPTCY' }],
+        const mode = new Segmented(set, segX, 12 + rowH * 2, segW, 50, [{ label: '限时', value: 'TIME_LIMIT' }, { label: '破产', value: 'BANKRUPTCY' }],
             s.settings.endMode, (v) => st.setSetting({ endMode: v as EndMode }));
         mk1('游戏时长', 3);
         const limited = s.settings.endMode === 'TIME_LIMIT';
-        const dur = new Segmented(set, segX, 20 + rowH * 3, segW, 56,
+        const dur = new Segmented(set, segX, 12 + rowH * 3, segW, 50,
             TIME_LIMIT_OPTIONS.map((v) => ({ label: v + '分钟', value: v, disabled: !limited, note: '破产模式不限时长（最长 120 分钟）' })),
             s.settings.timeLimitMinutes, (v) => st.setSetting({ timeLimitMinutes: v as number }));
         mk1('投骰时间', 4);
-        const roll = new Segmented(set, segX, 20 + rowH * 4, segW, 56, ROLL_SECONDS_OPTIONS.map((v) => ({ label: v + '秒', value: v })),
+        const roll = new Segmented(set, segX, 12 + rowH * 4, segW, 50, ROLL_SECONDS_OPTIONS.map((v) => ({ label: v + '秒', value: v })),
             s.settings.rollSeconds, (v) => st.setSetting({ rollSeconds: v as number }), 8, Theme.font.sm);
-        for (const sg of [map, cash, mode, dur, roll]) {
+        // 开局道具（用户 2026-10-07）：默认不发；选 1～6 张则开局每人随机发这么多张（事件仍可获得道具）
+        mk1('开局道具', 5);
+        const cards = new Segmented(set, segX, 12 + rowH * 5, segW, 50,
+            [{ label: '无', value: 0 }, ...[1, 2, 3, 4, 5, 6].map((v) => ({ label: String(v), value: v }))],
+            s.settings.initialCards, (v) => st.setSetting({ initialCards: v as number }), 6, Theme.font.sm);
+        for (const sg of [map, cash, mode, dur, roll, cards]) {
             sg.locked = !isHost;
             sg.lockHint = lockHint;
         }
