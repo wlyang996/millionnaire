@@ -11,6 +11,7 @@ import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
 import { art, AVATAR_NAMES, informationCharacterKey } from '../ui/Art';
+import { isWechat } from '../net/Wx';
 
 export class ProfileScreen extends Screen {
     readonly id = 'profile' as const;
@@ -22,6 +23,7 @@ export class ProfileScreen extends Screen {
     private hintIcon!: Graphics;
     private enter!: Button;
     private field!: EditField;
+    private busy = false;
 
     protected build(): void {
         const st = ctx.store;
@@ -48,10 +50,11 @@ export class ProfileScreen extends Screen {
         // 微信登录
         const logged = st.profile.loggedIn;
         new Button(this.root, logged ? '已登录 · 微信用户 ✓' : '微信登录', 36, 500, 648, 92, logged ? 'ghost' : 'success', () => {
-            if (st.profile.loggedIn) return;
+            if (st.profile.loggedIn || this.busy) return;
+            if (st.online && isWechat()) return this.wechatLogin();
             st.setProfile({ loggedIn: true });
             if (!this.nick && !st.online) this.nick = '微信用户';
-            Toast.show(st.online ? '测试登录：填写昵称后保存即可联机（暂未接入微信）' : '微信登录成功（演示，未连接微信）');
+            Toast.show(st.online ? '测试登录：填写昵称后保存即可联机' : '微信登录成功（演示，未连接微信）');
             this.rebuild();
         }, Theme.font.lg);
 
@@ -97,7 +100,7 @@ export class ProfileScreen extends Screen {
             if (!r.ok) return Toast.show(r.reason);
             st.setProfile({ nickname: this.nick.trim(), avatar: this.avatarIdx });
             if (!st.online) return ctx.screens.go('lobby');
-            // 联机：测试身份登录并连接服务器
+            // 联机：微信里用 wx.login（带上昵称与头像），其他环境用测试身份，然后连接服务器
             this.enter.setEnabled(false, '正在连接服务器…');
             st.online.login(this.nick.trim(), this.avatarIdx).then(() => ctx.screens.go('lobby'), (e: { code?: string }) => {
                 Toast.show(e && e.code === 'INVALID_NICKNAME' ? '昵称不合法，请换一个' : '连接服务器失败，请稍后重试');
@@ -105,6 +108,27 @@ export class ProfileScreen extends Screen {
             });
         });
         this.checkNow();
+    }
+
+    /** 微信里：wx.login 换身份；老用户直接进大厅（沿用服务端存的昵称、头像），新用户留在本页填资料。 */
+    private wechatLogin(): void {
+        const st = ctx.store;
+        this.busy = true;
+        st.online!.wechatQuickLogin().then((p) => {
+            this.busy = false;
+            st.setProfile({ loggedIn: true });
+            if (p) {
+                st.setProfile({ nickname: p.nickname, avatar: p.avatar >= 0 ? p.avatar : st.profile.avatar });
+                Toast.show('欢迎回来，' + p.nickname);
+                ctx.screens.go('lobby');
+                return;
+            }
+            Toast.show('微信登录成功，请填写昵称并选择头像');
+            this.rebuild();
+        }, (e: { code?: string }) => {
+            this.busy = false;
+            Toast.show(e && e.code === 'WECHAT_LOGIN_FAILED' ? '微信登录失败，请重试' : '连接服务器失败，请稍后重试');
+        });
     }
 
     private checkNow(): void {

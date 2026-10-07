@@ -4,6 +4,7 @@
  * 由 LobbyBootstrap 组件在 onLoad 里调用 start()，每帧调用 update()。
  */
 import { Camera, Canvas, Color, Layers, Node, profiler, ResolutionPolicy, UITransform, Vec3, view } from 'cc';
+import { launchRoom, onShowRoom, setupShareMenu } from './net/Wx';
 import { MockStore, Scenario } from './core/MockStore';
 import { POPUP_CATALOG } from './popups/Catalog';
 import { ResyncPopup } from './popups/ResyncPopup';
@@ -61,6 +62,17 @@ export class App {
             store.session = emptySession();
             online.onRoute = (r) => ctx.screens.go(r);
             online.onToast = (m) => Toast.show(m);
+            // 微信：右上角转发带上当前房间号；好友从分享卡片进入（冷启动或切回前台）时记下房间号，进大厅后自动加入
+            setupShareMenu(() => {
+                const s = store.session;
+                const inRoom = !!s.roomId && s.members.some((m) => m.playerId === store.myId);
+                return { room: inRoom ? s.roomId : null, nickname: store.profile.nickname };
+            });
+            store.pendingRoom = launchRoom();
+            onShowRoom((room) => {
+                store.pendingRoom = room;
+                store.emit();
+            });
         }
         ctx.store = store;
         ctx.clock = store.clock;

@@ -36,6 +36,8 @@ public class UserStore {
     private final ObjectProvider<JdbcTemplate> jdbc;
     private final Clock clock;
     private final Map<Long, User> cache = new ConcurrentHashMap<>();
+    /** 没连库时的微信身份表。 */
+    private final Map<String, Long> identities = new ConcurrentHashMap<>();
 
     public UserStore(ObjectProvider<JdbcTemplate> jdbc, Clock clock) {
         this.jdbc = jdbc;
@@ -70,6 +72,67 @@ public class UserStore {
                 }
             }
         }
+    }
+
+    /** 微信身份：appId + openid → 用户（没连库时在内存）。 */
+    public Optional<User> findByOpenid(String appId, String openid) {
+        JdbcTemplate t = jdbc.getIfAvailable();
+        if (t == null) {
+            Long id = identities.get(appId + '\n' + openid);
+            return id == null ? Optional.empty() : Optional.ofNullable(cache.get(id));
+        }
+        List<Long> ids = t.query("SELECT user_id FROM wx_identity WHERE app_id = ? AND open_id = ?",
+                (rs, i) -> rs.getLong(1), bytes(appId), bytes(openid));
+        if (ids.isEmpty()) {
+            return Optional.empty();
+        }
+        long now = clock.millis();
+        t.update("UPDATE wx_identity SET last_login_at = ? WHERE app_id = ? AND open_id = ?", now, bytes(appId), bytes(openid));
+        t.update("UPDATE app_user SET last_login_at = ? WHERE user_id = ?", now, ids.get(0));
+        cache.remove(ids.get(0));
+        return find(ids.get(0));
+    }
+
+    /** 首次微信登录：建用户并绑定 openid；并发重复登录时返回先建好的那个。 */
+    public User createWithOpenid(String appId, String openid, String nickname, int avatar) {
+        JdbcTemplate t = jdbc.getIfAvailable();
+        User u = create(nickname, avatar);
+        if (t == null) {
+            Long prev = identities.putIfAbsent(appId + '\n' + openid, u.id());
+            if (prev != null) {
+                cache.remove(u.id());
+                return cache.get(prev);
+            }
+            return u;
+        }
+        long now = clock.millis();
+        try {
+            t.update("INSERT INTO wx_identity (app_id, open_id, user_id, created_at, last_login_at) VALUES (?, ?, ?, ?, ?)",
+                    bytes(appId), bytes(openid), u.id(), now, now);
+            return u;
+        } catch (DuplicateKeyException e) {
+            // 同一微信号并发首次登录：删掉刚建的空用户（还没有任何引用），用先绑定的
+            t.update("DELETE FROM app_user WHERE user_id = ?", u.id());
+            cache.remove(u.id());
+            return findByOpenid(appId, openid).orElseThrow(() -> e);
+        }
+    }
+
+    /** 改昵称 / 头像（avatar 为 0～7，其他值不改头像）。 */
+    public User updateProfile(User u, String nickname, int avatar) {
+        int avatarId = avatar >= 0 && avatar < AVATARS ? avatar + 1 : u.avatarId();
+        User next = new User(u.id(), nickname, avatarId);
+        JdbcTemplate t = jdbc.getIfAvailable();
+        if (t != null) {
+            t.update("UPDATE app_user SET nickname = ?, avatar_id = ?, updated_at = ? WHERE user_id = ?",
+                    nickname, avatarId, clock.millis(), u.id());
+        }
+        cache.put(u.id(), next);
+        return next;
+    }
+
+    private static byte[] bytes(String s) {
+        return s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     public Optional<User> find(long id) {

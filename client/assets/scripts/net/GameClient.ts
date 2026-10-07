@@ -73,6 +73,37 @@ export class GameClient {
         this.nickname = r.body.nickname;
     }
 
+    /** 服务端开放的登录方式（微信登录要服务端配好 AppID / AppSecret）。旧后台没有这个接口时当作只有测试登录。 */
+    async authMethods(): Promise<{ wechat: boolean; test: boolean }> {
+        try {
+            const r = await requestJson<{ wechat?: boolean; test?: boolean }>('GET', this.baseUrl + '/api/auth/methods');
+            if (r.status === 200 && r.body) return { wechat: !!r.body.wechat, test: r.body.test !== false };
+        } catch {
+            // 网络失败：按旧后台处理，后面的登录请求会再报错
+        }
+        return { wechat: false, test: true };
+    }
+
+    /**
+     * 微信登录：code 来自 wx.login。老用户直接登录（返回服务端存的昵称、头像）；新用户没带昵称时返回 null（需要先填资料）。
+     * 失败时抛出带 code 的错误（WECHAT_LOGIN_FAILED、INVALID_NICKNAME、WECHAT_NOT_CONFIGURED…）。
+     */
+    async wxLogin(code: string, nickname?: string, avatar?: number): Promise<{ nickname: string; avatar: number } | null> {
+        const body: Record<string, unknown> = { code };
+        if (nickname) body.nickname = nickname;
+        if (avatar !== undefined) body.avatar = avatar;
+        const r = await requestJson<{ token?: string; userId?: string; nickname?: string; avatar?: number; needProfile?: boolean; code?: string }>(
+            'POST', this.baseUrl + '/api/auth/wx-login', body);
+        if (r.status === 200 && r.body?.needProfile) return null;
+        if (r.status !== 200 || !r.body?.token) {
+            throw Object.assign(new Error('wx login failed'), { code: r.body?.code ?? 'HTTP_' + r.status });
+        }
+        this.token = r.body.token;
+        this.userId = r.body.userId ?? null;
+        this.nickname = r.body.nickname ?? '';
+        return { nickname: r.body.nickname ?? '', avatar: typeof r.body.avatar === 'number' ? r.body.avatar : -1 };
+    }
+
     async boards(): Promise<BoardTemplate[]> {
         const r = await requestJson<BoardTemplate[]>('GET', this.baseUrl + '/api/boards');
         if (r.status !== 200 || !r.body) throw new Error('cannot load boards');

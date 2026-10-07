@@ -1,5 +1,6 @@
 /** 页面 3：好友房间（房号分享、8 个座位、房主设置、语音条/聊天片段、准备/开局）。 */
 import { Node } from 'cc';
+import { copyText, shareRoom } from '../net/Wx';
 import { boardSizeOf, INITIAL_CASH_OPTIONS, maxPlayers, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
 import { EndMode, Member } from '../core/Models';
 import { Theme } from '../core/Theme';
@@ -39,8 +40,18 @@ export class RoomScreen extends Screen {
         const code = roundedPanel(this.root, 24, 96, 672, 130);
         text(code, '房间号', 28, 12, 200, 34, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
         text(code, s.roomId, 24, 40, 330, 84, 76, Theme.c.ink, { bold: true, align: 'l' });
-        new IconButton(code, 360, 40, 64, '', () => Toast.show('房间号已复制：' + s.roomId), Theme.c.ivoryDark, Theme.c.ink, (g, z) => drawCopy(g, z / 2, z / 2, z * 0.7, Theme.c.ink));
-        secondaryButton(code, '分享邀请', 450, 28, 198, 76, () => Toast.show('已调起微信分享（演示）'), Theme.font.md);
+        new IconButton(code, 360, 40, 64, '', () => {
+            if (!st.online) return Toast.show('房间号已复制：' + s.roomId);
+            void copyText(s.roomId).then((ok) => Toast.show(ok ? '房间号已复制：' + s.roomId : '复制失败，请手动记下房间号'));
+        }, Theme.c.ivoryDark, Theme.c.ink, (g, z) => drawCopy(g, z / 2, z / 2, z * 0.7, Theme.c.ink));
+        // 微信里拉起转发（好友点卡片直接进本房间）；浏览器里复制带 ?room= 的链接
+        secondaryButton(code, '分享邀请', 450, 28, 198, 76, () => {
+            if (!st.online) return Toast.show('已调起微信分享（演示）');
+            void shareRoom(s.roomId, st.profile.nickname).then((r) => {
+                if (r === 'copied') Toast.show('邀请链接已复制，发给好友即可加入');
+                else if (r === 'failed') Toast.show('请把房间号 ' + s.roomId + ' 告诉好友');
+            });
+        }, Theme.font.md);
 
         // 座位 2×4
         const seats = roundedPanel(this.root, 24, 238, 672, 372);

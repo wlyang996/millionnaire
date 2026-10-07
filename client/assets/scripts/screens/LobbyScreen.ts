@@ -1,5 +1,6 @@
 /** 页面 2：大厅（创建房间 / 房号加入 / 返回对局 / 我的战绩）。 */
 import { UITransform } from 'cc';
+import { describe } from '../net/OnlineSession';
 import { Theme } from '../core/Theme';
 import { HistoryPopup } from '../popups/HistoryPopup';
 import { JoinRoomPopup } from '../popups/JoinRoomPopup';
@@ -19,6 +20,7 @@ export class LobbyScreen extends Screen {
     protected build(): void {
         const st = ctx.store;
         this.backdrop('sky');
+        this.joinFromShare();
         art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
 
         // 顶部：头像 + 昵称 + 在线信号 + 设置/音量
@@ -98,4 +100,21 @@ export class LobbyScreen extends Screen {
         return !!art(parent, 'board_town', 0, 0, size?.width ?? 500, size?.height ?? 270, 'stretch');
     }
 
+
+    /** 从分享卡片 / ?room= 进来：登录进大厅后自动加入那个房间（连接还没建好时稍后重试，最多 3 次）。 */
+    private joinFromShare(attempt = 0): void {
+        const st = ctx.store;
+        const code = st.pendingRoom;
+        if (!st.online || !code) return;
+        st.pendingRoom = null;
+        void st.online.join(code).then((r) => {
+            if (r.ok) return void ctx.screens.push('room');
+            if ((r.code === 'OFFLINE' || r.code === 'TIMEOUT') && attempt < 2) {
+                st.pendingRoom = code;
+                setTimeout(() => this.joinFromShare(attempt + 1), 1500);
+                return;
+            }
+            Toast.show('无法加入房间 ' + code + '：' + describe(r.code));
+        });
+    }
 }

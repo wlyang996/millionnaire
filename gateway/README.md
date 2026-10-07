@@ -11,6 +11,7 @@
 | `MYSQL_ADDRESS` / `MYSQL_USERNAME` / `MYSQL_PASSWORD` | — | db 配置下必填，用内网地址 |
 | `MYSQL_DATABASE` | `millionnaire` | 库名，须事先建好 |
 | `TEST_LOGIN_ENABLED` | `true` | 测试身份登录开关；正式上线前设为 `false` |
+| `WECHAT_APPID` / `WECHAT_APPSECRET` | 无 | 微信小游戏的 AppID 与 AppSecret（小游戏后台"开发管理 → 开发设置"）。两个都配了微信登录才可用；只放环境变量，不进仓库 |
 
 本地运行：先在 `server/` 执行 `mvn install -Dmaven.test.skip=true`，再在本目录 `mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8080`。测试：`mvn test`。
 
@@ -26,8 +27,10 @@
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| POST | `/api/auth/test-login` | 请求 `{"nickname":"阿杰"}`；返回 `{"token","userId","nickname"}`。每次登录都创建新用户。昵称按引擎规则校验，失败 400 `{"code":"INVALID_NICKNAME"}` |
-| GET | `/api/me` | 头 `Authorization: Bearer <token>`；返回 `{"userId","nickname","roomCode"}` |
+| POST | `/api/auth/test-login` | 请求 `{"nickname":"阿杰","avatar":3}`（avatar 可省略）；返回 `{"token","userId","nickname","avatar"}`。每次登录都创建新用户。昵称按引擎规则校验，失败 400 `{"code":"INVALID_NICKNAME"}` |
+| POST | `/api/auth/wx-login` | 微信登录。请求 `{"code","nickname?","avatar?"}`，`code` 为 `wx.login` 的一次性 code，服务端调 `jscode2session` 换 openid（不保存 session_key），按 `wx_identity` 找用户。老用户直接返回 `{"token","userId","nickname","avatar","roomCode"}`（带了昵称 / 头像就更新）；新用户没带昵称返回 `{"needProfile":true}`（code 已用掉，填完资料后重新 `wx.login` 再调）。错误：503 `WECHAT_NOT_CONFIGURED`、401 `WECHAT_LOGIN_FAILED`、400 `INVALID_NICKNAME` / `BAD_REQUEST` |
+| GET | `/api/auth/methods` | `{"wechat":bool,"test":bool}`：客户端据此决定走微信登录还是测试登录 |
+| GET | `/api/me` | 头 `Authorization: Bearer <token>`；返回 `{"userId","nickname","avatar","roomCode"}`（avatar 为 -1 表示没选） |
 | GET | `/api/me/history` | 头 `Authorization`；我的最近 20 局（新的在前）：`[{gameNo, endMode, timeLimitMinutes, boardId, playerCount, startedAt, endedAt, endReason, rank, netWorth, cash, life}]`。每局结束时写入 `game_record` / `game_record_player`（db 配置），否则只在内存 |
 | GET | `/api/room` | 当前房间快照，形状同 WebSocket 的 `UPDATE`（`events` 为空）；不在房间 404 |
 | GET | `/health`、`/health/db` | 存活与数据库诊断 |
@@ -84,12 +87,14 @@
 | type | 字段 | 说明 |
 |---|---|---|
 | `RESULT` | `requestId`, `ok`, `outcome`, `code`, `roomCode?`, `message?` | `outcome`：`ACCEPTED` / `REJECTED`（规则拒绝，`code` 为引擎拒绝原因，如 `NOT_YOUR_WINDOW`、`INSUFFICIENT_CASH`）/ `ERROR`（网关错误，`code` 如 `NOT_IN_ROOM`、`ROOM_NOT_FOUND`、`ALREADY_IN_ROOM`、`UNKNOWN_COMMAND`、`UNAUTHENTICATED`、`REQUEST_ID_REQUIRED`） |
-| `UPDATE` | `roomCode`, `version`, `serverTime`, `events`, `view` | 房间每推进一步（含定时推进）推送一次：`events` 是本步对你可见的事件（`{"kind","data"}`，用于动画），`view` 是你的最新完整视图（以它为准渲染）。`version` 单调递增 |
+| `UPDATE` | `roomCode`, `version`, `serverTime`, `events`, `view`, `avatars` | 房间每推进一步（含定时推进）推送一次：`events` 是本步对你可见的事件（`{"kind","data"}`，用于动画），`view` 是你的最新完整视图（以它为准渲染）。`version` 单调递增 |
 | `ROOM_CLOSED` | `roomCode`, `reason` | 房间因故障等原因关闭 |
 | `CHAT` | `roomCode`, `lines[{from,nickname,text,at}]` | 最近 30 条聊天的完整列表（有人发言、连接、SYNC 时推送），直接替换本地列表 |
 | `HELLO` / `PONG` / `NO_ROOM` / `REPLACED` | — | 见上文 |
 
 注意：一步的 `UPDATE` 会先于该命令的 `RESULT` 到达。
+
+`avatars` 是房间里选过头像的玩家：`{"玩家ID": 头像序号 0～7}`，没选的不在表里（客户端按玩家 ID 取默认头像）。头像只在网关保存（`app_user.avatar_id` = 序号 + 1），不进引擎状态。
 
 `view` 为引擎的 `SessionView`：`status`、`hostId`、`members[{playerId,nickname,ready}]`、`settings`、`game`（未开局为 null）、`gamesPlayed`、`lastResult`。
 `game` 含 `players`（位置、现金、手牌数、监狱、控制与连接状态）、`board.ownables`、`currentPlayer`、`stage`、`windows[{windowId,kind,owner,opensAt,deadline,paused}]`、`landing`、`debt`、`myHand`（只有自己的手牌）。
@@ -104,5 +109,5 @@
 
 ## 尚未实现
 - 掉线判定（15 秒疑似、30 秒确认）还没接到引擎的连接命令上，目前断线的玩家按"在线但不操作"处理（超时由引擎自动处理）。
-- 微信登录（云托管 callContainer 会注入 `X-WX-OPENID`，接入时不需要 AppSecret）。
+- 微信登录走 `wx.login` + `jscode2session`（需要 AppSecret），沿用现在客户端直连云托管域名的 HTTP / WebSocket。如果以后改用 `wx.cloud.callContainer` / `connectContainer`，可以改读云托管注入的 `X-WX-OPENID`（不需要 AppSecret），但必须确认公网请求无法伪造这个头。
 - 战绩写库（`game_record`）、聊天落库、房间号加入频率限制、空房间超时关闭。

@@ -67,6 +67,8 @@ export class MockStore {
     myRequest: PendingRequest | null = null;
     /** [联机] 最近一次拍卖 / 交易的结果提示（设计稿 29 结果卡） */
     flowResult: FlowResult | null = null;
+    /** [联机] 从分享卡片 / ?room= 带来的房间号：登录进大厅后自动加入 */
+    pendingRoom: string | null = null;
     private listeners: Listener[] = [];
 
     constructor() {

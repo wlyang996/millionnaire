@@ -20,3 +20,7 @@ millionnaire:
   auth:
     # 测试身份登录（POST /api/auth/test-login）。正式上线前在云托管环境变量里设 TEST_LOGIN_ENABLED=false
     test-login-enabled: ${TEST_LOGIN_ENABLED:true}
+  wechat:
+    # 微信小游戏登录（POST /api/auth/wx-login）。只从环境变量读，不进仓库；不配时该接口返回 WECHAT_NOT_CONFIGURED
+    app-id: ${WECHAT_APPID:}
+    app-secret: ${WECHAT_APPSECRET:}

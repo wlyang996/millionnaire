@@ -11,6 +11,7 @@ import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
 import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
 import { adaptSession, lastDiceFrom } from './ViewAdapter';
+import { isWechat, wxLoginCode } from './Wx';
 
 export type Cue =
     | { kind: 'dice'; playerId: string; value: number }
@@ -83,9 +84,34 @@ export class OnlineSession {
         return this.client.userId ?? '';
     }
 
-    /** 测试身份登录并连接；失败时抛出带 code 的错误。 */
+    /** 在微信小游戏里且服务端已配置微信登录时，走微信登录。 */
+    private async useWechat(): Promise<boolean> {
+        return isWechat() && (await this.client.authMethods()).wechat;
+    }
+
+    /**
+     * 微信静默登录（资料页"微信登录"）：老用户直接登录并连接，返回服务端存的昵称与头像；新用户返回 null（需要先填资料）；
+     * 不在微信里或服务端没配微信登录时也返回 null（继续用测试登录）。
+     */
+    async wechatQuickLogin(): Promise<{ nickname: string; avatar: number } | null> {
+        if (!(await this.useWechat())) return null;
+        const profile = await this.client.wxLogin(await wxLoginCode());
+        if (profile) await this.afterLogin();
+        return profile;
+    }
+
+    /** 登录并连接：微信里用 wx.login（带上资料页的昵称、头像），其他环境用测试身份；失败时抛出带 code 的错误。 */
     async login(nickname: string, avatar?: number): Promise<void> {
-        await this.client.login(nickname, avatar);
+        if (await this.useWechat()) {
+            const profile = await this.client.wxLogin(await wxLoginCode(), nickname, avatar);
+            if (!profile) throw Object.assign(new Error('profile required'), { code: 'INVALID_NICKNAME' });
+        } else {
+            await this.client.login(nickname, avatar);
+        }
+        await this.afterLogin();
+    }
+
+    private async afterLogin(): Promise<void> {
         this.boards = await this.client.boards();
         this.store.myId = this.client.userId!;
         this.leaveLocally();
