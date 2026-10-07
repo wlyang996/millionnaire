@@ -69,32 +69,47 @@ public class WechatAuth {
         return exchanger.exchange(appId, secret, code.strip());
     }
 
-    /** 真实实现：GET {apiBase}/sns/jscode2session。 */
+    /**
+     * 真实实现：GET {apiBase}/sns/jscode2session。HTTP/1.1；HTTPS 连不上时改用 http://api.weixin.qq.com 再试一次
+     * （云托管开启"开放接口服务"后，容器访问 api.weixin.qq.com 走云调用转发，按文档应使用 HTTP）。
+     */
     static CodeExchanger http(String apiBase, ObjectMapper json) {
-        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+        HttpClient client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(5)).build();
+        String primary = apiBase.replaceAll("/+$", "");
+        String fallback = primary.startsWith("https://") ? "http://" + primary.substring("https://".length()) : null;
         return (appId, secret, code) -> {
-            String url = apiBase.replaceAll("/+$", "") + "/sns/jscode2session?appid=" + enc(appId) + "&secret=" + enc(secret)
-                    + "&js_code=" + enc(code) + "&grant_type=authorization_code";
-            try {
-                HttpResponse<String> r = client.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(8)).GET().build(),
-                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-                JsonNode body = json.readTree(r.body());
-                String openid = body.path("openid").asText("");
-                if (r.statusCode() != 200 || openid.isEmpty()) {
-                    // 不记录 code 与 secret
-                    log.warn("jscode2session failed: http {} errcode {} errmsg {}", r.statusCode(), body.path("errcode").asInt(),
-                            body.path("errmsg").asText());
-                    return Exchange.fail(body.path("errcode").asInt(r.statusCode()), body.path("errmsg").asText(""));
-                }
-                return Exchange.ok(openid);
-            } catch (IOException e) {
-                log.warn("jscode2session unreachable: {}", e.toString());
-                return Exchange.fail(-1, "unreachable");
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return Exchange.fail(-1, "interrupted");
+            Exchange r = call(client, json, primary, appId, secret, code);
+            if (r.errcode() == -1 && fallback != null) {
+                Exchange second = call(client, json, fallback, appId, secret, code);
+                return second.errcode() == -1 ? Exchange.fail(-1, r.errmsg() + " | " + second.errmsg()) : second;
             }
+            return r;
         };
+    }
+
+    private static Exchange call(HttpClient client, ObjectMapper json, String base, String appId, String secret, String code) {
+        String url = base + "/sns/jscode2session?appid=" + enc(appId) + "&secret=" + enc(secret)
+                + "&js_code=" + enc(code) + "&grant_type=authorization_code";
+        try {
+            HttpResponse<String> r = client.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(8)).GET().build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            JsonNode body = json.readTree(r.body());
+            String openid = body.path("openid").asText("");
+            if (r.statusCode() != 200 || openid.isEmpty()) {
+                // 不记录 code 与 secret
+                log.warn("jscode2session via {} failed: http {} errcode {} errmsg {}", base, r.statusCode(), body.path("errcode").asInt(),
+                        body.path("errmsg").asText());
+                return Exchange.fail(body.path("errcode").asInt(r.statusCode()), body.path("errmsg").asText(""));
+            }
+            return Exchange.ok(openid);
+        } catch (IOException e) {
+            log.warn("jscode2session via {} unreachable", base, e);
+            String why = e.getClass().getSimpleName() + (e.getMessage() == null ? "" : ": " + e.getMessage());
+            return Exchange.fail(-1, base.startsWith("https") ? "https " + why : "http " + why);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return Exchange.fail(-1, "interrupted");
+        }
     }
 
     private static String enc(String s) {
