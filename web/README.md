@@ -8,7 +8,9 @@
 
 ## 每次更新
 1. `git pull`，在 Cocos Creator 里构建「Web 手机端」（产物在 `client/build/web-mobile-001/`）。
-2. 双击仓库根目录的 `update-web.bat`（等同于 `powershell -ExecutionPolicy Bypass -File web\update-dist.ps1`，把产物复制到 `web/dist/`）。
-3. `git add web/dist && git commit -m "Update web build" && git push`，然后在云托管里发布 `web` 服务（或开启推送自动触发）。
+2. 双击仓库根目录的 `update-web.bat`：把产物复制到 `web/dist/`，**自动提交并推送当前分支**（只提交 `web/dist` 的变化，其他未提交的改动保持原样；推送前先合并远端新提交）。
+   - 构建目录不是 `web-mobile-001` 时：`update-web.bat web-mobile-002`；只复制不提交：`update-web.bat -NoPush`。
+   - 合并冲突或推送失败时窗口会给出提示，新包已在本地提交，处理后再 `git push` 即可。
+3. 在云托管里发布 `web` 服务（或开启推送自动触发）。
 
 注意：推送到 `prod` 会同时触发后台服务的流水线（若开启了自动触发），后台重启会解散进行中的对局。
