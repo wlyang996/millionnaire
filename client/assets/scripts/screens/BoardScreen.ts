@@ -5,7 +5,7 @@
  */
 import { BlockInputEvents, Label, Node } from 'cc';
 import { Countdown, formatMMSS } from '../core/Clock';
-import { eventViewMode } from '../core/EventDraw';
+import { EVENT_IDLE, eventViewMode } from '../core/EventDraw';
 import { matchClockOpacity, matchClockState } from '../core/MatchClock';
 import { GameView, PlayerView } from '../core/Models';
 import { Theme } from '../core/Theme';
@@ -552,6 +552,22 @@ export class BoardScreen extends Screen {
             return;
         }
         if (this.dice && this.dice.playing) return;
+        // 我点了卡背、正在等服务端的抽卡结果：结果排在队首时立即取出翻牌（否则下面的"翻牌期间不播放"会把它一直挡住）
+        const head = online.cues[0];
+        if (head && head.kind === 'event' && !head.waiting && st.eventDraw.phase === 'FLIPPING' && !st.eventDraw.result) {
+            online.cues.shift();
+            st.eventDraw = { phase: 'FLIPPING', actor: head.actor, since: Date.now(), result: head.result, settled: st.eventDraw.settled + 1 };
+            st.emit();
+            return;
+        }
+        // 兜底：点了卡背 10 秒还没等到结果（命令被拒、网络丢包），还在等抽卡就回到"点击抽卡"，否则收起
+        if (st.eventDraw.phase === 'FLIPPING' && !st.eventDraw.result && Date.now() - st.eventDraw.since > 10000
+            && !online.cues.some((c) => c.kind === 'event')) {
+            const waiting = !!g.landing && g.landing.step === 'EVENT' && g.landing.decisionPending;
+            st.eventDraw = waiting ? { ...st.eventDraw, phase: 'WAITING', since: Date.now() } : { ...EVENT_IDLE, settled: st.eventDraw.settled };
+            st.emit();
+            return;
+        }
         // 事件卡翻牌与结果展示期间不播后续走棋（先看清结果再移动）
         if (st.eventDraw.phase === 'FLIPPING' || st.eventDraw.phase === 'RESULT') return;
         // 拍卖进行中（土地拍卖或拍卖卡）：所有手动的存活玩家都弹出竞价页（卖家 / 发起人只能看）
