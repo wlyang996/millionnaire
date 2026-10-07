@@ -1,7 +1,9 @@
 /** 二次确认弹窗（认输、移除成员、返回大厅等）。 */
 import { Node } from 'cc';
 import { Theme } from '../core/Theme';
-import { dangerButton, ghostButton, primaryButton } from '../ui/Buttons';
+import { dangerButton, ghostButton, primaryButton, secondaryButton } from '../ui/Buttons';
+import { art, informationCharacterKey } from '../ui/Art';
+import { ctx } from '../ui/Ctx';
 import { text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 
@@ -37,14 +39,30 @@ export class ConfirmPopup extends Popup {
     }
 }
 
-/** 认输二次确认（规则：主动认输须二次确认；无欠款则现金和资产系统回收，不奖励他人）。 */
-export function surrenderConfirm(onConfirm: () => void): ConfirmPopup {
-    return new ConfirmPopup({
-        title: '确认认输？',
-        message: '认输后你的现金和全部资产由系统回收，不会奖励其他玩家。之后只能观战、聊天和语音。',
-        confirmText: '确认认输',
-        cancelText: '继续游戏',
-        danger: true,
-        onConfirm,
-    }, 'surrender');
+/**
+ * 认输二次确认（设计稿 17 中）：面板上方探出本人角色半身像；大标题"确认认输？"、两行说明，
+ * 蓝色"继续游戏" / 红色"确认认输"。规则：主动认输须二次确认；现金与资产由系统回收，不奖励他人。
+ */
+export class SurrenderPopup extends Popup {
+    constructor(private readonly onConfirm: () => void) {
+        super('surrender', '', 576, 360, 0, false);
+        this.dimBackground = true;
+    }
+
+    protected buildBody(p: Node, w: number, h: number): void {
+        const me = ctx.store.me();
+        art(p, informationCharacterKey(me ? me.avatar : 0), (w - 180) / 2, -186, 180, 202);
+        text(p, '确认认输？', 0, 34, w, 70, 46, Theme.c.navy, { bold: true });
+        text(p, '现金和资产由系统回收，\n之后可观战和聊天', 30, 112, w - 60, 90, Theme.font.md, Theme.c.noteGray, { wrap: true, lineHeight: 40 });
+        const bw = (w - 36 * 2 - 24) / 2;
+        secondaryButton(p, '继续游戏', 36, h - 124, bw, 92, () => this.close(), Theme.font.lg);
+        dangerButton(p, '确认认输', 36 + bw + 24, h - 124, bw, 92, () => {
+            this.close();
+            this.onConfirm();
+        }, Theme.font.lg);
+    }
+}
+
+export function surrenderConfirm(onConfirm: () => void): Popup {
+    return new SurrenderPopup(onConfirm);
 }
