@@ -14,6 +14,7 @@ import com.millionnaire.gateway.auth.UserStore;
 import com.millionnaire.gateway.auth.UserStore.User;
 import com.millionnaire.gateway.room.ClientException;
 import com.millionnaire.gateway.room.LiveRoom;
+import com.millionnaire.gateway.room.Presence;
 import com.millionnaire.gateway.room.RoomService;
 import com.millionnaire.gateway.room.Wire;
 import java.io.IOException;
@@ -47,11 +48,13 @@ public class GameSocketHandler extends TextWebSocketHandler {
     private final Wire wire;
     private final Clock clock;
     private final boolean testLoginEnabled;
+    private final Presence presence;
 
     public GameSocketHandler(RoomService rooms, UserStore users, SessionTokens tokens, Sockets sockets, Wire wire,
-                             Clock clock,
+                             Clock clock, Presence presence,
                              @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled) {
         this.testLoginEnabled = testLoginEnabled;
+        this.presence = presence;
         this.rooms = rooms;
         this.users = users;
         this.tokens = tokens;
@@ -88,6 +91,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
                 return;
             }
             User user = currentUser(session);
+            presence.touch(user.playerId(), clock.millis()); // 任何有效消息（含心跳）都算在线
             if (type == null) {
                 throw new ClientException("BAD_REQUEST", "type missing");
             }
@@ -205,6 +209,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
             sockets.unbind(Long.toString(previous), session);
         }
         session.getAttributes().put(USER, uid);
+        presence.touch(user.playerId(), clock.millis());
         WebSocketSession replaced = sockets.bind(user.playerId(), session);
         if (replaced != null) {
             sockets.sendTo(replaced, wire.write(wire.object().put("type", "REPLACED")));

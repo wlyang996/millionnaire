@@ -3,7 +3,11 @@ package com.millionnaire.gateway.room;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.millionnaire.engine.core.command.Command;
+import com.millionnaire.engine.core.command.GameCommand.ConnectionConfirmed;
+import com.millionnaire.engine.core.command.GameCommand.ConnectionSuspected;
+import com.millionnaire.engine.core.command.GameCommand.Reconnected;
 import com.millionnaire.engine.core.command.GameCommand.SetControl;
+import com.millionnaire.engine.core.command.SessionCommand.EndGame;
 import com.millionnaire.engine.core.command.Input;
 import com.millionnaire.engine.core.command.RoomCommand.Join;
 import com.millionnaire.engine.core.command.RoomCommand.Leave;
@@ -106,6 +110,8 @@ public final class LiveRoom {
     /** 测试机器人（房主在测试环境添加）：在房间里自动准备，开局后转为托管，由引擎的自动动作代打。 */
     private final Set<String> bots = new LinkedHashSet<>();
     private boolean tendingBots;
+    /** 全员确认掉线（且无人托管）开始的时刻；有人在线或托管则清零。 */
+    private long allOfflineSince = Long.MIN_VALUE;
     private ScheduledFuture<?> wake;
     private long wakeAt = Long.MIN_VALUE;
     private long lastTime;
@@ -440,6 +446,76 @@ public final class LiveRoom {
             service.gameEnded(new GameRecords.Draft(roomId, ended.gameNo(), ended.reason(), set.endMode().name(),
                     timed ? set.timeLimitMinutes() : null, set.boardId(), set.initialCash(), g.startedAt(),
                     Math.max(at, g.startedAt()), service.configHash(), seats));
+        }
+    }
+
+    /**
+     * 连接判定（已裁决 2，每秒由外层调用）：按最后一次收到消息的时刻，存活的真人玩家
+     * 静默 ≥ suspectAfterMs 由在线转疑似断线，≥ offlineAfterMs 由疑似转确认掉线；再次收到消息即重连。
+     * 全员确认掉线且无人托管持续 allOfflineCloseMs（已采纳默认值 #6：120 秒）后，以系统命令中止本局。
+     * 测试机器人不参与判定，也不算"有人托管"。
+     */
+    synchronized void checkConnections(long now, Presence presence, java.util.function.LongSupplier observation) {
+        if (closed) {
+            return;
+        }
+        SessionState s = (SessionState) runner.committed().domain();
+        if (!s.inGame()) {
+            allOfflineSince = Long.MIN_VALUE;
+            return;
+        }
+        var timing = engine.config().timing();
+        long gameNo = s.game().gameNo();
+        for (PlayerState p : List.copyOf(s.game().players())) {
+            if (!p.alive() || bots.contains(p.playerId())) {
+                continue;
+            }
+            long silence = now - presence.lastSeen(p.playerId(), now);
+            Command c = null;
+            if (silence < timing.suspectAfterMs() && p.conn() != ConnState.ONLINE) {
+                c = new Reconnected(gameNo, p.playerId(), observation.getAsLong());
+            } else if (silence >= timing.offlineAfterMs() && p.conn() == ConnState.SUSPECT) {
+                c = new ConnectionConfirmed(gameNo, p.playerId(), observation.getAsLong());
+            } else if (silence >= timing.suspectAfterMs() && p.conn() == ConnState.ONLINE) {
+                c = new ConnectionSuspected(gameNo, p.playerId(), observation.getAsLong());
+            }
+            if (c != null) {
+                systemStep(c, now);
+            }
+        }
+        if (closed) {
+            return;
+        }
+        s = (SessionState) runner.committed().domain();
+        if (!s.inGame()) {
+            allOfflineSince = Long.MIN_VALUE;
+            return;
+        }
+        List<PlayerState> humans = s.game().players().stream()
+                .filter(p -> p.alive() && !bots.contains(p.playerId())).toList();
+        boolean allOffline = !humans.isEmpty() && humans.stream()
+                .allMatch(p -> p.conn() == ConnState.OFFLINE && p.control() != ControlMode.HOSTED);
+        if (!allOffline) {
+            allOfflineSince = Long.MIN_VALUE;
+        } else if (allOfflineSince == Long.MIN_VALUE) {
+            allOfflineSince = now;
+        } else if (now - allOfflineSince >= timing.allOfflineCloseMs()) {
+            allOfflineSince = Long.MIN_VALUE;
+            log.info("room {}: all players offline for {} ms, aborting game {}", code(), timing.allOfflineCloseMs(), s.game().gameNo());
+            systemStep(new EndGame(s.game().gameNo(), "ALL_OFFLINE"), now);
+        }
+    }
+
+    /** 以可信系统命令推进一步；被拒或失败只记日志（判定会在下一秒重试）。 */
+    private void systemStep(Command c, long now) {
+        try {
+            engine.admitSystem(c);
+            StepResult r = step(c, now);
+            if (r.outcome() != StepResult.Outcome.ACCEPTED) {
+                log.debug("room {}: {} -> {}", code(), c, r.rejection());
+            }
+        } catch (RuntimeException e) {
+            log.warn("room {}: {} failed: {}", code(), c.getClass().getSimpleName(), e.getMessage());
         }
     }
 

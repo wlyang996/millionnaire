@@ -31,7 +31,7 @@ interface Pending {
 
 const OPEN = 1;
 const REQUEST_TIMEOUT_MS = 15000;
-const PING_MS = 10000;
+const PING_MS = 5000; // 心跳 5 秒（已裁决 2）：服务端 15 秒无消息判疑似断线、30 秒判掉线
 const BACKOFF_MS = [1000, 2000, 4000, 8000, 10000];
 
 export class GameClient {

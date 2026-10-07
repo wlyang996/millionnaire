@@ -110,4 +110,70 @@ class LiveRoomTimerTest {
             rooms.shutdown();
         }
     }
+
+    /** 连接判定：静默 15 秒疑似断线、30 秒确认掉线、再次有消息即重连；全员掉线 120 秒后中止本局。 */
+    @Test
+    void silentPlayersBecomeSuspectThenOfflineAndAllOfflineAbortsTheGame() {
+        MutableClock clock = new MutableClock(System.currentTimeMillis());
+        List<String> sent = new CopyOnWriteArrayList<>();
+        RoomStore store = new RoomStore(new StaticListableBeanFactory().getBeanProvider(JdbcTemplate.class), clock);
+        RoomService rooms = new RoomService(store, (player, json) -> sent.add(json), new Wire(new ObjectMapper()), clock);
+        try {
+            LiveRoom room = rooms.create(new User(1, "阿杰"), "c", null).room();
+            assertThat(rooms.join(new User(2, "糖糖"), room.codeNumber(), "j").ok()).isTrue();
+            assertThat(room.submitClient("1", "r1", new SetReady("1", true)).ok()).isTrue();
+            assertThat(room.submitClient("2", "r2", new SetReady("2", true)).ok()).isTrue();
+            assertThat(room.submitClient("1", "s", new StartGame("1")).ok()).isTrue();
+            Presence presence = rooms.presence();
+            long t0 = clock.now;
+            presence.touch("1", t0);
+            presence.touch("2", t0);
+
+            // 玩家 1 一直有心跳；玩家 2 静默
+            clock.now = t0 + 14_000;
+            presence.touch("1", clock.now);
+            rooms.checkConnections();
+            assertThat(conn(room, "2")).isEqualTo("ONLINE");
+            clock.now = t0 + 15_000;
+            rooms.checkConnections();
+            assertThat(conn(room, "2")).isEqualTo("SUSPECT");
+            clock.now = t0 + 29_000;
+            presence.touch("1", clock.now);
+            rooms.checkConnections();
+            assertThat(conn(room, "2")).isEqualTo("SUSPECT");
+            clock.now = t0 + 30_000;
+            rooms.checkConnections();
+            assertThat(conn(room, "2")).isEqualTo("OFFLINE");
+            assertThat(conn(room, "1")).isEqualTo("ONLINE");
+
+            // 玩家 2 重新发来消息：重连
+            clock.now = t0 + 31_000;
+            presence.touch("2", clock.now);
+            rooms.checkConnections();
+            assertThat(conn(room, "2")).isEqualTo("ONLINE");
+
+            // 两人都静默：先后疑似、掉线；全员掉线满 120 秒后中止
+            long quiet = clock.now;
+            for (long t = quiet + 1_000; t <= quiet + 30_000; t += 1_000) {
+                clock.now = t;
+                rooms.checkConnections();
+            }
+            assertThat(conn(room, "1")).isEqualTo("OFFLINE");
+            assertThat(conn(room, "2")).isEqualTo("OFFLINE");
+            clock.now = quiet + 30_000 + 119_000;
+            rooms.checkConnections();
+            assertThat(room.gameNo()).isPresent();
+            clock.now = quiet + 30_000 + 120_000;
+            rooms.checkConnections();
+            assertThat(room.gameNo()).isEmpty();
+            assertThat(sent).anyMatch(m -> m.contains("GameAborted") && m.contains("ALL_OFFLINE"));
+        } finally {
+            rooms.shutdown();
+        }
+    }
+
+    private static String conn(LiveRoom room, String player) {
+        return room.view(player).game().players().stream().filter(p -> p.playerId().equals(player)).findFirst()
+                .orElseThrow().conn().name();
+    }
 }

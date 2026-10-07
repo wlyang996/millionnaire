@@ -48,15 +48,24 @@ public class RoomService {
     private final Wire wire;
     private final Clock clock;
     private final GameRecords records;
+    private final Presence presence;
+    /** 连接判定的观测序号：单调递增（引擎拒绝不大于已采纳序号的过期判定）。 */
+    private final java.util.concurrent.atomic.AtomicLong observations = new java.util.concurrent.atomic.AtomicLong();
 
-    /** 不连数据库的测试用：战绩只在内存。 */
+    /** 不连数据库的测试用：战绩只在内存；不自动做连接判定（测试里手动调用 {@link #checkConnections()}）。 */
     public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock) {
-        this(store, outbox, wire, clock, GameRecords.inMemory(clock));
+        this(store, outbox, wire, clock, GameRecords.inMemory(clock), new Presence(), false);
     }
 
     @Autowired
-    public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock, GameRecords records) {
+    public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock, GameRecords records, Presence presence) {
+        this(store, outbox, wire, clock, records, presence, true);
+    }
+
+    private RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock, GameRecords records, Presence presence,
+                        boolean monitorConnections) {
         this.records = records;
+        this.presence = presence;
         this.store = store;
         this.outbox = outbox;
         this.wire = wire;
@@ -67,6 +76,26 @@ public class RoomService {
             t.setDaemon(true);
             return t;
         });
+        if (monitorConnections) {
+            timers.scheduleWithFixedDelay(this::checkConnections, 1, 1, java.util.concurrent.TimeUnit.SECONDS);
+        }
+    }
+
+    /** 每秒：各房间按最后收到消息的时刻判定疑似断线 / 确认掉线 / 重连，以及全员掉线中止。 */
+    public void checkConnections() {
+        long now = now();
+        for (LiveRoom room : byCode.values()) {
+            try {
+                room.checkConnections(now, presence, observations::incrementAndGet);
+            } catch (RuntimeException e) {
+                log.error("room {} connection check failed", room.code(), e);
+            }
+        }
+    }
+
+    /** 测试用：连接判定读取的在线记录。 */
+    Presence presence() {
+        return presence;
     }
 
     @PreDestroy
