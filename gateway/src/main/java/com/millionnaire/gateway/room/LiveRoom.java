@@ -20,7 +20,13 @@ import com.millionnaire.engine.core.engine.SessionDomain;
 import com.millionnaire.engine.core.engine.StateValidationException;
 import com.millionnaire.engine.core.engine.StepResult;
 import com.millionnaire.engine.core.event.Event;
+import com.millionnaire.engine.config.EndMode;
 import com.millionnaire.engine.core.event.GameEvent.DiceRolled;
+import com.millionnaire.engine.core.event.GameEvent.GameEnded;
+import com.millionnaire.engine.core.event.GameEvent.PlayerEliminated;
+import com.millionnaire.engine.core.state.GameState;
+import com.millionnaire.engine.core.state.Standing;
+import com.millionnaire.gateway.record.GameRecords;
 import com.millionnaire.engine.core.event.GameEvent.JailRolled;
 import com.millionnaire.engine.core.event.KernelEvent;
 import com.millionnaire.engine.core.state.ConnState;
@@ -323,6 +329,7 @@ public final class LiveRoom {
                 }
             }
         }
+        recordIfEnded(before, r.events(), at);
         markAway(missedRolls(r.events(), after), at);
         tendBots(at);
         return r;
@@ -385,6 +392,55 @@ public final class LiveRoom {
     /** 是否为本房间的测试机器人。 */
     public synchronized boolean isBot(String playerId) {
         return bots.contains(playerId);
+    }
+
+    /**
+     * 本步有 GameEnded：按开局座位顺序生成战绩草稿交给外层落库。名次、净资产、现金取自终局结算；
+     * 生死状态取本步之前的状态，再叠加本步里的淘汰事件（如最后一人认输导致结束）。非数字的玩家 ID 不记录。
+     */
+    private void recordIfEnded(EngineState before, List<Event> events, long at) {
+        SessionState s = (SessionState) before.domain();
+        if (!s.inGame()) {
+            return;
+        }
+        for (Event e : events) {
+            if (!(e instanceof GameEnded ended)) {
+                continue;
+            }
+            GameState g = s.game();
+            Map<String, String> life = new HashMap<>();
+            for (PlayerState p : g.players()) {
+                life.put(p.playerId(), p.life().name());
+            }
+            for (Event x : events) {
+                if (x instanceof PlayerEliminated pe) {
+                    life.put(pe.playerId(), pe.life().name());
+                }
+            }
+            Map<String, Standing> standings = new HashMap<>();
+            for (Standing st : ended.result().standings()) {
+                standings.put(st.playerId(), st);
+            }
+            List<GameRecords.Seat> seats = new ArrayList<>();
+            List<PlayerState> players = g.players();
+            for (int i = 0; i < players.size(); i++) {
+                String pid = players.get(i).playerId();
+                long uid;
+                try {
+                    uid = Long.parseLong(pid);
+                } catch (NumberFormatException nfe) {
+                    continue;
+                }
+                Standing st = standings.get(pid);
+                seats.add(new GameRecords.Seat(i, uid, st == null ? null : st.rank(), st == null ? null : st.netWorth(),
+                        st == null ? null : st.cash(), life.get(pid)));
+            }
+            var set = g.settings();
+            boolean timed = set.endMode() == EndMode.TIME_LIMIT;
+            service.gameEnded(new GameRecords.Draft(roomId, ended.gameNo(), ended.reason(), set.endMode().name(),
+                    timed ? set.timeLimitMinutes() : null, set.boardId(), set.initialCash(), g.startedAt(),
+                    Math.max(at, g.startedAt()), service.configHash(), seats));
+        }
     }
 
     /** 本步里被系统代投的手动玩家计数；达到阈值的玩家返回（计数清零）。亲手投骰、本来就由系统代管的清零。 */

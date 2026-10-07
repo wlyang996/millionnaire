@@ -12,6 +12,7 @@ import com.millionnaire.engine.core.state.RoomSettings;
 import com.millionnaire.engine.core.state.SessionState;
 import com.millionnaire.gateway.auth.Ids;
 import com.millionnaire.gateway.auth.UserStore.User;
+import com.millionnaire.gateway.record.GameRecords;
 import jakarta.annotation.PreDestroy;
 import java.time.Clock;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -45,8 +47,16 @@ public class RoomService {
     private final Outbox outbox;
     private final Wire wire;
     private final Clock clock;
+    private final GameRecords records;
 
+    /** 不连数据库的测试用：战绩只在内存。 */
     public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock) {
+        this(store, outbox, wire, clock, GameRecords.inMemory(clock));
+    }
+
+    @Autowired
+    public RoomService(RoomStore store, Outbox outbox, Wire wire, Clock clock, GameRecords records) {
+        this.records = records;
         this.store = store;
         this.outbox = outbox;
         this.wire = wire;
@@ -173,6 +183,15 @@ public class RoomService {
         } catch (RuntimeException e) {
             log.error("room {} wake-up failed", room.code(), e);
         }
+    }
+
+    /** 局结束：提交战绩草稿（异步落库）。 */
+    void gameEnded(GameRecords.Draft draft) {
+        records.submit(draft);
+    }
+
+    String configHash() {
+        return engine.configHash();
     }
 
     long now() {

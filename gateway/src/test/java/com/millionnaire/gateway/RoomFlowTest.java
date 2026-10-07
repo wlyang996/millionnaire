@@ -43,6 +43,9 @@ class RoomFlowTest {
         jdbc.execute("ALTER TABLE room DROP CONSTRAINT IF EXISTS ck_room_ids");
         jdbc.execute("ALTER TABLE room ADD CONSTRAINT ck_room_ids CHECK (OCTET_LENGTH(create_request_id) = 16"
                 + " AND max_saved_game_no >= 0)");
+        jdbc.execute("ALTER TABLE game_record DROP CONSTRAINT IF EXISTS ck_game_record_values");
+        jdbc.execute("ALTER TABLE game_record ADD CONSTRAINT ck_game_record_values CHECK (game_no >= 1 AND player_count >= 1"
+                + " AND player_count <= 8 AND initial_cash >= 0 AND ended_at >= started_at AND OCTET_LENGTH(draft_sha256) = 32)");
     }
 
     @SuppressWarnings("unchecked")
@@ -227,11 +230,37 @@ class RoomFlowTest {
             JsonNode ended = wa.lastUpdate();
             assertThat(ended.path("view").path("game").isNull()).as(ended.toString()).isTrue();
             assertThat(ended.path("view").path("members").get(1).path("ready").asBoolean()).isTrue(); // 机器人重新准备
+            // 战绩：这一局写进数据库（异步），我的最近战绩里有一行：2 人、已认输、排名第 2
+            Map<?, ?>[] history = null;
+            for (int i = 0; i < 50; i++) {
+                history = http.exchange("/api/me/history", org.springframework.http.HttpMethod.GET,
+                        new org.springframework.http.HttpEntity<>(bearer((String) a.get("token"))), Map[].class).getBody();
+                if (history != null && history.length > 0) {
+                    break;
+                }
+                Thread.sleep(100);
+            }
+            assertThat(history).hasSize(1);
+            assertThat(history[0].get("playerCount")).isEqualTo(2);
+            assertThat(history[0].get("life")).isEqualTo("SURRENDERED");
+            assertThat(history[0].get("rank")).isEqualTo(2);
+            assertThat(history[0].get("endMode")).isEqualTo("TIME_LIMIT");
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM game_record_player p JOIN game_record r ON r.record_id = p.record_id"
+                    + " WHERE r.room_id = (SELECT room_id FROM room WHERE room_code = ? AND status = 'OPEN')", Integer.class,
+                    Integer.parseInt(code))).isEqualTo(2);
+            assertThat(http.getForEntity("/api/me/history", Map.class).getStatusCode().value()).isEqualTo(401);
+
             JsonNode left = wa.call(wa.msg("LEAVE_ROOM", "l"));
             assertThat(left.path("ok").asBoolean()).as(left.toString()).isTrue();
             assertThat(jdbc.queryForObject("SELECT status FROM room WHERE room_code = ?", String.class,
                     Integer.parseInt(code))).isEqualTo("CLOSED");
         }
+    }
+
+    private static org.springframework.http.HttpHeaders bearer(String token) {
+        org.springframework.http.HttpHeaders h = new org.springframework.http.HttpHeaders();
+        h.setBearerAuth(token);
+        return h;
     }
 
     private static String controlOf(JsonNode update, String player) {

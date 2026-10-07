@@ -1,6 +1,7 @@
 package com.millionnaire.gateway.auth;
 
 import com.millionnaire.gateway.auth.UserStore.User;
+import com.millionnaire.gateway.record.GameRecords;
 import com.millionnaire.gateway.room.LiveRoom;
 import com.millionnaire.gateway.room.RoomService;
 import java.util.LinkedHashMap;
@@ -25,9 +26,11 @@ public class ApiController {
     private final SessionTokens tokens;
     private final RoomService rooms;
     private final boolean testLoginEnabled;
+    private final GameRecords records;
 
-    public ApiController(UserStore users, SessionTokens tokens, RoomService rooms,
+    public ApiController(UserStore users, SessionTokens tokens, RoomService rooms, GameRecords records,
                          @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled) {
+        this.records = records;
         this.users = users;
         this.tokens = tokens;
         this.rooms = rooms;
@@ -66,6 +69,16 @@ public class ApiController {
         out.put("nickname", user.get().nickname());
         out.put("roomCode", rooms.roomOf(user.get().playerId()).map(LiveRoom::code).orElse(null));
         return ResponseEntity.ok(out);
+    }
+
+    /** 我的最近 20 局（新的在前）：[{gameNo, endMode, timeLimitMinutes, boardId, playerCount, startedAt, endedAt, endReason, rank, netWorth, cash, life}]。 */
+    @GetMapping("/me/history")
+    public ResponseEntity<?> history(@RequestHeader(value = "Authorization", required = false) String auth) {
+        Optional<User> user = user(auth);
+        if (user.isEmpty()) {
+            return error(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED");
+        }
+        return ResponseEntity.ok(records.recent(user.get().id()));
     }
 
     /** 当前房间的快照（与 WebSocket 的 UPDATE 消息同形，events 为空）。 */

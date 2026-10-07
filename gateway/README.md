@@ -27,6 +27,7 @@
 |---|---|---|
 | POST | `/api/auth/test-login` | 请求 `{"nickname":"阿杰"}`；返回 `{"token","userId","nickname"}`。每次登录都创建新用户。昵称按引擎规则校验，失败 400 `{"code":"INVALID_NICKNAME"}` |
 | GET | `/api/me` | 头 `Authorization: Bearer <token>`；返回 `{"userId","nickname","roomCode"}` |
+| GET | `/api/me/history` | 头 `Authorization`；我的最近 20 局（新的在前）：`[{gameNo, endMode, timeLimitMinutes, boardId, playerCount, startedAt, endedAt, endReason, rank, netWorth, cash, life}]`。每局结束时写入 `game_record` / `game_record_player`（db 配置），否则只在内存 |
 | GET | `/api/room` | 当前房间快照，形状同 WebSocket 的 `UPDATE`（`events` 为空）；不在房间 404 |
 | GET | `/health`、`/health/db` | 存活与数据库诊断 |
 | GET | `/dev` | 联机测试台：一个页面开多个玩家，点按钮建房、加入、准备、开局、执行对局命令（页面在 `src/main/resources/static/dev/`） |
