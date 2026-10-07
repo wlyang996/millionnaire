@@ -1,11 +1,12 @@
 /**
  * 买地（15 秒），按设计稿 04"购买地产"：地产插画 + 档位胶囊、购买价格、三档价格、未升级租金，底部"放弃 / 购买 (金币) 价格"。
  * 现金不足时购买按钮置灰，并提示"现金 X，不足以购买"。不弹任何成功 / 放弃 / 超时提示。超时视为放弃（联机由服务端处理）。
+ * 指定拍卖地（联机）另有"发起拍卖"：放弃本次购买资格，所有其他玩家竞拍，发起人得成交价 10%。设计稿 04 没有这一项，按同一版式补在按钮上方。
  */
 import { Node } from 'cc';
 import { landPrice, rentOf, stationRent, STATION, SECONDS, TIERS } from '../core/Rules';
 import { Theme } from '../core/Theme';
-import { primaryButton, softButton } from '../ui/Buttons';
+import { primaryButton, secondaryButton, softButton } from '../ui/Buttons';
 import { art } from '../ui/Art';
 import { ctx } from '../ui/Ctx';
 import { text } from '../ui/Kit';
@@ -14,11 +15,19 @@ import { box, inlineRow, pillLabel, propertyArtKey, tierName } from './Common';
 
 const W = 480;
 const H = 666;
+/** 指定拍卖地多出"发起拍卖"一行的高度。 */
+const AUCTION_ROW = 86;
 
 export class BuyPopup extends Popup {
     /** @param windowId 联机时为服务端的落点决策窗口；演示时不传 */
     constructor(private readonly tileIndex: number, private readonly windowId?: number) {
-        super('buy', ctx.store.tile(tileIndex).type === 'STATION' ? '购买车站' : '购买地产', W, H, SECONDS.buy);
+        super('buy', ctx.store.tile(tileIndex).type === 'STATION' ? '购买车站' : '购买地产', W,
+            H + (BuyPopup.auctionable(tileIndex, windowId) ? AUCTION_ROW : 0), SECONDS.buy);
+    }
+
+    /** 联机、指定拍卖地：可以发起土地拍卖。 */
+    private static auctionable(tileIndex: number, windowId?: number): boolean {
+        return !!ctx.store.online && windowId !== undefined && !!ctx.store.tile(tileIndex).auctionLot;
     }
 
     protected buildBody(p: Node): void {
@@ -42,8 +51,13 @@ export class BuyPopup extends Popup {
             { t: String(station ? stationRent(1) : rentOf(tile.tier ?? 'LOW', 0)), size: 36 },
         ]);
         if (!enough) text(p, '现金 ' + cash + '，不足以购买', 0, 526, W, 30, 22, Theme.c.payRed, { bold: true });
-        softButton(p, '放弃', 12, 563, 178, 77, () => this.giveUp(), 30);
-        const buy = primaryButton(p, '购买', 207, 563, W - 207 - 12, 77, () => this.buy(price), 30).withCoin(price);
+        let by = 563;
+        if (BuyPopup.auctionable(this.tileIndex, this.windowId)) {
+            secondaryButton(p, '发起拍卖（放弃购买资格）', 12, by, W - 24, 70, () => this.auction(), 26);
+            by += AUCTION_ROW;
+        }
+        softButton(p, '放弃', 12, by, 178, 77, () => this.giveUp(), 30);
+        const buy = primaryButton(p, '购买', 207, by, W - 207 - 12, 77, () => this.buy(price), 30).withCoin(price);
         buy.setEnabled(enough);
     }
 
@@ -59,6 +73,12 @@ export class BuyPopup extends Popup {
         const prop = st.prop(this.tileIndex);
         if (prop) prop.owner = st.myId;
         st.emit();
+    }
+
+    private auction(): void {
+        const online = ctx.store.online;
+        this.close();
+        if (online && this.windowId !== undefined) void online.act('StartLandAuction', { windowId: this.windowId });
     }
 
     private giveUp(): void {

@@ -286,6 +286,18 @@ export class OnlineSession {
                 case 'RentWaived':
                     notice = name(d.payer) + '用免租卡免除了本次租金';
                     break;
+                case 'LandAuctionChosen':
+                    notice = name(d.playerId) + '对' + tile(d.tile) + '发起了拍卖';
+                    break;
+                case 'AuctionRequested':
+                    notice = name(d.applicant) + '申请拍卖' + tile(d.tile) + '，下个回合交界开拍';
+                    break;
+                case 'AuctionSettled':
+                    notice = name(d.winner) + '以 ' + Number(d.price) + ' 拍得' + tile(d.tile);
+                    break;
+                case 'AuctionPassed':
+                    notice = tile(d.tile) + '无人出价，流拍';
+                    break;
                 default:
                     break;
             }

@@ -2,12 +2,13 @@
 
 > 用途：会话额度用尽或中断时，下一个会话从这里继续。每完成一项就更新本文件。
 > 依据：用户 2026-10-07 指示"继续做欠款应急抵押，把评审过的没有疑问的都开发吧，最后给我个汇总，哪些完成了，哪些没有"；
-> 工作方式："直接在 prod 上修改，分次提交，全部修改完毕再推送"。
+> 工作方式：直接在 prod 上修改，分次提交；**每完成一项就推送 prod**（用户 2026-10-07 改为此方式，取代"全部做完再推送"）。
+> 推送 prod 可能触发云托管自动发布（会解散进行中的对局），用户已知情。
 
 ## 一、代码在哪里
 
-- 所有新提交都在**本地 prod**上，尚未推送到 `origin/prod`（推送 prod 可能触发云托管自动发布、解散进行中的对局，按用户要求全部做完再推）。
-- 每次提交后都把本地 prod 镜像推到了 **`origin/claude/project-quick-analysis-d48z76`**（不会触发发布）。容器丢失时从这里恢复：
+- 每完成一项就推送 `origin/prod`，并镜像到 **`origin/claude/project-quick-analysis-d48z76`**。
+- 若容器丢失、本地有未推送的提交，从镜像分支恢复：
 
   ```bash
   git fetch origin claude/project-quick-analysis-d48z76
@@ -15,7 +16,7 @@
   git merge --ff-only origin/claude/project-quick-analysis-d48z76
   ```
 
-- 截至本文件，prod 比 origin/prod 多出的提交（从旧到新）：
+- 本轮提交（从旧到新，均已推送）：
 
   | 提交 | 内容 |
   |---|---|
@@ -36,11 +37,11 @@
 | 2 | 掉线判定（网关） | ✅ 完成（f21da8b） |
 | 3 | 虎口拔牙（引擎 + 网关 + 客户端） | ✅ 完成（0ccdcad、18dc737、24433f3） |
 | 4 | 道具：主动卡与响应卡（不含拍卖卡、交易卡） | ✅ 完成（478faf2、fa67e69） |
-| 5 | 拍卖（指定拍卖地 + 拍卖卡） | ⏳ 引擎完成（0aee3cb）；**客户端未做**（见第三节） |
+| 5 | 拍卖（指定拍卖地 + 拍卖卡） | ✅ 完成（0aee3cb 引擎；客户端见上表最后一条） |
 | 6 | 交易卡 | ⬜ 未开始（见第四节） |
-| 7 | 全部推送 prod + 给用户中文汇总 | ⬜ 最后做（见第五节） |
+| 7 | 给用户中文汇总 | ⬜ 最后做（见第五节） |
 
-## 三、正在做：拍卖的客户端（任务 5 剩余部分）
+## 三、拍卖（任务 5，已完成，留作接口说明）
 
 服务端已提供（正式规则 `EconomyConfig.cardsEnabled = true` 时生效）：
 
@@ -50,7 +51,7 @@
 - 事件：`LandAuctionChosen`、`AuctionRequested`、`AuctionStarted`、`BidPlaced`、`AuctionSettled{winner, tile, price, commission}`、`AuctionPassed{tile}`。
 - 冻结资金：`players[].frozen`（最高价冻结）。
 
-客户端待办：
+客户端（已完成）：
 
 1. `net/Protocol.ts` / `core/Models.ts` / `net/ViewAdapter.ts`：加 `auction` 字段、`WindowExtended` 不需要处理（视图里窗口 deadline 已更新）；`FlowKind` 加 `'LAND_AUCTION'`；`GameCommandName` 加 `'StartLandAuction' | 'RequestAuction' | 'Bid'`。
 2. `popups/AuctionPopup.ts`（设计稿 05"地产拍卖"，现为演示）改为联机：参数从 `game.auction` 读；倒计时取拍卖窗口 deadline（延时后要重设）；"出价"发 `Bid`（步进器下限 = minimumBid，步长 = minRaise，上限 cap）；"一口价"发 `Bid amount=cap`；卖家 / 发起人只看不出价；拍卖结束（`game.auction` 消失）自动关闭。所有存活玩家（含非当前玩家）都要弹。
@@ -76,7 +77,7 @@
 ## 五、收尾（任务 7）
 
 1. `cd server && mvn -B -q install`，`cd gateway && mvn -B -q test` 全绿（当前：引擎全部通过；网关 10 项通过）。
-2. 推送：`git push origin prod`（会触发云托管发布）；再镜像 `git push origin prod:claude/project-quick-analysis-d48z76`。
+2. 推送：每项完成即 `git push origin prod`（会触发云托管发布），再镜像 `git push origin prod:claude/project-quick-analysis-d48z76`。
 3. 提醒用户：用 Cocos Creator 重新构建 H5 后执行 `update-web.bat`（自动选最新构建目录、提交并推送 web/dist）；后台随 prod 推送重新部署。
 4. 用中文给用户汇总"完成 / 未完成 / 原因 / 需要用户确认的点"（见第六、七节）。
 
@@ -87,6 +88,8 @@
 - **房屋保护 / 拒绝购买的响应弹窗**：设计稿只画了"租金响应"，这两个按同一版式补齐。
 - **定点移动**：确认面板列出 1～6 格地名可点选；设计稿里棋盘上逐格标号高亮**未实现**。
 - **建造卡确认面板**：设计稿 14 没有建造，按降级面板的版式补齐。
+- **买地页"发起拍卖"**：设计稿 04 买地页没有这一项，指定拍卖地时在按钮上方补一行"发起拍卖（放弃购买资格）"。
+- **拍卖卡选资产页**：设计稿没有，沿用银行列表的行样式（可滚动）。
 - **拍卖卡申请在启动前失效**（玩家出局、卡被弃、地块已抵押或易主）：申请直接取消，**已占用的主动用卡机会不退还**。
 - 道具开关：`EconomyConfig.cardsEnabled`（正式配置开，旧场景测试配置关），配置哈希因此变化；引擎版本 `engine-0.11.0-m6a`。
 

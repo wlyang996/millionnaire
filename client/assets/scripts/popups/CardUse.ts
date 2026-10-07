@@ -17,6 +17,7 @@ import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
 import { inlineRow } from './Common';
 import { QueryTargetPopup } from './QueryPopups';
+import { ScrollList } from '../ui/ScrollList';
 
 export const RESPONSE_CARDS: CardType[] = ['RENT_WAIVER', 'REFUSE_PURCHASE', 'HOUSE_PROTECTION'];
 
@@ -61,8 +62,9 @@ export function cardUsable(type: CardType): Usable {
     const me = st.me();
     if (!me || me.life !== 'ALIVE') return no('你已出局');
     if (RESPONSE_CARDS.includes(type)) return no('响应时使用');
-    if (type === 'AUCTION' || type === 'TRADE') return no('拍卖 / 交易需另行申请');
     if (!g.myHand.some((c) => c.type === type)) return no('手里没有这张道具');
+    if (type === 'AUCTION') return auctionUsable();
+    if (type === 'TRADE') return no('交易卡即将开放');
     if (!st.isMyTurn()) return no('只能在自己的回合使用');
     if (me.control !== 'MANUAL' || me.conn === 'OFFLINE') return no('托管中不能用卡');
     const online = st.online;
@@ -105,6 +107,18 @@ export function cardUsable(type: CardType): Usable {
     }
 }
 
+/** 拍卖卡：可非自己回合申请（排队到回合交界开拍），占用主动用卡机会；欠款处理中不能用；要有未抵押的地产或车站。 */
+function auctionUsable(): Usable {
+    const st = ctx.store;
+    const g = st.game;
+    const me = st.me();
+    if (me.control !== 'MANUAL' || me.conn === 'OFFLINE') return no('托管中不能用卡');
+    if (!st.online) return no('拍卖卡需联机使用');
+    if (g.cards?.chanceUsed.includes(st.myId)) return no('本回合已经用过道具了');
+    if (g.debt && g.debt.debtor === st.myId) return no('处理欠款时不能用拍卖卡');
+    return st.assetsOf(st.myId).some((a) => !a.p.mortgaged) ? yes : no('没有未抵押的地产或车站');
+}
+
 /** 发送用卡（联机）或在演示里本地结算。 */
 export function sendCard(type: CardType, target: string | null = null, steps = 0): void {
     const st = ctx.store;
@@ -144,6 +158,10 @@ export function openCardUse(type: CardType): void {
     }
     if (type === 'QUERY') {
         ctx.popups.open(new QueryTargetPopup());
+        return;
+    }
+    if (type === 'AUCTION') {
+        ctx.popups.open(new AuctionAssetPopup());
         return;
     }
     if (type === 'JAIL_RELEASE') {
@@ -314,5 +332,57 @@ class PropertyCardSheet extends CardSheet {
             { t: name, size: 28 }, { t: from + '级', size: 32, color: '#2F86E8' }, { t: '→', size: 28 },
             { t: to + '级', size: 32, color: Theme.c.payRed },
         ], 10);
+    }
+}
+
+// ================================================================ 拍卖卡：选择要拍卖的资产
+
+/**
+ * 拍卖卡选资产（设计稿无单独页面，沿用银行抵押列表的行样式）：列出我未抵押的地产与车站（插画、地名、标准价值、起拍 / 封顶），
+ * 单选后"申请拍卖"发送 RequestAuction；申请排队，到下一个回合交界开拍。
+ */
+export class AuctionAssetPopup extends Popup {
+    private sel = -1;
+
+    constructor() {
+        super('auction-asset', '选择拍卖资产', 620, 840);
+        this.titleIcon = 'icon_auction';
+    }
+
+    private assets() {
+        const st = ctx.store;
+        return st.assetsOf(st.myId).filter((a) => !a.p.mortgaged);
+    }
+
+    protected buildBody(p: Node, w: number, h: number): void {
+        const list = this.assets();
+        const rowH = 104;
+        const sl = new ScrollList(p, 24, 92, w - 48, 5 * rowH);
+        list.forEach((a, i) => {
+            const on = this.sel === i;
+            const station = a.tile.type === 'STATION';
+            const std = standardValue(station, a.tile.tier, station ? 0 : TIERS[a.tile.tier ?? 'LOW'].upgrade * a.p.level);
+            const n = mk(sl.content, 'Asset' + i, 0, i * rowH, w - 48, rowH - 10);
+            const g = gfx(n);
+            fillRR(g, 0, 0, w - 48, rowH - 10, 18, on ? '#EAF4FF' : Theme.c.white);
+            strokeRR(g, 1, 1, w - 50, rowH - 12, 18, on ? '#3E8EF2' : Theme.c.panelLine, on ? 4 : 2);
+            text(n, a.tile.name + (station ? ' · 车站' : ' · ' + a.p.level + '级'), 20, 6, w - 88, 40, 28, Theme.c.navy, { bold: true, align: 'l' });
+            text(n, '标准价值 ' + std + ' · 起拍 ' + Math.ceil(std / 2) + ' · 封顶 ' + Math.floor(std * 5 / 2), 20, 48, w - 88, 34, 22,
+                Theme.c.noteGray, { align: 'l' });
+            onTap(n, () => {
+                this.sel = on ? -1 : i;
+                this.rebuildBody();
+            }, false);
+        });
+        sl.setContentHeight(list.length * rowH);
+        text(p, '申请后排队，到下一个回合交界开拍 · 成交款全归你 · 流拍也消耗拍卖卡', 24, h - 196, w - 48, 60, 20, Theme.c.noteGray,
+            { wrap: true, lineHeight: 28 });
+        softButton(p, '取消', 24, h - 120, 220, 88, () => this.close(), 32);
+        const b = primaryButton(p, '申请拍卖', 264, h - 120, w - 288, 88, () => {
+            const a = this.assets()[this.sel];
+            this.close();
+            if (a) void ctx.store.online?.act('RequestAuction', { tile: a.tile.index });
+        }, 34);
+        b.setEnabled(this.sel >= 0, '请先选择要拍卖的资产');
     }
 }

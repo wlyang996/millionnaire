@@ -53,6 +53,11 @@ export class PopupManager {
         });
     }
 
+    /** 是否有该类别的弹窗开着。 */
+    has(id: string): boolean {
+        return this.stack.some((p) => p.popupId === id && !p.closed);
+    }
+
     closeTop(): void {
         this.top?.close();
     }

@@ -116,5 +116,6 @@ function adaptGame(g: SGame, boards: BoardTemplate[] | null, lastDice: number, n
             } : null,
         } : null,
         roadblocks: (g.board.roadblocks ?? []).map((r) => r.tile),
+        auction: g.auction ?? null,
     };
 }

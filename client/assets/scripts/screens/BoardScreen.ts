@@ -32,6 +32,7 @@ import { RentPopup } from '../popups/RentPopup';
 import { CardResponsePopup } from '../popups/CardResponsePopup';
 import { QueryResultPopup } from '../popups/QueryPopups';
 import { rentAt } from '../popups/CardUse';
+import { AuctionPopup } from '../popups/AuctionPopup';
 import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
@@ -538,6 +539,12 @@ export class BoardScreen extends Screen {
         if (this.dice && this.dice.playing) return;
         // 事件卡翻牌与结果展示期间不播后续走棋（先看清结果再移动）
         if (st.eventDraw.phase === 'FLIPPING' || st.eventDraw.phase === 'RESULT') return;
+        // 拍卖进行中（土地拍卖或拍卖卡）：所有手动的存活玩家都弹出竞价页（卖家 / 发起人只能看）
+        if (g.auction && online.cues.length === 0 && !this.spectator && me_manual(st.me()) && st.me().life === 'ALIVE'
+            && !ctx.popups.has('auction')) {
+            ctx.popups.open(new AuctionPopup(g.auction.tile, g.auction.kind === 'LAND'));
+            return;
+        }
         // 查询卡结果（只发给我）：弹出手牌快照
         const qr = st.queryResult;
         if (qr && !qr.seen && online.cues.length === 0) {

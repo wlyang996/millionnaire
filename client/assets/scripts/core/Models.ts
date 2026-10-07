@@ -10,7 +10,7 @@ export type RoomStatus = 'LOBBY' | 'PLAYING' | 'SETTLING';
 export type GamePhase = 'ORDERING' | 'PLAYING' | 'FINISHED';
 export type EndMode = 'TIME_LIMIT' | 'BANKRUPTCY';
 export type TurnStage = 'NONE' | 'JAIL_DECISION' | 'PRE_ROLL' | 'LANDING' | 'AWAITING_FLOW';
-export type FlowKind = 'TURN' | 'AUCTION' | 'TRADE' | 'ATTACK' | 'DEBT' | 'MINIGAME' | 'DISCARD' | 'RESPONSE';
+export type FlowKind = 'TURN' | 'AUCTION' | 'TRADE' | 'ATTACK' | 'DEBT' | 'MINIGAME' | 'DISCARD' | 'RESPONSE' | 'LAND_AUCTION';
 export type TileType = 'START' | 'PROPERTY' | 'STATION' | 'EVENT' | 'BANK' | 'JAIL' | 'REST' | 'GAME_ZONE';
 export type Tier = 'LOW' | 'MID' | 'HIGH';
 
@@ -129,6 +129,28 @@ export interface GameView {
     cards?: CardsInfo | null;
     /** [联机] 棋盘上的路障所在格 */
     roadblocks?: number[];
+    /** [联机] 进行中的拍卖 */
+    auction?: AuctionInfo | null;
+}
+
+/**
+ * [联机] 进行中的拍卖（服务端 PublicAuction）：LAND 为指定拍卖地土地拍卖（initiator 发起、不能出价），
+ * CARD 为拍卖卡（seller 卖家、不能出价）；minimumBid 为下一次报价下限；windowId 为拍卖窗口。
+ */
+export interface AuctionInfo {
+    kind: 'LAND' | 'CARD';
+    tile: number;
+    seller: string | null;
+    initiator: string | null;
+    basis: number;
+    start: number;
+    minRaise: number;
+    cap: number;
+    highBid: number;
+    highBidder: string | null;
+    minimumBid: number;
+    hardEnd: number;
+    windowId: number;
 }
 
 /** [联机] 道具的公开部分 */

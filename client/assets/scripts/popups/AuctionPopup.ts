@@ -2,8 +2,11 @@
  * 土地拍卖（20 秒，总时长最多 40 秒）。起拍=基准 50%，封顶=一口价=基准 2.5 倍，最低加价=基准 10%。
  * 最后 3 秒内"出价者变化"才恢复到 3 秒（不超过 40 秒上限）；报价需足额可用现金，不靠抵押。
  * 布局按设计稿 05"地产拍卖"：地产卡、当前最高价与出价人、最低加价 | 封顶价、步进器、出价 / 一口价、三栏资金、规则说明。
+ * 联机：所有参数取服务端视图 game.auction（土地拍卖以原价为基数、拍卖卡以标准价值为基数），倒计时跟随拍卖窗口截止（延时后自动更新）；
+ * "出价 / 一口价"发送 Bid（一口价 = 封顶价）；卖家 / 发起人只能看；拍卖结束（视图里没有拍卖）自动关闭。
  */
 import { Label, Node } from 'cc';
+import { AuctionInfo } from '../core/Models';
 import { auctionParams, SECONDS, standardValue } from '../core/Rules';
 import { Theme } from '../core/Theme';
 import { art } from '../ui/Art';
@@ -29,17 +32,46 @@ export class AuctionPopup extends Popup {
     private frozen = 0;
     private hardCap = 0;
     private banner: Label | null = null;
+    /** 联机：已画出的拍卖状态（变化时重画）与正在发送的出价 */
+    private shown = '';
+    private sending = false;
+    private syncedDeadline = 0;
+    private hostText = '';
 
     constructor(private readonly tileIndex: number, private readonly byInitiator = false) {
         super('auction', '地产拍卖', W, H, SECONDS.auction);
         this.titleIcon = 'icon_auction';
     }
 
+    /** 联机时的服务端拍卖（本页对应的地块）；演示模式为 null。 */
+    private live(): AuctionInfo | null {
+        const st = ctx.store;
+        const a = st.online ? st.game?.auction : null;
+        return a && a.tile === this.tileIndex ? a : null;
+    }
+
+    /** 联机：从服务端视图同步参数与我的冻结资金。 */
+    private sync(a: AuctionInfo): void {
+        const me = ctx.store.me();
+        this.base = a.basis;
+        this.start = a.start;
+        this.cap = a.cap;
+        this.minRaise = a.minRaise;
+        this.highBid = a.highBidder ? a.highBid : 0;
+        this.highBidder = a.highBidder;
+        this.hardCap = a.hardEnd;
+        this.frozen = me ? me.frozen : 0;
+        if (this.myBid < a.minimumBid) this.myBid = a.minimumBid;
+        if (this.myBid > a.cap) this.myBid = a.cap;
+    }
+
     protected buildBody(p: Node): void {
         const st = ctx.store;
         const tile = st.tile(this.tileIndex);
         const prop = st.prop(this.tileIndex);
-        if (!this.hardCap) {
+        const a = this.live();
+        if (a) this.sync(a);
+        else if (!this.hardCap) {
             this.base = standardValue(tile.type === 'STATION', tile.tier, prop ? prop.upgradeSpent : 0);
             const a = auctionParams(this.base);
             this.start = a.start;
@@ -50,12 +82,17 @@ export class AuctionPopup extends Popup {
             this.hardCap = ctx.clock.now() + SECONDS.auctionMax * 1000;
         }
         const me = st.me();
-        if (this.myBid <= this.highBid) this.myBid = Math.min(this.cap, this.highBid + this.minRaise);
+        if (!a && this.myBid <= this.highBid) this.myBid = Math.min(this.cap, this.highBid + this.minRaise);
+        const host = a ? (a.kind === 'CARD' ? a.seller : a.initiator) : null;
+        const iAmHost = !!a && host === st.myId;
         const bidder = this.highBidder ? st.player(this.highBidder) : undefined;
         const avail = me.cash - this.frozen;
         const X = 36;
         const IW = W - 2 * X;
-        this.banner = text(p, '', X, 72, IW, 26, 20, Theme.c.payRed, { bold: true });
+        // 联机：标明是谁的拍卖（卖家 / 发起人不能出价）；最后 3 秒换成延时提示
+        const hostName = host === st.myId ? '你' : st.player(host ?? '')?.nickname ?? '';
+        this.hostText = a ? (a.kind === 'CARD' ? '拍卖卡 · 卖家：' + hostName : '土地拍卖 · 发起人：' + hostName) : '';
+        this.banner = text(p, this.hostText, X, 72, IW, 26, 20, Theme.c.noteGray, { bold: true });
 
         // 地产卡：插画 + 档位·等级、基准价值、起拍价
         const head = box(p, X, 96, IW, 150, Theme.c.white, 20);
@@ -93,7 +130,8 @@ export class AuctionPopup extends Popup {
             const b = mk(stp, 'Step' + label, x, 6, 84, 60);
             text(b, label, 0, 0, 84, 60, 48, Theme.c.noteGray, { bold: true });
             onTap(b, () => {
-                this.myBid = Math.max(this.highBid + this.minRaise, Math.min(this.cap, this.myBid + d * this.minRaise));
+                const floor = a ? a.minimumBid : this.highBid + this.minRaise;
+                this.myBid = Math.max(floor, Math.min(this.cap, this.myBid + d * this.minRaise));
                 this.rebuildBody();
             });
         };
@@ -104,10 +142,12 @@ export class AuctionPopup extends Popup {
 
         // 出价（蓝）/ 一口价（黄）
         const bw = (IW - 18) / 2;
+        const own = this.highBidder === st.myId ? this.frozen : 0;
+        const hostNote = a && a.kind === 'CARD' ? '卖家不能出价' : '发起人已放弃购买资格，不能出价';
         const bid: Button = secondaryButton(p, '出价', X, 536, bw, 92, () => this.placeBid(this.myBid), 32).withCoin(this.myBid);
-        bid.setEnabled(this.myBid <= avail + (this.highBidder === st.myId ? this.frozen : 0), '可用现金不足（报价需足额，不可抵押）');
+        bid.setEnabled(!iAmHost && !this.sending && this.myBid <= avail + own, iAmHost ? hostNote : '可用现金不足（报价需足额，不可抵押）');
         const buy: Button = primaryButton(p, '一口价', X + bw + 18, 536, bw, 92, () => this.placeBid(this.cap), 32).withCoin(this.cap);
-        buy.setEnabled(this.cap <= me.cash, '可用现金不足（需足额，不可抵押）');
+        buy.setEnabled(!iAmHost && !this.sending && this.cap <= avail + own, iAmHost ? hostNote : '可用现金不足（需足额，不可抵押）');
 
         // 我的现金 | 我的冻结资金 | 可用现金
         fillRR(gfx(mk(p, 'Line', X, 646, IW, 2)), 0, 0, IW, 2, 1, Theme.c.panelLine);
@@ -128,7 +168,8 @@ export class AuctionPopup extends Popup {
     protected onTick(): void {
         if (!this.cd || !this.banner) return;
         const ms = this.cd.remainingMs();
-        setText(this.banner, ms > 0 && ms <= 3000 ? '最后 3 秒：他人出价将恢复到 3 秒' : '');
+        const warn = ms > 0 && ms <= 3000;
+        setText(this.banner, warn ? '最后 3 秒：他人出价将恢复到 3 秒' : this.hostText, warn ? Theme.c.payRed : Theme.c.noteGray);
     }
 
     private raise(by: string, amount: number): void {
@@ -141,6 +182,17 @@ export class AuctionPopup extends Popup {
 
     private placeBid(amount: number): void {
         const st = ctx.store;
+        const a = this.live();
+        if (st.online) {
+            if (!a || this.sending) return;
+            this.sending = true;
+            this.rebuildBody();
+            void st.online.act('Bid', { windowId: a.windowId, amount }).then(() => {
+                this.sending = false;
+                if (!this.closed) this.rebuildBody();
+            });
+            return;
+        }
         if (amount > st.me().cash) return Toast.show('可用现金不足');
         if (amount >= this.cap) {
             st.spend(this.cap);
@@ -163,8 +215,32 @@ export class AuctionPopup extends Popup {
         this.raise(this.highBidder === 'p3' ? 'p2' : 'p3', next);
     }
 
+    /** 联机：拍卖结束即关闭；最高价、出价人或我的资金变化时重画；截止时刻延后时更新倒计时。 */
+    tick(): void {
+        super.tick();
+        const st = ctx.store;
+        if (this.closed || !st.online) return;
+        const a = this.live();
+        if (!a) {
+            this.close();
+            return;
+        }
+        const w = st.game.windows.find((x) => x.windowId === a.windowId);
+        if (w && w.deadline !== this.syncedDeadline && this.cd) {
+            this.syncedDeadline = w.deadline;
+            this.cd.setDeadline(w.deadline, this.seconds);
+        }
+        const me = st.me();
+        const key = a.highBid + '|' + a.highBidder + '|' + (me ? me.cash + '/' + me.frozen : '');
+        if (key !== this.shown) {
+            this.shown = key;
+            this.rebuildBody();
+        }
+    }
+
     protected onExpire(): void {
         const st = ctx.store;
+        if (st.online) return; // 服务端在截止时成交或流拍
         if (this.highBidder === 'p1') {
             st.spend(this.highBid);
             const prop = st.prop(this.tileIndex);

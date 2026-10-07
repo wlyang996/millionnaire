@@ -86,7 +86,8 @@ export class CardDetailPage extends Popup {
             'disabled', () => this.close(), 36);
         if (!response) {
             // 使用：关掉详情，按卡种打开确认面板（路障 / 定点移动 / 地产类）或查询选人页（设计稿 13 / 14）
-            const usable = this.canUse ? cardUsable(this.type) : { ok: false, reason: '只能在自己的回合使用' };
+            // 拍卖卡可非自己回合申请
+            const usable = this.canUse || this.type === 'AUCTION' ? cardUsable(this.type) : { ok: false, reason: '只能在自己的回合使用' };
             const action = new Button(p, this.type === 'FIXED_MOVE' ? '选择落点' : '使用', 300, actionY, w - 328, 100,
                 'primary', () => {
                     this.close();
