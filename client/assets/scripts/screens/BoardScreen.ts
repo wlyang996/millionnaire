@@ -15,7 +15,7 @@ import { ghostButton, IconButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { DiceView } from '../ui/DiceView';
 import { drawBack, drawClock } from '../ui/Icons';
-import { fillCircle, fillRR, gfx, mk, onTap, setOpacity, setText, text } from '../ui/Kit';
+import { fillCircle, fillRR, gfx, mk, onTap, setOpacity, setText, strokeRR, text } from '../ui/Kit';
 import { Screen, ScreenId } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, roundedPanel } from '../ui/Widgets';
@@ -211,6 +211,18 @@ export class BoardScreen extends Screen {
         const cx = Theme.W / 2;
         // 设计稿 01 / 11：白色圆角药丸（x 250–466，y 498–578）+ 黄色秒表；本人"轮到你了 / 剩余 N秒"，他人"X的回合 / 等待X投骰"
         const top = 498;
+        if (this.spectator) {
+            // 设计稿 03 破产观战：加大的白色药丸 + 黄色描边 + 当前玩家头像"X的回合"；下方深色"已破产 · 观战中"；骰子在其下
+            const sp = roundedPanel(this.root, cx - 170, 452, 340, 96, { fill: '#FFFFFFF5', r: 30 });
+            strokeRR(gfx(sp), 1, 1, 338, 94, 30, '#F5C33B', 4);
+            avatar(sp, 12, 10, 76, cur.avatar, cur.nickname);
+            text(sp, cur.nickname + '的回合', 98, 0, 232, 96, 34, Theme.c.navy, { bold: true, align: 'l' });
+            const status = roundedPanel(this.root, cx - 150, 562, 300, 56, { fill: '#2D3B4AEE', r: 28 });
+            text(status, '已' + (st.me().life === 'SURRENDERED' ? '认输' : '破产') + ' · 观战中', 0, 0, 300, 56, Theme.font.md, Theme.c.white, { bold: true });
+            this.dice = new DiceView(this.root, cx - 54, 640);
+            this.dice.setValue(game.lastDice);
+            return;
+        }
         const pill = roundedPanel(this.root, cx - 110, top, 220, 80, { fill: '#FFFFFFF2', r: 24 });
         // 本人回合：黄色秒表；他人回合：当前玩家头像（设计稿 09 / 03）
         if (myTurn) drawClock(gfx(mk(pill, 'TurnIcon', 12, 14, 44, 44)), 22, 24, 17, Theme.c.yellowDark);
@@ -221,13 +233,6 @@ export class BoardScreen extends Screen {
             this.cdSec = text(pill, '', 108, 42, 100, 32, 22, Theme.c.payRed, { bold: true, align: 'l' });
         } else {
             text(pill, '等待' + cur.nickname + '投骰', 58, 42, 156, 32, 20, Theme.c.navy, { align: 'l' });
-        }
-        if (this.spectator) {
-            const status = roundedPanel(this.root, cx - 180, top + 230, 360, 58, { fill: '#2D3B4AEE', r: 29 });
-            text(status, '已' + (st.me().life === 'SURRENDERED' ? '认输' : '破产') + ' · 观战中', 0, 0, 360, 58, Theme.font.lg, Theme.c.white, { bold: true });
-            this.dice = new DiceView(this.root, cx - 54, 616);
-            this.dice.setValue(game.lastDice);
-            return;
         }
         // 骰子：设计稿 01 中央（x 300–420，y 610–730）
         this.dice = new DiceView(this.root, cx - 54, 616);
