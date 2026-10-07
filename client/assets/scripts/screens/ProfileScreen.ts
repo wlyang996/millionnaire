@@ -102,8 +102,8 @@ export class ProfileScreen extends Screen {
             if (!st.online) return ctx.screens.go('lobby');
             // 联机：微信里用 wx.login（带上昵称与头像），其他环境用测试身份，然后连接服务器
             this.enter.setEnabled(false, '正在连接服务器…');
-            st.online.login(this.nick.trim(), this.avatarIdx).then(() => ctx.screens.go('lobby'), (e: { code?: string }) => {
-                Toast.show(e && e.code === 'INVALID_NICKNAME' ? '昵称不合法，请换一个' : '连接服务器失败，请稍后重试');
+            st.online.login(this.nick.trim(), this.avatarIdx).then(() => ctx.screens.go('lobby'), (e: { code?: string; wxErrcode?: number }) => {
+                Toast.show(e && e.code === 'INVALID_NICKNAME' ? '昵称不合法，请换一个' : wechatError(e));
                 this.checkNow();
             });
         });
@@ -125,9 +125,9 @@ export class ProfileScreen extends Screen {
             }
             Toast.show('微信登录成功，请填写昵称并选择头像');
             this.rebuild();
-        }, (e: { code?: string }) => {
+        }, (e: { code?: string; wxErrcode?: number }) => {
             this.busy = false;
-            Toast.show(e && e.code === 'WECHAT_LOGIN_FAILED' ? '微信登录失败，请重试' : '连接服务器失败，请稍后重试');
+            Toast.show(wechatError(e));
         });
     }
 
@@ -152,4 +152,15 @@ export class ProfileScreen extends Screen {
     refresh(): void {
         this.checkNow();
     }
+}
+
+/** 登录失败提示：微信换身份失败时带上微信错误码，便于对照排查。 */
+function wechatError(e: { code?: string; wxErrcode?: number } | undefined): string {
+    if (!e || e.code !== 'WECHAT_LOGIN_FAILED') return '连接服务器失败，请稍后重试';
+    const c = e.wxErrcode;
+    if (c === 40029) return '微信登录失败（40029：code 无效，请检查小游戏 AppID 与后台 WECHAT_APPID 是否一致）';
+    if (c === 40125) return '微信登录失败（40125：后台 WECHAT_APPSECRET 不正确）';
+    if (c === 40013) return '微信登录失败（40013：后台 WECHAT_APPID 不正确）';
+    if (c === -1) return '微信登录失败（后台连不上微信服务器）';
+    return '微信登录失败' + (c !== undefined ? '（错误码 ' + c + '）' : '') + '，请重试';
 }

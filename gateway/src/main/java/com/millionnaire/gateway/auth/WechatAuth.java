@@ -10,7 +10,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,11 +24,21 @@ import org.springframework.stereotype.Component;
 public class WechatAuth {
     private static final Logger log = LoggerFactory.getLogger(WechatAuth.class);
 
+    /** 换取结果：成功时 openid 非空；失败时 errcode 为微信错误码（40029 code 无效、40125 AppSecret 无效、40013 AppID 无效、-1 网络不通）。 */
+    public record Exchange(String openid, int errcode, String errmsg) {
+        public static Exchange ok(String openid) {
+            return new Exchange(openid, 0, "");
+        }
+
+        public static Exchange fail(int errcode, String errmsg) {
+            return new Exchange(null, errcode, errmsg);
+        }
+    }
+
     /** 把 code 换成 openid；测试里替换成假的。 */
     @FunctionalInterface
     public interface CodeExchanger {
-        /** @return openid；code 无效或微信出错时为空 */
-        Optional<String> openid(String appId, String secret, String code);
+        Exchange exchange(String appId, String secret, String code);
     }
 
     private final String appId;
@@ -53,11 +62,11 @@ public class WechatAuth {
         return appId;
     }
 
-    public Optional<String> openid(String code) {
+    public Exchange exchange(String code) {
         if (!configured() || code == null || code.isBlank() || code.length() > 128) {
-            return Optional.empty();
+            return Exchange.fail(40029, "invalid code");
         }
-        return exchanger.openid(appId, secret, code.strip());
+        return exchanger.exchange(appId, secret, code.strip());
     }
 
     /** 真实实现：GET {apiBase}/sns/jscode2session。 */
@@ -75,15 +84,15 @@ public class WechatAuth {
                     // 不记录 code 与 secret
                     log.warn("jscode2session failed: http {} errcode {} errmsg {}", r.statusCode(), body.path("errcode").asInt(),
                             body.path("errmsg").asText());
-                    return Optional.empty();
+                    return Exchange.fail(body.path("errcode").asInt(r.statusCode()), body.path("errmsg").asText(""));
                 }
-                return Optional.of(openid);
+                return Exchange.ok(openid);
             } catch (IOException e) {
                 log.warn("jscode2session unreachable: {}", e.toString());
-                return Optional.empty();
+                return Exchange.fail(-1, "unreachable");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return Optional.empty();
+                return Exchange.fail(-1, "interrupted");
             }
         };
     }

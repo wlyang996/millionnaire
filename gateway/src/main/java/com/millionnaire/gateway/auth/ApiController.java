@@ -78,10 +78,16 @@ public class ApiController {
         if (body == null || body.code() == null || body.code().isBlank()) {
             return error(HttpStatus.BAD_REQUEST, "BAD_REQUEST");
         }
-        Optional<String> openid = wechat.openid(body.code());
-        if (openid.isEmpty()) {
-            return error(HttpStatus.UNAUTHORIZED, "WECHAT_LOGIN_FAILED");
+        WechatAuth.Exchange ex = wechat.exchange(body.code());
+        if (ex.openid() == null) {
+            // 带回微信错误码，便于排查（40029 code 无效 / AppID 不一致，40125 AppSecret 错，40013 AppID 错，-1 连不上微信）
+            Map<String, Object> err = new LinkedHashMap<>();
+            err.put("code", "WECHAT_LOGIN_FAILED");
+            err.put("wxErrcode", ex.errcode());
+            err.put("message", ex.errmsg());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(err);
         }
+        Optional<String> openid = Optional.of(ex.openid());
         String nickname = body.nickname() == null ? null : body.nickname().strip();
         if (nickname != null && !nickname.isEmpty() && !rooms.validNickname(nickname)) {
             return error(HttpStatus.BAD_REQUEST, "INVALID_NICKNAME");

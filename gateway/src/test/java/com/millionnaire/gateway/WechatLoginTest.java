@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.millionnaire.gateway.auth.WechatAuth;
 import java.util.Map;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,9 +38,9 @@ class WechatLoginTest {
             return (appId, secret, code) -> {
                 assertThat(appId).isEqualTo("wx-test-app");
                 if (!code.startsWith("c-")) {
-                    return Optional.empty();
+                    return WechatAuth.Exchange.fail(40029, "invalid code");
                 }
-                return Optional.of("o-" + code.split("-")[1]);
+                return WechatAuth.Exchange.ok("o-" + code.split("-")[1]);
             };
         }
     }
@@ -96,7 +95,7 @@ class WechatLoginTest {
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString("{\"code\":\"nope\"}")).build(),
                 java.net.http.HttpResponse.BodyHandlers.ofString());
         assertThat(bad.statusCode()).isEqualTo(401);
-        assertThat(bad.body()).contains("WECHAT_LOGIN_FAILED");
+        assertThat(bad.body()).contains("WECHAT_LOGIN_FAILED").contains("40029");
         ResponseEntity<Map> nick = http.postForEntity("/api/auth/wx-login", Map.of("code", "c-carol-1", "nickname", "​"), Map.class);
         assertThat(nick.getStatusCode().value()).isEqualTo(400);
         ResponseEntity<Map> none = http.postForEntity("/api/auth/wx-login", Map.of(), Map.class);

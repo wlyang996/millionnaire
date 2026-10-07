@@ -92,11 +92,11 @@ export class GameClient {
         const body: Record<string, unknown> = { code };
         if (nickname) body.nickname = nickname;
         if (avatar !== undefined) body.avatar = avatar;
-        const r = await requestJson<{ token?: string; userId?: string; nickname?: string; avatar?: number; needProfile?: boolean; code?: string }>(
+        const r = await requestJson<{ token?: string; userId?: string; nickname?: string; avatar?: number; needProfile?: boolean; code?: string; wxErrcode?: number }>(
             'POST', this.baseUrl + '/api/auth/wx-login', body);
         if (r.status === 200 && r.body?.needProfile) return null;
         if (r.status !== 200 || !r.body?.token) {
-            throw Object.assign(new Error('wx login failed'), { code: r.body?.code ?? 'HTTP_' + r.status });
+            throw Object.assign(new Error('wx login failed'), { code: r.body?.code ?? 'HTTP_' + r.status, wxErrcode: r.body?.wxErrcode });
         }
         this.token = r.body.token;
         this.userId = r.body.userId ?? null;
