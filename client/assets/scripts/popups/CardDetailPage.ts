@@ -65,7 +65,8 @@ export class CardDetailPage extends Popup {
         if (!art(p, 'detail_' + CARD_ART[this.type], 135, 205, 450, 490)) {
             art(p, CARD_ART[this.type], 135, 205, 450, 490);
         }
-        text(p, CARD_NAMES[this.type], 165, 590, 390, 70, 44, Theme.c.ink, { bold: true });
+        // 大卡素材底部留有空白名牌（约在卡高的 83%～97%）：卡片按高 490 等比放在 y 205，名牌即 y 612～680
+        text(p, CARD_NAMES[this.type], 165, 612, 390, 66, 44, Theme.c.navy, { bold: true });
 
         const rows = rules(this.type);
         const y = rows.length === 2 ? 780 : 710;
