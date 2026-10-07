@@ -8,8 +8,8 @@ import { Countdown } from '../core/Clock';
 import { ME } from '../core/MockStore';
 import { PlayerView } from '../core/Models';
 import { MINIGAME_REWARD, SECONDS, toothCount } from '../core/Rules';
-import { Theme } from '../core/Theme';
-import { IconButton } from '../ui/Buttons';
+import { Theme, textWidth } from '../core/Theme';
+import { IconButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { drawBack, drawChat, drawCoin, drawMic } from '../ui/Icons';
 import { fillCircle, fillRR, gfx, mk, onTap, setText, text } from '../ui/Kit';
@@ -37,6 +37,8 @@ export class TeethScreen extends Screen {
     private inited = false;
     private teethNodes: Node[] = [];
     private loser: PlayerView | null = null;
+    /** 闭合后先看鳄鱼合嘴，到此时刻切到结算页 */
+    private resultAt = 0;
 
     onShow(): void {
         this.inited = false;
@@ -61,6 +63,10 @@ export class TeethScreen extends Screen {
 
     protected build(): void {
         if (!this.inited) this.init();
+        if (this.phase === 'closed' && Date.now() >= this.resultAt) {
+            this.buildResult();
+            return;
+        }
         this.backdrop('sky');
         art(this.root, 'card_detail_background', 0, 0, Theme.W, Theme.H, 'stretch');
         art(this.root, 'scene_game_center', 50, 110, 620, 260);
@@ -168,9 +174,10 @@ export class TeethScreen extends Screen {
         if (idx === this.danger) {
             this.phase = 'closed';
             this.loser = cur;
-            Toast.show('咔嚓！' + cur.nickname + ' 触发闭合，其余玩家各获 ' + MINIGAME_REWARD);
             for (const p of this.participants) if (p.playerId !== cur.playerId) p.cash += MINIGAME_REWARD;
-            this.endAt = Date.now() + 2600;
+            // 合嘴 1.2 秒后显示结算页（设计稿 16），停留 8 秒或点"返回棋盘"回到棋盘
+            this.resultAt = Date.now() + 1200;
+            this.endAt = this.resultAt + 8000;
         } else {
             this.turn = (this.turn + 1) % this.participants.length;
             this.cd.start(SECONDS.tooth);
@@ -197,11 +204,8 @@ export class TeethScreen extends Screen {
         this.tickTexts();
         const now = Date.now();
         if (this.phase === 'closed') {
-            if (now >= this.endAt) {
-                this.inited = false;
-                ctx.store.emit();
-                ctx.screens.back('board');
-            }
+            if (now >= this.endAt) this.backToBoard();
+            else if (now >= this.resultAt && !this.showingResult) this.rebuild();
             return;
         }
         const cur = this.participants[this.turn];
@@ -216,6 +220,82 @@ export class TeethScreen extends Screen {
             Toast.show(cur.nickname + ' 超时，系统随机代选');
             this.pick(this.randomFree(), cur.playerId);
         }
+    }
+
+    private showingResult = false;
+
+    private backToBoard(): void {
+        if (!this.inited) return;
+        this.inited = false;
+        this.showingResult = false;
+        ctx.store.emit();
+        ctx.screens.back('board');
+    }
+
+    /**
+     * 结算页（设计稿 16 左两张）：木牌标题"虎口拔牙"、气泡"某某触发了闭合！"（我触发时为"你触发了闭合！"）、合嘴鳄鱼、
+     * "本次奖励"彩带。胜利者视角：白色面板写触发者本次奖励 0 与"其余 N 名参与者各获得 +500"，蓝色卡写"你获得的奖励 +500"；
+     * 落败者视角：大号红色 0、"其他参与玩家各 +500"与全部参与者头像网格（触发者 0、其余 +500）。底部黄色"返回棋盘"。
+     */
+    private buildResult(): void {
+        this.showingResult = true;
+        const st = ctx.store;
+        const loser = this.loser;
+        const iLost = !!loser && loser.playerId === st.myId;
+        const others = this.participants.length - 1;
+        this.backdrop('sky');
+        art(this.root, 'card_detail_background', 0, 0, Theme.W, Theme.H, 'stretch');
+        const title = mk(this.root, 'Title', 150, 40, 420, 200);
+        art(title, 'minigame_title', 0, 0, 420, 200);
+        text(title, '虎口拔牙', 40, 42, 340, 110, 64, '#5A3412', { bold: true });
+        // 气泡
+        const bubbleText = iLost ? '你触发了闭合！' : (loser ? loser.nickname : '') + ' 触发了闭合！';
+        const bw = Math.min(560, textWidth(bubbleText, 32) + 80);
+        const bubble = mk(this.root, 'Bubble', (Theme.W - bw) / 2, 252, bw, 70);
+        fillRR(gfx(bubble), 0, 4, bw, 66, 33, Theme.c.shadow);
+        fillRR(gfx(bubble), 0, 0, bw, 66, 33, Theme.c.white);
+        text(bubble, bubbleText, 0, 0, bw, 66, 32, iLost ? Theme.c.navy : Theme.c.navy, { bold: true });
+        art(this.root, 'croc_closed', 130, 330, 460, 357);
+        // 本次奖励彩带
+        const rib = mk(this.root, 'Ribbon', 210, 664, 300, 64);
+        fillRR(gfx(rib), 0, 0, 300, 64, 32, '#FFD95A');
+        text(rib, '本次奖励', 0, 0, 300, 64, 32, '#7A4A00', { bold: true });
+        if (!iLost) {
+            const pnl = mk(this.root, 'Panel', 40, 712, 640, 250);
+            fillRR(gfx(pnl), 0, 4, 640, 246, 28, Theme.c.shadow);
+            fillRR(gfx(pnl), 0, 0, 640, 246, 28, '#FFFBF3');
+            if (loser) avatar(pnl, 40, 26, 96, loser.avatar, loser.nickname);
+            text(pnl, (loser ? loser.nickname : '') + '本次奖励', 156, 26, 300, 96, 32, Theme.c.navy, { align: 'l' });
+            text(pnl, '0', 456, 26, 80, 96, 48, Theme.c.payRed, { bold: true, align: 'l' });
+            fillRR(gfx(mk(pnl, 'Line', 30, 140, 580, 2)), 0, 0, 580, 2, 1, Theme.c.panelLine);
+            text(pnl, '其余 ' + others + ' 名参与者各获得', 40, 150, 380, 90, 30, Theme.c.navy, { bold: true, align: 'l' });
+            text(pnl, '+' + MINIGAME_REWARD, 430, 150, 180, 90, 52, Theme.c.payRed, { bold: true, align: 'l' });
+            const mine = mk(this.root, 'Mine', 60, 978, 600, 160);
+            if (!art(mine, 'result_reward_panel', 0, 0, 600, 160, 'stretch')) fillRR(gfx(mine), 0, 0, 600, 160, 26, '#DCEBFF');
+            const me = st.me();
+            if (me) avatar(mine, 40, 24, 112, me.avatar, me.nickname, { ring: Theme.c.white });
+            text(mine, '你获得的奖励', 190, 18, 340, 50, 30, Theme.c.navy, { bold: true, align: 'l' });
+            drawCoin(gfx(mk(mine, 'Coin', 190, 76, 56, 56)), 28, 28, 28);
+            text(mine, '+' + MINIGAME_REWARD, 258, 70, 260, 70, 56, Theme.c.payRed, { bold: true, align: 'l' });
+        } else {
+            const pnl = mk(this.root, 'Panel', 40, 712, 640, 426);
+            if (!art(pnl, 'result_zero_panel', 0, 0, 640, 426, 'stretch')) fillRR(gfx(pnl), 0, 0, 640, 426, 28, '#FFFBF3');
+            drawCoin(gfx(mk(pnl, 'Coin', 236, 30, 60, 60)), 30, 30, 30);
+            text(pnl, '0', 306, 22, 100, 76, 64, Theme.c.payRed, { bold: true, align: 'l' });
+            text(pnl, '其他参与玩家各 +' + MINIGAME_REWARD, 0, 100, 640, 50, 30, Theme.c.navy, { bold: true });
+            this.participants.slice(0, 8).forEach((p, i) => {
+                const cx = 36 + (i % 4) * 146;
+                const cy = 156 + Math.floor(i / 4) * 130;
+                const lost = !!loser && p.playerId === loser.playerId;
+                const cell = mk(pnl, 'P' + i, cx, cy, 130, 124);
+                if (lost) fillRR(gfx(cell), 0, 0, 130, 124, 16, '#FFF1C9');
+                avatar(cell, 27, 4, 76, p.avatar, p.nickname, { dim: lost });
+                text(cell, p.nickname, 0, 80, 130, 22, 20, Theme.c.navy, { bold: true });
+                text(cell, lost ? '0' : '+' + MINIGAME_REWARD, 0, 100, 130, 24, 20, lost ? Theme.c.noteGray : Theme.c.payRed, { bold: true });
+            });
+        }
+        const back = primaryButton(this.root, '返回棋盘', 140, 1158, 440, 96, () => this.backToBoard(), 36);
+        art(back.node, 'icon_house', 70, 16, 60, 60);
     }
 
     refresh(): void {
