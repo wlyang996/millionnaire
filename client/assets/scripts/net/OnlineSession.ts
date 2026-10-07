@@ -28,7 +28,7 @@ const MESSAGES: Record<string, string> = {
     WINDOW_NOT_OPEN: '请稍等动画结束', WRONG_STAGE: '当前不能这样操作', INSUFFICIENT_CASH: '现金不足',
     NOT_AVAILABLE: '该功能尚未开放', CONTROL_NOT_MANUAL: '托管中，请先恢复手动', NO_ACTIVE_WINDOW: '操作已过期',
     WINDOW_MISMATCH: '操作已过期', TIMEOUT: '网络超时，请重试', OFFLINE: '网络未连接', UNAUTHENTICATED: '请重新登录', TOO_FAST: '发言太快了，歇一下', NOT_IN_ROOM: '你不在房间里',
-    BOTS_DISABLED: '机器人只在测试环境可用', IN_GAME: '对局进行中不能加机器人',
+    UNKNOWN_TYPE: '服务器版本较旧，请先发布最新后台', BOTS_DISABLED: '机器人只在测试环境可用', IN_GAME: '对局进行中不能加机器人',
     ROOM_HALTED: '房间出现故障已关闭', MAX_LEVEL: '已满级', MORTGAGED: '已抵押的资产不能这样操作',
 };
 
