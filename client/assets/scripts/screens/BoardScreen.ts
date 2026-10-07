@@ -63,7 +63,7 @@ export class BoardScreen extends Screen {
     private otherAt = 0;
     private eventOv: EventOverlay | null = null;
     private pendingFine = 0;
-    private cashGame: GameView | null = null;
+    private cashGame = '';
     private cashSnapshot = new Map<string, number>();
     private cashChanges = new Map<string, CashChange>();
     private cashChangeNodes: CashChangeNode[] = [];
@@ -399,8 +399,10 @@ export class BoardScreen extends Screen {
     // ---------- 文字/时钟 ----------
     private captureCashChanges(game: GameView): void {
         const now = Date.now();
-        if (this.cashGame !== game) {
-            this.cashGame = game;
+        // 按"房间 + 局号"判断换局；联机每次推送都是新的视图对象，不能按对象判断（否则每次都清空快照，永远看不到变化）
+        const key = ctx.store.session.roomId + '#' + game.gameNo;
+        if (this.cashGame !== key) {
+            this.cashGame = key;
             this.cashSnapshot.clear();
             this.cashChanges.clear();
         }
