@@ -21,6 +21,7 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.OptionalLong;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -45,9 +46,12 @@ public class GameSocketHandler extends TextWebSocketHandler {
     private final Sockets sockets;
     private final Wire wire;
     private final Clock clock;
+    private final boolean testLoginEnabled;
 
     public GameSocketHandler(RoomService rooms, UserStore users, SessionTokens tokens, Sockets sockets, Wire wire,
-                             Clock clock) {
+                             Clock clock,
+                             @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled) {
+        this.testLoginEnabled = testLoginEnabled;
         this.rooms = rooms;
         this.users = users;
         this.tokens = tokens;
@@ -127,6 +131,16 @@ public class GameSocketHandler extends TextWebSocketHandler {
                 sockets.sendTo(session, wire.write(r));
                 return;
             }
+            case "ADD_BOT" -> {
+                // 测试用：一个人也能开局。与测试登录同一开关，正式环境关闭
+                if (!testLoginEnabled) {
+                    throw new ClientException("BOTS_DISABLED", "bots are only available in test mode");
+                }
+                LiveRoom room = rooms.roomOf(pid)
+                        .orElseThrow(() -> new ClientException("NOT_IN_ROOM", "join or create a room first"));
+                roomCode = room.code();
+                reply = rooms.addBot(user, requestId, users.create(botName(room)));
+            }
             case "JOIN_ROOM" -> {
                 int code = roomCode(msg);
                 LiveRoom target = rooms.byCode(code).orElse(null);
@@ -158,6 +172,11 @@ public class GameSocketHandler extends TextWebSocketHandler {
             }
         }
         sockets.sendTo(session, wire.write(result(requestId, reply.outcome(), reply.code(), roomCode)));
+    }
+
+    /** 机器人昵称：机器人1、机器人2……（按房间现有人数取号）。 */
+    private static String botName(LiveRoom room) {
+        return "机器人" + room.memberCount();
     }
 
     /** 暂离 / 托管 / 手动：玩家只能切换自己的控制模式，由服务端转成可信系统命令。 */

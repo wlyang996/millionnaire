@@ -62,7 +62,11 @@ final class WsClient extends TextWebSocketHandler implements AutoCloseable {
     }
 
     JsonNode await(Predicate<JsonNode> p) throws InterruptedException {
-        long deadline = System.currentTimeMillis() + 10_000;
+        return await(p, 10_000);
+    }
+
+    JsonNode await(Predicate<JsonNode> p, long timeoutMs) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
             for (int i = cursor; i < received.size(); i++) {
                 JsonNode m = received.get(i);

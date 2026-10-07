@@ -172,6 +172,77 @@ class RoomFlowTest {
         }
     }
 
+    /** 测试机器人：一个人建房、加机器人（自动准备）、开局；机器人转为托管并由服务端自动投骰。 */
+    @Test
+    void soloPlayerStartsWithABot() throws Exception {
+        Map<String, Object> a = login("毛毛");
+        String aid = (String) a.get("userId");
+        try (WsClient wa = new WsClient(port, (String) a.get("token"))) {
+            wa.awaitType("HELLO");
+            assertThat(wa.call(wa.msg("ADD_BOT", "b0")).path("code").asText()).isEqualTo("NOT_IN_ROOM");
+            String code = wa.call(wa.msg("CREATE_ROOM", "c")).path("roomCode").asText();
+            JsonNode added = wa.call(wa.msg("ADD_BOT", "b1"));
+            assertThat(added.path("ok").asBoolean()).as(added.toString()).isTrue();
+            assertThat(added.path("roomCode").asText()).isEqualTo(code);
+            JsonNode lobby = wa.lastUpdate();
+            JsonNode bot = lobby.path("view").path("members").get(1);
+            assertThat(bot.path("nickname").asText()).isEqualTo("机器人1");
+            assertThat(bot.path("ready").asBoolean()).as(lobby.toString()).isTrue();
+            String botId = bot.path("playerId").asText();
+
+            assertThat(wa.call(wa.msg("READY", "r").put("ready", true)).path("ok").asBoolean()).isTrue();
+            JsonNode started = wa.call(wa.msg("START_GAME", "s"));
+            assertThat(started.path("ok").asBoolean()).as(started.toString()).isTrue();
+            assertThat(wa.call(wa.msg("ADD_BOT", "b2")).path("code").asText()).isEqualTo("IN_GAME");
+
+            // 开局那一步之后机器人立即转为托管（UPDATE 先于开局的 RESULT 到达）
+            JsonNode hosted = wa.lastUpdate();
+            assertThat(controlOf(hosted, botId)).isEqualTo("HOSTED");
+            assertThat(controlOf(hosted, aid)).isEqualTo("MANUAL");
+            // 轮到人时自己投一次；之后机器人应在自动动作延时后自己投骰
+            JsonNode turn = wa.lastUpdate();
+            if (aid.equals(turn.path("view").path("game").path("currentPlayer").asText())) {
+                JsonNode w = ownWindow(turn, aid);
+                long wait = w.path("opensAt").asLong() - turn.path("serverTime").asLong();
+                if (wait > 0) {
+                    Thread.sleep(wait + 50);
+                }
+                assertThat(wa.call(wa.msg("GAME", "roll").put("command", "RollDice")
+                        .set("args", wa.msg("x", null).put("windowId", w.path("windowId").asLong()))).path("ok").asBoolean()).isTrue();
+            }
+            JsonNode botRoll = wa.await(m -> {
+                for (JsonNode e : m.path("events")) {
+                    if ("DiceRolled".equals(e.path("kind").asText()) && botId.equals(e.path("data").path("playerId").asText())) {
+                        return true;
+                    }
+                }
+                return false;
+            }, 60_000); // 人落地后的决策窗口（买地等）不操作，等其超时
+            assertThat(botRoll.path("events").toString()).contains("PlayerMoved");
+
+            // 认输后存活的只剩托管的机器人，对局结束；人离开后只剩机器人：机器人随之离开，房间关闭
+            JsonNode gave = wa.call(wa.msg("GAME", "sur").put("command", "Surrender")
+                    .set("args", wa.msg("x", null).put("gameNo", 1)));
+            assertThat(gave.path("ok").asBoolean()).as(gave.toString()).isTrue();
+            JsonNode ended = wa.lastUpdate();
+            assertThat(ended.path("view").path("game").isNull()).as(ended.toString()).isTrue();
+            assertThat(ended.path("view").path("members").get(1).path("ready").asBoolean()).isTrue(); // 机器人重新准备
+            JsonNode left = wa.call(wa.msg("LEAVE_ROOM", "l"));
+            assertThat(left.path("ok").asBoolean()).as(left.toString()).isTrue();
+            assertThat(jdbc.queryForObject("SELECT status FROM room WHERE room_code = ?", String.class,
+                    Integer.parseInt(code))).isEqualTo("CLOSED");
+        }
+    }
+
+    private static String controlOf(JsonNode update, String player) {
+        for (JsonNode p : update.path("view").path("game").path("players")) {
+            if (player.equals(p.path("playerId").asText())) {
+                return p.path("control").asText();
+            }
+        }
+        return "";
+    }
+
     private static JsonNode ownWindow(JsonNode update, String owner) {
         for (JsonNode w : update.path("view").path("game").path("windows")) {
             if (owner.equals(w.path("owner").asText(null)) && "TURN".equals(w.path("kind").asText())) {

@@ -50,7 +50,7 @@ export class RoomScreen extends Screen {
             const cell = mk(seats, 'Seat' + i, cx, cy, 150, 164);
             const m: Member | undefined = s.members[i];
             if (m) this.drawMember(cell, m, isHost);
-            else this.drawEmpty(cell, i >= cap);
+            else this.drawEmpty(cell, i >= cap, isHost);
         }
 
         // 设置
@@ -156,10 +156,13 @@ export class RoomScreen extends Screen {
         }
     }
 
-    private drawEmpty(cell: Node, locked: boolean): void {
+    private drawEmpty(cell: Node, locked: boolean, isHost: boolean): void {
         const g = gfx(cell);
-        strokeCircle(g, 75, 42, 40, locked ? Theme.c.gray : Theme.c.ivoryLine, 3);
-        text(cell, locked ? '×' : '+', 33, 2, 84, 80, Theme.font.xl, Theme.c.inkFaint);
-        text(cell, locked ? '30格不可用' : '空位', 0, 88, 150, 32, Theme.font.sm, Theme.c.inkFaint);
+        // 联机测试：房主点空位加一个机器人（服务端托管代打），一个人也能开局
+        const bot = !locked && isHost && !!ctx.store.online;
+        strokeCircle(g, 75, 42, 40, locked ? Theme.c.gray : bot ? Theme.c.blue : Theme.c.ivoryLine, 3);
+        text(cell, locked ? '×' : '+', 33, 2, 84, 80, Theme.font.xl, bot ? Theme.c.blue : Theme.c.inkFaint);
+        text(cell, locked ? '30格不可用' : bot ? '加机器人' : '空位', 0, 88, 150, 32, Theme.font.sm, bot ? Theme.c.blue : Theme.c.inkFaint, { bold: bot });
+        if (bot) onTap(cell, () => void ctx.store.online?.addBot());
     }
 }
