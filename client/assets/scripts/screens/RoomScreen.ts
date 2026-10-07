@@ -7,11 +7,11 @@ import { ConfirmPopup } from '../popups/ConfirmPopup';
 import { Button, IconButton, primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { drawChat, drawCopy, drawMic } from '../ui/Icons';
-import { fillCircle, fillRR, gfx, line, mk, onTap, strokeCircle, text } from '../ui/Kit';
+import { fillCircle, fillRR, gfx, line, mk, onTap, strokeCircle, strokeRR, text } from '../ui/Kit';
 import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, chip, roundedPanel, Segmented } from '../ui/Widgets';
-import { art } from '../ui/Art';
+import { art, characterKey } from '../ui/Art';
 
 export class RoomScreen extends Screen {
     readonly id = 'room' as const;
@@ -130,18 +130,30 @@ export class RoomScreen extends Screen {
         const st = ctx.store;
         const s = st.session;
         const isMe = m.playerId === st.myId;
-        avatar(cell, 33, 0, 84, m.avatar, m.nickname, { ring: m.ready ? Theme.c.green : undefined });
-        if (m.playerId === s.hostId) chip(cell, 8, 0, '房主', Theme.c.orange, Theme.c.white, Theme.font.xs);
-        text(cell, m.nickname + (isMe ? '(我)' : ''), 0, 88, 150, 32, Theme.font.sm, Theme.c.ink, { bold: true });
-        const rc = m.ready ? chip(cell, 26, 124, '✓ 已准备', Theme.c.greenSoft, Theme.c.greenDark, Theme.font.xs)
-            : chip(cell, 26, 124, '○ 未准备', '#E9EDF1', Theme.c.inkSoft, Theme.font.xs);
+        // 设计稿 06/08：圆角方形人物卡（头像底色的浅色）、房主橙色角标在右上、名字、准备状态胶囊
+        const card = mk(cell, 'Card', 23, 2, 104, 104);
+        const cg = gfx(card);
+        fillRR(cg, 0, 3, 104, 104, 20, Theme.c.shadow);
+        fillRR(cg, 0, 0, 104, 104, 20, Theme.avatarColors[((m.avatar % 8) + 8) % 8] + '55');
+        strokeRR(cg, 1, 1, 102, 102, 20, '#FFFFFF', 3);
+        if (!art(card, characterKey(m.avatar), 4, 4, 96, 96)) avatar(card, 10, 10, 84, m.avatar, m.nickname);
+        if (m.playerId === s.hostId) {
+            const tag = mk(cell, 'Host', 86, -8, 56, 30);
+            fillRR(gfx(tag), 0, 0, 56, 30, 12, Theme.c.orange);
+            text(tag, '房主', 0, 0, 56, 30, Theme.font.xs, Theme.c.white, { bold: true });
+        }
+        text(cell, m.nickname + (isMe ? '(我)' : ''), 0, 108, 150, 30, Theme.font.sm, Theme.c.ink, { bold: true });
+        const rc = m.ready ? chip(cell, 22, 138, '✓ 已准备', Theme.c.greenSoft, Theme.c.greenDark, Theme.font.xs, 26)
+            : chip(cell, 22, 138, '◷ 未准备', '#E9EDF1', Theme.c.inkSoft, Theme.font.xs, 26);
+        // 胶囊在格内居中
+        rc.node.setPosition(rc.node.position.x + (106 - rc.w) / 2, rc.node.position.y, 0);
         // 演示：点别人的准备标签可切换其准备状态（真实环境由对方自己操作）
         if (!isMe && !st.online) onTap(rc.node, () => {
             Toast.show('演示：切换 ' + m.nickname + ' 的准备状态');
             st.setReady(m.playerId, !m.ready);
         });
         if (isHost && !isMe) {
-            const x = mk(cell, 'Kick', 104, 0, 40, 40);
+            const x = mk(cell, 'Kick', 4, -6, 40, 40);
             const g = gfx(x);
             fillCircle(g, 20, 20, 17, Theme.c.red);
             line(g, 13, 13, 27, 27, Theme.c.white, 4);
