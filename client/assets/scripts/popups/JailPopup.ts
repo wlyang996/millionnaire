@@ -65,7 +65,7 @@ export class JailPopup extends Popup {
         }, 38);
         art(roll.node, 'dice_5', 70, 14, 62, 62);
         const pay: Button = secondaryButton(p, '支付 ' + BAIL + ' 出狱', 60, by + 108, w - 120, 80, () => this.payBail(), 32);
-        art(pay.node, 'icon_coin', 150, 14, 46, 46);
+        art(pay.node, 'icon_coin', 112, 14, 46, 46); // 文字约宽 220、居中在 x 170 起，金币放在其左侧
         pay.setEnabled((me ? me.cash : 0) >= BAIL, '现金不足 ' + BAIL);
         const cards = st.game.myHand.filter((c) => c.type === 'JAIL_RELEASE').length;
         let ny = by + 200;

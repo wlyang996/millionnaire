@@ -34,6 +34,7 @@ export class HistoryPopup extends Popup {
 
     constructor() {
         super('history', '我的战绩', W, H, 0, true);
+        this.dimBackground = true; // 设计稿 17 是整页：压暗底层，不露出棋盘 / 大厅
         const online = ctx.store.online;
         if (online) {
             this.state = 'loading';

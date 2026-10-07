@@ -20,7 +20,7 @@ import { ScrollList } from '../ui/ScrollList';
 import { box, inlineRow, inlineRowLeft, noteLines, propertyArtKey } from './Common';
 
 const W = 640;
-const H = 960;
+const H = 880;
 const ROW_H = 112;
 
 type Tab = 'mortgage' | 'redeem';
@@ -87,7 +87,7 @@ export class BankPopup extends Popup {
             box(p, 24, sy, w - 48, 200, Theme.c.white, 20);
             inlineRow(p, w / 2, sy + 14, 64, [{ t: '本次可得', size: 28 }, { coin: 40 }, { t: String(value), size: 44, color: Theme.c.payRed }], 12);
             btn = primaryButton(p, '确认抵押', 90, sy + 92, w - 180, 92, () => this.confirm(), 36);
-            const note = box(p, 24, H - 100, w - 48, 72, Theme.c.boxGray, 18);
+            const note = box(p, 24, H - 92, w - 48, 72, Theme.c.boxGray, 18);
             noteLines(note, w - 48, ['银行按原价 100% · 保留等级与所有权 · 抵押期间不收租'], 16);
         } else {
             const sy = 222 + listH + 14;
@@ -103,7 +103,7 @@ export class BankPopup extends Popup {
             fillRR(gfx(mk(sum, 'Line', 20, 140, w - 88, 2)), 0, 0, w - 88, 2, 1, Theme.c.panelLine);
             kv('可用现金', st.me().cash, 150, Theme.c.navy, 32);
             btn = primaryButton(p, '确认赎回', 90, sy + 232, w - 180, 92, () => this.confirm(), 36);
-            const note = box(p, 24, H - 100, w - 48, 72, Theme.c.boxGray, 18);
+            const note = box(p, 24, H - 92, w - 48, 72, Theme.c.boxGray, 18);
             noteLines(note, w - 48, ['银行免费赎回 · 其他位置手续费 10%'], 16);
         }
         const enough = mortgage || value <= st.me().cash;
