@@ -38,7 +38,7 @@ export function tilesFor(boardId: string, boards: BoardTemplate[] | null): Board
 export function lastDiceFrom(events: SEvent[], previous: number): number {
     for (let i = events.length - 1; i >= 0; i--) {
         const e = events[i];
-        if (e.kind === 'DiceRolled' && e.data && typeof e.data.value === 'number') return e.data.value;
+        if ((e.kind === 'DiceRolled' || e.kind === 'JailRolled') && e.data && typeof e.data.value === 'number') return e.data.value;
     }
     return previous;
 }

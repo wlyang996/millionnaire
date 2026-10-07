@@ -602,6 +602,8 @@ export class BoardScreen extends Screen {
             const who = st.player(cue.playerId);
             if (cue.kind === 'dice') {
                 if (this.dice) this.dice.play(cue.value, () => undefined);
+            } else if (cue.kind === 'notice') {
+                Toast.show(cue.text);
             } else if (cue.kind === 'jail') {
                 this.jail = { name: cue.playerId === this.myId ? '你' : who?.nickname ?? '玩家', start: Date.now() };
                 this.jailOv = new JailOverlay(this.root, this.jail.name, this.jail.start);

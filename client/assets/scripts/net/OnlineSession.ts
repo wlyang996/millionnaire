@@ -17,6 +17,8 @@ export type Cue =
     | { kind: 'dice'; playerId: string; value: number }
     | { kind: 'move'; playerId: string; from: number; steps: number }
     | { kind: 'jail'; playerId: string }
+    /** 一句提示，排在前面的动画（如狱中判定骰）播完后再显示。 */
+    | { kind: 'notice'; playerId: string; text: string }
     /** 事件卡：waiting = 落到事件格等待抽卡；否则为翻牌结果。排在走棋提示之后，人物落地后才显示。 */
     | { kind: 'event'; playerId: string; actor: string; waiting: boolean; result: EventResult | null };
 
@@ -216,8 +218,17 @@ export class OnlineSession {
         this.eventCueAt = -1;
         for (const e of u.events) {
             const d = e.data ?? {};
-            if (e.kind === 'DiceRolled') {
+            if (e.kind === 'DiceRolled' || e.kind === 'JailRolled') {
+                // 狱中判定骰（JailRolled）同样播骰子动画
                 this.cues.push({ kind: 'dice', playerId: String(d.playerId), value: Number(d.value) });
+            } else if (e.kind === 'JailReleased' || e.kind === 'JailFailed') {
+                const pid = String(d.playerId);
+                const who = pid === this.myId ? '你' : this.store.session.game?.players.find((p) => p.playerId === pid)?.nickname ?? '玩家';
+                const text = e.kind === 'JailFailed' ? who + '没掷出偶数，未能出狱（已失败 ' + Number(d.failures) + ' 次）'
+                    : d.reason === 'EVEN_ROLL' ? who + '掷出偶数，出狱！'
+                        : d.reason === 'THIRD_FAILURE' ? who + '连续 3 次未掷出偶数，按规则释放出狱'
+                            : d.reason === 'BAIL' ? who + '支付 500 出狱' : '';
+                if (text) this.cues.push({ kind: 'notice', playerId: pid, text }); // 出狱卡另有"使用出狱卡出狱"的提示
             } else if (e.kind === 'PlayerMoved' && Number(d.steps) > 0) {
                 // 事件后退：步数记为负，棋盘页逐格往回跳
                 const back = String(d.kind ?? '').indexOf('BACK') >= 0;
