@@ -16,7 +16,8 @@ import { Node } from 'cc';
 import { drawHandBar } from './HandBar';
 import { CashChange, CashChangeNode, cashDelta } from './PlayerBar';
 
-export function drawBottom(root: Node, spectator: boolean, change?: CashChange, changeNodes: CashChangeNode[] = []): void {
+/** @param cash 显示的现金（走棋动画期间沿用动画前的数）；不传时取我的实际现金。 */
+export function drawBottom(root: Node, spectator: boolean, change?: CashChange, changeNodes: CashChangeNode[] = [], cash?: number): void {
     const st = ctx.store;
     const me = st.me();
     if (spectator) {
@@ -56,7 +57,7 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
     text(row, me.nickname + ' · 我', 98, 8, 150, 28, 20, Theme.c.white, { align: 'l' });
     if (!spectator) {
         drawCoin(gfx(mk(row, 'Coin', 98, 42, 30, 30)), 15, 15, 14);
-        text(row, String(me.cash), 134, 36, 112, 42, 30, Theme.c.white, { bold: true, align: 'l' });
+        text(row, String(cash ?? me.cash), 134, 36, 112, 42, 30, Theme.c.white, { bold: true, align: 'l' });
         if (change) cashDelta(row, 130, 22, change, changeNodes, 20); // 浮在现金正上方，向上飘出底栏
         const assets = mk(row, 'Btn:assets', 310, 15, 156, 52);
         fillRR(gfx(assets), 0, 0, 156, 52, 26, '#FFFFFF1A');

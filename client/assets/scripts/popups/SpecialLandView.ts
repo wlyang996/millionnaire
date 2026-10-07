@@ -9,7 +9,7 @@ import { mk, onTap, text } from '../ui/Kit';
 import { Toast } from '../ui/Toast';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar, chip } from '../ui/Widgets';
-import { informationCard, informationClose, informationPanel, shopKey } from './InformationPage';
+import { informationCard, informationClose, informationPanel, redeemOrClose, shopKey } from './InformationPage';
 
 export interface SpecialLandState { bankMode: 'mortgage' | 'redeem'; selected: number | null }
 
@@ -78,7 +78,7 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         list.setContentHeight(total * 44);
         caption(panel, '租金 = 未抵押车站数 × 200；车站不可升级', 24, 248, 608, 38, 22);
         caption(panel, prop?.mortgaged ? '抵押本金 ' + prop.mortgagePaid + ' · 抵押期间不收租' : '当前租金 ' + count * STATION.rentEach, 24, 286, 608, 38, 22);
-        informationClose(p, 44, 1156, 632, close);
+        redeemOrClose(p, index, 44, 1156, 632, close);
     } else if (tile.type === 'BANK') {
         // Screen20: cash, two tabs, selectable owned assets, totals, two footer actions.
         const cash = informationPanel(p, 'info_summary_panel', 462, 202, 224, 100);

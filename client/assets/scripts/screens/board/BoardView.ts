@@ -37,12 +37,12 @@ const HEADROOM = 50;
 
 const OWNER_COLORS = Theme.avatarColors;
 
-/** 地产格底部厚边：档位色 + 更深的底沿。 */
-const TIER_BASE: Record<string, [string, string]> = {
-    LOW: [Theme.c.tierLow, '#58B04A'],
-    MID: [Theme.c.tierMid, '#2F7FCC'],
-    HIGH: [Theme.c.tierHigh, '#8550E0'],
-};
+/** 颜色加深约 20%（下边框底沿）。 */
+function shade(hex: string): string {
+    const n = parseInt(hex.slice(1, 7), 16);
+    const f = (v: number) => Math.round(v * 0.78).toString(16).padStart(2, '0');
+    return '#' + f((n >> 16) & 255) + f((n >> 8) & 255) + f(n & 255);
+}
 
 /**
  * 棋子样式：badge = 头像立牌（用户 2026-10-07 选定，默认）；figure = 原全身人物；mini = 全身人物缩小（对比用，未采用）。
@@ -346,18 +346,15 @@ export class BoardView {
         const isProp = tile.type === 'PROPERTY';
         const prop = game.properties.find((p) => p.tileIndex === tile.index);
         const face = tile.type === 'EVENT' ? '#FFF4D8' : '#FFFFFF';
-        const [baseColor, baseDark] = isProp ? TIER_BASE[tile.tier ?? 'LOW'] : ['#D6DCE4', '#B4BCC8'];
+        // 用户 2026-10-08：土地（地产 / 车站）下边框默认白色，被买下后换成所有者的颜色；格面不再染色。其他格子保持浅灰
+        const ownable = isProp || tile.type === 'STATION';
+        const ownerCol = prop && prop.owner ? this.ownerColor(prop, game) : null;
+        const [baseColor, baseDark] = ownerCol ? [ownerCol, shade(ownerCol)] : ownable ? ['#FFFFFF', '#D3D8DF'] : ['#D6DCE4', '#B4BCC8'];
         fillRR(gg, m, m + 3, bw, bh, r, '#00000026');
         fillRR(gg, m, m, bw, bh, r, baseDark);
         fillRR(gg, m, m, bw, bh - 3, r, baseColor);
         const fh = bh - band;
         fillRR(gg, m, m, bw, fh, r, face);
-        // 有主的地产 / 车站：格面染上所有者的颜色并描边（与玩家条色条、棋子底座同色）
-        const ownerCol = prop && prop.owner ? this.ownerColor(prop, game) : null;
-        if (ownerCol) {
-            fillRR(gg, m, m, bw, fh, r, ownerCol + '55');
-            strokeRR(gg, m + 1.5, m + 1.5, bw - 3, bh - 3, r, ownerCol, 3);
-        }
         if (this.highlight === tile.index) {
             fillRR(gg, m - 1, m - 1, bw + 2, bh + 2, r + 1, '#FFD64655');
             strokeRR(gg, m, m, bw, fh, r, Theme.c.yellow, 3);
@@ -377,18 +374,16 @@ export class BoardView {
         if (housed) {
             // 有主地产：立体房子画在格子之上的房屋层（更大，向上探出格子）
             this.houses.push({ key: iconKey, x: x + icx, y, base: y + icy + isz * 0.5, isz, cw,
-                dot: { x: x + m + 8, y: y + m + 8, r: Math.max(5, cw * 0.1) }, ownerColor: this.ownerColor(prop, game) });
+                dot: { x: x + m + 8, y: y + m + 8, r: Math.max(5, cw * 0.1) }, ownerColor: null });
         } else if (!iconKey || !art(n, iconKey, icx - isz / 2, icy - isz / 2, isz, isz)) {
             this.drawIcon(gg, tile, prop, icx, icy, isz);
         }
         if (isProp && prop && prop.owner) {
-            if (!housed) this.drawOwnerDot(gg, prop, game, m + 8, m + 8);
             if (prop.mortgaged) {
                 fillRR(gg, m, m, bw, fh, r, '#4A556099');
                 text(n, '押', m, m, bw, fh - nameH, Math.round(Math.min(bw, fh) * 0.4), Theme.c.white, { bold: true });
             }
         }
-        if (tile.type === 'STATION') this.drawOwnerDot(gg, prop, game, m + bw - 9, m + 9);
         // 路障（设计稿 13）：格子右上角的路障图标
         if ((game.roadblocks ?? []).includes(tile.index)) {
             const rs = Math.max(18, Math.round(bw * 0.46));

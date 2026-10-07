@@ -6,7 +6,7 @@
  */
 import { Node } from 'cc';
 import { CARD_NAMES } from '../../core/Models';
-import { EventDrawState } from '../../core/EventDraw';
+import { EventDrawState, eventStory } from '../../core/EventDraw';
 import { Theme } from '../../core/Theme';
 import { col, fillCircle, fillRR, gfx, line, mk, onTap, text } from '../../ui/Kit';
 import { inlineRow, Seg } from '../../popups/Common';
@@ -108,6 +108,13 @@ export class EventOverlay {
                 : r.kind === 'CARD' ? [{ t: '获得' + (r.card ? CARD_NAMES[r.card] : '道具') + '×1', size: 18, color: navy }]
                     : r.kind === 'MOVE' ? [{ t: r.steps > 0 ? '前进' : '后退', size: 20, color: navy }, { t: String(Math.abs(r.steps)), size: 24, color: red }, { t: '格', size: 20, color: navy }]
                         : [{ t: '前往监狱', size: 20, color: navy }];
+        const story = eventStory(r);
+        if (story) {
+            // 奖励 / 罚款：缘由（两行以内）+ 金额，例如"随地吐痰，被罚款 -200"
+            text(n, story, -CARD_W / 2 + 8, CARD_H / 2 - 78, CARD_W - 16, 40, 13, navy, { bold: true, wrap: true, lineHeight: 18 });
+            inlineRow(n, 0, CARD_H / 2 - 38, 32, segs, 2);
+            return;
+        }
         inlineRow(n, 0, CARD_H / 2 - 66, 34, segs, 2);
         text(n, f.note, -CARD_W / 2 + 6, CARD_H / 2 - 30, CARD_W - 12, 22, 12, Theme.c.noteGray, { bold: true });
     }

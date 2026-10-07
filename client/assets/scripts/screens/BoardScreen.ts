@@ -65,6 +65,8 @@ export class BoardScreen extends Screen {
     private eventOv: EventOverlay | null = null;
     private pendingFine = 0;
     private cashGame = '';
+    /** 每位玩家最近一次显示的现金（走棋动画期间沿用）。 */
+    private shownCash = new Map<string, number>();
     private banners: FlowBanners | null = null;
     private cashSnapshot = new Map<string, number>();
     private cashChanges = new Map<string, CashChange>();
@@ -142,7 +144,8 @@ export class BoardScreen extends Screen {
         this.buildOverlays();
         // 设计稿 28 / 29：交易等待、排队申请、拍卖 / 交易结果横幅（玩家条下方，不拦截棋盘）
         this.banners = drawFlowBanners(this.root, 74 + (game.players.length > 4 ? 144 : 68) + 12);
-        drawBottom(this.root, this.spectator, this.cashChanges.get(this.myId), this.cashChangeNodes);
+        drawBottom(this.root, this.spectator, this.cashChanges.get(this.myId), this.cashChangeNodes,
+            game.players.find((p) => p.playerId === this.myId)?.cash);
         this.buildAwayOverlay();
         this.jailOv = this.jail ? new JailOverlay(this.root, this.jail.name, this.jail.start) : null;
         this.tickTexts();
@@ -510,8 +513,13 @@ export class BoardScreen extends Screen {
         const shown = new Map<string, number>();
         if (this.move) shown.set(this.move.id, (((this.move.from + (this.move.steps < 0 ? -1 : 1) * this.move.done) % n) + n) % n);
         for (const c of online.cues) if (c.kind === 'move' && !shown.has(c.playerId)) shown.set(c.playerId, c.from);
+        // 走棋动画播完前，现金停在动画开始前的数（经过起点的奖励、落点租金等等人物到了再显示，用户 2026-10-08）
+        for (const p of game.players) if (!shown.has(p.playerId)) this.shownCash.set(p.playerId, p.cash);
         if (!shown.size) return game;
-        return { ...game, players: game.players.map((p) => (shown.has(p.playerId) ? { ...p, position: shown.get(p.playerId)! } : p)) };
+        return {
+            ...game, players: game.players.map((p) => (shown.has(p.playerId)
+                ? { ...p, position: shown.get(p.playerId)!, cash: this.shownCash.get(p.playerId) ?? p.cash } : p)),
+        };
     }
 
     private tickOnline(): void {
@@ -605,7 +613,12 @@ export class BoardScreen extends Screen {
             } else if (cue.kind === 'notice') {
                 Toast.show(cue.text);
             } else if (cue.kind === 'jail') {
-                this.jail = { name: cue.playerId === this.myId ? '你' : who?.nickname ?? '玩家', start: Date.now() };
+                // 入狱全屏动画只给本人看；别人入狱只提示一句（用户 2026-10-08）
+                if (cue.playerId !== this.myId) {
+                    Toast.show((who?.nickname ?? '玩家') + '被关进了监狱');
+                    return;
+                }
+                this.jail = { name: '你', start: Date.now() };
                 this.jailOv = new JailOverlay(this.root, this.jail.name, this.jail.start);
             } else if (cue.kind === 'event') {
                 // 事件卡（等待抽卡 / 翻牌结果）按顺序排在走棋动画之后：人物落到事件格后才出现

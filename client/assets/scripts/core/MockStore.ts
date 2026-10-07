@@ -21,6 +21,12 @@ export const ME = 'p1';
 
 /** 事件卡结果展示时长，到时自动收起。 */
 export const EVENT_RESULT_SHOW_MS = 3000;
+/** 奖励 / 罚款结果停留更短（金钱一眼看完，道具等要看效果，用户 2026-10-08）。 */
+export const EVENT_CASH_SHOW_MS = 1600;
+
+function isCash(r: EventResult | null): boolean {
+    return !!r && (r.kind === 'CASH_REWARD' || r.kind === 'CASH_FINE');
+}
 
 export type ConnPreset = 'normal' | 'mixed' | 'mySuspect';
 
@@ -383,7 +389,7 @@ export class MockStore {
             if (e.phase === 'FLIPPING' && e.result && now - e.since >= Theme.anim.eventFlipMs) {
                 this.eventDraw = { ...e, phase: 'RESULT', since: now };
                 this.emit();
-            } else if (e.phase === 'RESULT' && now - e.since >= EVENT_RESULT_SHOW_MS) {
+            } else if (e.phase === 'RESULT' && now - e.since >= (isCash(e.result) ? EVENT_CASH_SHOW_MS : EVENT_RESULT_SHOW_MS)) {
                 this.eventDraw = { ...EVENT_IDLE, settled: e.settled };
                 this.emit();
             }

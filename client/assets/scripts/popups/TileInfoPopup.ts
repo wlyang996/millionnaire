@@ -6,7 +6,7 @@ import { ctx } from '../ui/Ctx';
 import { gfx, mk, text } from '../ui/Kit';
 import { drawHouse } from '../ui/Icons';
 import { avatar, chip } from '../ui/Widgets';
-import { InformationPage, informationClose, informationCard, shopKey } from './InformationPage';
+import { InformationPage, informationCard, redeemOrClose, shopKey } from './InformationPage';
 import { buildSpecialLand, SpecialLandState } from './SpecialLandView';
 
 const INK = '#101A50';
@@ -62,7 +62,7 @@ export class TileInfoPopup extends InformationPage {
             art(row, 'info_cash', 330, 6, 36, 36);
             text(row, String(rent), 388, 0, 178, 48, 30, INK, { bold: true, align: 'l' });
         });
-        if (mortgaged) text(p, '抵押本金 ' + prop!.mortgagePaid + ' · 抵押期间不收租', 50, 1136, w - 100, 24, 19, '#B73337', { align: 'l' });
-        informationClose(p, 44, h - 124, w - 88, () => this.close());
+        if (mortgaged) text(p, '抵押本金 ' + prop!.mortgagePaid + ' · 抵押期间不收租 · 不在银行赎回另收 10% 手续费', 50, 1136, w - 100, 24, 19, '#B73337', { align: 'l' });
+        redeemOrClose(p, this.tileIndex, 44, h - 124, w - 88, () => this.close());
     }
 }

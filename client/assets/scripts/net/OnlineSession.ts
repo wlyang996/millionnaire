@@ -286,7 +286,7 @@ export class OnlineSession {
                 const back = String(d.moveKind ?? '').indexOf('BACK') >= 0;
                 result = {
                     kind: String(d.kind) as EventKind, amount: Number(d.amount ?? 0), card: null,
-                    steps: (back ? -1 : 1) * Number(d.distance ?? 0),
+                    steps: (back ? -1 : 1) * Number(d.distance ?? 0), seed: Number(d.landingId ?? 0),
                 };
             } else if (e.kind === 'EventCardReceived' && result) {
                 result.card = String(d.card) as CardType;
@@ -396,6 +396,7 @@ export class OnlineSession {
         for (const e of u.events) {
             const d = e.data ?? {};
             if (e.kind === 'MinigameStarted') {
+                this.store.toothResult = null; // 新一局开始：丢掉上一局的结果
                 participants = Array.isArray(d.participants) ? (d.participants as unknown[]).map(String) : [];
                 picks = [];
             } else if (e.kind === 'ToothPicked') {

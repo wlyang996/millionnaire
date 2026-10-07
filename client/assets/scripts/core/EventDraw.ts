@@ -24,6 +24,25 @@ export interface EventResult {
     card: CardType | null;
     /** 位移格数：前进为正、后退为负（仅 MOVE，绝对值 1～3） */
     steps: number;
+    /** 选描述文案用的种子（联机为落点编号，所有人一致）；演示为 0 */
+    seed?: number;
+}
+
+/** 奖励 / 罚款的事件描述（用户 2026-10-08：不能只写加减，要有缘由）。按种子挑一条，所有客户端相同。 */
+export const REWARD_STORIES = [
+    '扶老奶奶过马路，好心有好报', '捡到钱包交还失主，获得酬谢', '参加社区义务植树，获得奖励', '小镇征文比赛获奖',
+    '帮邻居找回走失的小狗', '街头义演收到打赏', '买彩票中了小奖', '帮面包店搬货，老板发了红包',
+];
+export const FINE_STORIES = [
+    '随地吐痰，被罚款', '闯红灯被交警拦下', '乱扔垃圾被城管发现', '深夜喧哗被邻居投诉',
+    '违章停车被贴罚单', '在公园踩踏草坪', '图书馆的书逾期未还', '不小心打碎了商店的花瓶',
+];
+
+export function eventStory(r: EventResult): string {
+    const list = r.kind === 'CASH_REWARD' ? REWARD_STORIES : r.kind === 'CASH_FINE' ? FINE_STORIES : null;
+    if (!list) return '';
+    const i = Math.abs(((r.seed ?? 0) * 31 + r.amount / 10) | 0) % list.length;
+    return list[i];
 }
 
 export interface EventDrawState {
