@@ -6,6 +6,7 @@ import { BlockInputEvents, Node } from 'cc';
 import { ConnPreset } from '../core/MockStore';
 import { runSelfCheck } from '../core/SelfCheck';
 import { Theme } from '../core/Theme';
+import { AuctionPopup } from '../popups/AuctionPopup';
 import { POPUP_CATALOG } from '../popups/Catalog';
 import { Button, ghostButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -169,6 +170,7 @@ export class DemoPanel {
             ['逐格跳 4 步', () => { this.close(); const b = ctx.screens.current; if (b instanceof BoardScreen) b.demoHop(4); else Toast.show('请先进入对局棋盘页'); }],
             ['事件格抽卡(我)', () => { this.close(); const b = ctx.screens.current; if (b instanceof BoardScreen) b.demoEventMe(); else Toast.show('请先进入对局棋盘页'); }],
             ['他人抽卡', () => { this.close(); const b = ctx.screens.current; if (b instanceof BoardScreen) b.demoEventOther(); else Toast.show('请先进入对局棋盘页'); }],
+            ['拍卖：他人出价', () => { this.close(); const a = ctx.popups.top; if (a instanceof AuctionPopup) a.demoOtherBid(); else Toast.show('请先打开拍卖弹窗'); }],
             ['逐格跳 1 步', () => { this.close(); const b = ctx.screens.current; if (b instanceof BoardScreen) b.demoHop(1); else Toast.show('请先进入对局棋盘页'); }],
             ['资金 +300（演示）', () => {
                 this.close();

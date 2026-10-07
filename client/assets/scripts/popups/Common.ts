@@ -1,10 +1,10 @@
 /** 弹窗共用部件：金币数字、地产头图、租金表、信息行。 */
 import { Node } from 'cc';
 import { BoardTile, PropertyState, Tier } from '../core/Models';
-import { TIERS } from '../core/Rules';
+import { emergencyRatioLabel, landPrice, TIERS } from '../core/Rules';
 import { Theme, textWidth } from '../core/Theme';
 import { drawCardIcon, drawCoin } from '../ui/Icons';
-import { fillPoly, fillRR, gfx, mk, strokeRR, text } from '../ui/Kit';
+import { fillCircle, fillPoly, fillRR, gfx, mk, strokeRR, text } from '../ui/Kit';
 import { art } from '../ui/Art';
 
 export function tierColor(tier: Tier | undefined, station = false): string {
@@ -108,9 +108,35 @@ export type Seg =
     | { coin: number }
     | { arrow: number; color?: string };
 
+/** 片段宽度（inlineRow / inlineRowLeft 共用）。 */
+function segWidth(s: Seg): number {
+    return 't' in s ? textWidth(s.t, s.size) + 2 : 'coin' in s ? s.coin : s.arrow;
+}
+
+/** 同 inlineRow，但从 x 起左对齐（设计稿 05"基准价值 (金币) 1000"、"当前最高价"大数字）。 */
+export function inlineRowLeft(parent: Node, x: number, y: number, h: number, segs: Seg[], gap = 10): void {
+    const total = segs.reduce((a, s) => a + segWidth(s), 0) + gap * (segs.length - 1);
+    inlineRow(parent, x + total / 2, y, h, segs, gap);
+}
+
+/** 设计稿 05 的灰底规则说明：首行（allWarn 时每行）橙色"!"圆标 + 深蓝文字，其余行为"•"小字。 */
+export function noteLines(parent: Node, w: number, lines: string[], top = 14, allWarn = false): void {
+    lines.forEach((l, i) => {
+        const y = top + i * 40;
+        if (i === 0 || allWarn) {
+            const g = gfx(mk(parent, 'Warn', 22, y + 6, 28, 28));
+            fillCircle(g, 14, 14, 14, '#F0A04B');
+            text(parent, '!', 22, y + 6, 28, 28, 20, Theme.c.white, { bold: true });
+            text(parent, l, 60, y, w - 76, 40, 22, Theme.c.navy, { bold: true, align: 'l' });
+        } else {
+            text(parent, '•  ' + l, 34, y, w - 50, 40, 20, Theme.c.noteGray, { align: 'l' });
+        }
+    });
+}
+
 /** 一行文字与金币整体以 cx 居中（设计稿 04 的"购买价格 (金币) 1000"等）。 */
 export function inlineRow(parent: Node, cx: number, y: number, h: number, segs: Seg[], gap = 10): void {
-    const widthOf = (s: Seg) => ('t' in s ? textWidth(s.t, s.size) + 2 : 'coin' in s ? s.coin : s.arrow);
+    const widthOf = segWidth;
     const total = segs.reduce((a, s) => a + widthOf(s), 0) + gap * (segs.length - 1);
     let x = cx - total / 2;
     for (const s of segs) {
@@ -127,4 +153,24 @@ export function inlineRow(parent: Node, cx: number, y: number, h: number, segs: 
         }
         x += w + gap;
     }
+}
+
+/**
+ * 设计稿 05 的抵押资产行：地产插画 + "地名 · 档位"（灰色"原价 N"）+ "应急 80% · 可得 (金币) N"。
+ * x 为插画左边，w 为插画起到行尾的宽度。
+ */
+export function mortgageRow(parent: Node, x: number, y: number, w: number, h: number, tile: BoardTile,
+    gainLabel: string, gain: number, dim = false): void {
+    const station = tile.type === 'STATION';
+    art(parent, propertyArtKey(tile), x, y + 6, 104, h - 12, 'contain', dim);
+    const tx = x + 118;
+    const title = tile.name + ' · ' + tierName(tile);
+    const tw = textWidth(title, 24) + 4;
+    const ink = dim ? Theme.c.noteGray : Theme.c.navy;
+    text(parent, title, tx, y + 8, tw + 8, 36, 24, ink, { bold: true, align: 'l' });
+    text(parent, '· 原价' + landPrice(station, tile.tier), tx + tw + 8, y + 10, w - 118 - tw - 8, 34, 20, Theme.c.noteGray, { align: 'l' });
+    inlineRowLeft(parent, tx, y + h - 42, 36, [
+        { t: '应急' + emergencyRatioLabel(station, tile.tier) + ' · ' + gainLabel, size: 20, color: Theme.c.noteGray, bold: false },
+        { coin: 28 }, { t: String(gain), size: 26, color: ink },
+    ], 8);
 }

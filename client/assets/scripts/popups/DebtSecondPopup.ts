@@ -1,50 +1,63 @@
-/** 欠款·第二段（30 秒）：继续抵押 / 确认破产。首段 30 秒 + 第二段 30 秒，总计不超过 60 秒；不选默认继续。 */
+/**
+ * 欠款·第二段（30 秒）：继续抵押 / 确认破产。首段 30 秒 + 第二段 30 秒，总计不超过 60 秒；不选默认继续。
+ * 布局按设计稿 05"仍有欠款"：副标题、三条规则、继续抵押（蓝）/ 确认破产（浅底红字）、已抵押资产、已筹 / 还差。
+ */
 import { Node } from 'cc';
 import { debtShortfall, SECONDS } from '../core/Rules';
 import { Theme } from '../core/Theme';
-import { dangerButton, secondaryButton } from '../ui/Buttons';
+import { ghostRedButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
-import { fillCircle, fillRR, gfx, mk, text } from '../ui/Kit';
+import { strokeRR, gfx, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
-import { coinText, tierName } from './Common';
+import { box, inlineRow, mortgageRow, noteLines } from './Common';
 import { DebtPopup } from './DebtPopup';
+
+const W = 600;
+const ROW_H = 96;
+const LIST_Y = 570;
+
+/** 已抵押资产最多列 2 行，面板高度随行数变化。 */
+function rowsShown(): number {
+    return Math.max(1, Math.min(2, ctx.store.debt.selected.length));
+}
 
 export class DebtSecondPopup extends Popup {
     constructor(private readonly amount: number, private readonly creditor: string | null) {
-        super('debt2', '仍有欠款', 640, 860, SECONDS.debt1);
+        super('debt2', '仍有欠款', W, LIST_Y + rowsShown() * ROW_H + 96, SECONDS.debt1);
+        this.titleIcon = 'icon_house';
     }
 
-    protected buildBody(p: Node, w: number): void {
+    protected buildBody(p: Node): void {
         const st = ctx.store;
-        text(p, '是否继续抵押？', 28, 92, w - 56, 48, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
-        const box = mk(p, 'Info', 28, 150, w - 56, 150);
-        fillRR(gfx(box), 0, 0, w - 56, 150, 18, Theme.c.ivoryDark);
-        const lines = ['首段 30 秒 + 第二段 30 秒，总计不超过 60 秒', '弹窗等待计入第二段；不选择默认继续', '第二段到期仍未筹足则破产'];
-        lines.forEach((l, i) => {
-            fillCircle(gfx(box), 26, 28 + i * 44, 8, Theme.c.orange);
-            text(box, l, 46, 8 + i * 44, w - 120, 40, Theme.font.xs, Theme.c.ink, { align: 'l' });
-        });
-        secondaryButton(p, '继续抵押', 28, 318, w - 56, 92, () => this.goOn(), Theme.font.lg);
-        dangerButton(p, '确认破产', 28, 424, w - 56, 80, () => this.bankrupt(), Theme.font.md);
-        text(p, '已抵押资产（已选择）', 28, 520, w - 56, 36, Theme.font.sm, Theme.c.ink, { bold: true, align: 'l' });
+        const X = 28;
+        const IW = W - 2 * X;
+        text(p, '是否继续抵押？', 0, 84, W, 48, 30, Theme.c.navy, { bold: true });
+        const info = box(p, X, 146, IW, 140, Theme.c.boxGray, 18);
+        noteLines(info, IW, ['首段 30 秒 + 第二段 30 秒，总计不超过 60 秒', '弹窗等待计入第二段；不选择默认继续', '第二段到期仍未筹足则破产'], 10, true);
+        secondaryButton(p, '继续抵押', X, 306, IW, 92, () => this.goOn(), 36);
+        ghostRedButton(p, '确认破产', X, 414, IW, 88, () => this.bankrupt(), 36);
+
+        text(p, '已抵押资产', X, 526, 150, 40, 26, Theme.c.navy, { bold: true, align: 'l' });
+        text(p, '（已选择）', X + 140, 528, 200, 40, 22, Theme.c.noteGray, { align: 'l' });
         const done = st.debt.selected;
-        const list = mk(p, 'Done', 28, 560, w - 56, 150);
-        fillRR(gfx(list), 0, 0, w - 56, 150, 16, Theme.c.white);
+        const rows = rowsShown();
+        const list = box(p, X, LIST_Y, IW, rows * ROW_H, Theme.c.white, 18);
+        strokeRR(gfx(list), 0, 0, IW, rows * ROW_H, 18, Theme.c.panelLine, 2);
         let raised = 0;
-        done.slice(0, 3).forEach((i, k) => {
-            const t = st.tile(i);
-            const paid = st.prop(i)?.mortgagePaid ?? 0;
-            raised += paid;
-            text(list, t.name + ' · 原价 ' + st.unownedLandPrice(i), 20, 8 + k * 44, 360, 40, Theme.font.xs, Theme.c.ink, { align: 'l' });
-            coinText(list, w - 56 - 150, 8 + k * 44 + 4, paid, Theme.font.sm, Theme.c.greenDark);
+        done.forEach((i) => (raised += st.prop(i)?.mortgagePaid ?? 0));
+        done.slice(0, rows).forEach((i, k) => {
+            mortgageRow(list, 16, k * ROW_H + 4, IW - 32, ROW_H - 8, st.tile(i), '已得', st.prop(i)?.mortgagePaid ?? 0);
         });
-        if (done.length === 0) text(list, '尚未抵押任何资产', 0, 0, w - 56, 150, Theme.font.sm, Theme.c.inkFaint);
-        const sum = mk(p, 'Sum', 28, 724, w - 56, 64);
-        fillRR(gfx(sum), 0, 0, w - 56, 64, 14, '#FFF1C9');
-        text(sum, '已筹', 40, 0, 70, 64, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
-        coinText(sum, 110, 10, raised, Theme.font.lg);
-        text(sum, '/ 还差', 300, 0, 100, 64, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
-        coinText(sum, 410, 10, debtShortfall(this.amount, st.me().cash, raised), Theme.font.lg, Theme.c.redDark);
+        if (done.length === 0) text(list, '尚未抵押任何资产', 0, 0, IW, ROW_H, 24, Theme.c.noteGray);
+        if (done.length > rows) text(list, '等 ' + done.length + ' 处', IW - 120, 4, 104, 30, 20, Theme.c.noteGray, { align: 'r' });
+
+        const sy = LIST_Y + rows * ROW_H + 12;
+        const short = debtShortfall(this.amount, st.me().cash, raised);
+        box(p, X, sy, IW, 60, Theme.c.boxBeige, 16);
+        inlineRow(p, W / 2, sy, 60, [
+            { t: '已筹', size: 26 }, { coin: 34 }, { t: String(raised), size: 30 },
+            { t: '  /  还差', size: 26 }, { coin: 34 }, { t: String(short), size: 30, color: Theme.c.payRed },
+        ], 8);
     }
 
     private goOn(): void {

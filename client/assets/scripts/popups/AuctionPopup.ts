@@ -1,18 +1,22 @@
 /**
  * 土地拍卖（20 秒，总时长最多 40 秒）。起拍=基准 50%，封顶=一口价=基准 2.5 倍，最低加价=基准 10%。
  * 最后 3 秒内"出价者变化"才恢复到 3 秒（不超过 40 秒上限）；报价需足额可用现金，不靠抵押。
+ * 布局按设计稿 05"地产拍卖"：地产卡、当前最高价与出价人、最低加价 | 封顶价、步进器、出价 / 一口价、三栏资金、规则说明。
  */
 import { Label, Node } from 'cc';
 import { auctionParams, SECONDS, standardValue } from '../core/Rules';
 import { Theme } from '../core/Theme';
-import { Button, ghostButton, primaryButton, secondaryButton } from '../ui/Buttons';
+import { art } from '../ui/Art';
+import { Button, primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
-import { drawCardIcon } from '../ui/Icons';
-import { fillRR, gfx, mk, onTap, setText, text } from '../ui/Kit';
+import { fillRR, gfx, mk, onTap, setText, strokeRR, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
-import { coinText, tileSubtitle, tierColor } from './Common';
+import { box, inlineRow, inlineRowLeft, LEVEL_NAMES, noteLines, propertyArtKey, tierName } from './Common';
+
+const W = 640;
+const H = 916;
 
 export class AuctionPopup extends Popup {
     private base = 0;
@@ -27,10 +31,11 @@ export class AuctionPopup extends Popup {
     private banner: Label | null = null;
 
     constructor(private readonly tileIndex: number, private readonly byInitiator = false) {
-        super('auction', '地产拍卖', 640, 860, SECONDS.auction);
+        super('auction', '地产拍卖', W, H, SECONDS.auction);
+        this.titleIcon = 'icon_auction';
     }
 
-    protected buildBody(p: Node, w: number): void {
+    protected buildBody(p: Node): void {
         const st = ctx.store;
         const tile = st.tile(this.tileIndex);
         const prop = st.prop(this.tileIndex);
@@ -48,73 +53,75 @@ export class AuctionPopup extends Popup {
         if (this.myBid <= this.highBid) this.myBid = Math.min(this.cap, this.highBid + this.minRaise);
         const bidder = this.highBidder ? st.player(this.highBidder) : undefined;
         const avail = me.cash - this.frozen;
+        const X = 36;
+        const IW = W - 2 * X;
+        this.banner = text(p, '', X, 72, IW, 26, 20, Theme.c.payRed, { bold: true });
 
-        // 头部：地产 + 基准/起拍
-        const head = mk(p, 'Head', 28, 88, w - 56, 120);
-        const g = gfx(head);
-        fillRR(g, 0, 0, 120, 120, 20, '#DFF3D2');
-        fillRR(g, 0, 0, 120, 16, 8, tierColor(tile.tier));
-        drawCardIcon(g, 'BUILD', 60, 66, 76);
-        text(head, tileSubtitle(tile, prop), 136, 0, w - 200, 38, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
-        text(head, '基准价值', 136, 42, 130, 32, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
-        coinText(head, 280, 40, this.base, Theme.font.md);
-        text(head, '起拍价', 136, 80, 130, 32, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
-        coinText(head, 280, 78, this.start, Theme.font.md);
-        this.banner = text(p, '', 28, 58, w - 150, 30, Theme.font.sm, Theme.c.red, { bold: true, align: 'l' });
+        // 地产卡：插画 + 档位·等级、基准价值、起拍价
+        const head = box(p, X, 96, IW, 150, Theme.c.white, 20);
+        strokeRR(gfx(head), 0, 0, IW, 150, 20, Theme.c.panelLine, 2);
+        art(head, propertyArtKey(tile), 8, 10, 190, 130);
+        const lv = tile.type === 'PROPERTY' ? ' · ' + LEVEL_NAMES[prop ? prop.level : 0] : '';
+        text(head, tile.name + ' · ' + tierName(tile) + lv, 214, 10, IW - 226, 40, 28, Theme.c.navy, { bold: true, align: 'l' });
+        const kv = (label: string, v: number, y: number) => {
+            text(head, label, 214, y, 140, 40, 24, Theme.c.noteGray, { bold: true, align: 'l' });
+            inlineRowLeft(head, 380, y, 40, [{ coin: 34 }, { t: String(v), size: 32 }]);
+        };
+        kv('基准价值', this.base, 56);
+        kv('起拍价', this.start, 100);
 
-        // 当前最高价
-        const hi = mk(p, 'High', 28, 220, w - 56, 100);
-        fillRR(gfx(hi), 0, 0, w - 56, 100, 18, '#FFF1C9');
-        text(hi, '当前最高价', 18, 6, 200, 32, Theme.font.sm, Theme.c.inkSoft, { bold: true, align: 'l' });
-        coinText(hi, 18, 38, this.highBid, Theme.font.xl);
+        // 当前最高价 + 出价人
+        box(p, X, 262, IW, 112, Theme.c.boxBeige, 20);
+        text(p, '当前最高价', X + 24, 268, 220, 36, 24, Theme.c.navy, { bold: true, align: 'l' });
+        inlineRowLeft(p, X + 22, 304, 64, [{ coin: 50 }, { t: String(this.highBid), size: 56, color: Theme.c.payRed }], 10);
         if (bidder) {
-            avatar(hi, w - 56 - 240, 14, 72, bidder.avatar, bidder.nickname);
-            text(hi, '出价人：' + bidder.nickname, w - 56 - 160, 14, 150, 72, Theme.font.sm, Theme.c.ink, { align: 'l' });
+            avatar(p, X + IW - 250, 276, 84, bidder.avatar, bidder.nickname, { ring: '#3E8EF2' });
+            text(p, '出价人：', X + IW - 158, 276, 90, 84, 22, Theme.c.noteGray, { bold: true, align: 'l' });
+            text(p, bidder.nickname, X + IW - 76, 276, 72, 84, 24, Theme.c.navy, { bold: true, align: 'l' });
+        } else {
+            text(p, '暂无出价', X + IW - 200, 276, 180, 84, 24, Theme.c.noteGray, { bold: true });
         }
-        // 最低加价/封顶
-        text(p, '最低加价', 40, 332, 120, 36, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
-        coinText(p, 160, 332, this.minRaise, Theme.font.sm);
-        text(p, '封顶价（一口价）', 300, 332, 200, 36, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
-        coinText(p, 500, 332, this.cap, Theme.font.sm);
 
-        // 步进器
-        const stp = mk(p, 'Stepper', 28, 380, w - 56, 70);
-        fillRR(gfx(stp), 0, 0, w - 56, 70, 18, '#FFFFFFCC');
+        // 最低加价 | 封顶价
+        inlineRow(p, X + IW / 4, 388, 44, [{ t: '最低加价', size: 24, color: Theme.c.noteGray }, { coin: 30 }, { t: String(this.minRaise), size: 28 }]);
+        fillRR(gfx(mk(p, 'Sep', W / 2 - 1, 396, 2, 28)), 0, 0, 2, 28, 1, Theme.c.panelLine);
+        inlineRow(p, X + (IW * 3) / 4, 388, 44, [{ t: '封顶价', size: 24, color: Theme.c.noteGray }, { coin: 30 }, { t: String(this.cap), size: 28 }]);
+
+        // 步进器：− [金币 出价] +
+        const stp = box(p, X, 446, IW, 72, Theme.c.boxGray, 18);
         const step = (label: string, x: number, d: number) => {
-            const b = mk(stp, 'Step' + label, x, 6, 78, 58);
-            fillRR(gfx(b), 0, 0, 78, 58, 14, Theme.c.ivoryDark);
-            text(b, label, 0, 0, 78, 58, Theme.font.xl, Theme.c.ink, { bold: true });
+            const b = mk(stp, 'Step' + label, x, 6, 84, 60);
+            text(b, label, 0, 0, 84, 60, 48, Theme.c.noteGray, { bold: true });
             onTap(b, () => {
                 this.myBid = Math.max(this.highBid + this.minRaise, Math.min(this.cap, this.myBid + d * this.minRaise));
                 this.rebuildBody();
             });
         };
-        step('−', 6, -1);
-        step('+', w - 56 - 84, 1);
-        coinText(stp, (w - 56) / 2 - 56, 10, this.myBid, Theme.font.xl);
+        step('−', 4, -1);
+        step('+', IW - 88, 1);
+        const field = box(stp, 92, 6, IW - 184, 60, Theme.c.white, 14);
+        inlineRow(field, (IW - 184) / 2, 0, 60, [{ coin: 40 }, { t: String(this.myBid), size: 40 }]);
 
-        // 出价/一口价
-        const bw = (w - 56 - 20) / 2;
-        const bid: Button = secondaryButton(p, '出价 ' + this.myBid, 28, 466, bw, 84, () => this.placeBid(this.myBid), Theme.font.lg);
-        bid.setEnabled(this.myBid <= me.cash, '可用现金不足（报价需足额，不可抵押）');
-        const buy: Button = primaryButton(p, '一口价 ' + this.cap, 28 + bw + 20, 466, bw, 84, () => this.placeBid(this.cap), Theme.font.lg);
+        // 出价（蓝）/ 一口价（黄）
+        const bw = (IW - 18) / 2;
+        const bid: Button = secondaryButton(p, '出价', X, 536, bw, 92, () => this.placeBid(this.myBid), 32).withCoin(this.myBid);
+        bid.setEnabled(this.myBid <= avail + (this.highBidder === st.myId ? this.frozen : 0), '可用现金不足（报价需足额，不可抵押）');
+        const buy: Button = primaryButton(p, '一口价', X + bw + 18, 536, bw, 92, () => this.placeBid(this.cap), 32).withCoin(this.cap);
         buy.setEnabled(this.cap <= me.cash, '可用现金不足（需足额，不可抵押）');
 
-        // 我的资金
-        const trio = mk(p, 'Trio', 28, 566, w - 56, 84);
+        // 我的现金 | 我的冻结资金 | 可用现金
+        fillRR(gfx(mk(p, 'Line', X, 646, IW, 2)), 0, 0, IW, 2, 1, Theme.c.panelLine);
         const cols: [string, number][] = [['我的现金', me.cash], ['我的冻结资金', this.frozen], ['可用现金', avail]];
+        const cw = IW / 3;
         cols.forEach(([k, v], i) => {
-            const cw = (w - 56) / 3;
-            text(trio, k, i * cw, 0, cw, 32, Theme.font.xs, Theme.c.inkSoft, { bold: true });
-            coinText(trio, i * cw + (cw - 110) / 2, 36, v, Theme.font.md);
+            text(p, k, X + i * cw, 658, cw, 34, 22, Theme.c.noteGray, { bold: true });
+            inlineRow(p, X + i * cw + cw / 2, 694, 44, [{ coin: 32 }, { t: String(v), size: 32 }], 8);
+            if (i > 0) fillRR(gfx(mk(p, 'Sep', X + i * cw - 1, 668, 2, 62)), 0, 0, 2, 62, 1, Theme.c.panelLine);
         });
 
-        // 规则提示
-        const note = mk(p, 'Note', 28, 662, w - 56, 120);
-        fillRR(gfx(note), 0, 0, w - 56, 120, 16, '#FFF1C9');
-        text(note, '报价需足额可用现金，不可抵押参拍\n最后 3 秒内他人出价才延至 3 秒，总时长最多 40 秒\n最高出价者可自行加价，冻结资金按差额增加', 16, 8, w - 90, 104, Theme.font.xs, Theme.c.inkSoft, { wrap: true, align: 'l', valign: 't', lineHeight: 32 });
-        ghostButton(p, '不参与', 28, 792, 150, 52, () => this.close(), Theme.font.sm);
-        ghostButton(p, '演示：他人出价', w - 28 - 230, 792, 230, 52, () => this.otherBids(), Theme.font.sm);
+        // 规则说明
+        const note = box(p, X, 754, IW, 140, Theme.c.boxGray, 18);
+        noteLines(note, IW, ['报价需足额可用现金，不可抵押参拍', '最后 3 秒出价恢复到 3 秒，总时长最多 40 秒', '最高报价冻结资金，被超过立即解冻']);
         void this.byInitiator;
     }
 
@@ -147,7 +154,8 @@ export class AuctionPopup extends Popup {
         this.raise('p1', amount);
     }
 
-    private otherBids(): void {
+    /** 演示：模拟他人加价（演示面板调用；联机时拍卖由服务端推送）。 */
+    demoOtherBid(): void {
         const next = Math.min(this.cap, this.highBid + this.minRaise);
         if (next >= this.cap) return Toast.show('已到封顶价');
         this.myBid = 0;
