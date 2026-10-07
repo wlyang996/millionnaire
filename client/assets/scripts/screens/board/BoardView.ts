@@ -536,7 +536,7 @@ export class BoardView {
         const badge = tokenStyle.value === 'badge';
         // 同格人多时整体缩小并收紧：一行最多 4 个、最多两行，都落在这一格附近（"我"最后画，盖在最上）
         const shrink = together > 4 ? 0.72 : together > 2 ? 0.84 : 1;
-        const s = Math.round(t * shrink * (badge ? (me ? 0.72 : 0.6) : (me ? 0.52 : 0.44)));
+        const s = Math.round(t * shrink * (badge ? (me ? 0.5 : 0.46) : (me ? 0.52 : 0.44)));
         const perRow = Math.min(4, together);
         const rows = Math.ceil(together / 4);
         const col0 = k % 4;
@@ -544,8 +544,8 @@ export class BoardView {
         const inRow = row < rows - 1 ? perRow : together - row * 4;
         const step = t * (together > 2 ? 0.26 : 0.34);
         const offX = together <= 1 ? 0 : (col0 - (inRow - 1) / 2) * step;
-        // 立牌（圆牌 + 底座）整体落在格子正中：节点顶在中心上方约 0.58 个边长
-        const soloY = -s * 0.08;
+        // 立牌（圆牌 + 底座，总高约 1.1 个边长）放在格子上半部：底座下沿略低于格子中线，不挡下部地名
+        const soloY = t * 0.03 - s * 0.6;
         const offY = (rows > 1 ? (row - 0.5) * t * 0.28 : 0) + soloY;
         const n = mk(parent, 'Token:' + p.playerId, c.x + offX - s / 2, c.y + offY - s / 2, s, s);
         const gg = gfx(n);

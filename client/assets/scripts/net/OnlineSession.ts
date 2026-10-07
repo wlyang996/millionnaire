@@ -15,7 +15,9 @@ import { adaptSession, lastDiceFrom } from './ViewAdapter';
 export type Cue =
     | { kind: 'dice'; playerId: string; value: number }
     | { kind: 'move'; playerId: string; from: number; steps: number }
-    | { kind: 'jail'; playerId: string };
+    | { kind: 'jail'; playerId: string }
+    /** 事件卡：waiting = 落到事件格等待抽卡；否则为翻牌结果。排在走棋提示之后，人物落地后才显示。 */
+    | { kind: 'event'; playerId: string; actor: string; waiting: boolean; result: EventResult | null };
 
 export type Route = 'lobby' | 'room' | 'board' | 'spectator' | 'result';
 
@@ -49,6 +51,10 @@ export class OnlineSession {
     onRoute: ((r: Route) => void) | null = null;
     onToast: ((msg: string) => void) | null = null;
     private hadGame = false;
+    /** 本条推送里抽到事件卡时动画队列的长度：翻牌插在这里（之前的走棋播完、之后的事件位移等翻牌看完）。 */
+    private eventCueAt = -1;
+    /** 已为当前的"等待抽卡"排过提示（避免每条推送重复排）。 */
+    private eventWaitQueued = false;
     /** 房间最近聊天（服务端 CHAT 推送的完整列表）。 */
     chat: ChatLine[] = [];
 
@@ -178,17 +184,21 @@ export class OnlineSession {
 
     // ------------------------------------------------------------ 内部
     private update(u: UpdateMsg): void {
+        this.eventCueAt = -1;
         for (const e of u.events) {
             const d = e.data ?? {};
             if (e.kind === 'DiceRolled') {
                 this.cues.push({ kind: 'dice', playerId: String(d.playerId), value: Number(d.value) });
             } else if (e.kind === 'PlayerMoved' && Number(d.steps) > 0) {
-                this.cues.push({ kind: 'move', playerId: String(d.playerId), from: Number(d.from), steps: Number(d.steps) });
+                // 事件后退：步数记为负，棋盘页逐格往回跳
+                const back = String(d.kind ?? '').indexOf('BACK') >= 0;
+                this.cues.push({ kind: 'move', playerId: String(d.playerId), from: Number(d.from), steps: (back ? -1 : 1) * Number(d.steps) });
+            } else if (e.kind === 'EventDrawn') {
+                this.eventCueAt = this.cues.length;
             } else if (e.kind === 'PlayerJailed') {
                 this.cues.push({ kind: 'jail', playerId: String(d.playerId) });
             }
         }
-        this.trackEventDraw(u);
         this.trackMinigame(u);
         this.lastDice = lastDiceFrom(u.events, this.lastDice);
         const s = adaptSession(u.view, this.boards, this.lastDice);
@@ -205,11 +215,19 @@ export class OnlineSession {
             this.onRoute?.('result');
         }
         this.hadGame = hasGame;
-        // 当前玩家踩到事件格、等待抽卡：所有人都显示中央卡牌（只有本人能点）
+        // 抽卡结果：排进动画队列（在本步之前的走棋之后翻牌，之后的事件位移等翻牌看完再走）
+        this.trackEventDraw(u);
+        // 当前玩家踩到事件格、等待抽卡：所有人都显示中央卡牌（只有本人能点），同样排在走棋动画之后
         const g = s.game;
-        if (!g) this.store.eventDraw = EVENT_IDLE;
-        else if (g.landing && g.landing.step === 'EVENT' && g.landing.decisionPending && this.store.eventDraw.phase === 'IDLE') {
-            this.store.eventDraw = { phase: 'WAITING', actor: g.currentPlayer, since: Date.now(), result: null, settled: this.store.eventDraw.settled };
+        const waiting = !!g && !!g.landing && g.landing.step === 'EVENT' && g.landing.decisionPending;
+        if (!g) {
+            this.store.eventDraw = EVENT_IDLE;
+            this.eventWaitQueued = false;
+        } else if (!waiting) {
+            this.eventWaitQueued = false;
+        } else if (!this.eventWaitQueued && this.store.eventDraw.phase === 'IDLE') {
+            this.eventWaitQueued = true;
+            this.cues.push({ kind: 'event', playerId: g.currentPlayer, actor: g.currentPlayer, waiting: true, result: null });
         }
         this.store.emit();
     }
@@ -232,8 +250,9 @@ export class OnlineSession {
             }
         }
         if (result && actor) {
-            const prev = this.store.eventDraw;
-            this.store.eventDraw = { phase: 'FLIPPING', actor, since: Date.now(), result, settled: prev.settled + 1 };
+            // 插在本步的事件位移之前：先翻牌、看完结果再走
+            const cue: Cue = { kind: 'event', playerId: actor, actor, waiting: false, result };
+            this.cues.splice(Math.min(Math.max(this.eventCueAt, 0), this.cues.length), 0, cue);
         }
     }
 

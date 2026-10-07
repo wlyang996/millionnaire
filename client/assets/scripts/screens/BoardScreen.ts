@@ -319,19 +319,22 @@ export class BoardScreen extends Screen {
         const hop = Theme.anim.hopMs;
         const e = Date.now() - m.start;
         const step = Math.floor(e / hop);
+        // steps 为负表示后退（事件"后退 N 格"）：逐格往回跳，不先往前走
+        const dir = m.steps < 0 ? -1 : 1;
+        const count = Math.abs(m.steps);
+        const at = (k: number) => (((m.from + dir * k) % n) + n) % n;
         // 逐格触地：每完成一步在落点冒尘土
-        while (m.done < Math.min(step, m.steps)) {
+        while (m.done < Math.min(step, count)) {
             m.done++;
-            const idx = (m.from + m.done) % n;
-            this.view.dust(idx);
+            this.view.dust(at(m.done));
         }
-        if (step >= m.steps) {
+        if (step >= count) {
             this.move = null;
             this.view.endHop(m.id);
             const st = ctx.store;
             if (st.online) {
                 // 联机：位置已是服务端结果，动画结束后按真实视图重绘
-                if (m.id === this.myId) this.view.pulse((m.from + m.steps) % n);
+                if (m.id === this.myId) this.view.pulse(at(count));
                 st.emit();
                 return;
             }
@@ -343,8 +346,8 @@ export class BoardScreen extends Screen {
             return;
         }
         const k = (e - step * hop) / hop;
-        const a = (m.from + step) % n;
-        const b = (m.from + step + 1) % n;
+        const a = at(step);
+        const b = at(step + 1);
         const pt = this.view.hopTo(m.id, a, b, k);
         if (pt) this.view.followPoint(pt);
     }
@@ -497,7 +500,7 @@ export class BoardScreen extends Screen {
         if (!online || !game) return game;
         const n = game.tiles.length;
         const shown = new Map<string, number>();
-        if (this.move) shown.set(this.move.id, (this.move.from + this.move.done) % n);
+        if (this.move) shown.set(this.move.id, (((this.move.from + (this.move.steps < 0 ? -1 : 1) * this.move.done) % n) + n) % n);
         for (const c of online.cues) if (c.kind === 'move' && !shown.has(c.playerId)) shown.set(c.playerId, c.from);
         if (!shown.size) return game;
         return { ...game, players: game.players.map((p) => (shown.has(p.playerId) ? { ...p, position: shown.get(p.playerId)! } : p)) };
@@ -578,6 +581,12 @@ export class BoardScreen extends Screen {
             } else if (cue.kind === 'jail') {
                 this.jail = { name: cue.playerId === this.myId ? '你' : who?.nickname ?? '玩家', start: Date.now() };
                 this.jailOv = new JailOverlay(this.root, this.jail.name, this.jail.start);
+            } else if (cue.kind === 'event') {
+                // 事件卡（等待抽卡 / 翻牌结果）按顺序排在走棋动画之后：人物落到事件格后才出现
+                st.eventDraw = cue.waiting
+                    ? { phase: 'WAITING', actor: cue.actor, since: Date.now(), result: null, settled: st.eventDraw.settled }
+                    : { phase: 'FLIPPING', actor: cue.actor, since: Date.now(), result: cue.result, settled: st.eventDraw.settled + 1 };
+                st.emit();
             } else this.startMove(cue.playerId, cue.steps, false, false, cue.from);
             return;
         }
