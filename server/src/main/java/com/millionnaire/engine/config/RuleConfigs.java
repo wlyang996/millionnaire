@@ -71,7 +71,7 @@ public final class RuleConfigs {
                         new TierPricing(Tier.MID, 1000, 600, List.of(200L, 500L, 900L, 1400L), Ratio.percent(70)),
                         new TierPricing(Tier.HIGH, 1500, 900, List.of(300L, 750L, 1350L, 2100L), Ratio.percent(60))),
                 new StationPricing(1000, 200, Ratio.percent(70)),
-                new EconomyConfig(1000, 500, 500, 100, 500, 50, 1, 3, 6, 3, 6, 2, 100, production, !production),
+                new EconomyConfig(1000, 500, 500, 100, 500, 50, 1, 3, 6, 3, 6, 2, 100, production, !production, production),
                 new RatioConfig(
                         Ratio.percent(50),   // 标准价值计入升级费 50%
                         Ratio.percent(100),  // 银行抵押：原价 100%

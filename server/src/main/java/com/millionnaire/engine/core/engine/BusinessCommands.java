@@ -30,6 +30,9 @@ final class BusinessCommands {
             case GameCommand.DrawEventCard ignored -> Kind.BUSINESS;
             case GameCommand.DiscardCard ignored -> Kind.BUSINESS;
             case GameCommand.PickTooth ignored -> Kind.BUSINESS;
+            case GameCommand.UseCard ignored -> Kind.BUSINESS;
+            case GameCommand.RespondCard ignored -> Kind.BUSINESS;
+            case GameCommand.FinishTurn ignored -> Kind.BUSINESS;
             case GameCommand.ResumeControl ignored -> Kind.CONTROL;
             case GameCommand.SetControl ignored -> Kind.SYSTEM;
             case GameCommand.ConnectionSuspected ignored -> Kind.SYSTEM;

@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 
 class SessionGoldenTest {
     private static final String CONFIG_HASH = "15be5a0b1185660540974ce2b74ac25d73bfb205f06e368cdb3c79b0ed26b668";
+    /** 测试配置新增道具开关（cardsEnabled，测试配置关闭）后的配置哈希；换回 CONFIG_HASH 后历史黄金值不变。 */
+    private static final String CARDS_CONFIG_HASH = "dc874ba180688decc09099487a7c79aa42754ff1c271a1a4aba2c84a9f692ba9";
     private static final String PREVIOUS_CONFIG_HASH = "f8524a62880278ca3e3a0e6838140e916f28cf1b2498111c53a29ddb38ef709d";
 
     @Test void scriptedSessionDebtToFinalLogHasStableBytes() {
@@ -18,7 +20,7 @@ class SessionGoldenTest {
         String raw = t.engine.encodeEvents(t.log);
         assertEquals(raw, t.engine.encodeEvents(t.engine.decodeEvents(raw)));
         // 虎口拔牙接入（engine-0.11.0-m6a）不改变这段债务会话：换回 m3c 版本号后，以下历史黄金值逐字节不变
-        String bytes = raw.replace("engine-0.11.0-m6a", "engine-0.10.0-m3c");
+        String bytes = raw.replace("engine-0.11.0-m6a", "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH);
         assertEquals(1, raw.split("engine-0.11.0-m6a", -1).length - 1, "only the version header changes");
         // Preserve the historical behavioral golden after removing only this revision's source metadata.
         var historicalEvents = t.log.stream().map(e -> {
@@ -31,14 +33,14 @@ class SessionGoldenTest {
             return e;
         }).toList();
         // 配置新增正式服策略开关后（测试配置沿用旧规则），配置哈希从 f8524a62… 变为 15be5a0b…；其余字节必须不变
-        String historicalBytes = t.engine.encodeEvents(historicalEvents)
+        String historicalBytes = t.engine.encodeEvents(historicalEvents).replace(CARDS_CONFIG_HASH, CONFIG_HASH)
                 .replaceAll(",\"plannedDistance\":\\d+,\"stoppedBy\":null", "")
                 .replace("engine-0.11.0-m6a", "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")
                 .replace(CONFIG_HASH, PREVIOUS_CONFIG_HASH);
         assertEquals("46953a081aa15740d69b5fbee5670e036bff181e77ac3130cd3e40e68135e5de",
                 Canonical.sha256Hex(historicalBytes.getBytes(StandardCharsets.UTF_8)),
                 "historical session behavior remains identical after removing the new source metadata");
-        assertEquals(CONFIG_HASH, t.config.contentHash());
+        assertEquals(CARDS_CONFIG_HASH, t.config.contentHash());
         String m3bBytes = bytes.replaceAll(",\"plannedDistance\":\\d+,\"stoppedBy\":null", "")
                 .replace("engine-0.10.0-m3c", "engine-0.9.1-m3b");
         assertEquals("a03bda62d0369e888fff87aab9f831253cd13b840dd4bc48a7f7fb37f0e3fcb3",

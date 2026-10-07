@@ -35,6 +35,9 @@ final class OverlayModule {
                     } else if (f.kind() == FlowKind.MINIGAME) {
                         // 选牙超时 / 托管：服务端代选
                         MinigameModule.onExpired(ctx, f);
+                    } else if (f.kind() == FlowKind.RESPONSE && ctx.state().game().cards().effect() != null) {
+                        // 道具响应窗到期：托管者自动使用，手动玩家视为不使用
+                        CardModule.onResponseExpired(ctx, f);
                     } else {
                         GameModule.closeOverlay(ctx, f.windowId(), CloseReason.EXPIRED);
                     }

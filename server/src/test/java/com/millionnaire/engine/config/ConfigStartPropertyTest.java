@@ -73,7 +73,7 @@ class ConfigStartPropertyTest {
     private static EconomyConfig orderMax(EconomyConfig e, int max) {
         return new EconomyConfig(e.startReward(), e.miniGameWinReward(), e.bailCost(), e.eventCashMin(), e.eventCashMax(),
                 e.eventCashStep(), e.eventMoveMinSteps(), e.eventMoveMaxSteps(), e.dieFaces(), e.maxLevel(), e.handLimit(),
-                e.initialHandSize(), max, e.offerUnaffordablePurchase(), e.upgradeAfterPurchase());
+                e.initialHandSize(), max, e.offerUnaffordablePurchase(), e.upgradeAfterPurchase(), e.cardsEnabled());
     }
 
     @Test
@@ -94,7 +94,7 @@ class ConfigStartPropertyTest {
             EconomyConfig m = new EconomyConfig(e.startReward(), e.miniGameWinReward(), e.bailCost(), e.eventCashMin(),
                     e.eventCashMax(), e.eventCashStep(), e.eventMoveMinSteps(), e.eventMoveMaxSteps(),
                     1 + rnd.nextInt(8), e.maxLevel(), 2 + rnd.nextInt(8), 1 + rnd.nextInt(2),
-                    rnd.nextInt(4) == 0 ? 100 : 1 + rnd.nextInt(120), e.offerUnaffordablePurchase(), e.upgradeAfterPurchase());
+                    rnd.nextInt(4) == 0 ? 100 : 1 + rnd.nextInt(120), e.offerUnaffordablePurchase(), e.upgradeAfterPurchase(), e.cardsEnabled());
             RuleConfig c = withEconomy(b, m);
             if (!ConfigValidator.validate(c).isEmpty()) {
                 continue;

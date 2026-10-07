@@ -65,6 +65,7 @@ class ProductionRulesTest {
         assertEquals(RejectionCode.INSUFFICIENT_CASH, buy.rejection());
         assertEquals(400, t.cash("p1"));
         t.act(w -> new GameCommand.DeclinePurchase("p1", w));
+        t.finishPostLanding();                                                      // 手里有路障卡：落点后用卡阶段，直接结束
         assertEquals("p2", t.current());
         assertNull(t.game().board().ownable(1).orElseThrow().owner());
     }
@@ -75,6 +76,7 @@ class ProductionRulesTest {
         craft(t, cash("p1", 400));
         t.rollOnly();
         t.tick(t.window().window().deadline());
+        t.finishPostLanding();
         assertEquals("p2", t.current());
         assertEquals(400, t.cash("p1"));
     }
@@ -88,7 +90,9 @@ class ProductionRulesTest {
         assertEquals(LandingStep.BUY, t.game().turn().landing().step());
         t.act(w -> new GameCommand.BuyProperty("p1", w));
         assertEquals("p1", t.game().board().ownable(1).orElseThrow().owner());
-        assertEquals("p2", t.current(), "no upgrade window right after buying");
+        assertNull(t.game().turn().landing(), "no upgrade window right after buying");
+        t.finishPostLanding();
+        assertEquals("p2", t.current());
         t.rollOnly();                                                               // p2 → 5（无主）：放弃
         while (t.session().inGame() && "p2".equals(t.current())) {
             t.pass();

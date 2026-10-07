@@ -205,12 +205,34 @@ class LiveRoomTimerTest {
                     clock.now = Math.max(clock.now + 1, top.opensAt());
                     room.submitClient(top.owner(), "roll" + (++req),
                             wire.gameCommand("RollDice", wire.object().put("windowId", top.windowId()), top.owner()));
+                } else if (top.kind() == com.millionnaire.engine.core.state.FlowKind.TURN
+                        && g.stage() == com.millionnaire.engine.core.state.TurnStage.LANDING) {
+                    // 落点决策直接处理（不等 15 秒超时，免得全局时钟先到）：放弃购买 / 抽事件卡 / 不用卡结束回合等
+                    var landing = g.landing();
+                    String command = landing == null ? "FinishTurn" : switch (landing.step()) {
+                        case BUY -> "DeclinePurchase";
+                        case UPGRADE -> "SkipUpgrade";
+                        case BANK -> "FinishBank";
+                        case EVENT -> "DrawEventCard";
+                        case RESPONSE -> "RespondCard";
+                        default -> null;
+                    };
+                    clock.now = Math.max(clock.now + 1, top.opensAt());
+                    if (command == null) {
+                        long due = room.scheduledWakeAt();
+                        clock.now = Math.max(clock.now, due);
+                        rooms.wake(room, due);
+                    } else {
+                        room.submitClient(top.owner(), "act" + (++req),
+                                wire.gameCommand(command, wire.object().put("windowId", top.windowId()), top.owner()));
+                    }
                 } else {
                     long due = room.scheduledWakeAt();
                     clock.now = Math.max(clock.now, due);
                     rooms.wake(room, due);
                 }
             }
+            assertThat(room.view("1").game()).as("game still running: " + sent.stream().filter(j -> j.contains("GameEnded")).findFirst().orElse("")).isNotNull();
             var m = room.view("1").game().minigame();
             assertThat(m).as("someone reached the game zone").isNotNull();
             assertThat(m.teeth()).isEqualTo(4);

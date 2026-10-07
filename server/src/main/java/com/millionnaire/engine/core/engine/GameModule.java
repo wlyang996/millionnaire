@@ -228,6 +228,7 @@ final class GameModule {
         List<FlowCoordinator.TaskClaim> claims = new java.util.ArrayList<>(TurnModule.validate(engine, g, config, full));
         claims.addAll(FlowCoordinator.validate(engine, g.flow()));
         MinigameModule.validate(g, config);
+        CardModule.validate(g, config);
         for (var frame : g.flow().frames()) {
             if (frame.kind() == FlowKind.TURN) { continue; }
             FlowOrigin o = frame.origin();
@@ -249,10 +250,13 @@ final class GameModule {
                         && o.ref() == m.landingId() && o.cursor() == m.cursor() && o.actor().equals(m.picker()),
                         "minigame flow origin invalid");
             } else if (frame.kind() == FlowKind.RESPONSE) {
-                // M4 must bind a real attack's target set. The scaffold accepts a live responder, not only the attacker.
+                // 道具攻击的响应窗挂在当前玩家的回合窗口上，必须对应待响应的攻击与其目标所有者；ATTACK 父窗口为流程骨架
                 var parent = g.flow().frame(o.ref()).orElse(null);
+                var effect = g.cards().effect();
+                boolean cardParent = parent != null && parent.kind() == FlowKind.TURN && effect != null && effect.response() != null
+                        && o.actor().equals(effect.target());
                 LobbyModule.expect(o.scopeId() == g.turn().turnNo() && o.kind() == FlowOrigin.Kind.ATTACK_RESPONSE
-                        && o.cursor() == -1 && parent != null && parent.kind() == FlowKind.ATTACK
+                        && o.cursor() == -1 && parent != null && (parent.kind() == FlowKind.ATTACK || cardParent)
                         && parent.windowId() < frame.windowId() && g.player(o.actor()).map(PlayerState::alive).orElse(false), "response flow origin invalid");
             } else {
                 LobbyModule.expect(false, "unregistered synchronous flow origin");
@@ -355,7 +359,10 @@ final class GameModule {
         }
         if (kind == FlowKind.RESPONSE) {
             // M4 target-set/card authorization is pending; the scaffold binds the real responder and current parent.
-            return origin.kind() == FlowOrigin.Kind.ATTACK_RESPONSE && top != null && top.kind() == FlowKind.ATTACK
+            var effect = g.cards().effect();
+            boolean cardParent = top != null && top.kind() == FlowKind.TURN && effect != null && effect.response() != null
+                    && owner.equals(effect.target()) && top.owner().equals(g.turn().currentPlayer());
+            return origin.kind() == FlowOrigin.Kind.ATTACK_RESPONSE && top != null && (top.kind() == FlowKind.ATTACK || cardParent)
                     && origin.ref() == top.windowId() && origin.cursor() == -1
                     ? null : "response requires its current attack parent source";
         }
@@ -397,7 +404,7 @@ final class GameModule {
                 : g.player(viewerId).map(PlayerState::hand).orElse(List.of());
         return new GameView(g.gameNo(), g.phase(), players, g.orderDraws(), g.board(), g.turn().turnNo(),
                 g.turn().currentPlayer(), g.turn().stage(), g.clock().endsAt(), windows, publicLanding(g), publicDebt(g), mine,
-                MinigameModule.view(g));
+                MinigameModule.view(g), CardModule.view(g));
     }
 
     /** E6：当前落点的公开部分（步骤与决策是否仍待做）。 */

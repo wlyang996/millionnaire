@@ -89,6 +89,22 @@ public sealed interface GameCommand extends Command {
     record DeclareBankruptcy(String actor, long windowId) implements GameCommand {
     }
 
+    /**
+     * 客户端：在自己的回合窗口内主动使用一张卡（投骰前 / 狱中判定 / 落点后用卡阶段）。目标格一律为当前位置；
+     * target 只用于查询（被查询玩家），steps 只用于定点移动（1～6）。拍卖、交易卡另有申请命令。
+     */
+    record UseCard(String actor, long windowId, com.millionnaire.engine.config.CardType card, String target, int steps)
+            implements GameCommand {
+    }
+
+    /** 客户端：响应窗内是否使用响应卡（免租 / 房屋保护 / 拒绝购买）。 */
+    record RespondCard(String actor, long windowId, boolean use) implements GameCommand {
+    }
+
+    /** 客户端：落点后用卡阶段不用卡，直接结束回合。 */
+    record FinishTurn(String actor, long windowId) implements GameCommand {
+    }
+
     /** 客户端：虎口拔牙中选一颗未按下的牙（只有当前选牙者、在其选牙窗口内）。 */
     record PickTooth(String actor, long windowId, int tooth) implements GameCommand {
     }

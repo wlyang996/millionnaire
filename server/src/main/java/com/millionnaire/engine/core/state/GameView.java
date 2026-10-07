@@ -14,7 +14,15 @@ import java.util.List;
 public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                        BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                        List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
-                       PublicMinigame minigame) {
+                       PublicMinigame minigame, PublicCards cards) {
+    public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
+                    BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
+                    List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
+                    PublicMinigame minigame) {
+        this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt, myHand,
+                minigame, null);
+    }
+
     public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                     BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                     List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand) {
@@ -47,6 +55,16 @@ public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players,
      */
     public record PublicDebt(long debtId, String debtor, String creditor, long amount, int segment, boolean continued,
                              boolean continueAvailable, long windowId) {
+    }
+
+    /** 道具的公开部分：本轮已用掉主动用卡机会的玩家；等待中的攻击响应（谁对谁的哪块地用了什么、对方可用的响应卡及其窗口）。 */
+    public record PublicCards(List<String> chanceUsed, PublicResponse response) {
+        public PublicCards {
+            chanceUsed = Immutable.list(chanceUsed);
+        }
+    }
+
+    public record PublicResponse(String attacker, String owner, int tile, CardType attack, CardType response, long windowId) {
     }
 
     /**

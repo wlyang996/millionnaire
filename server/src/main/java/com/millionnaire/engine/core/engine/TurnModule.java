@@ -145,6 +145,9 @@ final class TurnModule {
             case GameCommand.DrawEventCard c -> EventModule.decide(ctx, c);
             case GameCommand.DiscardCard c -> EventModule.decide(ctx, c);
             case GameCommand.PickTooth c -> MinigameModule.decide(ctx, c);
+            case GameCommand.UseCard c -> CardModule.decide(ctx, c);
+            case GameCommand.RespondCard c -> CardModule.decide(ctx, c);
+            case GameCommand.FinishTurn c -> CardModule.decide(ctx, c);
             case RollDice c -> {
                 RejectionCode why = checkTurnWindow(ctx, c.actor(), c.windowId());
                 if (why != null) {
@@ -495,6 +498,18 @@ final class TurnModule {
         openStage(ctx, TurnStage.PRE_ROLL, 0, remaining, null);
     }
 
+    /** 出狱卡（O9）：在狱中判定窗口使用，立即释放并沿用本回合剩余投骰时间（同付费出狱）。 */
+    static void releaseWithCard(DecisionContext<SessionState> ctx) {
+        GameState g = game(ctx);
+        String player = g.turn().currentPlayer();
+        FlowFrame frame = g.flow().frame(g.turn().windowId()).orElseThrow();
+        long remaining = Math.max(0, frame.window().deadline() - ctx.now());
+        disarm(ctx);
+        FlowCoordinator.close(ctx, GameModule.FLOW, g.turn().windowId(), CloseReason.ACTED);
+        ctx.emit(new JailReleased(player, ReleaseReason.CARD));
+        openStage(ctx, TurnStage.PRE_ROLL, 0, remaining, null);
+    }
+
     /** 尚未接入效果的格子：事件格（M3b）与游戏区（虎口拔牙）都已接入，现无占位格。 */
     static boolean placeholder(TileType type) {
         return false;
@@ -799,7 +814,9 @@ final class TurnModule {
             case TurnStarted e -> {
                 check(e.turnNo() == t.turnNo() + 1 && t.stage() == TurnStage.NONE && k.equals(TurnTrack.NONE)
                         && nextAlive(g).map(e.playerId()::equals).orElse(false), "turn sequence broken");
-                yield g.withTurn(t.next(e.turnNo(), e.playerId()).withTrack(TurnTrack.NONE.safePoint(1)));
+                // 每个自己的回合开始恢复一次主动用卡机会
+                yield g.withTurn(t.next(e.turnNo(), e.playerId()).withTrack(TurnTrack.NONE.safePoint(1)))
+                        .withCards(g.cards().turnStarted(e.playerId()));
             }
             case TurnStageEntered e -> {
                 check(!(e.continuation() instanceof Continuation.BeginTurn) || t.stage() == TurnStage.NONE,
@@ -918,9 +935,12 @@ final class TurnModule {
                     case EVEN_ROLL -> k.jailRoll() != 0 && k.jailRoll() % 2 == 0;
                     case THIRD_FAILURE -> k.jailRoll() % 2 == 1 && p.jailFailures() == 2;
                     case BAIL -> k.bailPaid();
+                    case CARD -> g.cards().effect() != null && g.cards().effect().card() == com.millionnaire.engine.config.CardType.JAIL_RELEASE
+                            && g.cards().effect().actor().equals(e.playerId()) && k.jailRoll() == 0 && !k.bailPaid();
                 };
                 check(ok && p.inJail() && current(g, e.playerId()), "release reason " + e.reason() + " does not follow the track");
-                yield g.withPlayer(p.jail(false, 0)).withTurn(t.withTrack(TurnTrack.NONE));
+                GameState released = g.withPlayer(p.jail(false, 0)).withTurn(t.withTrack(TurnTrack.NONE));
+                yield e.reason() == ReleaseReason.CARD ? released.withCards(g.cards().effect(null)) : released;
             }
             case ControlChanged e -> g.withPlayer(g.player(e.playerId()).orElseThrow().control(e.mode()));
             case ConnectionChanged e -> {
@@ -939,6 +959,7 @@ final class TurnModule {
             default -> {
                 if (EventModule.handles(event)) { yield EventModule.evolve(g, event, draws, rules); }
                 if (MinigameModule.handles(event)) { yield MinigameModule.evolve(g, event, draws, rules); }
+                if (CardModule.handles(event)) { yield CardModule.evolve(g, event, rules); }
                 if (EconomyModule.handles(event)) {
                     yield EconomyModule.evolve(g, event, rules);
                 }
@@ -1076,7 +1097,9 @@ final class TurnModule {
             LobbyModule.expect(c.plans().getLast().landingId() >= 1 && c.plans().getLast().landingId() < t.lastLandingId()
                     && c.plans().getLast().cursor() == 1, "event movement plan source invalid");
         } else {
-            LobbyModule.expect(c.eventDrawn() == (t.landing() != null && t.landing().event() != null), "move chain invalid");
+            // 落点后用卡阶段（落点已结束、回合尚未结束）：链仍在，事件是否抽过不再对应某个落点
+            boolean settled = t.landing() == null && t.stage() == TurnStage.LANDING && t.continuation() instanceof Continuation.EndTurn;
+            LobbyModule.expect(settled || c.eventDrawn() == (t.landing() != null && t.landing().event() != null), "move chain invalid");
         }
     }
 

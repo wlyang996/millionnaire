@@ -161,7 +161,8 @@ final class EconomyModule {
                 } else if (o.owner().equals(player)) {
                     yield canUpgrade(config, board, g, player, o) ? LandingStep.UPGRADE : null;
                 }
-                yield o.mortgaged() ? null : LandingStep.RENT;
+                // 持有免租卡时先问是否使用（响应先于费用成立与现金不足判定，O4）
+                yield o.mortgaged() ? null : CardModule.rentResponseDue(config, g, tileIndex) ? LandingStep.RESPONSE : LandingStep.RENT;
             }
             // O16：全局到时后不允许银行常规抵押 / 赎回（阶段表 BANK.drainingAllowed = false），因此不开银行窗口
             case BANK -> g.phase() == GamePhase.RUNNING || StageTable.rule(StageTable.Point.BANK).drainingAllowed()
@@ -181,7 +182,14 @@ final class EconomyModule {
             return;
         }
         switch (LandingRules.rule(l.next()).execution()) {
-            case WINDOW -> openStep(ctx, l.next(), leadMs);
+            case WINDOW -> {
+                // 托管 / 掉线 / 暂离的持卡者立即自动使用免租卡，不开窗口（O4）
+                if (l.next() == LandingStep.RESPONSE && game(ctx).player(game(ctx).turn().currentPlayer()).orElseThrow().automated()) {
+                    CardModule.autoWaive(ctx, leadMs);
+                } else {
+                    openStep(ctx, l.next(), leadMs);
+                }
+            }
             case RENT -> chargeRent(ctx, game(ctx).board().ownable(l.tile()).orElseThrow(), leadMs);
             case EFFECT -> EventModule.performEffect(ctx);
             case FLOW -> MinigameModule.start(ctx, leadMs);
@@ -216,6 +224,12 @@ final class EconomyModule {
 
     static void finishLanding(DecisionContext<SessionState> ctx, long leadMs) {
         completeLanding(ctx);
+        // 落点结算后的用卡阶段（15 秒，可直接结束回合）：只在手动玩家还有机会、手里有此刻可用的卡时开启
+        if (CardModule.offerPostLanding(ctx.config(), game(ctx))) {
+            TurnModule.openDecision(ctx, new Continuation.EndTurn(game(ctx).turn().turnNo()), leadMs,
+                    ctx.config().timing().decisionWindowMs());
+            return;
+        }
         TurnModule.endTurn(ctx, leadMs);
     }
 
@@ -263,6 +277,8 @@ final class EconomyModule {
                 resolve(ctx, 0);
             }
             case DRAW_EVENT -> EventModule.draw(ctx, true);
+            case USE_RESPONSE -> CardModule.waiveRent(ctx, true, 0);
+            case DECLINE_RESPONSE -> CardModule.declineWaiver(ctx, true);
             case DISCARD_NEW -> EventModule.discard(ctx, l.event().newCardIndex(), true);
             case ROLL, NEXT_SEGMENT_OR_BANKRUPT -> throw new IllegalStateException(action + " is not a landing action");
         }
@@ -678,6 +694,11 @@ final class EconomyModule {
         if (g.debt() != null && (playerId.equals(g.debt().creditor()) || playerId.equals(g.debt().debtor()))) {
             return true;
         }
+        // 待对方响应的道具：使用者与目标所有者
+        var effect = g.cards().effect();
+        if (effect != null && (playerId.equals(effect.actor()) || playerId.equals(effect.target()))) {
+            return true;
+        }
         // 小游戏：全体参与者（#15 中途认输延后到小游戏结束清算）
         if (g.minigame() != null && g.minigame().participants().contains(playerId)) {
             return true;
@@ -813,7 +834,8 @@ final class EconomyModule {
                         && o != null && o.owner() == null && e.price() == basePrice(rules, board.tiles().get(e.tile())),
                         "purchase mismatch");
                 Ledger ledger = g.ledger().transfer(e.playerId(), Ledger.SYSTEM, e.price(), PURCHASE, "tile-" + e.tile());
-                GameState bought = g.withLedger(ledger).withBoard(g.board().with(o.owned(e.playerId())));
+                GameState bought = g.withLedger(ledger).withBoard(g.board().with(o.owned(e.playerId())))
+                        .withCards(g.cards().bought(e.tile()));
                 // 买下之后的下一步：配置允许且可升级时开升级窗口（正式规则不开）
                 yield bought.withTurn(t.withLanding(LandingRules.consume(rules, bought, l, LandingResult.BOUGHT)));
             }

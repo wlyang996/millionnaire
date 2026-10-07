@@ -46,5 +46,11 @@ public enum RejectionCode {
     NOT_AT_BANK,
     ASSET_LOCKED,
     NOT_ALIVE,
-    DRAINING
+    DRAINING,
+    /** 手里没有这张卡。 */
+    NO_CARD,
+    /** 本轮主动用卡机会已用掉。 */
+    CARD_USED,
+    /** 当前位置 / 目标不满足这张卡的使用条件（卡不消耗）。 */
+    NO_TARGET
 }

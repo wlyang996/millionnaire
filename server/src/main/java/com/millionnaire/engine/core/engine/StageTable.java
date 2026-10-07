@@ -32,7 +32,9 @@ final class StageTable {
         /** 落点：无推进器的普通等待（测试与占位）。 */
         WAIT,
         /** 债务覆盖窗口（两段）。 */
-        DEBT, EVENT_DRAW, DISCARD
+        DEBT, EVENT_DRAW, DISCARD,
+        /** 落点：缴租前的免租响应（持有免租卡时）。 */
+        RENT_RESPONSE
     }
 
     /** 时限来源。 */
@@ -42,12 +44,18 @@ final class StageTable {
         /** 落点决策 15 秒。 */
         DECISION,
         /** 债务每段 30 秒。 */
-        DEBT_SEGMENT, DISCARD
+        DEBT_SEGMENT, DISCARD,
+        /** 响应窗 10 秒。 */
+        RESPONSE
     }
 
     /** 超时或自动执行的动作。 */
     enum Action {
-        ROLL, BUY_IF_AFFORDABLE, DECLINE, UPGRADE_IF_AFFORDABLE, SKIP, FINISH, NEXT_SEGMENT_OR_BANKRUPT, DRAW_EVENT, DISCARD_NEW
+        ROLL, BUY_IF_AFFORDABLE, DECLINE, UPGRADE_IF_AFFORDABLE, SKIP, FINISH, NEXT_SEGMENT_OR_BANKRUPT, DRAW_EVENT, DISCARD_NEW,
+        /** 使用响应卡（托管 / 掉线 / 暂离持卡者）。 */
+        USE_RESPONSE,
+        /** 不使用响应卡（手动玩家超时）。 */
+        DECLINE_RESPONSE
     }
 
     /**
@@ -64,8 +72,9 @@ final class StageTable {
 
     static final List<Rule> RULES = List.of(
             new Rule(Point.JAIL, List.of(GameCommand.RollDice.class, GameCommand.PayBail.class, GameCommand.Redeem.class,
-                    GameCommand.BankMortgage.class), Duration.ROLL, Action.ROLL, Action.ROLL, Action.ROLL, true, false, List.of()),
-            new Rule(Point.ROLL, List.of(GameCommand.RollDice.class, GameCommand.Redeem.class, GameCommand.BankMortgage.class),
+                    GameCommand.BankMortgage.class, GameCommand.UseCard.class), Duration.ROLL, Action.ROLL, Action.ROLL, Action.ROLL, true, false, List.of()),
+            new Rule(Point.ROLL, List.of(GameCommand.RollDice.class, GameCommand.Redeem.class, GameCommand.BankMortgage.class,
+                    GameCommand.UseCard.class),
                     Duration.ROLL, Action.ROLL, Action.ROLL, Action.ROLL, true, false, List.of(FlowKind.ATTACK)),
             // 待确认默认 4：本人普通操作窗口均可赎回（含买 / 升级窗口，不刷新截止；DRAINING 后仍按 O16 拒绝）
             new Rule(Point.BUY, List.of(GameCommand.BuyProperty.class, GameCommand.DeclinePurchase.class,
@@ -76,14 +85,19 @@ final class StageTable {
                     Duration.DECISION, Action.SKIP, Action.UPGRADE_IF_AFFORDABLE, Action.SKIP, false, true, List.of()),
             new Rule(Point.BANK, List.of(GameCommand.BankMortgage.class, GameCommand.Redeem.class, GameCommand.FinishBank.class),
                     Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, false, List.of()),
-            new Rule(Point.WAIT, List.of(), Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, true, List.of(FlowKind.ATTACK)),
+            // 落点后用卡阶段（也用于无推进器的普通等待）：用卡、直接结束回合、赎回
+            new Rule(Point.WAIT, List.of(GameCommand.UseCard.class, GameCommand.FinishTurn.class, GameCommand.Redeem.class),
+                    Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, true, List.of(FlowKind.ATTACK)),
             new Rule(Point.DEBT, List.of(GameCommand.EmergencyMortgage.class, GameCommand.ContinueDebt.class,
                     GameCommand.DeclareBankruptcy.class), Duration.DEBT_SEGMENT, Action.NEXT_SEGMENT_OR_BANKRUPT,
                     Action.NEXT_SEGMENT_OR_BANKRUPT, Action.NEXT_SEGMENT_OR_BANKRUPT, false, true, List.of()),
             new Rule(Point.EVENT_DRAW, List.of(GameCommand.DrawEventCard.class), Duration.DECISION,
                     Action.DRAW_EVENT, Action.DRAW_EVENT, Action.DRAW_EVENT, false, true, List.of()),
             new Rule(Point.DISCARD, List.of(GameCommand.DiscardCard.class), Duration.DISCARD,
-                    Action.DISCARD_NEW, Action.DISCARD_NEW, Action.DISCARD_NEW, false, true, List.of()));
+                    Action.DISCARD_NEW, Action.DISCARD_NEW, Action.DISCARD_NEW, false, true, List.of()),
+            // O4：只在持卡时弹出；手动超时不使用，托管 / 掉线 / 暂离自动使用
+            new Rule(Point.RENT_RESPONSE, List.of(GameCommand.RespondCard.class), Duration.RESPONSE,
+                    Action.DECLINE_RESPONSE, Action.USE_RESPONSE, Action.USE_RESPONSE, false, true, List.of()));
 
     static Rule rule(Point point) {
         return RULES.stream().filter(r -> r.point() == point).findFirst().orElseThrow();
@@ -112,6 +126,7 @@ final class StageTable {
             case DECISION -> config.timing().decisionWindowMs();
             case DEBT_SEGMENT -> config.timing().debtSegmentMs();
             case DISCARD -> config.timing().discardWindowMs();
+            case RESPONSE -> config.timing().responseWindowMs();
         };
     }
 }

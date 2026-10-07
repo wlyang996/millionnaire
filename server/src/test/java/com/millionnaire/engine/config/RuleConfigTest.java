@@ -76,7 +76,7 @@ class RuleConfigTest {
         EconomyConfig e = config.economy();
         EconomyConfig e2 = new EconomyConfig(e.startReward() + 1, e.miniGameWinReward(), e.bailCost(),
                 e.eventCashMin(), e.eventCashMax(), e.eventCashStep(), e.eventMoveMinSteps(), e.eventMoveMaxSteps(),
-                e.dieFaces(), e.maxLevel(), e.handLimit(), e.initialHandSize(), e.orderNumberMax(), e.offerUnaffordablePurchase(), e.upgradeAfterPurchase());
+                e.dieFaces(), e.maxLevel(), e.handLimit(), e.initialHandSize(), e.orderNumberMax(), e.offerUnaffordablePurchase(), e.upgradeAfterPurchase(), e.cardsEnabled());
         RuleConfig changed = new RuleConfig(config.ruleVersion(), config.boards(), config.tiers(), config.station(),
                 e2, config.ratios(), config.cardWeights(), config.eventWeights(), config.timing(), config.room());
         assertNotEquals(h, changed.contentHash());

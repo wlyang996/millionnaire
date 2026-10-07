@@ -247,6 +247,69 @@ public sealed interface GameEvent extends Event {
     record SurrenderBatchEnded(long batch) implements GameEvent, PublicEvent {
     }
 
+    // ------------------------------------------------------------ 道具（requirements 第 14 节）
+
+    /**
+     * 用出一张卡（从手牌移除同种的第一张）：active 为主动卡（消耗本轮主动用卡机会），否则为响应卡；
+     * tile 为目标格（-1 = 无），target 为目标玩家（地产所有者 / 查询对象 / 被响应的攻击者，可为 null）。
+     */
+    record CardUsed(String playerId, CardType card, int tile, String target, boolean active) implements GameEvent, PublicEvent {
+    }
+
+    /** 攻击卡的目标所有者持有对应响应卡（房屋保护 / 拒绝购买）：为其开 10 秒响应窗（O4：只在持卡时弹出）。 */
+    record ResponseOffered(String attacker, String owner, int tile, CardType attack, CardType response)
+            implements GameEvent, PublicEvent {
+    }
+
+    /** 所有者不使用响应卡（主动放弃或超时）：攻击照常生效。 */
+    record ResponseDeclined(String owner, int tile, boolean auto) implements GameEvent, PublicEvent {
+    }
+
+    /** 攻击被响应卡抵挡：双方的卡都已消耗，地产不变（auto 为托管 / 掉线 / 暂离自动使用）。 */
+    record AttackBlocked(String attacker, String owner, int tile, CardType attack, CardType response, boolean auto)
+            implements GameEvent, PublicEvent {
+    }
+
+    /** 建造卡：自己的普通地产免费升一级。 */
+    record PropertyBuilt(String playerId, int tile, int level) implements GameEvent, PublicEvent {
+    }
+
+    /** 降级卡：他人未抵押普通地产降一级。 */
+    record PropertyDowngraded(String attacker, String owner, int tile, int level) implements GameEvent, PublicEvent {
+    }
+
+    /** 拆楼卡：清除全部升级，保留所有权。 */
+    record PropertyDemolished(String attacker, String owner, int tile) implements GameEvent, PublicEvent {
+    }
+
+    /** 清地卡：清除等级与所有权，变为无主（不补偿，#10）。 */
+    record PropertyCleared(String attacker, String owner, int tile) implements GameEvent, PublicEvent {
+    }
+
+    /** 强制购房：以标准价值 1.5 倍（向下取整）买下，款归原主；等级保留。 */
+    record PropertyForceBought(String buyer, String owner, int tile, long price) implements GameEvent, PublicEvent {
+    }
+
+    /** 查询结果：目标玩家此刻的手牌快照，只发给使用者（#10）。 */
+    record QueryRevealed(String recipient, String target, List<CardType> cards) implements GameEvent {
+        public QueryRevealed {
+            cards = Immutable.list(cards);
+        }
+
+        @Override
+        public Visibility visibility() {
+            return Visibility.PRIVATE;
+        }
+    }
+
+    /** 免租卡免除本次租金（响应先于费用成立，O4）。 */
+    record RentWaived(String payer, String owner, int tile, boolean auto) implements GameEvent, PublicEvent {
+    }
+
+    /** 持有免租卡但不使用（主动放弃或超时）：随后照常缴租。 */
+    record RentWaiverDeclined(String payer, int tile, boolean auto) implements GameEvent, PublicEvent {
+    }
+
     // ------------------------------------------------------------ 小游戏（虎口拔牙）
 
     /**
@@ -288,7 +351,9 @@ public sealed interface GameEvent extends Event {
 
     /** 出狱原因。 */
     enum ReleaseReason {
-        EVEN_ROLL, THIRD_FAILURE, BAIL
+        EVEN_ROLL, THIRD_FAILURE, BAIL,
+        /** 出狱卡（占用本回合主动用卡机会，O9）。 */
+        CARD
     }
 
     // ------------------------------------------------------------ 控制与自动动作

@@ -86,13 +86,13 @@ class ControlSourceTest {
     @Test void everyGameCommandIsExplicitlyClassifiedAndNewOnesRequireAClassification() throws ReflectiveOperationException {
         Set<String> business=Set.of("RollDice","PayBail","BuyProperty","DeclinePurchase","StartLandAuction","UpgradeProperty",
                 "SkipUpgrade","BankMortgage","Redeem","FinishBank","EmergencyMortgage","ContinueDebt","DeclareBankruptcy",
-                "Surrender","DrawEventCard","DiscardCard","PickTooth");
+                "Surrender","DrawEventCard","DiscardCard","PickTooth","UseCard","RespondCard","FinishTurn");
         Set<String> control=Set.of("ResumeControl");
         Set<String> system=Set.of("SetControl","ConnectionSuspected","ConnectionConfirmed","Reconnected");
         Set<String> actual=new TreeSet<>();
         for(var type:GameCommand.class.getPermittedSubclasses()) {
             actual.add(type.getSimpleName()); var fields=type.getRecordComponents(); var args=new Object[fields.length]; var types=new Class<?>[fields.length];
-            for(int i=0;i<fields.length;i++) { types[i]=fields[i].getType(); args[i]=types[i]==String.class?"p1":types[i]==long.class?1L:types[i]==int.class?0:ControlMode.HOSTED; }
+            for(int i=0;i<fields.length;i++) { types[i]=fields[i].getType(); args[i]=types[i]==String.class?"p1":types[i]==long.class?1L:types[i]==int.class?0:types[i]==boolean.class?false:types[i]==com.millionnaire.engine.config.CardType.class?com.millionnaire.engine.config.CardType.QUERY:ControlMode.HOSTED; }
             var command=(GameCommand)type.getDeclaredConstructor(types).newInstance(args);
             var expected=business.contains(type.getSimpleName())?BusinessCommands.Kind.BUSINESS:control.contains(type.getSimpleName())?BusinessCommands.Kind.CONTROL:BusinessCommands.Kind.SYSTEM;
             assertEquals(expected,BusinessCommands.kind(command),type.getSimpleName());

@@ -83,7 +83,7 @@ class ConfigPropertyTest {
             case 2 -> eco = new EconomyConfig(eco.startReward(), eco.miniGameWinReward(), eco.bailCost(),
                     rnd.nextBoolean() ? pick(rnd) : 100, rnd.nextBoolean() ? pick(rnd) : 500,
                     rnd.nextBoolean() ? pick(rnd) : 50, eco.eventMoveMinSteps(), eco.eventMoveMaxSteps(), eco.dieFaces(),
-                    eco.maxLevel(), eco.handLimit(), eco.initialHandSize(), eco.orderNumberMax(), eco.offerUnaffordablePurchase(), eco.upgradeAfterPurchase());
+                    eco.maxLevel(), eco.handLimit(), eco.initialHandSize(), eco.orderNumberMax(), eco.offerUnaffordablePurchase(), eco.upgradeAfterPurchase(), eco.cardsEnabled());
             case 3 -> {
                 List<TierPricing> t = new ArrayList<>(tiers);
                 TierPricing old = t.get(rnd.nextInt(t.size()));

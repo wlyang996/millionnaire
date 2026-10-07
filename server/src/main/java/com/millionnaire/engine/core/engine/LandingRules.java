@@ -73,6 +73,10 @@ final class LandingRules {
                 List.of(new Outcome(LandingResult.MOVED, List.of()))),
         new Rule(LandingStep.TO_JAIL, Execution.EFFECT, null, ALWAYS, (c, g, l) -> false,
                 List.of(new Outcome(LandingResult.MOVED, List.of()))),
+        new Rule(LandingStep.RESPONSE, Execution.WINDOW, StageTable.Point.RENT_RESPONSE,
+                (c, g, l) -> CardModule.rentResponseDue(c, g, l.tile()), (c, g, l) -> CardModule.rentResponseDue(c, g, l.tile()),
+                List.of(new Outcome(LandingResult.WAIVED, List.of()),
+                        new Outcome(LandingResult.DECLINED, List.of(new Successor(LandingStep.RENT, ALWAYS))))),
         new Rule(LandingStep.MINIGAME, Execution.FLOW, null, (c, g, l) -> MinigameModule.eligible(c, g, l.tile()),
                 (c, g, l) -> MinigameModule.resting(g, l), List.of(new Outcome(LandingResult.PLAYED, List.of()))));
 
