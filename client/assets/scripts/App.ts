@@ -6,6 +6,7 @@
 import { Camera, Canvas, Color, Layers, Node, profiler, ResolutionPolicy, UITransform, Vec3, view } from 'cc';
 import { MockStore, Scenario } from './core/MockStore';
 import { POPUP_CATALOG } from './popups/Catalog';
+import { ResyncPopup } from './popups/ResyncPopup';
 import { ScreenId } from './ui/Screen';
 import { Theme } from './core/Theme';
 import { DemoPanel } from './demo/DemoPanel';
@@ -128,10 +129,26 @@ export class App {
         });
     }
 
+    private resync: ResyncPopup | null = null;
+
     update(dt: number): void {
         if (!ctx.screens) return;
         ctx.screens.update(dt);
+        this.updateResync();
         ctx.popups.update();
         Toast.update();
+    }
+
+    /** 联机对局中断线重连：显示"正在同步最新状态…"遮罩（设计稿 06 右），连上后关闭。 */
+    private updateResync(): void {
+        const online = ctx.store.online;
+        const page = ctx.screens.currentId;
+        const syncing = !!online && (page === 'board' || page === 'spectator')
+            && (online.link === 'reconnecting' || online.link === 'connecting');
+        if (syncing && (!this.resync || this.resync.closed)) this.resync = ctx.popups.open(new ResyncPopup(false)) as ResyncPopup;
+        else if (!syncing && this.resync) {
+            this.resync.close();
+            this.resync = null;
+        }
     }
 }

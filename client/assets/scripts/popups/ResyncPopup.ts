@@ -1,4 +1,7 @@
-/** 重连同步遮罩：转圈 + "正在同步最新状态…"。同步完成后恢复当前操作，不补做旧动作。点击遮罩（演示）可关闭。 */
+/**
+ * 重连同步遮罩（设计稿 06 右）：压暗棋盘，白色圆角卡片上蓝色转圈 + "正在同步最新状态…"，
+ * 下方两行说明。联机时由 App 在对局页断线重连期间自动打开、连上后自动关闭；演示模式点遮罩可关闭。
+ */
 import { Node } from 'cc';
 import { Theme } from '../core/Theme';
 import { fillCircle, gfx, mk, strokeCircle, text } from '../ui/Kit';
@@ -9,17 +12,18 @@ export class ResyncPopup extends Popup {
     private spinner: Node | null = null;
     private angle = 0;
 
-    constructor() {
-        super('resync', '', 600, 520, 0, true);
+    constructor(private readonly demo = true) {
+        super('resync', '', 600, 420, 0, demo);
+        this.dimBackground = true;
     }
 
     protected buildBody(p: Node, w: number): void {
-        this.spinner = mk(p, 'Spinner', (w - 110) / 2, 50, 110, 110);
+        this.spinner = mk(p, 'Spinner', (w - 110) / 2, 46, 110, 110);
         this.paintSpinner();
-        text(p, '正在同步最新状态…', 0, 190, w, 70, Theme.font.xl - 6, Theme.c.ink, { bold: true });
-        text(p, '同步完成后恢复当前操作', 0, 290, w, 40, Theme.font.md, Theme.c.inkSoft);
-        text(p, '不会补做旧动作', 0, 340, w, 40, Theme.font.md, Theme.c.inkSoft);
-        text(p, '（演示：点击遮罩外区域关闭）', 0, 440, w, 30, Theme.font.xs, Theme.c.inkFaint);
+        text(p, '正在同步最新状态…', 0, 182, w, 70, 40, Theme.c.navy, { bold: true });
+        text(p, '同步完成后恢复当前操作', 0, 270, w, 40, Theme.font.md, Theme.c.noteGray);
+        text(p, '不会补做旧动画', 0, 316, w, 40, Theme.font.md, Theme.c.noteGray);
+        if (this.demo) text(p, '（演示：点击遮罩外区域关闭）', 0, 370, w, 30, Theme.font.xs, Theme.c.inkFaint);
     }
 
     private paintSpinner(): void {
