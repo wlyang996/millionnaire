@@ -7,7 +7,7 @@
  */
 import { Label, Mask, Node, UITransform, Vec3, view } from 'cc';
 import { axisCell, gridCell, gridFor, GridSpec, ringLength } from '../../core/BoardLayout';
-import { BoardTile, GameView, PropertyState } from '../../core/Models';
+import { BoardTile, GameView, PlayerView, PropertyState } from '../../core/Models';
 import { Theme, textWidth } from '../../core/Theme';
 import { drawHouse, drawPips } from '../../ui/Icons';
 import { col, fillCircle, fillPoly, fillRR, gfx, line, mk, place, setOpacity, strokeRR, text } from '../../ui/Kit';
@@ -39,6 +39,9 @@ const TIER_BASE: Record<string, [string, string]> = {
     MID: [Theme.c.tierMid, '#2F7FCC'],
     HIGH: [Theme.c.tierHigh, '#8550E0'],
 };
+
+/** 棋子样式：figure = 现有全身人物（默认）；badge / mini 为待用户挑选的备选样式（见 drawAltToken）。 */
+export const tokenStyle = { value: 'figure' as 'figure' | 'badge' | 'mini' };
 
 /** 定点移动（设计稿 13 第二张）：从 from 往前 1～6 格标号高亮，selected 为当前选中的步数。 */
 export interface StepMarks { from: number; selected: number }
@@ -480,6 +483,10 @@ export class BoardView {
             seen[p.position] = k + 1;
             const c = this.tileCenter(p.position);
             const me = p.playerId === myId;
+            if (tokenStyle.value !== 'figure') {
+                this.drawAltToken(parent, p, k, c, me, myName);
+                continue;
+            }
             // 按格子大小收窄人物，脚踩在格子中心略偏下（人物立绘的脚在节点顶 + s 处，见下方 art 的摆放）
             const cell = this.cellSize(p.position);
             const fit = Math.min(cell.w, cell.h);
@@ -509,6 +516,61 @@ export class BoardView {
             if (me) this.drawBubble(n, s, '我·' + myName);
             this.tokens.set(p.playerId, { node: n, s, offX, offY, avatar: p.avatar, body, idle, poses: null, pose: null });
         }
+    }
+
+    /**
+     * 备选棋子样式（供用户比较，默认不启用）：
+     * badge = 头像立牌（圆形头像 + 玩家色描边 + 立杆 + 彩色圆底座）；mini = 现有人物缩到约 0.6 格高、站在玩家色底座上（模拟 Q 版人偶比例）。
+     */
+    private drawAltToken(parent: Node, p: PlayerView, k: number, c: Pt, me: boolean, myName: string): void {
+        const t = this.g.tile;
+        const color = OWNER_COLORS[((p.avatar % 8) + 8) % 8];
+        const badge = tokenStyle.value === 'badge';
+        const s = Math.round(t * (badge ? (me ? 0.72 : 0.6) : (me ? 0.52 : 0.44)));
+        const offX = ((k % 3) - 1) * s * (badge ? 0.7 : 0.62);
+        const offY = Math.floor(k / 3) * s * 0.35 + t * 0.12 - s / 2;
+        const n = mk(parent, 'Token:' + p.playerId, c.x + offX - s / 2, c.y + offY - s / 2, s, s);
+        const gg = gfx(n);
+        // 底座：投影 + 深色侧面 + 浅色顶面（"我"用蓝色发光底座）
+        const baseY = -(s * 0.96);
+        const rx = s * (badge ? 0.42 : 0.5);
+        const ry = rx * 0.34;
+        gg.fillColor = col(me ? '#4DA3F055' : '#00000030');
+        gg.ellipse(s / 2, baseY - ry * 0.5, rx * (me ? 1.5 : 1.15), ry * (me ? 1.5 : 1.15));
+        gg.fill();
+        gg.fillColor = col(me ? '#2F7FD0' : '#00000055');
+        gg.ellipse(s / 2, baseY - ry * 0.35, rx, ry);
+        gg.fill();
+        gg.fillColor = col(me ? '#4DA3F0' : color);
+        gg.ellipse(s / 2, baseY, rx, ry);
+        gg.fill();
+        gg.fillColor = col('#FFFFFF66');
+        gg.ellipse(s / 2, baseY + ry * 0.2, rx * 0.6, ry * 0.45);
+        gg.fill();
+        const body = mk(n, 'Body', s / 2, s, 0, 0);
+        let idle: Node | null;
+        if (badge) {
+            const d = s * 0.86;
+            const stem = gfx(mk(body, 'Stem', -s * 0.05, -s * 0.2, s * 0.1, s * 0.2));
+            fillRR(stem, 0, 0, s * 0.1, s * 0.2, 2, '#FFFFFF');
+            const disc = mk(body, 'Disc', -d / 2, -s * 0.18 - d, d, d);
+            const dg = gfx(disc);
+            fillCircle(dg, d / 2, d / 2 + 2, d / 2, '#00000033');
+            fillCircle(dg, d / 2, d / 2, d / 2, me ? Theme.c.blue : color);
+            fillCircle(dg, d / 2, d / 2, d / 2 - 3, '#FFFFFF');
+            const inner = d - 8;
+            const clip = mk(disc, 'Clip', 4, 4, inner, inner);
+            clip.addComponent(Mask).type = Mask.Type.GRAPHICS_ELLIPSE;
+            if (!art(clip, characterKey(p.avatar), -inner * 0.08, -inner * 0.02, inner * 1.16, inner * 1.16, 'contain'))
+                avatar(clip, 0, 0, inner, p.avatar, p.nickname);
+            idle = disc;
+        } else {
+            idle = art(body, characterKey(p.avatar, true), -s / 2, -s * 1.5, s, s * 1.5, 'contain', false, { bottom: true });
+            if (!idle) idle = avatar(body, -s / 2, -s, s, p.avatar, p.nickname);
+        }
+        if (p.inJail) this.drawBars(n, s);
+        if (me) this.drawBubble(n, badge ? s * 0.9 : s * 1.1, '我·' + myName);
+        this.tokens.set(p.playerId, { node: n, s, offX, offY, avatar: p.avatar, body, idle, poses: badge ? new Map() : null, pose: null });
     }
 
     /** 在监狱里：人物前面一排铁栏杆。 */
@@ -618,7 +680,8 @@ export class BoardView {
             tk.poses = poses;
         }
         tk.pose = pose;
-        if (tk.idle) tk.idle.active = !pose || !tk.poses;
+        // 头像立牌没有姿态帧（空表）：跳跃时一直显示立牌，只做挤压拉伸
+        if (tk.idle) tk.idle.active = !pose || !tk.poses || tk.poses.size === 0;
         tk.poses?.forEach((n, ps) => { n.active = ps === pose; });
     }
 
