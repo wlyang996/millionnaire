@@ -162,7 +162,7 @@ function wechatError(e: { code?: string; wxErrcode?: number; stage?: string; rea
         if (c === 40029) return '微信登录失败（40029：code 无效，请检查小游戏 AppID 与后台 WECHAT_APPID 是否一致）';
         if (c === 40125) return '微信登录失败（40125：后台 WECHAT_APPSECRET 不正确）';
         if (c === 40013) return '微信登录失败（40013：后台 WECHAT_APPID 不正确）';
-        if (c === -1) return '微信登录失败（后台连不上微信服务器）';
+        if (c === -1) return '后台连不上微信服务器：' + (e && e.reason ? e.reason : '');
     }
     const where = e && e.stage ? e.stage + '失败' : '登录失败';
     return where + '：' + (e && e.reason ? e.reason : e && e.code ? e.code : '未知错误');
