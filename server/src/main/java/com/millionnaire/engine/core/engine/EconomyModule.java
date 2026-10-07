@@ -706,7 +706,7 @@ final class EconomyModule {
             return true;
         }
         // 拍卖：卖家 / 发起人与出过价的玩家（M5 定义，取代 M2 的"全体存活者"占位）
-        if (AuctionModule.involved(g, playerId)) {
+        if (AuctionModule.involved(g, playerId) || TradeModule.involved(g, playerId)) {
             return true;
         }
         // 小游戏：全体参与者（#15 中途认输延后到小游戏结束清算）
@@ -724,7 +724,7 @@ final class EconomyModule {
 
     /** 是否仍有流程在进行（债务或任一覆盖窗口）。 */
     static boolean flowsRunning(GameState g) {
-        return g.debt() != null || g.minigame() != null || g.auction() != null
+        return g.debt() != null || g.minigame() != null || g.auction() != null || g.trade() != null
                 || g.flow().frames().stream().anyMatch(f -> f.kind() != FlowKind.TURN);
     }
 
@@ -1063,7 +1063,8 @@ final class EconomyModule {
         Pricing pricing = new Pricing(config);
         for (OwnableState o : g.board().ownables()) {
             Tile tile = board.tiles().get(o.tile());
-            expect(o.lockedBy() == null || AuctionModule.locks(g, o), "assets can only be locked by a running card auction");
+            expect(o.lockedBy() == null || AuctionModule.locks(g, o) || TradeModule.locks(g, o),
+                    "assets can only be locked by a running card auction or trade");
             expect(o.level() >= 0 && o.level() <= config.economy().maxLevel()
                     && (tile.type() == TileType.PROPERTY || o.level() == 0), "level out of range at " + o.tile());
             if (o.owner() == null) {

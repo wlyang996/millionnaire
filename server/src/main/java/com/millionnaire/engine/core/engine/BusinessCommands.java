@@ -35,6 +35,8 @@ final class BusinessCommands {
             case GameCommand.FinishTurn ignored -> Kind.BUSINESS;
             case GameCommand.RequestAuction ignored -> Kind.BUSINESS;
             case GameCommand.Bid ignored -> Kind.BUSINESS;
+            case GameCommand.RequestTrade ignored -> Kind.BUSINESS;
+            case GameCommand.AnswerTrade ignored -> Kind.BUSINESS;
             case GameCommand.ResumeControl ignored -> Kind.CONTROL;
             case GameCommand.SetControl ignored -> Kind.SYSTEM;
             case GameCommand.ConnectionSuspected ignored -> Kind.SYSTEM;

@@ -105,6 +105,14 @@ public sealed interface GameCommand extends Command {
     record RequestAuction(String actor, int tile) implements GameCommand {
     }
 
+    /** 客户端：交易卡——把自己一块未抵押的地产或车站以 price 卖给 buyer（随时申请，排队到安全点开始）。 */
+    record RequestTrade(String actor, int tile, String buyer, long price) implements GameCommand {
+    }
+
+    /** 客户端：买家答复交易（windowId 为交易窗口）；同意时可用现金须足额。 */
+    record AnswerTrade(String actor, long windowId, boolean accept) implements GameCommand {
+    }
+
     /** 客户端：在进行中的拍卖里出价（windowId 为拍卖窗口；amount 达到封顶即一口价）。 */
     record Bid(String actor, long windowId, long amount) implements GameCommand {
     }

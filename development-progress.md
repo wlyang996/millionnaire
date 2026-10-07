@@ -38,7 +38,7 @@
 | 3 | 虎口拔牙（引擎 + 网关 + 客户端） | ✅ 完成（0ccdcad、18dc737、24433f3） |
 | 4 | 道具：主动卡与响应卡（不含拍卖卡、交易卡） | ✅ 完成（478faf2、fa67e69） |
 | 5 | 拍卖（指定拍卖地 + 拍卖卡） | ✅ 完成（0aee3cb 引擎；客户端见上表最后一条） |
-| 6 | 交易卡 | ⬜ 未开始（见第四节） |
+| 6 | 交易卡 | ⏳ **引擎已完成并提交（本次归档提交）；客户端未做**（见第四节"续做"） |
 | 7 | 给用户中文汇总 | ⬜ 最后做（见第五节） |
 
 ## 三、拍卖（任务 5，已完成，留作接口说明）
@@ -60,7 +60,32 @@
 5. `net/OnlineSession.ts` 的 `trackCards`：加拍卖提示（谁发起、成交价、流拍）。
 6. 验证：`$S/tc` 下 `npx tsc -p tsconfig.json`；SelfCheck（202 项）；用 `$S/rebuild2.sh` + Playwright 截图检查拍卖页（参考 `$S/cards.js`、`$S/teeth.js` 的写法）。`$S` = 会话 scratchpad，换会话后需按"四、验证工具"重建。
 
-## 四、待做：交易卡（任务 6）
+## 四、交易卡（任务 6）
+
+### 当前进度（2026-10-07 会话归档时）
+
+- 引擎已完成：`server/.../core/engine/TradeModule.java`、`core/state/TradeState.java`；命令 `RequestTrade {tile, buyer, price}`、
+  `AnswerTrade {windowId, accept}`；事件 `TradeRequested / TradeStarted / TradeCompleted / TradeDeclined`；视图 `game.trade`
+  （PublicTrade：seller、buyer、tile、price、windowId）；窗口 kind `TRADE`（所有者 = 卖家，买家答复）。
+- 测试：`TradeTest`（7 项）通过；`CardLongGameTest` 加入随机交易（种子 5、19、24）通过。**归档前没来得及重跑整套**：
+  续做时先跑 `cd server && mvn -B -q install && cd ../gateway && mvn -B -q test`，有失败先修。
+- 归档提交后已推送 prod（引擎部分；客户端还看不到交易，不影响现有功能）。
+
+### 续做：交易卡客户端（照拍卖客户端的做法）
+
+1. `net/Protocol.ts`：`SGame.trade?: {seller, buyer, tile, price, windowId} | null`；`GameCommandName` 加 `'RequestTrade' | 'AnswerTrade'`。
+   `core/Models.ts`：`GameView.trade?: TradeInfo | null`；`net/ViewAdapter.ts`：`trade: g.trade ?? null`。
+2. `popups/TradePopup.ts`（设计稿 04"交易确认"，现为演示）：加联机模式——数据取 `game.trade`，倒计时取交易窗口 deadline，
+   "同意"发 `AnswerTrade {windowId, accept: true}`，"拒绝"发 `accept: false`，`game.trade` 消失或 windowId 变化即关闭。
+3. `screens/BoardScreen.ts` 的 `tickOnline`：`g.trade && g.trade.buyer === myId && me_manual` 且没开 `'trade'` 弹窗时打开 TradePopup（参照拍卖那段）。
+4. 交易卡使用：`popups/CardUse.ts` 的 `cardUsable('TRADE')` 目前返回"交易卡即将开放"，改成类似 `auctionUsable()`（可非自己回合）；
+   `openCardUse('TRADE')` 打开新的"发起交易"页：选资产（参照 `AuctionAssetPopup`）、选买家（参照 `QueryTargetPopup`）、
+   价格步进（下限 ceil(标准价值×50%)，上限 floor(×2.5)，默认标准价值）→ `RequestTrade {tile, buyer, price}`；
+   `popups/CardDetailPage.ts` 里 `this.canUse || this.type === 'AUCTION'` 加上 `'TRADE'`。
+5. `net/OnlineSession.ts` 的 `trackCards` 加提示：TradeRequested（X 向 Y 申请交易）、TradeCompleted（成交价）、TradeDeclined。
+6. 类型检查、SelfCheck、截图验证后提交，推送 prod，更新本文件，然后做第五节收尾汇总。
+
+### 规则与设计（原记录）
 
 已裁决规则（requirements 第 14 节、open-decisions #12）：卖自己任意未抵押资产给指定买家，自定价，**最低标准价值 50%（向上取整）、最高 2.5 倍（向下取整）**，不允许免费赠送；买家 15 秒内同意且足额现金才成交，超时视为拒绝；可非自己回合申请（排队到安全点），消耗主动用卡机会；**交易被拒或超时保留卡、消耗机会**；成交消耗卡；托管不主动交易、不接受交易；交易期间资产锁定；认输延后对象为卖家与买家。
 

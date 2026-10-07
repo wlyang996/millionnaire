@@ -230,6 +230,7 @@ final class GameModule {
         MinigameModule.validate(g, config);
         CardModule.validate(g, config);
         AuctionModule.validate(g, config);
+        TradeModule.validate(g, config);
         for (var frame : g.flow().frames()) {
             if (frame.kind() == FlowKind.TURN) { continue; }
             FlowOrigin o = frame.origin();
@@ -419,7 +420,7 @@ final class GameModule {
                 : g.player(viewerId).map(PlayerState::hand).orElse(List.of());
         return new GameView(g.gameNo(), g.phase(), players, g.orderDraws(), g.board(), g.turn().turnNo(),
                 g.turn().currentPlayer(), g.turn().stage(), g.clock().endsAt(), windows, publicLanding(g), publicDebt(g), mine,
-                MinigameModule.view(g), CardModule.view(g), AuctionModule.view(g));
+                MinigameModule.view(g), CardModule.view(g), AuctionModule.view(g), TradeModule.view(g));
     }
 
     /** E6：当前落点的公开部分（步骤与决策是否仍待做）。 */

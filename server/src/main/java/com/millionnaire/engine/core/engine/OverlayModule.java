@@ -23,6 +23,10 @@ final class OverlayModule {
             AuctionModule.beginCard(ctx, request, leadMs);
             return;
         }
+        if (TradeModule.enabled(ctx.config()) && request.kind() == FlowKind.TRADE) {
+            TradeModule.begin(ctx, request, leadMs);
+            return;
+        }
         GameModule.openQueuedOverlay(ctx, request, leadMs, durationMs(ctx.config(), request.kind()), "RETURN");
     }
 
@@ -43,6 +47,9 @@ final class OverlayModule {
                     } else if ((f.kind() == FlowKind.AUCTION || f.kind() == FlowKind.LAND_AUCTION) && ctx.state().game().auction() != null) {
                         // 拍卖到时：最高价成交或流拍
                         AuctionModule.onExpired(ctx, f);
+                    } else if (f.kind() == FlowKind.TRADE && ctx.state().game().trade() != null) {
+                        // 交易窗口到期：视为买家拒绝
+                        TradeModule.onExpired(ctx, f);
                     } else if (f.kind() == FlowKind.RESPONSE && ctx.state().game().cards().effect() != null) {
                         // 道具响应窗到期：托管者自动使用，手动玩家视为不使用
                         CardModule.onResponseExpired(ctx, f);

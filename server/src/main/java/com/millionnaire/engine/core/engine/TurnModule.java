@@ -150,6 +150,8 @@ final class TurnModule {
             case GameCommand.FinishTurn c -> CardModule.decide(ctx, c);
             case GameCommand.RequestAuction c -> AuctionModule.requestCardAuction(ctx, c);
             case GameCommand.Bid c -> AuctionModule.bid(ctx, c);
+            case GameCommand.RequestTrade c -> TradeModule.request(ctx, c);
+            case GameCommand.AnswerTrade c -> TradeModule.answer(ctx, c);
             case RollDice c -> {
                 RejectionCode why = checkTurnWindow(ctx, c.actor(), c.windowId());
                 if (why != null) {
@@ -313,7 +315,7 @@ final class TurnModule {
         // 排队标的已失效（玩家出局、卡已弃、地块已抵押或易主）的申请先取消（正式规则；旧测试配置的占位申请没有标的）
         if (AuctionModule.enabled(ctx.config())) {
             for (FlowRequest r : List.copyOf(game(ctx).flow().queue())) {
-                if (!AuctionModule.requestStillValid(ctx.config(), game(ctx), r) || !TradeRules.requestStillValid(ctx.config(), game(ctx), r)) {
+                if (!AuctionModule.requestStillValid(ctx.config(), game(ctx), r) || !TradeModule.requestStillValid(ctx.config(), game(ctx), r)) {
                     FlowCoordinator.cancelRequest(ctx, GameModule.FLOW, r.requestId());
                 }
             }
@@ -971,6 +973,7 @@ final class TurnModule {
                 if (MinigameModule.handles(event)) { yield MinigameModule.evolve(g, event, draws, rules); }
                 if (CardModule.handles(event)) { yield CardModule.evolve(g, event, rules); }
                 if (AuctionModule.handles(event)) { yield AuctionModule.evolve(g, event, rules); }
+                if (TradeModule.handles(event)) { yield TradeModule.evolve(g, event, rules); }
                 if (EconomyModule.handles(event)) {
                     yield EconomyModule.evolve(g, event, rules);
                 }

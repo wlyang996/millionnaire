@@ -336,6 +336,24 @@ public sealed interface GameEvent extends Event {
     record AuctionPassed(int tile) implements GameEvent, PublicEvent {
     }
 
+    // ------------------------------------------------------------ 交易（交易卡）
+
+    /** 交易卡申请已排队（占用卖家本轮主动用卡机会）：卖给 buyer，价格 price。 */
+    record TradeRequested(String seller, String buyer, int tile, long price, long requestId) implements GameEvent, PublicEvent {
+    }
+
+    /** 交易开始（安全点）：资产锁定，等待买家 15 秒内答复。 */
+    record TradeStarted(String seller, String buyer, int tile, long price) implements GameEvent, PublicEvent {
+    }
+
+    /** 成交：买家付款给卖家、转产权（等级保留），交易卡消耗。 */
+    record TradeCompleted(String seller, String buyer, int tile, long price) implements GameEvent, PublicEvent {
+    }
+
+    /** 买家拒绝或超时（auto）：资产解锁，交易卡保留。 */
+    record TradeDeclined(String buyer, int tile, boolean auto) implements GameEvent, PublicEvent {
+    }
+
     // ------------------------------------------------------------ 小游戏（虎口拔牙）
 
     /**

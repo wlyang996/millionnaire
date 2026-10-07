@@ -93,6 +93,22 @@ class CardLongGameTest {
                 var own = g.board().ownedBy(someone);
                 int tile = own.isEmpty() ? 1 : own.get(rnd.nextInt(own.size())).tile();
                 t.send(t.now + 1, new GameCommand.RequestAuction(someone, tile));
+            } else if (r < 9) {
+                // 随时申请交易卡：随机买家、价格在标准价值附近（多半不合法，被拒不改变状态）
+                var holders = g.alive().stream().filter(p -> p.hand().contains(CardType.TRADE)
+                        && g.board().ownedBy(p.playerId()).stream().anyMatch(o -> !o.mortgaged() && o.lockedBy() == null)).toList();
+                String someone = (holders.isEmpty() ? g.alive() : holders).get(rnd.nextInt((holders.isEmpty() ? g.alive() : holders).size())).playerId();
+                String buyer = g.alive().get(rnd.nextInt(g.alive().size())).playerId();
+                var own = g.board().ownedBy(someone).stream().filter(o -> !o.mortgaged() && o.lockedBy() == null).toList();
+                int tile = own.isEmpty() ? 1 : own.get(rnd.nextInt(own.size())).tile();
+                long price = own.isEmpty() ? 500 : TradeModule.standard(RULES, g, tile) * (1 + rnd.nextInt(3)) / 2;
+                t.send(t.now + 1, new GameCommand.RequestTrade(someone, tile, buyer, price));
+            } else if (w.kind() == FlowKind.TRADE && g.trade() != null) {
+                if (r < 70) {
+                    t.send(at(t, w, rnd), new GameCommand.AnswerTrade(g.trade().buyer(), w.windowId(), rnd.nextBoolean()));
+                } else {
+                    t.tick(Math.max(t.now, w.window().deadline()));
+                }
             } else if (w.kind() == FlowKind.AUCTION || w.kind() == FlowKind.LAND_AUCTION) {
                 var a = g.auction();
                 if (a != null && r < 75) {
@@ -199,7 +215,7 @@ class CardLongGameTest {
     @Test
     void randomCardGamesReplayAndResumeExactly() {
         TreeMap<String, Long> all = new TreeMap<>();
-        for (long seed : new long[] {7L, 77L, 777L, 7777L}) {
+        for (long seed : new long[] {7L, 77L, 777L, 7777L, 5L, 19L, 24L}) {
             Table t = start(seed);
             play(t, new SplittableRandom(seed));
             assertEquals(t.state, t.engine.rebuild(t.log), "seed " + seed + " replays exactly");
@@ -221,12 +237,15 @@ class CardLongGameTest {
             c.put("auctionSold", count(t.log, e -> e instanceof GameEvent.AuctionSettled));
             c.put("auctionPassed", count(t.log, e -> e instanceof GameEvent.AuctionPassed));
             c.put("bids", count(t.log, e -> e instanceof GameEvent.BidPlaced));
+            c.put("trade", count(t.log, e -> e instanceof GameEvent.TradeStarted));
+            c.put("tradeDone", count(t.log, e -> e instanceof GameEvent.TradeCompleted));
+            c.put("tradeDeclined", count(t.log, e -> e instanceof GameEvent.TradeDeclined));
             c.put("rejected", count(t.log, e -> e instanceof com.millionnaire.engine.core.event.KernelEvent.InputRejected));
             System.out.println("CARD_COVERAGE seed=" + seed + " events=" + t.log.size() + " " + c);
             c.forEach((k, v) -> all.merge(k, v, Long::sum));
         }
         for (String path : List.of("use.ROADBLOCK", "use.QUERY", "use.FIXED_MOVE", "use.RENT_WAIVER", "query", "waived", "waiverDeclined",
-                "minigame", "auctionLand", "auctionSold", "bids")) {
+                "minigame", "auctionLand", "auctionSold", "bids", "trade", "tradeDone", "tradeDeclined", "blocked")) {
             assertTrue(all.get(path) > 0, "random card games cover " + path + " " + all);
         }
     }

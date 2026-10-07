@@ -14,13 +14,21 @@ import java.util.List;
 public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                        BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                        List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
-                       PublicMinigame minigame, PublicCards cards, PublicAuction auction) {
+                       PublicMinigame minigame, PublicCards cards, PublicAuction auction, PublicTrade trade) {
+    public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
+                    BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
+                    List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
+                    PublicMinigame minigame, PublicCards cards, PublicAuction auction) {
+        this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt, myHand,
+                minigame, cards, auction, null);
+    }
+
     public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                     BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                     List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
                     PublicMinigame minigame, PublicCards cards) {
         this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt, myHand,
-                minigame, cards, null);
+                minigame, cards, null, null);
     }
 
     public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
@@ -28,7 +36,7 @@ public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players,
                     List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
                     PublicMinigame minigame) {
         this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt, myHand,
-                minigame, null, null);
+                minigame, null, null, null);
     }
 
     public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
@@ -63,6 +71,10 @@ public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players,
      */
     public record PublicDebt(long debtId, String debtor, String creditor, long amount, int segment, boolean continued,
                              boolean continueAvailable, long windowId) {
+    }
+
+    /** 进行中的交易：卖家、买家、地块、价格、交易窗口（所有者为卖家，买家答复）。 */
+    public record PublicTrade(String seller, String buyer, int tile, long price, long windowId) {
     }
 
     /**
