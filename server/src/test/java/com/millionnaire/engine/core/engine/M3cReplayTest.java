@@ -119,13 +119,15 @@ class M3cReplayTest {
     }
     @Test void m3cInternalTraceHasIdenticalBytesInAnotherJvmAndLocale() throws Exception {
         var t = trace(404).table(); String expected = Canonical.sha256Hex(t.engine.encodeEvents(t.log).getBytes(StandardCharsets.UTF_8));
-        var javaExe = java.nio.file.Path.of(System.getProperty("java.home"), "bin", "java.exe").toString();
+        var javaExe = java.nio.file.Path.of(System.getProperty("java.home"), "bin", System.getProperty("os.name").startsWith("Windows") ? "java.exe" : "java").toString();
         var process = new ProcessBuilder(javaExe, "-Duser.language=tr", "-Duser.country=TR", "-Duser.timezone=Pacific/Auckland",
                 "-Dfile.encoding=UTF-8", "-cp", System.getProperty("java.class.path"), M3cReplayTest.class.getName()).redirectErrorStream(true).start();
         try {
             assertTrue(process.waitFor(60, java.util.concurrent.TimeUnit.SECONDS));
             String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-            assertEquals(0, process.exitValue(), output); assertEquals(expected, output);
+            // 只比最后一行：子 JVM 可能先打印 "Picked up JAVA_TOOL_OPTIONS ..." 之类的环境提示
+            String[] lines = output.split("\\R");
+            assertEquals(0, process.exitValue(), output); assertEquals(expected, lines[lines.length - 1].trim(), output);
         } finally { if (process.isAlive()) { process.destroyForcibly(); process.waitFor(); } }
     }
 }
