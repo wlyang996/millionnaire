@@ -19,8 +19,8 @@ import {
 export const NAMES = ['糖糖', '可可', '阿杰', '奶茶', '阿凯', '圆圆', '豆豆', '毛毛'];
 export const ME = 'p1';
 
-/** 事件卡结果默认展示时长（可手动关闭）。 */
-export const EVENT_RESULT_SHOW_MS = 5000;
+/** 事件卡结果展示时长，到时自动收起。 */
+export const EVENT_RESULT_SHOW_MS = 3000;
 
 export type ConnPreset = 'normal' | 'mixed' | 'mySuspect';
 

@@ -28,6 +28,8 @@ interface Token {
     body: Node; idle: Node | null; poses: Map<Pose, Node> | null; pose: Pose | null;
 }
 const POSE_CANVAS = { w: 355, h: 306, figure: 288, feet: 298 };
+/** 视口在棋盘区上方多留的高度：站在最上一排的人物与"我"气泡会探出棋盘，不能被裁掉。 */
+const HEADROOM = 50;
 
 const OWNER_COLORS = Theme.avatarColors;
 
@@ -66,7 +68,7 @@ export class BoardView {
     onTileTap: ((index: number) => void) | null = null;
 
     constructor(parent: Node, x: number, y: number, readonly w: number, readonly h: number, cam: CamState | null) {
-        this.viewport = mk(parent, 'BoardViewport', x, y, w, h);
+        this.viewport = mk(parent, 'BoardViewport', x, y - HEADROOM, w, h + HEADROOM);
         const mask = this.viewport.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_RECT;
         this.cam = cam ?? { scale: 0, vx: 0, vy: 0, follow: true, boardId: '' };
@@ -336,7 +338,7 @@ export class BoardView {
         const s = this.cam.scale;
         const vp = this.viewport.position;
         const x0 = vp.x + this.cam.vx + this.xs[1] * s;
-        const y0 = -vp.y + this.cam.vy + this.ys[1] * s;
+        const y0 = -vp.y + HEADROOM + this.cam.vy + this.ys[1] * s;
         return { x: x0, y: y0, w: (this.xs[this.xs.length - 2] - this.xs[1]) * s, h: (this.ys[this.ys.length - 2] - this.ys[1]) * s };
     }
 
@@ -350,9 +352,9 @@ export class BoardView {
     private drawTokens(parent: Node, game: GameView, myId: string, myName: string): void {
         const t = this.g.tile;
         const seen: Record<number, number> = {};
-        // 设计稿 01：我的人物约一格大小、站在发光底座上；其他人小一些
-        const sOther = Math.round(t * 0.66);
-        const sMe = Math.round(t * 1.0);
+        // 我的人物站在发光底座上、比其他人略大；立绘高约 1.5 倍节点边长（用户反馈原先 1 格偏大，收小到约 0.7 格）
+        const sOther = Math.round(t * 0.56);
+        const sMe = Math.round(t * 0.72);
         const order = game.players.slice().sort((a, b) => (a.playerId === myId ? 1 : 0) - (b.playerId === myId ? 1 : 0)); // 我最后画，盖在最上
         for (const p of order) {
             if (p.life !== 'ALIVE') continue;
@@ -407,7 +409,7 @@ export class BoardView {
     }
 
     private drawBubble(token: Node, s: number, label: string): void {
-        const fs = Math.max(15, Math.round(this.g.tile * 0.28));
+        const fs = Math.max(13, Math.round(this.g.tile * 0.22));
         const bw = textWidth(label, fs) + 22;
         const bh = fs + 12;
         const b = mk(token, 'Bubble', s / 2 - bw / 2, -bh - 10 - s * 0.1, bw, bh);
@@ -428,9 +430,10 @@ export class BoardView {
         const A = this.tileCenter(a);
         const B = this.tileCenter(b);
         const p = Math.max(0, Math.min(1, k));
-        const CROUCH = 0.14;
-        const AIR = 0.82;
-        const LAND = 0.94;
+        // 原地停顿缩短（蓄力 8%、落地 12%，不再有站定阶段），连续多步时更连贯
+        const CROUCH = 0.08;
+        const AIR = 0.88;
+        const LAND = 1;
         let u = 0;
         let lift = 0;
         let sx = 1;
@@ -444,7 +447,8 @@ export class BoardView {
         } else if (p < AIR) {
             const q = (p - CROUCH) / (AIR - CROUCH);
             pose = 'airborne';
-            u = 0.5 - 0.5 * Math.cos(Math.PI * q);
+            // 线性与缓入缓出各半：每格起落不再"停-走-停"
+            u = 0.5 * q + 0.5 * (0.5 - 0.5 * Math.cos(Math.PI * q));
             const arc = Math.sin(Math.PI * q);
             lift = this.g.tile * 0.16 * arc;
             sx = 1 + 0.06 * (1 - q) - 0.04 * arc;
@@ -564,7 +568,7 @@ export class BoardView {
         this.cam.vx = clamp(this.cam.vx, this.w, ww);
         this.cam.vy = clamp(this.cam.vy, this.h, wh);
         this.world.setScale(s, s, 1);
-        place(this.world, this.cam.vx, this.cam.vy);
+        place(this.world, this.cam.vx, this.cam.vy + HEADROOM);
     }
 
     private centerOn(wx: number, wy: number, animate: boolean): void {

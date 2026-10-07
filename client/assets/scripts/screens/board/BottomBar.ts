@@ -14,8 +14,9 @@ import { Toast } from '../../ui/Toast';
 import { avatar, roundedPanel } from '../../ui/Widgets';
 import { Node } from 'cc';
 import { drawHandBar } from './HandBar';
+import { CashChange, CashChangeNode, cashDelta } from './PlayerBar';
 
-export function drawBottom(root: Node, spectator: boolean): void {
+export function drawBottom(root: Node, spectator: boolean, change?: CashChange, changeNodes: CashChangeNode[] = []): void {
     const st = ctx.store;
     const me = st.me();
     if (spectator) {
@@ -49,6 +50,7 @@ export function drawBottom(root: Node, spectator: boolean): void {
     if (!spectator) {
         drawCoin(gfx(mk(row, 'Coin', 98, 42, 30, 30)), 15, 15, 14);
         text(row, String(me.cash), 134, 36, 112, 42, 30, Theme.c.white, { bold: true, align: 'l' });
+        if (change) cashDelta(row, 130, 22, change, changeNodes, 20); // 浮在现金正上方，向上飘出底栏
         const assets = mk(row, 'Btn:assets', 310, 15, 156, 52);
         fillRR(gfx(assets), 0, 0, 156, 52, 26, '#FFFFFF1A');
         strokeRR(gfx(assets), 0, 0, 156, 52, 26, '#FFFFFF99', 2);

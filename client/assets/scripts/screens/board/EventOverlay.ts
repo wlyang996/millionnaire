@@ -1,7 +1,7 @@
 /**
  * 中央事件抽卡覆盖层（设计稿 10 / 12）：棋盘内圈压暗，金色"触发事件"，中央一张发光卡背，下方"点击卡片翻开"
  * （其他观看者显示"等待某某翻开"，不可点）；翻牌后显示卡面：蓝色题头写类别，中间插画，下方结果与说明。
- * 没有提示面板、没有类别说明行。结果默认停留后自动收起，也可以点卡片或 × 关闭。
+ * 没有提示面板、没有类别说明行。结果停留约 3 秒后自动收起（无关闭按钮，点卡片可提前收起）。
  * 动画由时间戳驱动：等待时轻微呼吸/发光，翻牌时长 Theme.anim.eventFlipMs。
  */
 import { Node } from 'cc';
@@ -75,17 +75,8 @@ export class EventOverlay {
             if (interactive) onTap(this.card, onCard, false);
             this.caption(interactive ? '点击卡片翻开' : '等待' + actorName + '翻开', captionY);
         }
-        if (state.phase === 'RESULT' && onClose) {
-            // 结果默认展示几秒后自动收起；也可以点卡片或右上角 × 立即关闭
-            onTap(this.card, onClose, false);
-            const x = mk(this.root, 'CloseResult', CX + CARD_W / 2 - 22, CARD_CY - CARD_H / 2 - 30, 52, 52);
-            const xg = gfx(x);
-            fillCircle(xg, 26, 26, 22, '#2D3B4AE6');
-            line(xg, 18, 18, 34, 34, Theme.c.white, 4);
-            line(xg, 34, 18, 18, 34, Theme.c.white, 4);
-            onTap(x, onClose);
-            this.caption('点击卡片关闭', captionY);
-        }
+        // 结果停留几秒后自动收起（用户：抽完应自动关闭）；不显示 × 和"点击关闭"，点卡片可提前收起
+        if (state.phase === 'RESULT' && onClose) onTap(this.card, onClose, false);
         this.tick(Date.now());
     }
 

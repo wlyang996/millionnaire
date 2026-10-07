@@ -29,7 +29,7 @@ import { DiscardPopup } from '../popups/DiscardPopup';
 import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
-import { CashChange, CashChangeNode, connBadge, drawPlayerBar } from './board/PlayerBar';
+import { CASH_DELTA_MS, CashChange, CashChangeNode, connBadge, drawPlayerBar, tickCashDelta } from './board/PlayerBar';
 
 /** 设计稿 01：棋盘区 y≈262–1095（视口 256–1098），手牌栏 1102–1192，页脚 1198–1280。 */
 const VP_Y = 256;
@@ -130,7 +130,7 @@ export class BoardScreen extends Screen {
         if (this.cam.follow && cur && !this.move) this.view.focusTile(cur.position, false);
 
         this.buildOverlays();
-        drawBottom(this.root, this.spectator);
+        drawBottom(this.root, this.spectator, this.cashChanges.get(this.myId), this.cashChangeNodes);
         this.buildAwayOverlay();
         this.jailOv = this.jail ? new JailOverlay(this.root, this.jail.name, this.jail.start) : null;
         this.tickTexts();
@@ -387,7 +387,7 @@ export class BoardScreen extends Screen {
         for (const p of game.players) {
             const previous = this.cashSnapshot.get(p.playerId);
             if (previous !== undefined && previous !== p.cash)
-                this.cashChanges.set(p.playerId, { amount: p.cash - previous, until: now + 2600 });
+                this.cashChanges.set(p.playerId, { amount: p.cash - previous, until: now + CASH_DELTA_MS });
             this.cashSnapshot.set(p.playerId, p.cash);
         }
         for (const [id, change] of this.cashChanges) if (change.until <= now) this.cashChanges.delete(id);
@@ -395,13 +395,7 @@ export class BoardScreen extends Screen {
 
     private tickCashChanges(): void {
         const now = Date.now();
-        for (const change of this.cashChangeNodes) {
-            if (!change.node.isValid) continue;
-            const remaining = change.until - now;
-            change.node.active = remaining > 0;
-            if (change.badge?.isValid) change.badge.active = remaining <= 0;
-            if (remaining > 0) setOpacity(change.node, Math.min(255, Math.round(remaining / 600 * 255)));
-        }
+        for (const change of this.cashChangeNodes) tickCashDelta(change, now);
     }
 
     private tickTexts(): void {

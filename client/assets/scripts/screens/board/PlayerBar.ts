@@ -1,17 +1,50 @@
 /**
  * 顶部玩家条（设计稿 01）：最多 8 人，2 行 × 4 列，每格 152×68；头像、昵称、金币现金；当前玩家黄框浅黄底；"我"蓝色角标。
- * 不显示现金变化的加减额（用户要求：不要扣钱 / 加钱提示）。
+ * 现金变化时在现金旁浮出"+500"（绿）/"-300"（红）的小标签，向上飘起并渐隐（用户 2026-10-07 要求的动态效果，
+ * 取代早先的文字提示）；动画由 BoardScreen.tickCashChanges 按时间驱动，重建时按剩余时间接着播。
  */
 import { Node } from 'cc';
 import { ConnState, ControlMode, PlayerView } from '../../core/Models';
 import { Theme } from '../../core/Theme';
 import { drawCoin } from '../../ui/Icons';
-import { fillCircle, fillRR, gfx, mk, onTap, strokeRR, text } from '../../ui/Kit';
+import { fillCircle, fillRR, gfx, mk, onTap, place, setOpacity, strokeRR, text } from '../../ui/Kit';
+import { textWidth } from '../../core/Theme';
 import { avatar } from '../../ui/Widgets';
 
 export interface StatusBadge { text: string; bg: string; fg: string }
 export interface CashChange { amount: number; until: number }
-export interface CashChangeNode { node: Node; badge: Node | null; until: number }
+export interface CashChangeNode { node: Node; badge: Node | null; until: number; x: number; y: number }
+
+/** 现金变化浮动标签的总时长与上飘距离。 */
+export const CASH_DELTA_MS = 2600;
+const CASH_DELTA_RISE = 26;
+
+/** 在 (x, y) 处放一个"+N / -N"标签（左边缘为 x，标签竖直中心为 y），登记到 nodes 由每帧动画驱动。 */
+export function cashDelta(parent: Node, x: number, y: number, change: CashChange, nodes: CashChangeNode[], size = 20): void {
+    if (change.amount === 0 || change.until <= Date.now()) return;
+    const label = (change.amount > 0 ? '+' : '-') + Math.abs(change.amount);
+    const h = size + 8;
+    const w = textWidth(label, size) + 16;
+    const n = mk(parent, 'CashDelta', x, y - h / 2, w, h);
+    fillRR(gfx(n), 0, 0, w, h, h / 2, change.amount > 0 ? '#1E9E43' : '#E5303A');
+    text(n, label, 0, 0, w, h, size, '#FFFFFF', { bold: true });
+    const entry = { node: n, badge: null, until: change.until, x, y: y - h / 2 };
+    nodes.push(entry);
+    tickCashDelta(entry, Date.now());
+}
+
+/** 每帧：前 85% 时间上飘并保持不透明，最后渐隐；到时隐藏。 */
+export function tickCashDelta(c: CashChangeNode, now: number): void {
+    if (!c.node.isValid) return;
+    const remaining = c.until - now;
+    c.node.active = remaining > 0;
+    if (c.badge?.isValid) c.badge.active = remaining <= 0;
+    if (remaining <= 0) return;
+    const k = Math.min(1, Math.max(0, 1 - remaining / CASH_DELTA_MS));
+    const ease = 1 - (1 - k) * (1 - k);
+    place(c.node, c.x, c.y - CASH_DELTA_RISE * ease);
+    setOpacity(c.node, k < 0.85 ? 255 : Math.round(255 * (1 - (k - 0.85) / 0.15)));
+}
 
 /** 连接/控制状态标记：已掉线·自动投骰 / 疑似断线 / 托管中 / 挂机（暂离）。破产单独标记。 */
 export function statusBadge(p: PlayerView): StatusBadge | null {
@@ -63,8 +96,9 @@ export function drawPlayerBar(parent: Node, x: number, y: number, players: Playe
             fillRR(gfx(bn), 0, 0, cw - 68, 16, 8, b.bg);
             text(bn, b.text, 2, 0, cw - 72, 16, 12, b.fg, { bold: true });
         }
-        void changes;
-        void changeNodes;
+        const change = changes.get(p.playerId);
+        // 浮在现金正上方（昵称那一行），向上飘出卡片
+        if (change) cashDelta(cell, 88, 24, change, changeNodes, 18);
     });
     return bar;
 }
