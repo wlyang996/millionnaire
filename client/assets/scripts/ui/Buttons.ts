@@ -6,7 +6,7 @@ import { drawCoin } from './Icons';
 import { fillCircle, fillRR, gfx, mk, onTap, setText, strokeCircle, strokeRR, text, TextOpts } from './Kit';
 import { Toast } from './Toast';
 
-export type BtnStyle = 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'soft' | 'disabled';
+export type BtnStyle = 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'soft' | 'ghostRed' | 'disabled';
 
 interface Skin { face: string; edge: string; text: string; stroke?: string }
 
@@ -18,6 +18,8 @@ function skinOf(s: BtnStyle): Skin {
         case 'danger': return { face: c.red, edge: c.redDark, text: c.white };
         case 'success': return { face: c.green, edge: c.greenDark, text: c.white };
         case 'ghost': return { face: c.ivory, edge: c.ivoryLine, text: c.ink, stroke: c.ivoryLine };
+        // 设计稿 05 的"确认破产"：浅色底、红字
+        case 'ghostRed': return { face: c.ivory, edge: c.ivoryLine, text: c.payRed, stroke: c.ivoryLine };
         // 设计稿 04 的"放弃 / 不使用 / 拒绝"：浅蓝底、深蓝字（没有对应位图，按稿面用图形绘制）
         case 'soft': return { face: c.softBlue, edge: c.softBlueEdge, text: c.navy };
         default: return { face: c.gray, edge: c.grayDark, text: c.white };
@@ -67,7 +69,7 @@ export class Button {
         this.skin?.removeFromParent();
         this.skin?.destroy();
         const keys: Record<BtnStyle, string> = { primary: 'button_flat_yellow', secondary: 'button_flat_blue',
-            success: 'button_flat_green', ghost: 'button_flat_ivory', danger: 'button_flat_red', soft: '', disabled: 'button_flat_gray' };
+            success: 'button_flat_green', ghost: 'button_flat_ivory', ghostRed: 'button_flat_ivory', danger: 'button_flat_red', soft: '', disabled: 'button_flat_gray' };
         const key = keys[this.enabledFlag ? this.style : 'disabled'];
         if (!key) {
             // 浅蓝按钮：底边 + 面 + 上半高光 + 描边，圆头与位图按钮一致
@@ -164,6 +166,11 @@ export function softButton(parent: Node, caption: string, x: number, y: number, 
 
 export function ghostButton(parent: Node, caption: string, x: number, y: number, w: number, h: number, fn: () => void, size?: number): Button {
     return new Button(parent, caption, x, y, w, h, 'ghost', fn, size);
+}
+
+/** 浅色底红字按钮（设计稿 05 的"确认破产"）。 */
+export function ghostRedButton(parent: Node, caption: string, x: number, y: number, w: number, h: number, fn: () => void, size?: number): Button {
+    return new Button(parent, caption, x, y, w, h, 'ghostRed', fn, size);
 }
 
 export function dangerButton(parent: Node, caption: string, x: number, y: number, w: number, h: number, fn: () => void, size?: number): Button {

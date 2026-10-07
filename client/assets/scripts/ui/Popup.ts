@@ -5,7 +5,8 @@
  */
 import { BlockInputEvents, Node } from 'cc';
 import { Countdown } from '../core/Clock';
-import { Theme } from '../core/Theme';
+import { Theme, textWidth } from '../core/Theme';
+import { art } from './Art';
 import { destroyChildren, fillRR, gfx, mk, onTap, paintPanel, text } from './Kit';
 import { ctx } from './Ctx';
 import { CountdownBadge } from './Widgets';
@@ -21,6 +22,9 @@ export abstract class Popup {
     get coversScreen(): boolean { return false; }
     /** 是否压暗底层（设计稿里的弹窗都不压暗棋盘；个别需要时子类打开）。 */
     protected dimBackground = false;
+    /** 标题左侧图标（设计稿 05：拍卖锤 / 房子），空串表示纯文字标题。 */
+    protected titleIcon = '';
+    private titleNode: Node | null = null;
 
     /**
      * @param popupId 目录 id（演示面板用）
@@ -72,8 +76,21 @@ export abstract class Popup {
     protected abstract buildBody(panel: Node, w: number, h: number): void;
 
     protected buildTitle(): void {
+        this.titleNode?.destroy();
         const side = Theme.popupRing.size + Theme.popupRing.inset;
-        text(this.panel, this.title, side, 14, this.pw - side * 2, 64, 38, Theme.c.navy, { bold: true });
+        const t = mk(this.panel, 'Title', side, 14, this.pw - side * 2, 64);
+        this.titleNode = t;
+        if (!this.titleIcon) {
+            text(t, this.title, 0, 0, this.pw - side * 2, 64, 38, Theme.c.navy, { bold: true });
+            return;
+        }
+        // 图标 + 标题整体居中
+        const icon = 58;
+        const gap = 12;
+        const tw = textWidth(this.title, 38) + 4;
+        const x0 = (this.pw - side * 2 - (icon + gap + tw)) / 2;
+        art(t, this.titleIcon, x0, 3, icon, icon);
+        text(t, this.title, x0 + icon + gap, 0, tw + 8, 64, 38, Theme.c.navy, { bold: true, align: 'l' });
     }
 
     /** 每帧（PopupManager 调用） */
@@ -104,7 +121,9 @@ export abstract class Popup {
 
     /** 后台加载的美术图到达：重建主体，把先前的占位换成图（状态都在字段里，重建不丢）。 */
     artArrived(): void {
-        if (!this.closed && this.body && this.body.isValid) this.rebuildBody();
+        if (this.closed || !this.body || !this.body.isValid) return;
+        if (this.titleIcon) this.buildTitle();
+        this.rebuildBody();
     }
 
     /** 弹窗内部状态变化时重建主体（标题与倒计时环保持不变）。 */
