@@ -41,14 +41,15 @@ export const CARD_ART: Record<string, string> = {
 /** 首屏（昵称 / 头像页）必需：背景、面板、标题木牌、8 个头像、按钮皮肤。 */
 const BOOT_KEYS = [
     'information_background', 'info_asset_panel', 'brand_logo', 'icon_back',
-    'avatar_tangtang', 'avatar_keke', 'avatar_ajie', 'avatar_naicha',
-    'avatar_akai', 'avatar_yuanyuan', 'avatar_doudou', 'avatar_maomao',
+    // 首屏（登录资料页）的头像格用半身人物图：放在首屏预加载里，否则先显示头像图、加载完又换成半身图（看起来像"头像变了"）
+    'information_host_tangtang', 'information_host_keke', 'information_host_ajie', 'information_host_naicha',
+    'information_host_akai', 'information_host_yuanyuan', 'information_host_doudou', 'information_host_maomao',
     'button_flat_yellow', 'button_flat_blue', 'button_flat_green', 'button_flat_ivory', 'button_flat_red', 'button_flat_gray',
 ];
 
 /** 后台加载的先后：先大厅 / 房间，再棋盘与对局弹窗，其余（详情页、场景大图等）最后。 */
 const BACKGROUND_ORDER: (string | RegExp)[] = [
-    'lobby_friends', 'board_town', 'icon_settings', 'icon_house', 'icon_copy', 'icon_share', 'icon_mic', 'icon_chat', 'icon_coin',
+    /^avatar_[a-z]+$/, 'lobby_friends', 'board_town', 'icon_settings', 'icon_house', 'icon_copy', 'icon_share', 'icon_mic', 'icon_chat', 'icon_coin',
     /^pawn_[a-z]+$/, /^house_lv\d$/, 'icon_bank', 'icon_jail', 'event_card_back', 'event_card_fan', 'croc_open',
     /^dice_/, /^event_/, /^card_(?!detail|face)/, /^icon_clock/, /^info_/, /^shop_/, 'icon_shield', 'scene_jail_closeup',
 ];
