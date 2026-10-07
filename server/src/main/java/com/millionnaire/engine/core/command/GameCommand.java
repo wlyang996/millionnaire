@@ -101,6 +101,14 @@ public sealed interface GameCommand extends Command {
     record RespondCard(String actor, long windowId, boolean use) implements GameCommand {
     }
 
+    /** 客户端：拍卖卡——申请拍卖自己一块未抵押的地产或车站（随时申请，排队到安全点启动；欠款处理中不能用）。 */
+    record RequestAuction(String actor, int tile) implements GameCommand {
+    }
+
+    /** 客户端：在进行中的拍卖里出价（windowId 为拍卖窗口；amount 达到封顶即一口价）。 */
+    record Bid(String actor, long windowId, long amount) implements GameCommand {
+    }
+
     /** 客户端：落点后用卡阶段不用卡，直接结束回合。 */
     record FinishTurn(String actor, long windowId) implements GameCommand {
     }

@@ -6,8 +6,8 @@ public enum FlowKind {
     TURN,
     /** 申请类流程：拍卖、交易（随时申请，进入 FIFO 队列，在安全点启动）。 */
     AUCTION, TRADE,
-    /** 由落点或用卡同步触发的覆盖流程。 */
-    ATTACK, DEBT, MINIGAME, DISCARD,
+    /** 由落点或用卡同步触发的覆盖流程（LAND_AUCTION：落在指定拍卖地发起的土地拍卖）。 */
+    ATTACK, DEBT, MINIGAME, DISCARD, LAND_AUCTION,
     /** 响应窗（免租、拒绝购买、房屋保护），可嵌套在回合窗口或覆盖流程之上。 */
     RESPONSE;
 

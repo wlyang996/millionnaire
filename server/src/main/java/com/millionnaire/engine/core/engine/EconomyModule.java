@@ -192,7 +192,13 @@ final class EconomyModule {
             }
             case RENT -> chargeRent(ctx, game(ctx).board().ownable(l.tile()).orElseThrow(), leadMs);
             case EFFECT -> EventModule.performEffect(ctx);
-            case FLOW -> MinigameModule.start(ctx, leadMs);
+            case FLOW -> {
+                if (l.next() == LandingStep.AUCTION) {
+                    AuctionModule.beginLand(ctx, leadMs);
+                } else {
+                    MinigameModule.start(ctx, leadMs);
+                }
+            }
         }
     }
 
@@ -470,7 +476,7 @@ final class EconomyModule {
                 decline(ctx, false);
                 yield null;
             }
-            case GameCommand.StartLandAuction c -> RejectionCode.NOT_AVAILABLE;
+            case GameCommand.StartLandAuction c -> AuctionModule.chooseLandAuction(ctx, c);
             case GameCommand.UpgradeProperty c -> {
                 if (!canUpgrade(ctx.config(), board, g, actor, g.board().ownable(l.tile()).orElseThrow())) {
                     yield RejectionCode.INSUFFICIENT_CASH;
@@ -699,12 +705,16 @@ final class EconomyModule {
         if (effect != null && (playerId.equals(effect.actor()) || playerId.equals(effect.target()))) {
             return true;
         }
+        // 拍卖：卖家 / 发起人与出过价的玩家（M5 定义，取代 M2 的"全体存活者"占位）
+        if (AuctionModule.involved(g, playerId)) {
+            return true;
+        }
         // 小游戏：全体参与者（#15 中途认输延后到小游戏结束清算）
         if (g.minigame() != null && g.minigame().participants().contains(playerId)) {
             return true;
         }
         for (FlowFrame f : g.flow().frames()) {
-            if (f.kind() == FlowKind.AUCTION && g.player(playerId).map(PlayerState::alive).orElse(false)
+            if (f.kind() == FlowKind.AUCTION && g.auction() == null && g.player(playerId).map(PlayerState::alive).orElse(false)
                     || f.kind() != FlowKind.TURN && f.kind() != FlowKind.DEBT && playerId.equals(f.owner())) {
                 return true;
             }
@@ -714,7 +724,8 @@ final class EconomyModule {
 
     /** 是否仍有流程在进行（债务或任一覆盖窗口）。 */
     static boolean flowsRunning(GameState g) {
-        return g.debt() != null || g.minigame() != null || g.flow().frames().stream().anyMatch(f -> f.kind() != FlowKind.TURN);
+        return g.debt() != null || g.minigame() != null || g.auction() != null
+                || g.flow().frames().stream().anyMatch(f -> f.kind() != FlowKind.TURN);
     }
 
     /** 结束原因（E5）：进入 DRAINING 后固定为到时结束；否则零存活 → 全员淘汰，一人 → 最后存活者。 */
@@ -813,7 +824,7 @@ final class EconomyModule {
                 check(l != null && l.landingId() == e.landingId() && e.cursor() == l.cursor(), "landing step for another landing or cursor");
                 boolean ok = LandingRules.canEnter(rules, g, l, e.step(), e.payment());
                 check(ok, "landing step " + e.step() + " not legal here (next " + l.next() + ")");
-                boolean decision = e.step() != LandingStep.DEBT && e.step() != LandingStep.MINIGAME;
+                boolean decision = !e.step().awaitsFlow();
                 yield g.withTurn(t.withLanding(l.withStep(e.step(), e.payment()).decision(decision)));
             }
             case LandingFinished e -> {
@@ -1052,7 +1063,7 @@ final class EconomyModule {
         Pricing pricing = new Pricing(config);
         for (OwnableState o : g.board().ownables()) {
             Tile tile = board.tiles().get(o.tile());
-            expect(o.lockedBy() == null, "assets cannot be locked in M2");
+            expect(o.lockedBy() == null || AuctionModule.locks(g, o), "assets can only be locked by a running card auction");
             expect(o.level() >= 0 && o.level() <= config.economy().maxLevel()
                     && (tile.type() == TileType.PROPERTY || o.level() == 0), "level out of range at " + o.tile());
             if (o.owner() == null) {
@@ -1092,7 +1103,7 @@ final class EconomyModule {
         if (l != null) {
             expect(LandingRules.valid(l) && l.step() != null && l.landingId() >= 1 && l.landingId() == t.lastLandingId()
                     && t.chain() != null && l.chainId() == t.chain().chainId() && l.cursor() < l.tasks().size() && l.next() == null
-                    && l.decisionOpen() == (l.step() != LandingStep.DEBT && l.step() != LandingStep.MINIGAME)
+                    && l.decisionOpen() == !l.step().awaitsFlow()
                     && (l.step() == LandingStep.DEBT || l.currentTask() == l.step())
                     && (l.step() == LandingStep.DEBT || l.pendingPayment() == 0)
                     && g.player(t.currentPlayer()).orElseThrow().position() == l.tile(), "landing invalid");
@@ -1144,7 +1155,7 @@ final class EconomyModule {
      * M2 没有占用流程，恒为 0。
      */
     static long heldAmount(GameState g, String playerId) {
-        return 0;
+        return AuctionModule.held(g, playerId);
     }
 
     // ================================================================ helpers

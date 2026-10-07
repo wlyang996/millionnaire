@@ -148,6 +148,8 @@ final class TurnModule {
             case GameCommand.UseCard c -> CardModule.decide(ctx, c);
             case GameCommand.RespondCard c -> CardModule.decide(ctx, c);
             case GameCommand.FinishTurn c -> CardModule.decide(ctx, c);
+            case GameCommand.RequestAuction c -> AuctionModule.requestCardAuction(ctx, c);
+            case GameCommand.Bid c -> AuctionModule.bid(ctx, c);
             case RollDice c -> {
                 RejectionCode why = checkTurnWindow(ctx, c.actor(), c.windowId());
                 if (why != null) {
@@ -308,6 +310,14 @@ final class TurnModule {
         ctx.emit(new TurnStarted(Math.addExact(g.turn().turnNo(), 1), next.get()));
         // 回合交界是安全点：最多启动一个排队流程，回合在流程返回后再开始（O12）
         FlowCoordinator.enterSafePoint(ctx, GameModule.FLOW);
+        // 排队标的已失效（玩家出局、卡已弃、地块已抵押或易主）的申请先取消（正式规则；旧测试配置的占位申请没有标的）
+        if (AuctionModule.enabled(ctx.config())) {
+            for (FlowRequest r : List.copyOf(game(ctx).flow().queue())) {
+                if (!AuctionModule.requestStillValid(ctx.config(), game(ctx), r) || !TradeRules.requestStillValid(ctx.config(), game(ctx), r)) {
+                    FlowCoordinator.cancelRequest(ctx, GameModule.FLOW, r.requestId());
+                }
+            }
+        }
         Optional<FlowRequest> request = FlowCoordinator.dequeueAtSafePoint(ctx, GameModule.FLOW);
         if (request.isPresent()) {
             // 保存最早可开放时刻（含移动动画），覆盖窗口先消费这段缓冲，返回后不再重复累计（C6）
@@ -960,6 +970,7 @@ final class TurnModule {
                 if (EventModule.handles(event)) { yield EventModule.evolve(g, event, draws, rules); }
                 if (MinigameModule.handles(event)) { yield MinigameModule.evolve(g, event, draws, rules); }
                 if (CardModule.handles(event)) { yield CardModule.evolve(g, event, rules); }
+                if (AuctionModule.handles(event)) { yield AuctionModule.evolve(g, event, rules); }
                 if (EconomyModule.handles(event)) {
                     yield EconomyModule.evolve(g, event, rules);
                 }

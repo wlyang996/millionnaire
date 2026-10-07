@@ -213,14 +213,44 @@ class RoomFlowTest {
                 assertThat(wa.call(wa.msg("GAME", "roll").put("command", "RollDice")
                         .set("args", wa.msg("x", null).put("windowId", w.path("windowId").asLong()))).path("ok").asBoolean()).isTrue();
             }
-            JsonNode botRoll = wa.await(m -> {
-                for (JsonNode e : m.path("events")) {
-                    if ("DiceRolled".equals(e.path("kind").asText()) && botId.equals(e.path("data").path("playerId").asText())) {
-                        return true;
+            // 人落地后的决策窗口直接处理（放弃买地、不用卡结束回合等），并保持心跳，直到机器人自己投骰
+            int start = wa.received.size();
+            JsonNode botRoll = null;
+            int req = 0;
+            for (long until = System.currentTimeMillis() + 60_000; botRoll == null && System.currentTimeMillis() < until; ) {
+                for (int i = start; i < wa.received.size() && botRoll == null; i++) {
+                    for (JsonNode e : wa.received.get(i).path("events")) {
+                        if ("DiceRolled".equals(e.path("kind").asText()) && botId.equals(e.path("data").path("playerId").asText())) {
+                            botRoll = wa.received.get(i);
+                        }
                     }
                 }
-                return false;
-            }, 60_000); // 人落地后的决策窗口（买地等）不操作，等其超时
+                if (botRoll != null) {
+                    break;
+                }
+                wa.send(wa.msg("PING", null));
+                JsonNode last = wa.lastUpdate();
+                JsonNode game = last.path("view").path("game");
+                JsonNode mine = ownWindow(last, aid);
+                if (mine != null && "LANDING".equals(game.path("stage").asText())
+                        && mine.path("opensAt").asLong() <= last.path("serverTime").asLong()) {
+                    JsonNode landing = game.path("landing");
+                    String command = landing.isNull() || landing.isMissingNode() ? "FinishTurn" : switch (landing.path("step").asText()) {
+                        case "BUY" -> "DeclinePurchase";
+                        case "UPGRADE" -> "SkipUpgrade";
+                        case "BANK" -> "FinishBank";
+                        case "EVENT" -> "DrawEventCard";
+                        case "RESPONSE" -> "RespondCard";
+                        default -> null;
+                    };
+                    if (command != null) {
+                        wa.send(wa.msg("GAME", "land" + (++req)).put("command", command)
+                                .set("args", wa.msg("x", null).put("windowId", mine.path("windowId").asLong())));
+                    }
+                }
+                Thread.sleep(300);
+            }
+            assertThat(botRoll).as("the bot rolls by itself").isNotNull();
             assertThat(botRoll.path("events").toString()).contains("PlayerMoved");
 
             // 认输后存活的只剩托管的机器人，对局结束；人离开后只剩机器人：机器人随之离开，房间关闭

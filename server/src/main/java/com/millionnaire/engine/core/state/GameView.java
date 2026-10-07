@@ -14,13 +14,21 @@ import java.util.List;
 public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                        BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                        List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
-                       PublicMinigame minigame, PublicCards cards) {
+                       PublicMinigame minigame, PublicCards cards, PublicAuction auction) {
+    public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
+                    BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
+                    List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
+                    PublicMinigame minigame, PublicCards cards) {
+        this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt, myHand,
+                minigame, cards, null);
+    }
+
     public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                     BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                     List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
                     PublicMinigame minigame) {
         this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt, myHand,
-                minigame, null);
+                minigame, null, null);
     }
 
     public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
@@ -55,6 +63,14 @@ public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players,
      */
     public record PublicDebt(long debtId, String debtor, String creditor, long amount, int segment, boolean continued,
                              boolean continueAvailable, long windowId) {
+    }
+
+    /**
+     * 进行中的拍卖：类别（LAND 土地拍卖 / CARD 拍卖卡）、地块、卖家或发起人、基数、起拍价、最小加价、封顶（一口价）、
+     * 当前最高价与出价者、下一次报价的下限、总时长上限、拍卖窗口。
+     */
+    public record PublicAuction(String kind, int tile, String seller, String initiator, long basis, long start, long minRaise,
+                                long cap, long highBid, String highBidder, long minimumBid, long hardEnd, long windowId) {
     }
 
     /** 道具的公开部分：本轮已用掉主动用卡机会的玩家；等待中的攻击响应（谁对谁的哪块地用了什么、对方可用的响应卡及其窗口）。 */

@@ -87,6 +87,22 @@ class CardLongGameTest {
                 ControlMode m = ControlMode.values()[rnd.nextInt(3)];
                 t.send(t.now + 1, m == ControlMode.MANUAL ? new GameCommand.ResumeControl(someone, g.gameNo())
                         : new GameCommand.SetControl(g.gameNo(), someone, m));
+            } else if (r < 6) {
+                // 随时申请拍卖卡（多半不合法，被拒不改变状态）
+                String someone = g.alive().get(rnd.nextInt(g.alive().size())).playerId();
+                var own = g.board().ownedBy(someone);
+                int tile = own.isEmpty() ? 1 : own.get(rnd.nextInt(own.size())).tile();
+                t.send(t.now + 1, new GameCommand.RequestAuction(someone, tile));
+            } else if (w.kind() == FlowKind.AUCTION || w.kind() == FlowKind.LAND_AUCTION) {
+                var a = g.auction();
+                if (a != null && r < 75) {
+                    var bidders = g.alive().stream().map(p -> p.playerId()).filter(p -> !p.equals(a.host())).toList();
+                    String bidder = bidders.get(rnd.nextInt(bidders.size()));
+                    long amount = r < 10 ? a.cap() : Math.min(a.cap(), a.minimumBid() + a.minRaise() * rnd.nextInt(3));
+                    t.send(at(t, w, rnd), new GameCommand.Bid(bidder, w.windowId(), amount));
+                } else {
+                    t.tick(Math.max(t.now, w.window().deadline()));
+                }
             } else if (w.kind() == FlowKind.DEBT) {
                 var assets = g.board().ownedBy(w.owner()).stream().filter(o -> !o.mortgaged()).toList();
                 if (!assets.isEmpty() && r < 70) {
@@ -127,7 +143,8 @@ class CardLongGameTest {
                     }
                 } else {
                     c = switch (l.step()) {
-                        case BUY -> r < 60 ? new GameCommand.BuyProperty(cur, w.windowId()) : new GameCommand.DeclinePurchase(cur, w.windowId());
+                        case BUY -> r < 25 ? new GameCommand.StartLandAuction(cur, w.windowId())
+                                : r < 60 ? new GameCommand.BuyProperty(cur, w.windowId()) : new GameCommand.DeclinePurchase(cur, w.windowId());
                         case UPGRADE -> r < 60 ? new GameCommand.UpgradeProperty(cur, w.windowId()) : new GameCommand.SkipUpgrade(cur, w.windowId());
                         case BANK -> new GameCommand.FinishBank(cur, w.windowId());
                         case EVENT -> new GameCommand.DrawEventCard(cur, w.windowId());
@@ -199,12 +216,17 @@ class CardLongGameTest {
             c.put("forced", count(t.log, e -> e instanceof GameEvent.PropertyForceBought));
             c.put("built", count(t.log, e -> e instanceof GameEvent.PropertyBuilt));
             c.put("minigame", count(t.log, e -> e instanceof GameEvent.MinigameEnded));
+            c.put("auctionLand", count(t.log, e -> e instanceof GameEvent.AuctionStarted s && s.auction().kind() == com.millionnaire.engine.core.state.AuctionState.Kind.LAND));
+            c.put("auctionCard", count(t.log, e -> e instanceof GameEvent.AuctionStarted s && s.auction().kind() == com.millionnaire.engine.core.state.AuctionState.Kind.CARD));
+            c.put("auctionSold", count(t.log, e -> e instanceof GameEvent.AuctionSettled));
+            c.put("auctionPassed", count(t.log, e -> e instanceof GameEvent.AuctionPassed));
+            c.put("bids", count(t.log, e -> e instanceof GameEvent.BidPlaced));
             c.put("rejected", count(t.log, e -> e instanceof com.millionnaire.engine.core.event.KernelEvent.InputRejected));
             System.out.println("CARD_COVERAGE seed=" + seed + " events=" + t.log.size() + " " + c);
             c.forEach((k, v) -> all.merge(k, v, Long::sum));
         }
         for (String path : List.of("use.ROADBLOCK", "use.QUERY", "use.FIXED_MOVE", "use.RENT_WAIVER", "query", "waived", "waiverDeclined",
-                "minigame")) {
+                "minigame", "auctionLand", "auctionSold", "bids")) {
             assertTrue(all.get(path) > 0, "random card games cover " + path + " " + all);
         }
     }

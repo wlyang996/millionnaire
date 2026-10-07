@@ -18,6 +18,11 @@ final class OverlayModule {
 
     /** 在安全点启动一个排队申请（覆盖窗口位于栈底，回合处于 AWAITING_FLOW）；leadMs 为尚未播完的动画缓冲（C6）。 */
     static void start(DecisionContext<SessionState> ctx, FlowRequest request, long leadMs) {
+        // 正式规则：拍卖卡开拍；旧测试配置：无结果的占位流程
+        if (AuctionModule.enabled(ctx.config()) && request.kind() == FlowKind.AUCTION) {
+            AuctionModule.beginCard(ctx, request, leadMs);
+            return;
+        }
         GameModule.openQueuedOverlay(ctx, request, leadMs, durationMs(ctx.config(), request.kind()), "RETURN");
     }
 
@@ -35,6 +40,9 @@ final class OverlayModule {
                     } else if (f.kind() == FlowKind.MINIGAME) {
                         // 选牙超时 / 托管：服务端代选
                         MinigameModule.onExpired(ctx, f);
+                    } else if ((f.kind() == FlowKind.AUCTION || f.kind() == FlowKind.LAND_AUCTION) && ctx.state().game().auction() != null) {
+                        // 拍卖到时：最高价成交或流拍
+                        AuctionModule.onExpired(ctx, f);
                     } else if (f.kind() == FlowKind.RESPONSE && ctx.state().game().cards().effect() != null) {
                         // 道具响应窗到期：托管者自动使用，手动玩家视为不使用
                         CardModule.onResponseExpired(ctx, f);
@@ -46,7 +54,7 @@ final class OverlayModule {
 
     static long durationMs(RuleConfig config, FlowKind kind) {
         return switch (kind) {
-            case AUCTION -> config.timing().auctionDurationMs();
+            case AUCTION, LAND_AUCTION -> config.timing().auctionDurationMs();
             case TRADE -> config.timing().tradeResponseMs();
             case DEBT -> config.timing().debtSegmentMs();
             case MINIGAME -> config.timing().toothPickMs();

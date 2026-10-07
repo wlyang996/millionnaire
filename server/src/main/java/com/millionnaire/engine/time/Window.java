@@ -73,6 +73,14 @@ public record Window(long windowId, long opensAt, long deadline, boolean paused,
         return new Resumption.Reopened(new Window(windowId, opens, Math.addExact(opens, pausedRemainingMs), false, 0, 0));
     }
 
+    /** 运行中延长截止时刻（拍卖最后 3 秒出价恢复到 3 秒）；只能延后。 */
+    public Window extendTo(long newDeadline) {
+        if (paused || newDeadline <= deadline) {
+            throw new IllegalStateException("window " + windowId + " can only be extended while running, to a later deadline");
+        }
+        return new Window(windowId, opensAt, newDeadline, false, 0, 0);
+    }
+
     /** 恢复结果。 */
     public sealed interface Resumption {
         /** 重新开放的窗口。 */

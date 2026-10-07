@@ -38,7 +38,8 @@ final class LandingRules {
                         || o.owner().equals(g.turn().currentPlayer()) && l.bought()).orElse(false), List.of(
                 new Outcome(LandingResult.BOUGHT, List.of(new Successor(LandingStep.UPGRADE,
                         (c, g, l) -> c.economy().upgradeAfterPurchase() && CAN_UPGRADE.allows(c, g, l)))),
-                new Outcome(LandingResult.DECLINED, List.of()))),
+                new Outcome(LandingResult.DECLINED, List.of()),
+                new Outcome(LandingResult.AUCTIONED, List.of(new Successor(LandingStep.AUCTION, ALWAYS))))),
         new Rule(LandingStep.UPGRADE, Execution.WINDOW, StageTable.Point.UPGRADE, CAN_UPGRADE,
                 (c, g, l) -> g.board().ownable(l.tile()).map(o -> g.turn().currentPlayer().equals(o.owner()) && !o.mortgaged()
                         && LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type() == com.millionnaire.engine.config.TileType.PROPERTY).orElse(false), List.of(
@@ -77,6 +78,8 @@ final class LandingRules {
                 (c, g, l) -> CardModule.rentResponseDue(c, g, l.tile()), (c, g, l) -> CardModule.rentResponseDue(c, g, l.tile()),
                 List.of(new Outcome(LandingResult.WAIVED, List.of()),
                         new Outcome(LandingResult.DECLINED, List.of(new Successor(LandingStep.RENT, ALWAYS))))),
+        new Rule(LandingStep.AUCTION, Execution.FLOW, null, (c, g, l) -> AuctionModule.landAuctionLegal(c, g, l.tile()),
+                (c, g, l) -> AuctionModule.resting(g, l), List.of(new Outcome(LandingResult.AUCTION_ENDED, List.of()))),
         new Rule(LandingStep.MINIGAME, Execution.FLOW, null, (c, g, l) -> MinigameModule.eligible(c, g, l.tile()),
                 (c, g, l) -> MinigameModule.resting(g, l), List.of(new Outcome(LandingResult.PLAYED, List.of()))));
 

@@ -229,6 +229,7 @@ final class GameModule {
         claims.addAll(FlowCoordinator.validate(engine, g.flow()));
         MinigameModule.validate(g, config);
         CardModule.validate(g, config);
+        AuctionModule.validate(g, config);
         for (var frame : g.flow().frames()) {
             if (frame.kind() == FlowKind.TURN) { continue; }
             FlowOrigin o = frame.origin();
@@ -244,6 +245,12 @@ final class GameModule {
                 LobbyModule.expect(o.scopeId() == g.turn().turnNo() && o.kind() == FlowOrigin.Kind.ACTIVE_CARD
                         && o.ref() == 0 && o.cursor() == -1 && o.actor().equals(g.turn().currentPlayer())
                         && StageTable.rule(StageTable.turnPoint(g)).preemptible(FlowKind.ATTACK), "attack flow origin invalid");
+            } else if (frame.kind() == FlowKind.LAND_AUCTION) {
+                var a = g.auction();
+                var l = g.turn().landing();
+                LobbyModule.expect(a != null && o.kind() == FlowOrigin.Kind.LAND_AUCTION && o.scopeId() == g.turn().turnNo()
+                        && l != null && o.ref() == l.landingId() && o.cursor() == l.cursor() && o.actor().equals(a.initiator()),
+                        "land auction flow origin invalid");
             } else if (frame.kind() == FlowKind.MINIGAME) {
                 var m = g.minigame();
                 LobbyModule.expect(m != null && o.kind() == FlowOrigin.Kind.MINIGAME && o.scopeId() == g.turn().turnNo()
@@ -343,6 +350,14 @@ final class GameModule {
         }
         if (g.debt() != null) { return "flow cannot open while a debt is open"; }
         var top = g.flow().top().orElse(null);
+        if (kind == FlowKind.LAND_AUCTION) {
+            var a = g.auction();
+            var l = g.turn().landing();
+            return origin.kind() == FlowOrigin.Kind.LAND_AUCTION && a != null && a.kind() == com.millionnaire.engine.core.state.AuctionState.Kind.LAND
+                    && owner.equals(a.initiator()) && l != null && origin.ref() == l.landingId() && origin.cursor() == l.cursor()
+                    && top == null && g.turn().stage() == TurnStage.AWAITING_FLOW
+                    ? null : "land auction source mismatch";
+        }
         if (kind == FlowKind.MINIGAME) {
             var m = g.minigame();
             return origin.kind() == FlowOrigin.Kind.MINIGAME && m != null && origin.ref() == m.landingId()
@@ -404,7 +419,7 @@ final class GameModule {
                 : g.player(viewerId).map(PlayerState::hand).orElse(List.of());
         return new GameView(g.gameNo(), g.phase(), players, g.orderDraws(), g.board(), g.turn().turnNo(),
                 g.turn().currentPlayer(), g.turn().stage(), g.clock().endsAt(), windows, publicLanding(g), publicDebt(g), mine,
-                MinigameModule.view(g), CardModule.view(g));
+                MinigameModule.view(g), CardModule.view(g), AuctionModule.view(g));
     }
 
     /** E6：当前落点的公开部分（步骤与决策是否仍待做）。 */

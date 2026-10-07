@@ -7,6 +7,7 @@ import com.millionnaire.engine.core.event.GameEvent.FlowRequestCancelled;
 import com.millionnaire.engine.core.event.GameEvent.FlowRequested;
 import com.millionnaire.engine.core.event.GameEvent.SafePointEntered;
 import com.millionnaire.engine.core.event.GameEvent.WindowClosed;
+import com.millionnaire.engine.core.event.GameEvent.WindowExtended;
 import com.millionnaire.engine.core.event.GameEvent.WindowOpened;
 import com.millionnaire.engine.core.event.GameEvent.WindowPaused;
 import com.millionnaire.engine.core.event.GameEvent.WindowResumed;
@@ -151,6 +152,19 @@ public final class FlowCoordinator {
         return new Closed(top.resumeTag(), exhausted);
     }
 
+    /** 延后栈顶运行中窗口的截止时刻：取消原截止任务、安排新任务。 */
+    public static <S extends DomainState> void extend(DecisionContext<S> ctx, Function<S, FlowState> flow, long windowId,
+                                                      long deadline) {
+        FlowFrame top = flow.apply(ctx.state()).top().filter(t -> t.windowId() == windowId && !t.window().paused())
+                .orElseThrow(() -> new IllegalStateException("window " + windowId + " is not the running top window"));
+        if (deadline <= top.window().deadline()) {
+            throw new IllegalStateException("a window can only be extended to a later deadline");
+        }
+        cancelPending(ctx, top);
+        long taskId = ctx.schedule(deadline, taskKind(top.kind()), windowId);
+        ctx.emit(new WindowExtended(windowId, deadline, taskId));
+    }
+
     /** 取消全部窗口（自顶向下，不恢复），用于对局终止等。 */
     public static <S extends DomainState> void cancelAll(DecisionContext<S> ctx, Function<S, FlowState> flow) {
         Optional<FlowFrame> top;
@@ -163,6 +177,13 @@ public final class FlowCoordinator {
     /** 提交排队申请（不打断任何窗口）。 */
     public static <S extends DomainState> RejectionCode request(DecisionContext<S> ctx, Function<S, FlowState> flow,
                                                                 FlowKind kind, String applicant) {
+        return request(ctx, flow, kind, applicant, -1, null, 0);
+    }
+
+    /** 带标的的排队申请（拍卖卡：地块；交易卡：地块、买家、价格）。 */
+    public static <S extends DomainState> RejectionCode request(DecisionContext<S> ctx, Function<S, FlowState> flow,
+                                                                FlowKind kind, String applicant, int tile, String counterparty,
+                                                                long price) {
         if (!kind.queued()) {
             throw new IllegalArgumentException(kind + " is not a queued flow");
         }
@@ -170,7 +191,7 @@ public final class FlowCoordinator {
         if (f.queue().stream().anyMatch(r -> r.applicant().equals(applicant))) {
             return RejectionCode.ALREADY_REQUESTED;
         }
-        ctx.emit(new FlowRequested(new FlowRequest(f.nextRequestId(), kind, applicant, ctx.now())));
+        ctx.emit(new FlowRequested(new FlowRequest(f.nextRequestId(), kind, applicant, ctx.now(), tile, counterparty, price)));
         return null;
     }
 
@@ -186,6 +207,14 @@ public final class FlowCoordinator {
             throw new IllegalStateException("not a safe point: " + f.frames().size() + " window(s) open");
         }
         ctx.emit(new SafePointEntered(Math.addExact(f.safePointNo(), 1)));
+    }
+
+    /** 取消一条排队申请（标的已失效等）。 */
+    public static <S extends DomainState> void cancelRequest(DecisionContext<S> ctx, Function<S, FlowState> flow, long requestId) {
+        if (flow.apply(ctx.state()).queue().stream().noneMatch(r -> r.requestId() == requestId)) {
+            throw new IllegalStateException("no such request " + requestId);
+        }
+        ctx.emit(new FlowRequestCancelled(requestId));
     }
 
     /** 取消全部排队申请（全局到时 DRAINING：未启动的申请全部取消并退还）。 */
@@ -271,6 +300,12 @@ public final class FlowCoordinator {
             case WindowClosed e -> {
                 top(f, e.windowId());
                 yield f.withFrames(f.frames().subList(0, f.frames().size() - 1));
+            }
+            case WindowExtended e -> {
+                FlowFrame t = top(f, e.windowId());
+                check(!t.window().paused() && e.deadline() > t.window().deadline(), "only a running window can be extended");
+                yield replaceTop(f, new FlowFrame(t.windowId(), t.kind(), t.owner(), t.window().extendTo(e.deadline()),
+                        e.deadlineTaskId(), t.resumeTag(), t.origin()));
             }
             case FlowRequested e -> {
                 FlowRequest r = e.request();

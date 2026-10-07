@@ -5,4 +5,8 @@ public enum LandingResult { BOUGHT, DECLINED, UPGRADED, SKIPPED, BANK_FINISHED, 
     /** 小游戏已结束（输家确定、奖励已发）。 */
     PLAYED,
     /** 免租卡免除了本次租金。 */
-    WAIVED }
+    WAIVED,
+    /** 指定拍卖地：放弃购买资格，发起土地拍卖。 */
+    AUCTIONED,
+    /** 土地拍卖已结束（成交或流拍）。 */
+    AUCTION_ENDED }

@@ -310,6 +310,32 @@ public sealed interface GameEvent extends Event {
     record RentWaiverDeclined(String payer, int tile, boolean auto) implements GameEvent, PublicEvent {
     }
 
+    // ------------------------------------------------------------ 拍卖（requirements 第 8 节）
+
+    /** 到达无主指定拍卖地的玩家放弃购买资格、发起土地拍卖（落点 BUY 步骤以 AUCTIONED 结束）。 */
+    record LandAuctionChosen(String playerId, int tile) implements GameEvent, PublicEvent {
+    }
+
+    /** 拍卖卡申请已排队（占用申请者本轮主动用卡机会；卡在拍卖启动时消耗）。 */
+    record AuctionRequested(String applicant, int tile, long requestId) implements GameEvent, PublicEvent {
+    }
+
+    /** 拍卖开始：类别、地块、卖家（拍卖卡）或发起人（土地拍卖）、基数、起拍价、最小加价、封顶 / 一口价、总时长上限。 */
+    record AuctionStarted(com.millionnaire.engine.core.state.AuctionState auction) implements GameEvent, PublicEvent {
+    }
+
+    /** 有效报价（冻结出价者现金，解冻原最高价）；达到封顶即一口价成交。 */
+    record BidPlaced(String bidder, long amount) implements GameEvent, PublicEvent {
+    }
+
+    /** 成交：赢家付款（解冻后扣款）、转产权；土地拍卖款归系统、发起人得 commission，拍卖卡款全归卖家。 */
+    record AuctionSettled(String winner, int tile, long price, long commission) implements GameEvent, PublicEvent {
+    }
+
+    /** 流拍：无人出价，地块不变（土地拍卖无奖励；拍卖卡照样消耗）。 */
+    record AuctionPassed(int tile) implements GameEvent, PublicEvent {
+    }
+
     // ------------------------------------------------------------ 小游戏（虎口拔牙）
 
     /**
@@ -389,6 +415,10 @@ public sealed interface GameEvent extends Event {
     }
 
     record WindowClosed(long windowId, CloseReason reason) implements FlowEvent, PublicEvent {
+    }
+
+    /** 运行中的栈顶窗口延后截止（拍卖最后 3 秒出价恢复到 3 秒）；换一个截止任务。 */
+    record WindowExtended(long windowId, long deadline, long deadlineTaskId) implements FlowEvent, PublicEvent {
     }
 
     record FlowRequested(FlowRequest request) implements FlowEvent, PublicEvent {

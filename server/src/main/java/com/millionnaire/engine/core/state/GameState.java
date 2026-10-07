@@ -8,13 +8,20 @@ import java.util.Optional;
 /**
  * 对局状态，按归属拆为子状态：参与者名册（顺序即行动顺序，含私有手牌；与大厅成员分开）、开局抽数、棋盘（含地产）、
  * 回合（含落点）、流程、账本（现金唯一来源）、全局时钟、进行中的债务（至多一个）、延后认输（按收到顺序）、
- * 进行中的小游戏（至多一个，含保密的危险牙）、道具状态（主动用卡机会、待结算的卡）。
+ * 进行中的小游戏（至多一个，含保密的危险牙）、道具状态（主动用卡机会、待结算的卡）、进行中的拍卖（至多一个）。
  * <b>含私有数据，不得直接下发</b>，客户端只能拿到 {@link GameView}。
  */
 public record GameState(long gameNo, long startedAt, RoomSettings settings, GamePhase phase, List<PlayerState> players,
                         List<OrderDraw> orderDraws, BoardState board, TurnState turn, FlowState flow, Ledger ledger,
                         GameClock clock, DebtState debt, List<String> pendingSurrenders, MinigameState minigame,
-                        CardState cards) {
+                        CardState cards, AuctionState auction) {
+    public GameState(long gameNo, long startedAt, RoomSettings settings, GamePhase phase, List<PlayerState> players,
+                     List<OrderDraw> orderDraws, BoardState board, TurnState turn, FlowState flow, Ledger ledger,
+                     GameClock clock, DebtState debt, List<String> pendingSurrenders, MinigameState minigame, CardState cards) {
+        this(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt, pendingSurrenders,
+                minigame, cards, null);
+    }
+
     public GameState(long gameNo, long startedAt, RoomSettings settings, GamePhase phase, List<PlayerState> players,
                      List<OrderDraw> orderDraws, BoardState board, TurnState turn, FlowState flow, Ledger ledger,
                      GameClock clock, DebtState debt, List<String> pendingSurrenders, MinigameState minigame) {
@@ -45,12 +52,12 @@ public record GameState(long gameNo, long startedAt, RoomSettings settings, Game
 
     public GameState withFlow(FlowState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, value, ledger, clock, debt,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withPlayers(List<PlayerState> value) {
         return new GameState(gameNo, startedAt, settings, phase, value, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withPlayer(PlayerState value) {
@@ -59,51 +66,56 @@ public record GameState(long gameNo, long startedAt, RoomSettings settings, Game
 
     public GameState withOrderDraws(List<OrderDraw> value) {
         return new GameState(gameNo, startedAt, settings, phase, players, value, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withBoard(BoardState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, value, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withTurn(TurnState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, value, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withLedger(Ledger value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, value, clock, debt,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withClock(GameClock value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, value, debt,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withPhase(GamePhase value) {
         return new GameState(gameNo, startedAt, settings, value, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withDebt(DebtState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, value,
-                pendingSurrenders, minigame, cards);
+                pendingSurrenders, minigame, cards, auction);
     }
 
     public GameState withPendingSurrenders(List<String> value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                value, minigame, cards);
+                value, minigame, cards, auction);
     }
 
     public GameState withMinigame(MinigameState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, value, cards);
+                pendingSurrenders, value, cards, auction);
     }
 
     public GameState withCards(CardState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, value);
+                pendingSurrenders, minigame, value, auction);
+    }
+
+    public GameState withAuction(AuctionState value) {
+        return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
+                pendingSurrenders, minigame, cards, value);
     }
 }

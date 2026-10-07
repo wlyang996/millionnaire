@@ -26,5 +26,12 @@ public enum LandingStep {
     MOVE,
     REWARD, FINE, CARD, DISCARD, TO_JAIL,
     /** 游戏区：虎口拔牙（回合处于 AWAITING_FLOW，等待小游戏结束；不足两名存活者不启动）。 */
-    MINIGAME
+    MINIGAME,
+    /** 指定拍卖地：到达者发起土地拍卖后，回合处于 AWAITING_FLOW，等待拍卖结束。 */
+    AUCTION;
+
+    /** 等待覆盖流程返回的步骤（决策不在回合窗口里）。 */
+    public boolean awaitsFlow() {
+        return this == DEBT || this == MINIGAME || this == AUCTION;
+    }
 }
