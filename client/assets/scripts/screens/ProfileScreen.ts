@@ -154,18 +154,16 @@ export class ProfileScreen extends Screen {
     }
 }
 
-/** 登录失败提示：微信换身份失败时带上微信错误码，便于对照排查。 */
-function wechatError(e: { code?: string; wxErrcode?: number } | undefined): string {
+/** 登录失败提示：写明失败在哪一步、具体原因；微信换身份失败时解释错误码。 */
+function wechatError(e: { code?: string; wxErrcode?: number; stage?: string; reason?: string } | undefined): string {
     console.error('[login] failed', e);
-    if (!e || e.code !== 'WECHAT_LOGIN_FAILED') {
-        // 带上错误码或原因（HTTP_500 等），便于排查是哪一步失败
-        const why = e && e.code ? e.code : e instanceof Error ? e.message : '';
-        return '连接服务器失败' + (why ? '（' + why + '）' : '') + '，请稍后重试';
+    const c = e ? e.wxErrcode : undefined;
+    if (e && e.code === 'WECHAT_LOGIN_FAILED') {
+        if (c === 40029) return '微信登录失败（40029：code 无效，请检查小游戏 AppID 与后台 WECHAT_APPID 是否一致）';
+        if (c === 40125) return '微信登录失败（40125：后台 WECHAT_APPSECRET 不正确）';
+        if (c === 40013) return '微信登录失败（40013：后台 WECHAT_APPID 不正确）';
+        if (c === -1) return '微信登录失败（后台连不上微信服务器）';
     }
-    const c = e.wxErrcode;
-    if (c === 40029) return '微信登录失败（40029：code 无效，请检查小游戏 AppID 与后台 WECHAT_APPID 是否一致）';
-    if (c === 40125) return '微信登录失败（40125：后台 WECHAT_APPSECRET 不正确）';
-    if (c === 40013) return '微信登录失败（40013：后台 WECHAT_APPID 不正确）';
-    if (c === -1) return '微信登录失败（后台连不上微信服务器）';
-    return '微信登录失败' + (c !== undefined ? '（错误码 ' + c + '）' : '') + '，请重试';
+    const where = e && e.stage ? e.stage + '失败' : '登录失败';
+    return where + '：' + (e && e.reason ? e.reason : e && e.code ? e.code : '未知错误');
 }

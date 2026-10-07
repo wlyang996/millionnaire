@@ -96,28 +96,30 @@ export class OnlineSession {
      * 不在微信里或服务端没配微信登录时也返回 null（继续用测试登录）。
      */
     async wechatQuickLogin(): Promise<{ nickname: string; avatar: number } | null> {
-        if (!(await this.useWechat())) return null;
-        const profile = await this.client.wxLogin(await wxLoginCode());
+        if (!(await step('查询登录方式', this.useWechat()))) return null;
+        const code = await step('wx.login', wxLoginCode());
+        const profile = await step('微信登录', this.client.wxLogin(code));
         if (profile) await this.afterLogin();
         return profile;
     }
 
     /** 登录并连接：微信里用 wx.login（带上资料页的昵称、头像），其他环境用测试身份；失败时抛出带 code 的错误。 */
     async login(nickname: string, avatar?: number): Promise<void> {
-        if (await this.useWechat()) {
-            const profile = await this.client.wxLogin(await wxLoginCode(), nickname, avatar);
+        if (await step('查询登录方式', this.useWechat())) {
+            const code = await step('wx.login', wxLoginCode());
+            const profile = await step('微信登录', this.client.wxLogin(code, nickname, avatar));
             if (!profile) throw Object.assign(new Error('profile required'), { code: 'INVALID_NICKNAME' });
         } else {
-            await this.client.login(nickname, avatar);
+            await step('测试登录', this.client.login(nickname, avatar));
         }
         await this.afterLogin();
     }
 
     private async afterLogin(): Promise<void> {
-        this.boards = await this.client.boards();
+        this.boards = await step('读取地图', this.client.boards());
         this.store.myId = this.client.userId!;
         this.leaveLocally();
-        this.client.connect();
+        await step('建立连接', Promise.resolve().then(() => this.client.connect()));
     }
 
     // ------------------------------------------------------------ 房间
@@ -442,4 +444,31 @@ export function emptySession(settings?: RoomSettings): SessionView {
         roomId: '', status: 'LOBBY', hostId: '', members: [], game: null, gamesPlayed: 0, lastResult: null,
         settings: settings ?? { boardId: 'classic-30', initialCash: 3000, endMode: 'TIME_LIMIT', timeLimitMinutes: 30, rollSeconds: 15, initialCards: 0 },
     };
+}
+
+/** 任意抛出物的可读原因（Error、微信接口的 {errMsg}、字符串……）。 */
+export function reasonOf(e: unknown): string {
+    if (e === undefined || e === null) return '未知错误';
+    if (typeof e === 'string') return e;
+    const o = e as { code?: unknown; errMsg?: unknown; message?: unknown; wxErrcode?: unknown };
+    const parts: string[] = [];
+    if (o.code) parts.push(String(o.code));
+    if (o.wxErrcode !== undefined && o.wxErrcode !== null) parts.push('微信 ' + String(o.wxErrcode));
+    if (o.errMsg) parts.push(String(o.errMsg));
+    else if (o.message && !o.code) parts.push(String(o.message));
+    if (parts.length) return parts.join(' / ');
+    try {
+        return JSON.stringify(e).slice(0, 80);
+    } catch {
+        return String(e);
+    }
+}
+
+/** 登录的某一步：失败时保留原错误码（code / wxErrcode），并记下是哪一步（stage）与可读原因（reason）。 */
+function step<T>(stage: string, p: Promise<T>): Promise<T> {
+    return p.catch((e: unknown) => {
+        console.error('[login] ' + stage + ' failed', e);
+        const o = (e && typeof e === 'object' ? e : {}) as { code?: string; wxErrcode?: number };
+        throw Object.assign(new Error(stage + ' 失败'), { code: o.code, wxErrcode: o.wxErrcode, stage, reason: reasonOf(e) });
+    });
 }
