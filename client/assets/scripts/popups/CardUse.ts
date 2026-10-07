@@ -4,7 +4,7 @@
  * 查询的选人与结果见 QueryPopups。规则：自己的回合投骰前（狱中只能出狱、查询）或落点结算后的用卡阶段，两阶段共一次；
  * 目标格一律为当前位置；条件不满足的卡不消耗。演示模式只在本地扣掉手牌并做简单效果。
  */
-import { Node } from 'cc';
+import { EventTouch, Node } from 'cc';
 import { CARD_NAMES, CardType, PlayerView, PropertyState } from '../core/Models';
 import { MAX_LEVEL, rentOf, standardValue, stationRent, TIERS } from '../core/Rules';
 import { Theme } from '../core/Theme';
@@ -18,6 +18,7 @@ import { avatar } from '../ui/Widgets';
 import { inlineRow } from './Common';
 import { QueryTargetPopup } from './QueryPopups';
 import { ScrollList } from '../ui/ScrollList';
+import { boardMarks } from '../screens/board/BoardView';
 
 export const RESPONSE_CARDS: CardType[] = ['RENT_WAIVER', 'REFUSE_PURCHASE', 'HOUSE_PROTECTION'];
 
@@ -240,7 +241,10 @@ class RoadblockSheet extends CardSheet {
     }
 }
 
-/** 设计稿 13 第二张：骰子插画 +"前进 N 格" + 目标地名；1～6 格地名列表（点选）；取消 / 确认移动。 */
+/**
+ * 设计稿 13 第二张：骰子插画 +"前进 N 格" + 目标地名；1～6 格地名列表（点选）；取消 / 确认移动。
+ * 棋盘上前方 1～6 格同时标号高亮，点棋盘上的标号也能选（面板的遮罩接住点击，再交给棋盘判定点中哪一格）。
+ */
 class FixedMoveSheet extends CardSheet {
     private steps = 1;
 
@@ -248,10 +252,35 @@ class FixedMoveSheet extends CardSheet {
         super('card-fixed-move', 380);
     }
 
+    mount(layer: Node): void {
+        super.mount(layer);
+        boardMarks.current = { from: ctx.store.me().position, selected: this.steps };
+        boardMarks.redraw?.();
+        boardMarks.reveal?.(1192 - this.ph);
+        boardMarks.onToggle?.(true);
+        const mask = this.root.getChildByName('Mask');
+        mask?.on(Node.EventType.TOUCH_END, (e: EventTouch) => {
+            const k = boardMarks.hit?.(e.getUILocation()) ?? 0;
+            if (k > 0 && k !== this.steps) {
+                this.steps = k;
+                this.rebuildBody();
+            }
+        });
+    }
+
+    close(): void {
+        if (!this.closed) boardMarks.clear();
+        super.close();
+    }
+
     protected buildBody(p: Node): void {
         const st = ctx.store;
         const pos = st.me().position;
         const n = st.game.tiles.length;
+        if (boardMarks.current && boardMarks.current.selected !== this.steps) {
+            boardMarks.current = { from: pos, selected: this.steps };
+            boardMarks.redraw?.();
+        }
         art(p, 'dice_' + this.steps, 36, 24, 110, 110);
         text(p, '前进 ' + this.steps + ' 格', 170, 22, SHEET_W - 190, 60, 40, Theme.c.navy, { bold: true, align: 'l' });
         text(p, '到达：' + st.tile((pos + this.steps) % n).name, 170, 82, SHEET_W - 190, 44, 28, Theme.c.payRed, { bold: true, align: 'l' });

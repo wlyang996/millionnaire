@@ -40,6 +40,37 @@ const TIER_BASE: Record<string, [string, string]> = {
     HIGH: [Theme.c.tierHigh, '#8550E0'],
 };
 
+/** 定点移动（设计稿 13 第二张）：从 from 往前 1～6 格标号高亮，selected 为当前选中的步数。 */
+export interface StepMarks { from: number; selected: number }
+
+/**
+ * 棋盘标号的共享入口：确认面板设置 current 并调用 redraw；最近一次绘制的棋盘负责画和点选。
+ * 棋盘每次重建都会按 current 重画，所以面板开着时棋盘刷新标号也不丢。
+ */
+export const boardMarks = {
+    current: null as StepMarks | null,
+    redraw: null as (() => void) | null,
+    /** 屏幕点（UI 坐标）落在哪个标号上：返回步数，没点中返回 0。 */
+    hit: null as ((ui: Pt) => number) | null,
+    /** 放大并平移棋盘，让标号露在面板上方（sheetTop 为面板上沿的屏幕 y）。 */
+    reveal: null as ((sheetTop: number) => void) | null,
+    /** 面板盖住视口底部的高度：相机允许多往上推这么多（重建棋盘时沿用）。 */
+    cover: 0,
+    /** 打开标号前的相机，关闭时还原。 */
+    saved: null as CamState | null,
+    /** 关闭标号：清掉标号、还原相机。 */
+    clear(): void {
+        this.current = null;
+        this.cover = 0;
+        this.redraw?.();
+        this.restore?.();
+        this.onToggle?.(false);
+    },
+    /** 棋盘页收起 / 恢复挡住标号的回合提示与骰子。 */
+    onToggle: null as ((on: boolean) => void) | null,
+    restore: null as (() => void) | null,
+};
+
 export class BoardView {
     readonly viewport: Node;
     private world!: Node;
@@ -61,13 +92,15 @@ export class BoardView {
     private target: Pt | null = null;
     private tokens = new Map<string, Token>();
     private fxLayer: Node | null = null;
+    private marksLayer: Node | null = null;
     private highlight: number | null = null;
     private fx: Fx[] = [];
     private cellToIndex = new Map<string, number>();
     onUserMove: (() => void) | null = null;
     onTileTap: ((index: number) => void) | null = null;
 
-    constructor(parent: Node, x: number, y: number, readonly w: number, readonly h: number, cam: CamState | null) {
+    constructor(parent: Node, x: number, private readonly top: number, readonly w: number, readonly h: number, cam: CamState | null) {
+        const y = top;
         this.viewport = mk(parent, 'BoardViewport', x, y - HEADROOM, w, h + HEADROOM);
         const mask = this.viewport.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_RECT;
@@ -133,9 +166,89 @@ export class BoardView {
         this.tokens.clear();
         const tokens = mk(this.world, 'Tokens', 0, 0, ww, wh);
         this.drawTokens(tokens, game, myId, myName);
+        this.marksLayer = mk(this.world, 'StepMarks', 0, 0, ww, wh);
         this.fxLayer = mk(this.world, 'Fx', 0, 0, ww, wh);
         this.fx = [];
+        boardMarks.redraw = () => this.drawMarks();
+        boardMarks.hit = (ui) => this.markAt(ui);
+        boardMarks.reveal = (sheetTop) => this.revealMarks(sheetTop);
+        boardMarks.restore = () => this.restoreCam();
+        this.drawMarks();
         this.apply();
+    }
+
+    /** 定点移动标号：前方 1～6 格各一个黄色数字牌、格子描黄边；选中的一格换成蓝色。 */
+    private drawMarks(): void {
+        const layer = this.marksLayer;
+        if (!layer || !layer.isValid) return;
+        layer.destroyAllChildren();
+        const m = boardMarks.current;
+        if (!m) return;
+        const n = ringLength(this.g);
+        const node = mk(layer, 'Marks', 0, 0, this.ww, this.wh);
+        const gg = gfx(node);
+        for (let k = 1; k <= 6; k++) {
+            const idx = (m.from + k) % n;
+            const c = gridCell(idx, this.g);
+            const x = this.xs[c.col];
+            const y = this.ys[c.row];
+            const cw = this.xs[c.col + 1] - x;
+            const ch = this.ys[c.row + 1] - y;
+            const sel = k === m.selected;
+            fillRR(gg, x + 2, y + 2, cw - 4, ch - 4, 10, sel ? '#4DA3F04D' : '#FFD64640');
+            strokeRR(gg, x + 2, y + 2, cw - 4, ch - 4, 10, sel ? Theme.c.blue : Theme.c.yellow, sel ? 4 : 3);
+            // 数字牌放在图标区（格子上半部），下部地名不被挡住
+            const r = Math.max(12, Math.min(cw, ch) * 0.22);
+            const cx = x + cw / 2;
+            const cy = y + ch * 0.3;
+            fillCircle(gg, cx, cy + 3, r, '#00000033');
+            fillCircle(gg, cx, cy, r, sel ? '#2F7FD0' : Theme.c.yellowDark);
+            fillCircle(gg, cx, cy - 2, r - 3, sel ? '#4DA3F0' : '#FFC93C');
+            text(node, String(k), cx - r, cy - r - 2, r * 2, r * 2, Math.round(r * 1.2), Theme.c.white, { bold: true });
+        }
+    }
+
+    /** 放大到约 1.5 倍、把当前位置和前方 6 格的中心移到面板上方可见区的中间（设计稿 13）。 */
+    private revealMarks(sheetTop: number): void {
+        const m = boardMarks.current;
+        if (!m || !this.world) return;
+        if (!boardMarks.saved) boardMarks.saved = { ...this.cam };
+        boardMarks.cover = Math.max(0, this.top + this.h - sheetTop);
+        this.cam.follow = false;
+        const n = ringLength(this.g);
+        const pts = Array.from({ length: 7 }, (_, k) => this.tileCenter((m.from + k) % n));
+        const minX = Math.min(...pts.map((p) => p.x));
+        const maxX = Math.max(...pts.map((p) => p.x));
+        const minY = Math.min(...pts.map((p) => p.y));
+        const maxY = Math.max(...pts.map((p) => p.y));
+        const visH = this.h - boardMarks.cover;
+        const t = this.g.tile;
+        const fitS = Math.min((this.w - 40) / (maxX - minX + t * 1.6), (visH - 40) / (maxY - minY + t * 1.6));
+        const s = Math.max(this.fit, Math.min(1.6, fitS));
+        this.cam.scale = s;
+        this.cam.vx = this.w / 2 - ((minX + maxX) / 2) * s;
+        this.cam.vy = visH / 2 - ((minY + maxY) / 2) * s;
+        this.target = null;
+        this.apply();
+    }
+
+    private restoreCam(): void {
+        const saved = boardMarks.saved;
+        boardMarks.saved = null;
+        if (!saved || !this.world) return;
+        Object.assign(this.cam, saved);
+        this.target = null;
+        this.apply();
+    }
+
+    /** UI 坐标 → 标号步数（0 = 没点中标号）。 */
+    private markAt(ui: Pt): number {
+        const m = boardMarks.current;
+        const idx = this.tileAtUI(ui);
+        if (!m || idx === undefined) return 0;
+        const n = ringLength(this.g);
+        const k = (idx - m.from + n) % n;
+        return k >= 1 && k <= 6 ? k : 0;
     }
 
     private drawCenter(ww: number, wh: number): void {
@@ -554,14 +667,19 @@ export class BoardView {
     // ---------- 点击格子 ----------
     private tapAt(ui: Pt): void {
         if (!this.world || !this.onTileTap) return;
+        const idx = this.tileAtUI(ui);
+        if (idx !== undefined) this.onTileTap(idx);
+    }
+
+    private tileAtUI(ui: Pt): number | undefined {
+        if (!this.world || !this.world.isValid) return undefined;
         const ut = this.world.getComponent(UITransform) as UITransform;
         // UI 坐标原点在可见区左下；本工程 Canvas 位于世界原点（居中），故减去可见区一半换算成世界坐标
         const vs = view.getVisibleSize();
         const local = ut.convertToNodeSpaceAR(new Vec3(ui.x - vs.width / 2, ui.y - vs.height / 2, 0));
         const col0 = axisCell(this.xs, local.x);
         const row = axisCell(this.ys, -local.y);
-        const idx = this.cellToIndex.get(col0 + ',' + row);
-        if (idx !== undefined) this.onTileTap(idx);
+        return this.cellToIndex.get(col0 + ',' + row);
     }
 
     // ---------- 相机 ----------
@@ -571,7 +689,9 @@ export class BoardView {
         const wh = this.wh * s;
         const clamp = (v: number, vp: number, size: number) => (size <= vp ? (vp - size) / 2 : Math.max(vp - size - 40, Math.min(40, v)));
         this.cam.vx = clamp(this.cam.vx, this.w, ww);
-        this.cam.vy = clamp(this.cam.vy, this.h, wh);
+        // 定点移动面板盖住视口底部时，允许把棋盘多往上推，底边一排也能露出来
+        const cover = boardMarks.current ? boardMarks.cover : 0;
+        this.cam.vy = cover > 0 ? Math.max(this.h - cover - wh - 40, Math.min(40, this.cam.vy)) : clamp(this.cam.vy, this.h, wh);
         this.world.setScale(s, s, 1);
         place(this.world, this.cam.vx, this.cam.vy + HEADROOM);
     }

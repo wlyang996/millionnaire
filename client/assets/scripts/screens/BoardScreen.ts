@@ -19,7 +19,7 @@ import { fillCircle, fillRR, gfx, mk, onTap, setOpacity, setText, strokeRR, text
 import { Screen, ScreenId } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, roundedPanel } from '../ui/Widgets';
-import { BoardView, CamState } from './board/BoardView';
+import { boardMarks, BoardView, CamState } from './board/BoardView';
 import { drawBottom } from './board/BottomBar';
 import { BuyPopup } from '../popups/BuyPopup';
 import { UpgradePopup } from '../popups/UpgradePopup';
@@ -246,6 +246,13 @@ export class BoardScreen extends Screen {
         onTap(this.dice.node, () => {
             if (this.canRoll()) this.startRoll();
         }, false);
+        // 定点移动标号显示期间，收起回合提示与骰子，免得挡住棋盘上的标号
+        const dice = this.dice;
+        boardMarks.onToggle = (on) => {
+            if (pill.isValid) pill.active = !on;
+            if (dice.node.isValid) dice.node.active = !on;
+        };
+        if (boardMarks.current) boardMarks.onToggle(true);
         const jailWin = st.online && myTurn && game.stage === 'JAIL_DECISION' ? st.online.myWindow('TURN') : undefined;
         if (jailWin) {
             text(this.root, '点骰子掷出狱判定（偶数出狱）', cx - 220, 736, 440, 40, Theme.font.sm, Theme.c.ink, { bold: true });
