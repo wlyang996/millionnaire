@@ -230,29 +230,44 @@ export class TeethScreen extends Screen {
         this.drawTeeth(wrap);
     }
 
+    /**
+     * 牙齿沿口腔边缘的椭圆弧排布（设计稿 21）：上排挂在上牙龈、尖朝下，下排立在下牙龈、尖朝上；
+     * 两侧的牙随弧线倾斜，垂直于牙龈。按下的牙缩回牙龈 14。坐标为鳄鱼图（640×510，左上 40,0）内的口腔边缘实测值。
+     */
     private drawTeeth(wrap: Node): void {
         const n = this.pressed.length;
         const top = Math.ceil(n / 2);
         const bottom = n - top;
         this.teethNodes = [];
+        const CX = 360;
+        const A = 280; // 口腔半宽
+        const B = 76; // 弧线拱高
+        const TOP_CY = 262; // 上牙龈：中点 y = TOP_CY - B
+        const BOT_CY = 352; // 下牙龈：中点 y = BOT_CY + B
         const place = (idx: number, count: number, isTop: boolean, k: number) => {
-            const x0 = 130;
-            const x1 = 590;
-            const gap = (x1 - x0) / Math.max(1, count - 1 || 1);
-            const cx = count === 1 ? 360 : x0 + k * gap;
-            const tw = Math.min(54, gap - 8 || 54);
-            const th = 66;
+            const xmax = count <= 1 ? 0 : Math.min(isTop ? 228 : 222, 70 + 28 * count);
+            const fmax = Math.asin(xmax / A);
+            const f = count <= 1 ? 0 : -fmax + (2 * fmax * k) / (count - 1);
+            const x = CX + A * Math.sin(f);
+            const y = isTop ? TOP_CY - B * Math.cos(f) : BOT_CY + B * Math.cos(f);
+            // 弧线切线方向（y 向下）：上排右侧往下斜、下排右侧往上斜；Cocos 旋转为逆时针
+            const tilt = (Math.atan2(B * Math.sin(f), A * Math.cos(f)) * 180) / Math.PI;
+            const gap = count <= 1 ? 120 : (2 * xmax) / (count - 1);
+            const tw = Math.max(34, Math.min(54, gap - 10));
+            const th = Math.round(tw * 1.22);
             const pressed = this.pressed[idx];
-            const dx = (cx - 360) / 230;
-            const baseY = isTop ? 196 + dx * dx * 18 : 430 - th - dx * dx * 18;
-            const y = pressed ? baseY + (isTop ? -14 : 14) : baseY;
-            const t = mk(wrap, 'Tooth' + idx, cx - tw / 2, y, tw, th);
+            const holder = mk(wrap, 'Tooth' + idx, x, y, 0, 0);
+            holder.setRotationFromEuler(0, 0, isTop ? -tilt : tilt);
+            // 上排翻转成尖朝下：在翻转空间里与下排同样摆放（牙根压进牙龈 6，按下再缩进 14）
+            const axis = mk(holder, 'Axis', 0, 0, 0, 0);
+            if (isTop) axis.setScale(1, -1, 1);
+            const t = mk(axis, 'Body', -tw / 2, -th + 6 + (pressed ? 14 : 0), tw, th);
             const g = gfx(t);
             if (!art(t, pressed ? 'tooth_pressed' : 'tooth_normal', 0, 0, tw, th, 'stretch')) {
                 fillRR(g, 0, 4, tw, th, 14, '#00000030');
                 fillRR(g, 0, 0, tw, th, 14, pressed ? '#9AA3AD' : '#FFFFFF');
             }
-            this.teethNodes[idx] = t;
+            this.teethNodes[idx] = holder;
             onTap(t, () => (ctx.store.online ? this.pickOnline(idx) : this.pick(idx, this.myId)), false);
         };
         for (let i = 0; i < top; i++) place(i, top, true, i);
