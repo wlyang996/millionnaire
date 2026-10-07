@@ -51,6 +51,7 @@
 | `UPDATE_SETTINGS` | `settings` | 房主修改设置，全员重新准备 |
 | `KICK` | `target`（userId） | 房主开局前移除玩家 |
 | `START_GAME` | — | 房主开局（全员准备且人数够） |
+| `ADD_BOT` | — | 测试用：房主加一个机器人（新建测试用户"机器人N"）。机器人自动准备，开局后服务端把它转为托管、由引擎自动动作代打；对局结束回到大厅后自动重新准备；只剩机器人时它们自动离开、房间关闭。仅 `TEST_LOGIN_ENABLED=true` 时可用，否则 `BOTS_DISABLED`；对局中 `IN_GAME` |
 | `GAME` | `command`, `args` | 对局命令，见下表 |
 | `SET_CONTROL` | `mode`: `MANUAL` / `AWAY` / `HOSTED` | 切换自己的控制模式（暂离 / 托管） |
 | `CHAT` | `text`（≤40 字，`requestId` 可选） | 房间聊天（含观战者），同一人至少间隔 0.8 秒，过快回 `TOO_FAST` |

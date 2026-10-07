@@ -124,6 +124,11 @@ export class GameClient {
         return this.request('KICK', { target });
     }
 
+    /** 测试用：房主加一个机器人（服务端测试登录开启时才可用；机器人自动准备，开局后由服务端托管代打）。 */
+    addBot(): Promise<ResultMsg> {
+        return this.request('ADD_BOT');
+    }
+
     startGame(): Promise<ResultMsg> {
         return this.request('START_GAME');
     }

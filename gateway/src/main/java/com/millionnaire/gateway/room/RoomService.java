@@ -117,6 +117,15 @@ public class RoomService {
         return room.submitClient(pid, requestId, new Join(pid, user.nickname()));
     }
 
+    /** 房主给自己的房间加一个测试机器人（机器人是一个新建的测试用户）。 */
+    public LiveRoom.Reply addBot(User host, String requestId, User bot) {
+        LiveRoom room = byPlayer.get(host.playerId());
+        if (room == null) {
+            throw new ClientException("NOT_IN_ROOM", "join or create a room first");
+        }
+        return room.addBot(host.playerId(), requestId, bot.playerId(), bot.nickname());
+    }
+
     /** 地图模板（格子类型、档位、指定拍卖地、人数容量），客户端据此画棋盘，不自己写死布局。 */
     public java.util.List<com.millionnaire.engine.config.BoardTemplate> boards() {
         return engine.config().boards();

@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.millionnaire.engine.core.command.Command;
 import com.millionnaire.engine.core.command.GameCommand.SetControl;
 import com.millionnaire.engine.core.command.Input;
+import com.millionnaire.engine.core.command.RoomCommand.Join;
+import com.millionnaire.engine.core.command.RoomCommand.Leave;
+import com.millionnaire.engine.core.command.RoomCommand.SetReady;
 import com.millionnaire.engine.core.command.Tick;
 import com.millionnaire.engine.core.engine.Engine;
 import com.millionnaire.engine.core.engine.EventProjector;
@@ -94,6 +97,9 @@ public final class LiveRoom {
     private final Map<String, Long> lastChatAt = new HashMap<>();
     /** 挂机判定：每位手动玩家连续被系统代投的次数（亲手投骰即清零）。 */
     private final Map<String, Integer> missedRolls = new HashMap<>();
+    /** 测试机器人（房主在测试环境添加）：在房间里自动准备，开局后转为托管，由引擎的自动动作代打。 */
+    private final Set<String> bots = new LinkedHashSet<>();
+    private boolean tendingBots;
     private ScheduledFuture<?> wake;
     private long wakeAt = Long.MIN_VALUE;
     private long lastTime;
@@ -159,6 +165,41 @@ public final class LiveRoom {
             throw new ClientException("BAD_REQUEST", e.getMessage());
         }
         return Reply.of(step(command, service.now()));
+    }
+
+    /**
+     * 房主添加一个测试机器人（仅测试登录开启时由外层调用）：机器人以自己的身份加入并准备。
+     * 同一房主的同一 requestId 只处理一次。
+     */
+    public synchronized Reply addBot(String hostId, String requestId, String botId, String nickname) {
+        String key = hostId + '\u0000' + requestId;
+        Reply previous = replies.get(key);
+        if (previous != null) {
+            return previous;
+        }
+        if (closed) {
+            throw new ClientException("ROOM_CLOSED", "room is closed");
+        }
+        RoomState lobby = lobby(runner.committed());
+        if (!lobby.isHost(hostId)) {
+            throw new ClientException("NOT_HOST", "only the host can add bots");
+        }
+        if (((SessionState) runner.committed().domain()).inGame()) {
+            throw new ClientException("IN_GAME", "cannot add bots during a game");
+        }
+        Command join = new Join(botId, nickname);
+        try {
+            engine.admitClient(join);
+        } catch (InvalidInputException e) {
+            throw new ClientException("BAD_REQUEST", e.getMessage());
+        }
+        bots.add(botId); // 先登记，加入那一步之后的照看会让它准备
+        Reply r = Reply.of(step(join, service.now()));
+        if (!r.ok()) {
+            bots.remove(botId);
+        }
+        replies.put(key, r);
+        return r;
     }
 
     synchronized void wakeUp(long dueAt) {
@@ -283,7 +324,67 @@ public final class LiveRoom {
             }
         }
         markAway(missedRolls(r.events(), after), at);
+        tendBots(at);
         return r;
+    }
+
+    /**
+     * 照看测试机器人（每步之后）：不在房间的移除；只剩机器人时全部离开（房间随之关闭）；
+     * 大厅里自动准备；对局中存活且仍为手动的转为托管。照看产生的步骤不再递归照看。
+     */
+    private void tendBots(long at) {
+        if (bots.isEmpty() || tendingBots || closed) {
+            return;
+        }
+        tendingBots = true;
+        try {
+            Set<String> present = members(runner.committed());
+            bots.retainAll(present);
+            boolean humans = present.stream().anyMatch(p -> !bots.contains(p));
+            for (String bot : List.copyOf(bots)) {
+                if (closed) {
+                    return;
+                }
+                EngineState s = runner.committed();
+                SessionState session = (SessionState) s.domain();
+                Command c = null;
+                if (!humans) {
+                    c = new Leave(bot);
+                } else if (session.inGame()) {
+                    PlayerState ps = session.game().player(bot).orElse(null);
+                    if (ps != null && ps.alive() && ps.control() == ControlMode.MANUAL) {
+                        c = new SetControl(session.game().gameNo(), bot, ControlMode.HOSTED);
+                    }
+                } else if (lobby(s).status() == RoomStatus.OPEN
+                        && lobby(s).member(bot).map(m -> !m.ready()).orElse(false)) {
+                    c = new SetReady(bot, true);
+                }
+                if (c == null) {
+                    continue;
+                }
+                try {
+                    if (c instanceof SetControl) {
+                        engine.admitSystem(c);
+                    } else {
+                        engine.admitClient(c);
+                    }
+                    step(c, at);
+                } catch (RuntimeException e) {
+                    log.warn("room {}: bot {} step failed: {}", code(), bot, e.getMessage());
+                }
+            }
+        } finally {
+            tendingBots = false;
+        }
+    }
+
+    public synchronized int memberCount() {
+        return lobby(runner.committed()).members().size();
+    }
+
+    /** 是否为本房间的测试机器人。 */
+    public synchronized boolean isBot(String playerId) {
+        return bots.contains(playerId);
     }
 
     /** 本步里被系统代投的手动玩家计数；达到阈值的玩家返回（计数清零）。亲手投骰、本来就由系统代管的清零。 */
