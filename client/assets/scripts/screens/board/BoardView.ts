@@ -345,7 +345,7 @@ export class BoardView {
         const band = Math.max(6, Math.round(bh * 0.2));
         const isProp = tile.type === 'PROPERTY';
         const prop = game.properties.find((p) => p.tileIndex === tile.index);
-        const face = tile.type === 'EVENT' ? '#FFF4D8' : '#FFFFFF';
+        const face = tile.type === 'EVENT' ? '#FFF4D8' : tile.type === 'FIXED_EVENT' ? '#FFE9E0' : '#FFFFFF';
         // 用户 2026-10-08：土地（地产 / 车站）下边框默认白色，被买下后换成所有者的颜色；格面不再染色。其他格子保持浅灰
         const ownable = isProp || tile.type === 'STATION';
         const ownerCol = prop && prop.owner ? this.ownerColor(prop, game) : null;
@@ -419,6 +419,11 @@ export class BoardView {
                 // 设计稿 01：橙红圆底 + 白色问号
                 fillCircle(gg, cx, cy, s * 0.4, '#F2663A');
                 text(gg.node, '?', cx - s * 0.4, cy - s * 0.42, s * 0.8, s * 0.8, Math.round(s * 0.56), Theme.c.white, { bold: true });
+                break;
+            case 'FIXED_EVENT':
+                // 固定事件：紫红圆底 + 白色感叹号（与抽卡事件的问号区分），格名写效果名
+                fillCircle(gg, cx, cy, s * 0.4, '#C2367A');
+                text(gg.node, '!', cx - s * 0.4, cy - s * 0.42, s * 0.8, s * 0.8, Math.round(s * 0.56), Theme.c.white, { bold: true });
                 break;
             case 'BANK':
                 fillCircle(gg, cx, cy, s * 0.4, Theme.c.yellow);

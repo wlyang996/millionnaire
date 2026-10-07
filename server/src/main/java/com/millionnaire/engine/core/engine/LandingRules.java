@@ -57,6 +57,15 @@ final class LandingRules {
                 java.util.Arrays.stream(com.millionnaire.engine.config.EventKind.values()).map(kind ->
                     new Outcome(EventModule.drawnResult(kind), List.of(new Successor(EventModule.effect(kind),
                             (c, g, l) -> EventModule.hasKind(l, kind))))).toList()),
+        new Rule(LandingStep.FIXED_EVENT, Execution.EFFECT, null,
+                (c, g, l) -> fixedEventTile(c, g, l) && !g.turn().chain().eventDrawn(), (c, g, l) -> false,
+                java.util.Arrays.stream(com.millionnaire.engine.config.EventKind.values()).map(kind ->
+                    new Outcome(EventModule.drawnResult(kind), List.of(new Successor(EventModule.effect(kind),
+                            (c, g, l) -> EventModule.hasKind(l, kind))))).toList()),
+        new Rule(LandingStep.EVENT_BUILD, Execution.EFFECT, null, ALWAYS, (c, g, l) -> false,
+                List.of(new Outcome(LandingResult.BUILT, List.of()))),
+        new Rule(LandingStep.EVENT_DOWNGRADE, Execution.EFFECT, null, ALWAYS, (c, g, l) -> false,
+                List.of(new Outcome(LandingResult.DOWNGRADED, List.of()))),
         new Rule(LandingStep.REWARD, Execution.EFFECT, null, ALWAYS, (c, g, l) -> false,
                 List.of(new Outcome(LandingResult.REWARDED, List.of()))),
         new Rule(LandingStep.FINE, Execution.EFFECT, null, ALWAYS, (c, g, l) -> false,
@@ -82,6 +91,10 @@ final class LandingRules {
                 (c, g, l) -> AuctionModule.resting(g, l), List.of(new Outcome(LandingResult.AUCTION_ENDED, List.of()))),
         new Rule(LandingStep.MINIGAME, Execution.FLOW, null, (c, g, l) -> MinigameModule.eligible(c, g, l.tile()),
                 (c, g, l) -> MinigameModule.resting(g, l), List.of(new Outcome(LandingResult.PLAYED, List.of()))));
+
+    static boolean fixedEventTile(RuleConfig c, GameState g, LandingState l) {
+        return LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type() == com.millionnaire.engine.config.TileType.FIXED_EVENT;
+    }
 
     static boolean eventTile(RuleConfig c, GameState g, LandingState l) {
         return LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type() == com.millionnaire.engine.config.TileType.EVENT;

@@ -7,6 +7,7 @@ import { Button } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { mk, onTap, text } from '../ui/Kit';
 import { Toast } from '../ui/Toast';
+import { fixedEventText } from '../core/EventDraw';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar, chip } from '../ui/Widgets';
 import { informationCard, informationClose, informationPanel, redeemOrClose, shopKey } from './InformationPage';
@@ -26,7 +27,7 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
     const st = ctx.store, tile = st.tile(index), me = st.me();
     const hero: Record<string, string> = { START: 'scene_start', REST: 'scene_rest', BANK: 'scene_bank',
         JAIL: 'scene_jail', GAME_ZONE: 'scene_game_center', STATION: 'scene_station' };
-    if (tile.type !== 'EVENT' && tile.type !== 'JAIL') art(p, hero[tile.type], 32, 208, 656, tile.type === 'REST' ? 580 : 392);
+    if (hero[tile.type]) art(p, hero[tile.type], 32, 208, 656, tile.type === 'REST' ? 580 : 392);
 
     if (tile.type === 'START') {
         // Screen25: identity, reward block and restrictions, no owner or property pricing.
@@ -109,6 +110,15 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         new Button(p, '结束办理', 44, 1156, 302, 86, 'disabled', close, 32);
         const confirm = new Button(p, redeem ? '确认赎回' : '确认抵押', 364, 1156, 312, 86, redeem ? 'secondary' : 'primary', () => {}, 32);
         confirm.setEnabled(false, '银行办理结算尚未接入服务端');
+    } else if (tile.type === 'FIXED_EVENT') {
+        // 用户 2026-10-08：固定事件格踩到即自动生效，不抽卡；详情页写明效果
+        const panel = informationPanel(p, 'info_rent_panel', 32, 300, 656, 440);
+        caption(panel, tile.name, 40, 30, 576, 62, 44);
+        chip(panel, 40, 112, '固定事件', '#FFE3D6', '#C2461C', 24, 38);
+        caption(panel, '自动触发', 196, 114, 240, 40, 24);
+        const body = informationPanel(panel, 'info_summary_panel', 20, 180, 616, 220);
+        caption(body, tile.fixed ? fixedEventText(tile.fixed) : '踩到即自动触发', 24, 20, 568, 180, 30);
+        new Button(p, '知道了', 204, 800, 312, 86, 'primary', close, 32);
     } else if (tile.type === 'JAIL') {
         // Screen21 has large illustrated operation cards, not small gray capsules.
         art(p, 'scene_jail_closeup', 0, 0, 720, 648);

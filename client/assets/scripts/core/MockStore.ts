@@ -362,6 +362,24 @@ export class MockStore {
         this.emit();
     }
 
+    /** 走到固定事件格（演示）：不等点击，直接翻开格子写明的效果。 */
+    eventFixed(actor: string, tileIndex: number): void {
+        const f = this.game.tiles[tileIndex]?.fixed;
+        const p = this.player(actor);
+        if (!f || !p || this.eventDraw.phase !== 'IDLE') return;
+        const n = this.game.tiles.length;
+        let steps = 0;
+        if (f.kind === 'TO_START') steps = (n - tileIndex) % n;
+        else if (f.kind === 'TO_STATION') {
+            const st = this.game.tiles.filter((t) => t.type === 'STATION');
+            const target = st[Math.floor(Math.random() * st.length)].index;
+            steps = (((target - tileIndex) % n) + n) % n;
+        }
+        const result: EventResult = { kind: f.kind as EventResult['kind'], amount: f.amount, card: null, steps, label: f.label };
+        this.eventDraw = { phase: 'FLIPPING', actor, since: Date.now(), result, settled: this.eventDraw.settled };
+        this.emit();
+    }
+
     /** 点击卡片（仅触发者本人有效；重复点击被忽略）。返回是否被接受。 */
     eventClick(viewer: string): boolean {
         if (this.online) {
@@ -423,7 +441,15 @@ export class MockStore {
         const n = this.game.tiles.length;
         if (r.kind === 'CASH_REWARD') p.cash += r.amount;
         else if (r.kind === 'CASH_FINE' && p.cash >= r.amount) p.cash -= r.amount;
-        else if (r.kind === 'MOVE') p.position = (((p.position + r.steps) % n) + n) % n; // 演示：直接位移，不再触发落点/第二个事件格
+        else if (r.kind === 'TO_STATION' || r.kind === 'TO_START') {
+            if (p.position + r.steps >= n) p.cash += START_BONUS;
+            p.position = (p.position + r.steps) % n;
+        } else if (r.kind === 'BUILD' || r.kind === 'DOWNGRADE') {
+            const up = r.kind === 'BUILD';
+            const mine = this.game.properties.filter((q) => q.owner === actor && !q.mortgaged
+                && this.game.tiles[q.tileIndex].type === 'PROPERTY' && (up ? q.level < 3 : q.level > 0));
+            if (mine.length) mine[Math.floor(Math.random() * mine.length)].level += up ? 1 : -1;
+        } else if (r.kind === 'MOVE') p.position = (((p.position + r.steps) % n) + n) % n; // 演示：直接位移，不再触发落点/第二个事件格
         else if (r.kind === 'JAIL') {
             const j = this.game.tiles.findIndex((t) => t.type === 'JAIL');
             if (j >= 0) p.position = j;

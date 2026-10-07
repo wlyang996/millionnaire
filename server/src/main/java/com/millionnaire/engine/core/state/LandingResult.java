@@ -9,4 +9,6 @@ public enum LandingResult { BOUGHT, DECLINED, UPGRADED, SKIPPED, BANK_FINISHED, 
     /** 指定拍卖地：放弃购买资格，发起土地拍卖。 */
     AUCTIONED,
     /** 土地拍卖已结束（成交或流拍）。 */
-    AUCTION_ENDED }
+    AUCTION_ENDED,
+    /** 2026-10-08 新事件：抽到 / 触发了加盖、降级、去车站、回起点；加盖 / 降级已生效（或无合适地产）。 */
+    DRAW_BUILD, DRAW_DOWNGRADE, DRAW_STATION, DRAW_START, BUILT, DOWNGRADED }

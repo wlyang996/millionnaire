@@ -15,19 +15,30 @@ public final class RuleConfigs {
     public static final String BOARD_50 = "classic-50";
 
     /** 布局与美术设计稿 design/ui/board-v6（客户端 BoardNames.ts 的 DESIGN_30/50）逐格一致。
-     * 记号：S 起点，L/M/H 普通地产（* = 指定拍卖地），E 事件，T 车站，B 银行，J 监狱，R 休息，G 游戏区。 */
+     * 记号：S 起点，L/M/H 普通地产（* = 指定拍卖地），E 抽卡事件，F 固定事件，T 车站，B 银行，J 监狱，R 休息，G 游戏区。
+     * 2026-10-08（用户）：事件格拆成抽卡事件与固定事件两种，30 格 3 抽卡 + 2 固定，50 格 5 抽卡 + 4 固定（格子位置不变）。 */
     public static final String LAYOUT_30 =
-            "S L E M T H L J M E L T H* M* B G L* E M T H L R M E L T M H E";
+            "S L E M T H L J M F L T H* M* B G L* E M T H L R M F L T M H E";
     public static final String LAYOUT_50 =
-            "S M E L T H B L M* E H J M E L* T H L E M H* T M E L G H L E T "
-            + "M* B H E M L* R H E L T M H E G M L T L M";
+            "S M E L T H B L M* F H J M E L* T H L F M H* T M E L G H L F T "
+            + "M* B H E M L* R H F L T M H E G M L T L M";
+
+    /** 固定事件格的效果，按格子顺序。 */
+    public static final List<FixedEvent> FIXED_30 = List.of(
+            new FixedEvent(EventKind.CASH_FINE, 200, "随地吐痰"),
+            new FixedEvent(EventKind.TO_STATION, 0, "搭乘快车"));
+    public static final List<FixedEvent> FIXED_50 = List.of(
+            new FixedEvent(EventKind.CASH_REWARD, 300, "好人好事"),
+            new FixedEvent(EventKind.BUILD, 0, "免费加盖"),
+            new FixedEvent(EventKind.CASH_FINE, 200, "随地吐痰"),
+            new FixedEvent(EventKind.TO_START, 0, "回到起点"));
 
     private RuleConfigs() {
     }
 
     /** 正式配置：rules-v1 数值 + 美术设计稿布局。 */
     public static RuleConfig defaultV1() {
-        return v1(LAYOUT_30, LAYOUT_50, true);
+        return v1(LAYOUT_30, LAYOUT_50, true, true);
     }
 
     /** rules-v1 数值 + 指定的 30 / 50 格布局（测试夹具可用别的合规布局）；不启用正式服的对局策略。 */
@@ -40,6 +51,14 @@ public final class RuleConfigs {
      *                   存活玩家全部暂离 / 托管时直接结束对局
      */
     public static RuleConfig v1(String layout30, String layout50, boolean production) {
+        return v1(layout30, layout50, production, false);
+    }
+
+    /**
+     * @param eventsV2 2026-10-08 的事件规则：抽卡事件加入加盖 / 降级 / 去车站 / 回起点，固定事件格按 FIXED_30 / FIXED_50 生效。
+     *                 关闭时新事件权重为 0、没有固定事件（旧测试夹具与旧对局行为不变）。
+     */
+    public static RuleConfig v1(String layout30, String layout50, boolean production, boolean eventsV2) {
         Map<CardType, Integer> cards = new TreeMap<>();
         cards.put(CardType.ROADBLOCK, 120);
         cards.put(CardType.RENT_WAIVER, 120);
@@ -57,15 +76,20 @@ public final class RuleConfigs {
         cards.put(CardType.CLEAR_LAND, 15);
 
         Map<EventKind, Integer> events = new TreeMap<>();
-        events.put(EventKind.CASH_REWARD, 30);
-        events.put(EventKind.CASH_FINE, 25);
-        events.put(EventKind.CARD, 25);
-        events.put(EventKind.MOVE, 15);
+        events.put(EventKind.CASH_REWARD, eventsV2 ? 22 : 30);
+        events.put(EventKind.CASH_FINE, eventsV2 ? 18 : 25);
+        events.put(EventKind.CARD, eventsV2 ? 20 : 25);
+        events.put(EventKind.MOVE, eventsV2 ? 12 : 15);
         events.put(EventKind.JAIL, 5);
+        events.put(EventKind.BUILD, eventsV2 ? 8 : 0);
+        events.put(EventKind.DOWNGRADE, eventsV2 ? 6 : 0);
+        events.put(EventKind.TO_STATION, eventsV2 ? 5 : 0);
+        events.put(EventKind.TO_START, eventsV2 ? 4 : 0);
 
         return new RuleConfig(
                 RULE_VERSION,
-                List.of(board(BOARD_30, 2, 4, layout30), board(BOARD_50, 2, 8, layout50)),
+                List.of(board(BOARD_30, 2, 4, layout30, eventsV2 ? FIXED_30 : List.of()),
+                        board(BOARD_50, 2, 8, layout50, eventsV2 ? FIXED_50 : List.of())),
                 List.of(
                         new TierPricing(Tier.LOW, 500, 300, List.of(100L, 250L, 450L, 700L), Ratio.percent(80)),
                         new TierPricing(Tier.MID, 1000, 600, List.of(200L, 500L, 900L, 1400L), Ratio.percent(70)),
@@ -101,12 +125,16 @@ public final class RuleConfigs {
 
     /** 由紧凑记号生成棋盘。 */
     public static BoardTemplate board(String id, int minPlayers, int maxPlayers, String layout) {
+        return board(id, minPlayers, maxPlayers, layout, List.of());
+    }
+
+    public static BoardTemplate board(String id, int minPlayers, int maxPlayers, String layout, List<FixedEvent> fixed) {
         String[] tokens = layout.trim().split("\\s+");
         List<Tile> tiles = new ArrayList<>(tokens.length);
         for (int i = 0; i < tokens.length; i++) {
             tiles.add(tile(i, tokens[i]));
         }
-        return new BoardTemplate(id, minPlayers, maxPlayers, tiles);
+        return new BoardTemplate(id, minPlayers, maxPlayers, tiles, fixed);
     }
 
     private static Tile tile(int index, String token) {
@@ -118,6 +146,7 @@ public final class RuleConfigs {
             case "M" -> new Tile(index, TileType.PROPERTY, Tier.MID, designated);
             case "H" -> new Tile(index, TileType.PROPERTY, Tier.HIGH, designated);
             case "E" -> new Tile(index, TileType.EVENT, null, designated);
+            case "F" -> new Tile(index, TileType.FIXED_EVENT, null, designated);
             case "T" -> new Tile(index, TileType.STATION, null, designated);
             case "B" -> new Tile(index, TileType.BANK, null, designated);
             case "J" -> new Tile(index, TileType.JAIL, null, designated);

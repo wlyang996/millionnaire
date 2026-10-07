@@ -86,7 +86,8 @@ public final class ConfigValidator {
             checkWeights("cardWeights", c.cardWeights(), CardType.values().length, CARD_WEIGHT_TOTAL);
         }
         if (present(c.eventWeights(), "eventWeights")) {
-            checkWeights("eventWeights", c.eventWeights(), EventKind.values().length, EVENT_WEIGHT_TOTAL);
+            // 事件权重允许为 0（2026-10-08 新增的事件种类在旧配置里为 0，不改变旧对局的抽取）
+            checkWeights("eventWeights", c.eventWeights(), EventKind.values().length, EVENT_WEIGHT_TOTAL, true);
         }
         boolean timingOk = present(c.timing(), "timing") && checkTiming(c.timing());
         if (present(c.room(), "room") && timingOk && boardsOk) {
@@ -200,6 +201,28 @@ public final class ConfigValidator {
             }
             if (jails != 1) {
                 fail(p + " must have exactly one JAIL");
+            }
+            // 固定事件格：每格一项效果，按顺序对应；奖励 / 罚款金额须在事件金额区间内，其余为 0；去车站需要棋盘上有车站
+            long fixedTiles = b.count(TileType.FIXED_EVENT);
+            if (b.fixedEvents().size() != fixedTiles) {
+                fail(p + " needs one fixed event per FIXED_EVENT tile (" + fixedTiles + "), got " + b.fixedEvents().size());
+            }
+            for (FixedEvent f : b.fixedEvents()) {
+                if (f == null || f.kind() == null || blank(f.label())) {
+                    fail(p + " fixed event incomplete");
+                    continue;
+                }
+                boolean cash = f.kind() == EventKind.CASH_REWARD || f.kind() == EventKind.CASH_FINE;
+                if (f.kind() == EventKind.MOVE) {
+                    fail(p + " fixed event cannot be MOVE (direction / distance are drawn)");
+                }
+                if (cash ? f.amount() < eco.eventCashMin() || f.amount() > eco.eventCashMax()
+                        || (f.amount() - eco.eventCashMin()) % eco.eventCashStep() != 0 : f.amount() != 0) {
+                    fail(p + " fixed event " + f.label() + " amount invalid");
+                }
+                if (f.kind() == EventKind.TO_STATION && b.count(TileType.STATION) == 0) {
+                    fail(p + " fixed TO_STATION needs a station");
+                }
             }
             // 单回合最长前进链（骰子 + 事件位移）必须小于格子数，使"超过一圈"不可达
             if (longestChain >= b.tiles().size()) {
@@ -319,12 +342,16 @@ public final class ConfigValidator {
     }
 
     private <K> void checkWeights(String p, Map<K, Integer> weights, int expectedKeys, int total) {
+        checkWeights(p, weights, expectedKeys, total, false);
+    }
+
+    private <K> void checkWeights(String p, Map<K, Integer> weights, int expectedKeys, int total, boolean allowZero) {
         if (weights.size() != expectedKeys) {
             fail(p + " must define every kind (" + expectedKeys + "), got " + weights.size());
         }
         long sum = 0;
         for (Map.Entry<K, Integer> e : weights.entrySet()) {
-            if (e.getValue() == null || e.getValue() <= 0 || e.getValue() > total) {
+            if (e.getValue() == null || e.getValue() < (allowZero ? 0 : 1) || e.getValue() > total) {
                 fail(p + "." + e.getKey() + " must be in 1.." + total);
             } else {
                 sum += e.getValue();
