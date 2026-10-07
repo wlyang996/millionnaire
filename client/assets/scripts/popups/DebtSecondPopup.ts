@@ -10,21 +10,23 @@ import { ctx } from '../ui/Ctx';
 import { strokeRR, gfx, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 import { box, inlineRow, mortgageRow, noteLines } from './Common';
-import { DebtPopup } from './DebtPopup';
+import { DebtPopup, debtMortgaged, OnlineDebt } from './DebtPopup';
 
 const W = 600;
 const ROW_H = 96;
 const LIST_Y = 570;
 
 /** 已抵押资产最多列 2 行，面板高度随行数变化。 */
-function rowsShown(): number {
-    return Math.max(1, Math.min(2, ctx.store.debt.selected.length));
+function rowsShown(online?: OnlineDebt): number {
+    return Math.max(1, Math.min(2, debtMortgaged(online).length));
 }
 
 export class DebtSecondPopup extends Popup {
-    constructor(private readonly amount: number, private readonly creditor: string | null) {
-        super('debt2', '仍有欠款', W, LIST_Y + rowsShown() * ROW_H + 96, SECONDS.debt1);
+    /** @param online 联机时为服务端第二段债务窗口：继续 → ContinueDebt，破产 → DeclareBankruptcy */
+    constructor(private readonly amount: number, private readonly creditor: string | null, private readonly online?: OnlineDebt) {
+        super('debt2', '仍有欠款', W, LIST_Y + rowsShown(online) * ROW_H + 96, SECONDS.debt1);
         this.titleIcon = 'icon_house';
+        if (online) this.withDeadline(online.deadline);
     }
 
     protected buildBody(p: Node): void {
@@ -39,8 +41,8 @@ export class DebtSecondPopup extends Popup {
 
         text(p, '已抵押资产', X, 526, 150, 40, 26, Theme.c.navy, { bold: true, align: 'l' });
         text(p, '（已选择）', X + 140, 528, 200, 40, 22, Theme.c.noteGray, { align: 'l' });
-        const done = st.debt.selected;
-        const rows = rowsShown();
+        const done = debtMortgaged(this.online);
+        const rows = rowsShown(this.online);
         const list = box(p, X, LIST_Y, IW, rows * ROW_H, Theme.c.white, 18);
         strokeRR(gfx(list), 0, 0, IW, rows * ROW_H, 18, Theme.c.panelLine, 2);
         let raised = 0;
@@ -52,7 +54,7 @@ export class DebtSecondPopup extends Popup {
         if (done.length > rows) text(list, '等 ' + done.length + ' 处', IW - 120, 4, 104, 30, 20, Theme.c.noteGray, { align: 'r' });
 
         const sy = LIST_Y + rows * ROW_H + 12;
-        const short = debtShortfall(this.amount, st.me().cash, raised);
+        const short = this.online ? Math.max(0, this.amount - st.me().cash) : debtShortfall(this.amount, st.me().cash, raised);
         box(p, X, sy, IW, 60, Theme.c.boxBeige, 16);
         inlineRow(p, W / 2, sy, 60, [
             { t: '已筹', size: 26 }, { coin: 34 }, { t: String(raised), size: 30 },
@@ -63,17 +65,36 @@ export class DebtSecondPopup extends Popup {
     private goOn(): void {
         const deadline = this.cd ? this.cd.getDeadline() : 0;
         this.close();
-        ctx.popups.open(new DebtPopup(this.amount, this.creditor, 2, deadline));
+        const online = ctx.store.online;
+        if (online && this.online) void online.act('ContinueDebt', { windowId: this.online.windowId });
+        ctx.popups.open(new DebtPopup(this.amount, this.creditor, 2, deadline, this.online));
     }
 
     private bankrupt(): void {
         this.close();
+        const online = ctx.store.online;
+        if (online && this.online) {
+            void online.act('DeclareBankruptcy', { windowId: this.online.windowId });
+            return;
+        }
         ctx.store.surrender('BANKRUPT');
         ctx.screens.go('spectator');
     }
 
-    /** 不选则默认继续 */
+    /** 联机：债务还清、破产或窗口结束时关闭。 */
+    tick(): void {
+        super.tick();
+        if (this.closed || !this.online) return;
+        const d = ctx.store.game.debt;
+        if (!d || d.windowId !== this.online.windowId) this.close();
+    }
+
+    /** 不选则默认继续（联机：第二段到期由服务端判破产） */
     protected onExpire(): void {
+        if (this.online) {
+            this.close();
+            return;
+        }
         this.goOn();
     }
 }

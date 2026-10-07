@@ -21,17 +21,17 @@ import { Toast } from '../ui/Toast';
 import { avatar, roundedPanel } from '../ui/Widgets';
 import { BoardView, CamState } from './board/BoardView';
 import { drawBottom } from './board/BottomBar';
-import { beginDebt } from '../popups/DebtPopup';
 import { BuyPopup } from '../popups/BuyPopup';
-import { ConfirmPopup } from '../popups/ConfirmPopup';
 import { UpgradePopup } from '../popups/UpgradePopup';
 import { BankPopup } from '../popups/BankPopup';
+import { beginDebt, DebtPopup } from '../popups/DebtPopup';
+import { DebtSecondPopup } from '../popups/DebtSecondPopup';
 import { DiscardPopup } from '../popups/DiscardPopup';
 import { JailPopup } from '../popups/JailPopup';
 import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
-import { CASH_DELTA_MS, CashChange, CashChangeNode, connBadge, drawPlayerBar, tickCashDelta } from './board/PlayerBar';
+import { CASH_DELTA_MS, CashChange, CashChangeNode, drawPlayerBar, tickCashDelta } from './board/PlayerBar';
 
 /** 设计稿 01：棋盘区 y≈262–1095（视口 256–1098），手牌栏 1102–1192，页脚 1198–1280。 */
 const VP_Y = 256;
@@ -510,7 +510,7 @@ export class BoardScreen extends Screen {
         st.eventTick();
         this.eventOv?.tick(Date.now());
         if (!this.spectator && !me_manual(st.me()) && ctx.popups.count > 0) {
-            ctx.popups.closeIds(['buy', 'upgrade', 'bank', 'debt', 'discard', 'auction']);
+            ctx.popups.closeIds(['buy', 'upgrade', 'bank', 'discard', 'auction']); // 债务窗口锁定为手动流程，掉线 / 托管不关
         }
         if (this.jailOv) {
             // 入狱动画期间暂停后续动画与弹窗
@@ -565,15 +565,11 @@ export class BoardScreen extends Screen {
         } else if (w.kind === 'DEBT' && g.debt && g.debt.debtor === this.myId) {
             this.openedFor = id;
             const d = g.debt;
-            ctx.popups.open(new ConfirmPopup({
-                title: '资金不足', message: '需支付 ' + d.amount + '，现金不足。应急抵押界面即将接入；现在可以确认破产，或等待超时由系统处理。'
-                    + (d.continueAvailable ? '\n也可以选择继续筹款（再给 30 秒）。' : ''),
-                confirmText: '确认破产', cancelText: d.continueAvailable ? '继续筹款' : '再想想', danger: true,
-                onConfirm: () => void online.act('DeclareBankruptcy', { windowId: id }),
-                onCancel: () => {
-                    if (d.continueAvailable) void online.act('ContinueDebt', { windowId: id });
-                },
-            }, 'debt'));
+            // 应急抵押（设计稿 05）：首段勾选资产抵押；第二段先问"继续抵押 / 确认破产"（不选默认继续）
+            const od = { debtId: d.debtId, windowId: id, deadline: w.deadline };
+            const creditor = d.creditor ?? null;
+            if (d.segment >= 2 && !d.continued) ctx.popups.open(new DebtSecondPopup(d.amount, creditor, od));
+            else ctx.popups.open(new DebtPopup(d.amount, creditor, d.segment >= 2 ? 2 : 1, 0, od));
         } else if (w.kind === 'DISCARD') {
             this.openedFor = id;
             ctx.popups.open(new DiscardPopup(id).withDeadline(w.deadline));
