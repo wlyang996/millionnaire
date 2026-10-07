@@ -1,0 +1,489 @@
+-- =====================================================================
+-- millionnaire 持久化层 V1 基线（阶段 D1.1 修订草案 v2；尚未在任何环境执行过迁移；真实 MySQL 未验证）
+-- 设计说明：.discuss/db-design.md（v2）；评审回应：.discuss/db-design-response.md
+--
+-- 方言约定：
+--   * 以 MySQL 8.0（>= 8.0.17，需要 CHECK 执行与 utf8mb4_0900_bin）/ InnoDB 为准；
+--     同时限定在 H2 (MODE=MySQL) 可执行的子集内（D1.1 已在 H2 1.4.200 执行通过；D2 改用 H2 2.x 再验）。
+--   * 表选项经 Flyway 占位符 ${table_options} 注入（Maven 资源过滤必须对 db/migration 关闭）：
+--       MySQL: ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin   [未验证-MySQL]
+--       H2   : 空串
+--     utf8mb4_0900_bin 为 NO PAD；而 utf8mb4_bin 为 PAD SPACE（'id' 与 'id ' 比较相等），故不用后者。
+--     必须"按字节精确相等"的标识符（requestId、openid、unionid、appid、token）一律用 VARBINARY，不依赖排序规则。
+--   * 不在 CREATE TABLE 内写 KEY/INDEX，索引单独 CREATE INDEX；不用 JSON / ON UPDATE / 复杂 DEFAULT。
+--   * 时间一律 UTC epoch 毫秒 BIGINT（*_at），时长 *_ms；哈希/MAC 一律 VARBINARY(32)，随机令牌 VARBINARY(16)。
+--   * 二进制长度检查用 LENGTH()：MySQL 中 LENGTH = 字节数；H2 1.4.200 的 OCTET_LENGTH(VARBINARY) 返回 2 倍字节数（实测），故不用。
+--     H2 2.x 下 LENGTH(VARBINARY) 语义需在 D2-M1 复核 [待证实]。
+--   * 外键全部为默认 RESTRICT（无级联）；删除必须按"子表 -> 父表"顺序（见设计 §8 清理协议）。
+--   * MySQL 的 DDL 会隐式提交：本文件不是一个可回滚单元。中途失败的处置见设计 §9.3
+--     （基线：persistence/ops/undo-V1.sql 手工回退 + flyway repair；后续迁移：每个文件只含一条 DDL）。
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 1. 用户与微信身份
+-- ---------------------------------------------------------------------
+CREATE TABLE app_user (
+  user_id        BIGINT        NOT NULL,              -- 随机正整数（<= 2^53-1，JS 安全）；引擎 playerId = 十进制字符串
+  nickname       VARCHAR(32)   NOT NULL,              -- 可重复（#13）；码点长度由应用校验；注销后改为固定占位
+  avatar_id      SMALLINT      NOT NULL DEFAULT 0,
+  status         VARCHAR(16)   NOT NULL DEFAULT 'ACTIVE',
+  created_at     BIGINT        NOT NULL,
+  updated_at     BIGINT        NOT NULL,
+  last_login_at  BIGINT        NOT NULL,
+  deleted_at     BIGINT        NULL,
+  CONSTRAINT pk_app_user PRIMARY KEY (user_id),
+  CONSTRAINT ck_app_user_id CHECK (user_id > 0 AND user_id <= 9007199254740991),
+  CONSTRAINT ck_app_user_avatar CHECK (avatar_id >= 0 AND avatar_id <= 999),
+  CONSTRAINT ck_app_user_status CHECK ((status IN ('ACTIVE', 'BANNED') AND deleted_at IS NULL)
+                                    OR (status = 'DELETED' AND deleted_at IS NOT NULL))
+) ${table_options};
+
+CREATE TABLE wx_identity (
+  app_id         VARBINARY(32) NOT NULL,              -- ASCII 字节，精确相等
+  open_id        VARBINARY(64) NOT NULL,
+  union_id       VARBINARY(64) NULL,                  -- 不作跨 app 唯一约束（同一 unionid 可对应多个 app）
+  user_id        BIGINT        NOT NULL,
+  created_at     BIGINT        NOT NULL,
+  last_login_at  BIGINT        NOT NULL,
+  CONSTRAINT pk_wx_identity PRIMARY KEY (app_id, open_id),
+  CONSTRAINT uk_wx_identity_user UNIQUE (user_id, app_id),
+  CONSTRAINT fk_wx_identity_user FOREIGN KEY (user_id) REFERENCES app_user (user_id)
+) ${table_options};
+
+CREATE INDEX ix_wx_identity_union ON wx_identity (union_id);
+
+-- 注销台账：备份/PITR 恢复后必须按本表重新执行删除（设计 §8.3）
+CREATE TABLE account_deletion (
+  user_id        BIGINT        NOT NULL,
+  requested_at   BIGINT        NOT NULL,
+  completed_at   BIGINT        NULL,
+  status         VARCHAR(16)   NOT NULL,
+  steps_done     VARCHAR(256)  NULL,                  -- 已完成步骤（可重试）
+  CONSTRAINT pk_account_deletion PRIMARY KEY (user_id),
+  CONSTRAINT ck_account_deletion CHECK ((status = 'PENDING' AND completed_at IS NULL)
+                                     OR (status = 'DONE' AND completed_at IS NOT NULL))
+) ${table_options};
+
+-- ---------------------------------------------------------------------
+-- 2. 房间、房间号保留（冷却期由本表行锁串行保护）
+-- ---------------------------------------------------------------------
+CREATE TABLE room (
+  room_id           BIGINT        NOT NULL,           -- 随机正整数；引擎 roomId = 十进制字符串
+  room_code         INT           NOT NULL,           -- 六位房间号（展示时补零为 6 位）；历史值，复用由 room_code_lease 决定
+  created_by        BIGINT        NOT NULL,
+  create_request_id VARBINARY(64) NOT NULL,           -- 建房幂等键（客户端 UUID）；结果未知时重试即"查到或新建"
+  owner_user_id     BIGINT        NOT NULL,           -- 投影（由提交后状态计算）
+  phase             VARCHAR(16)   NOT NULL,
+  current_game_no   INT           NOT NULL DEFAULT 0,
+  member_count      SMALLINT      NOT NULL,
+  settings_json     VARCHAR(1024) NULL,               -- 投影，仅供展示
+  created_at        BIGINT        NOT NULL,
+  updated_at        BIGINT        NOT NULL,
+  closed_at         BIGINT        NULL,
+  close_reason      VARCHAR(32)   NULL,               -- ENGINE_CLOSED / ADMIN_* / UPGRADE / ...
+  close_source      VARCHAR(8)    NULL,               -- LOG（RoomClosed 事件）/ ADMIN（管理性终态，权威在本行+admin_audit）
+  purge_state       VARCHAR(16)   NOT NULL DEFAULT 'NONE',
+  purged_at         BIGINT        NULL,
+  CONSTRAINT pk_room PRIMARY KEY (room_id),
+  CONSTRAINT uk_room_create_request UNIQUE (created_by, create_request_id),
+  CONSTRAINT ck_room_id CHECK (room_id > 0 AND room_id <= 9007199254740991),
+  CONSTRAINT ck_room_code CHECK (room_code >= 0 AND room_code <= 999999),
+  CONSTRAINT ck_room_counts CHECK (current_game_no >= 0 AND member_count >= 0 AND member_count <= 64),
+  CONSTRAINT ck_room_phase CHECK ((phase IN ('LOBBY', 'IN_GAME') AND closed_at IS NULL AND close_reason IS NULL
+                                   AND close_source IS NULL)
+                               OR (phase = 'CLOSED' AND closed_at IS NOT NULL AND close_reason IS NOT NULL
+                                   AND close_source IN ('LOG', 'ADMIN'))),
+  CONSTRAINT ck_room_purge CHECK ((purge_state IN ('NONE', 'PURGING') AND purged_at IS NULL)
+                               OR (purge_state = 'PURGED' AND purged_at IS NOT NULL)),
+  CONSTRAINT ck_room_purge_closed CHECK (purge_state = 'NONE' OR phase = 'CLOSED')
+) ${table_options};
+
+CREATE INDEX ix_room_closed ON room (closed_at);           -- 保留期清理
+CREATE INDEX ix_room_creator ON room (created_by);         -- 注销时定位
+
+-- 房间号保留：每个号码一行；分配与关房都对该行加锁，冷却期判断与占用在同一把锁下完成（设计 §1.4）
+CREATE TABLE room_code_lease (
+  room_code       INT           NOT NULL,
+  room_id         BIGINT        NOT NULL,             -- 当前/最近一次占用者
+  state           VARCHAR(8)    NOT NULL,             -- ACTIVE：占用中；COOLING：已关闭、冷却到 cooling_until
+  cooling_until   BIGINT        NULL,
+  updated_at      BIGINT        NOT NULL,
+  CONSTRAINT pk_room_code_lease PRIMARY KEY (room_code),
+  CONSTRAINT ck_room_code_lease_code CHECK (room_code >= 0 AND room_code <= 999999),
+  CONSTRAINT ck_room_code_lease_state CHECK ((state = 'ACTIVE' AND cooling_until IS NULL)
+                                          OR (state = 'COOLING' AND cooling_until IS NOT NULL))
+) ${table_options};
+
+CREATE INDEX ix_room_code_lease_room ON room_code_lease (room_id);
+
+-- ---------------------------------------------------------------------
+-- 3. 房间头：所有权（epoch + 随机写权令牌）、水位、版本绑定、恢复/停机控制状态。每步 CAS 的唯一热点行。
+--    状态机与每条转换的 CAS 条件见设计 §3（表 3-1）。
+-- ---------------------------------------------------------------------
+CREATE TABLE room_head (
+  room_id              BIGINT        NOT NULL,
+  segment_no           INT           NOT NULL DEFAULT 1,  -- v1 恒为 1（预留跨版本续接，需引擎 E7）
+  writer_epoch         BIGINT        NOT NULL,            -- 取得写权时的 writer_lease.epoch
+  writer_instance_id   VARCHAR(64)   NOT NULL,
+  writer_token         VARBINARY(16) NOT NULL,            -- 每次取得本房写权（建房/认领）新生成的 128 位随机令牌；所有写 CAS 必带
+  revision             BIGINT        NOT NULL,            -- 本行每次修改 +1（控制修订号，不等于 input_seq）
+  last_input_seq       BIGINT        NOT NULL,
+  last_event_index     BIGINT        NOT NULL,            -- 引擎 eventCount - 1；提交 CAS 要求新批 first_event_index = 本值 + 1
+  last_batch_mac       VARBINARY(32) NOT NULL,            -- 链头；提交 CAS 要求新批 prev_mac = 本值
+  last_received_at     BIGINT        NOT NULL,            -- 引擎 lastReceivedAt
+  last_commit_at       BIGINT        NOT NULL,            -- 最后一次成功提交的 DB 时刻（停机起点证据之一）
+  last_state_hash      VARBINARY(32) NULL,
+  engine_version       VARCHAR(64)   NOT NULL,
+  config_hash          VARBINARY(32) NOT NULL,
+  domain_id            VARCHAR(64)   NOT NULL,
+  rng_protocol         VARCHAR(64)   NOT NULL,
+  key_id               SMALLINT      NOT NULL,            -- 本段日志密钥版本；生产环境拒绝 0
+  mac_version          SMALLINT      NOT NULL,            -- 批 MAC 规范版本（v2 设计 = 2）
+  status               VARCHAR(16)   NOT NULL,
+  outage_started_at    BIGINT        NULL,                -- 当前不可服务区间的起点（区间未结束时非空）
+  current_recovery_id  VARBINARY(16) NULL,                -- 当前恢复尝试（room_recovery.attempt_id）
+  prep_ends_at         BIGINT        NULL,                -- 仅 PREP 状态非空
+  covered_until        BIGINT        NULL,                -- 镜像：引擎已补偿覆盖至的时刻（权威在日志）
+  downtime_used_ms     BIGINT        NOT NULL DEFAULT 0,  -- 镜像：本局累计停机（权威在日志）
+  next_due_at          BIGINT        NULL,                -- 冗余，仅运维检索
+  created_at           BIGINT        NOT NULL,
+  updated_at           BIGINT        NOT NULL,
+  CONSTRAINT pk_room_head PRIMARY KEY (room_id),
+  CONSTRAINT fk_room_head_room FOREIGN KEY (room_id) REFERENCES room (room_id),
+  CONSTRAINT ck_room_head_status CHECK (status IN ('ACTIVE', 'PREP', 'SUSPENDED', 'RECOVERING', 'FROZEN',
+                                                   'HALTED', 'QUARANTINED', 'INCOMPATIBLE', 'CLOSED', 'PURGING')),
+  CONSTRAINT ck_room_head_marks CHECK (segment_no >= 1 AND writer_epoch >= 1 AND revision >= 1
+                                       AND last_input_seq >= 0 AND last_event_index >= last_input_seq
+                                       AND last_received_at >= 0 AND downtime_used_ms >= 0 AND mac_version >= 1
+                                       AND key_id >= 0),
+  CONSTRAINT ck_room_head_bytes CHECK (LENGTH(writer_token) = 16 AND LENGTH(last_batch_mac) = 32
+                                       AND LENGTH(config_hash) = 32
+                                       AND (current_recovery_id IS NULL OR LENGTH(current_recovery_id) = 16)),
+  CONSTRAINT ck_room_head_prep CHECK ((status = 'PREP' AND prep_ends_at IS NOT NULL)
+                                   OR (status <> 'PREP' AND prep_ends_at IS NULL)),
+  -- 处于不可服务区间的状态必须记录起点；可服务/终止状态不得残留起点；隔离类状态可带可不带
+  CONSTRAINT ck_room_head_outage CHECK ((status IN ('SUSPENDED', 'RECOVERING', 'FROZEN') AND outage_started_at IS NOT NULL)
+                                     OR (status IN ('ACTIVE', 'PREP', 'CLOSED', 'PURGING') AND outage_started_at IS NULL)
+                                     OR status IN ('HALTED', 'QUARANTINED', 'INCOMPATIBLE')),
+  CONSTRAINT ck_room_head_attempt CHECK ((status IN ('SUSPENDED', 'RECOVERING') AND current_recovery_id IS NOT NULL)
+                                      OR (status IN ('ACTIVE', 'PREP', 'CLOSED', 'PURGING') AND current_recovery_id IS NULL)
+                                      OR status IN ('FROZEN', 'HALTED', 'QUARANTINED', 'INCOMPATIBLE'))
+) ${table_options};
+
+CREATE INDEX ix_room_head_status ON room_head (status);   -- 启动时枚举待认领房间（v2 不再有按 epoch 的批量心跳索引）
+
+-- ---------------------------------------------------------------------
+-- 4. 事件批：一个 Engine.step（或 create）的全部事件 = 一批 = 一行；batch_no ≡ input_seq，Genesis = 0。
+--    区间连续/不重叠由提交 CAS 保证（first_event_index = head.last_event_index + 1），
+--    uk_event_batch_first 只保证"起始下标唯一"，不能单独保证不重叠；恢复时再逐批校验连续性。
+-- ---------------------------------------------------------------------
+CREATE TABLE event_batch (
+  room_id            BIGINT        NOT NULL,
+  segment_no         INT           NOT NULL,
+  input_seq          BIGINT        NOT NULL,
+  first_event_index  BIGINT        NOT NULL,
+  event_count        INT           NOT NULL,
+  received_at        BIGINT        NOT NULL,   -- Input.serverTime；Genesis 为创世时刻
+  engine_version     VARCHAR(64)   NOT NULL,
+  format_version     SMALLINT      NOT NULL,   -- Envelope.formatVersion
+  payload_codec      SMALLINT      NOT NULL,   -- 0 = 原文，1 = deflate
+  key_id             SMALLINT      NOT NULL,   -- 0 = 未加密（仅开发/测试；生产拒绝）
+  mac_version        SMALLINT      NOT NULL,
+  plain_len          INT           NOT NULL,   -- 明文（信封文本 UTF-8）字节数；应用上限 8 MiB
+  plain_sha256       VARBINARY(32) NOT NULL,
+  payload            MEDIUMBLOB    NOT NULL,   -- 封装版本(1B) ‖ nonce(12B) ‖ 密文 ‖ tag(16B)
+  prev_mac           VARBINARY(32) NOT NULL,   -- Genesis 为 32 字节 0
+  batch_mac          VARBINARY(32) NOT NULL,
+  state_hash         VARBINARY(32) NULL,
+  created_at         BIGINT        NOT NULL,
+  CONSTRAINT pk_event_batch PRIMARY KEY (room_id, segment_no, input_seq),
+  CONSTRAINT uk_event_batch_first UNIQUE (room_id, segment_no, first_event_index),
+  CONSTRAINT ck_event_batch CHECK (segment_no >= 1 AND input_seq >= 0 AND event_count > 0 AND first_event_index >= 0
+                                   AND (input_seq > 0 OR first_event_index = 0)
+                                   AND received_at >= 0 AND payload_codec IN (0, 1) AND key_id >= 0
+                                   AND mac_version >= 1 AND format_version >= 1
+                                   AND plain_len >= 0 AND plain_len <= 8388608),
+  CONSTRAINT ck_event_batch_bytes CHECK (LENGTH(plain_sha256) = 32 AND LENGTH(prev_mac) = 32
+                                         AND LENGTH(batch_mac) = 32
+                                         AND (state_hash IS NULL OR LENGTH(state_hash) = 32))
+) ${table_options};
+
+-- ---------------------------------------------------------------------
+-- 5. 输入回执：与事件批 1:1（Genesis 无回执）；本表 -> 批 的外键保证"有回执必有批"，
+--    "有非 Genesis 批必有回执"由批 MAC 覆盖回执认证结构 + 恢复校验保证（设计 §2.6）。
+--    回执元数据（request_id、source、actor、command_type、command_digest、input_digest、outcome、
+--    rejection_code、输入明文哈希/长度）全部进入批 MAC。
+-- ---------------------------------------------------------------------
+CREATE TABLE input_receipt (
+  room_id            BIGINT        NOT NULL,
+  segment_no         INT           NOT NULL,
+  input_seq          BIGINT        NOT NULL,
+  request_id         VARBINARY(64) NOT NULL,   -- 客户端：小写规范 UUID；系统："sys:<kind>:<uuid>"（应用校验格式）
+  source             VARCHAR(8)    NOT NULL,
+  actor_user_id      BIGINT        NULL,       -- 客户端输入必填（认证上下文），系统输入必空
+  command_type       VARCHAR(64)   NOT NULL,   -- 规范编码中的 @type 标签
+  command_digest     VARBINARY(32) NOT NULL,   -- SHA-256(codec.encode(cmd, Command.class))，含 @type 与 actor
+  input_digest       VARBINARY(32) NOT NULL,   -- Engine.digest(Input)
+  received_at        BIGINT        NOT NULL,
+  outcome            VARCHAR(8)    NOT NULL,
+  rejection_code     VARCHAR(48)   NULL,
+  key_id             SMALLINT      NOT NULL,
+  input_plain_len    INT           NOT NULL,   -- 规范 Input 明文字节数；应用上限 64 KiB
+  input_plain_sha256 VARBINARY(32) NOT NULL,
+  input_payload      BLOB          NOT NULL,
+  created_at         BIGINT        NOT NULL,
+  CONSTRAINT pk_input_receipt PRIMARY KEY (room_id, segment_no, input_seq),
+  CONSTRAINT uk_input_receipt_request UNIQUE (room_id, request_id),
+  CONSTRAINT fk_input_receipt_batch FOREIGN KEY (room_id, segment_no, input_seq)
+      REFERENCES event_batch (room_id, segment_no, input_seq),
+  CONSTRAINT ck_input_receipt CHECK (input_seq >= 1 AND LENGTH(request_id) BETWEEN 8 AND 64
+                                     AND ((source = 'CLIENT' AND actor_user_id IS NOT NULL)
+                                          OR (source = 'SYSTEM' AND actor_user_id IS NULL))
+                                     AND ((outcome = 'REJECTED' AND rejection_code IS NOT NULL)
+                                          OR (outcome = 'ACCEPTED' AND rejection_code IS NULL))
+                                     AND input_plain_len >= 0 AND input_plain_len <= 65536),
+  CONSTRAINT ck_input_receipt_bytes CHECK (LENGTH(command_digest) = 32 AND LENGTH(input_digest) = 32
+                                           AND LENGTH(input_plain_sha256) = 32)
+) ${table_options};
+
+-- ---------------------------------------------------------------------
+-- 6. 规则配置与引擎制品归档
+-- ---------------------------------------------------------------------
+CREATE TABLE rule_config_archive (
+  config_hash      VARBINARY(32) NOT NULL,     -- = RuleConfig.contentHash() = SHA-256(规范正文)，不是信封整段的哈希
+  format_version   SMALLINT      NOT NULL,
+  first_engine     VARCHAR(64)   NOT NULL,
+  payload          MEDIUMBLOB    NOT NULL,     -- 带信封（kind=rule-config）的规范编码，明文（无秘密）
+  payload_sha256   VARBINARY(32) NOT NULL,     -- 信封整段字节的哈希（传输/存储完整性）
+  created_at       BIGINT        NOT NULL,
+  CONSTRAINT pk_rule_config_archive PRIMARY KEY (config_hash),
+  CONSTRAINT ck_rule_config_archive CHECK (LENGTH(config_hash) = 32 AND LENGTH(payload_sha256) = 32)
+) ${table_options};
+
+CREATE TABLE engine_release (
+  engine_version   VARCHAR(64)   NOT NULL,
+  engine_jar_sha256 VARBINARY(32) NOT NULL,    -- engine 制品（jar）哈希：由构建/部署流水线计算并注入，启动时对类路径实物复核
+  app_artifact_sha256 VARBINARY(32) NULL,      -- 应用整体制品（fat jar/镜像摘要）
+  build_id         VARCHAR(128)  NOT NULL,     -- 外部构建 ID（流水线号 + 提交号）
+  artifact_location VARCHAR(256) NULL,         -- 制品库/对象存储位置（不是 git tag）
+  first_seen_at    BIGINT        NOT NULL,
+  retired_at       BIGINT        NULL,
+  CONSTRAINT pk_engine_release PRIMARY KEY (engine_version),
+  CONSTRAINT ck_engine_release CHECK (LENGTH(engine_jar_sha256) = 32)
+) ${table_options};
+
+-- ---------------------------------------------------------------------
+-- 7. 写者租约与实例心跳
+--    取得：仅当租约空闲或已过期；epoch+1；生成新 holder_token。续约：要求 epoch、holder_token 匹配且未过期。
+--    不存在"本实例重入"：过期后必须以新 epoch 重新取得。
+--    心跳 = 一个事务：续约本行 + 更新本实例 instance_heartbeat.alive_at；成本 O(1)，不触碰 room_head。
+-- ---------------------------------------------------------------------
+CREATE TABLE writer_lease (
+  lease_name         VARCHAR(32)   NOT NULL,
+  epoch              BIGINT        NOT NULL,
+  holder_instance_id VARCHAR(64)   NULL,
+  holder_token       VARBINARY(16) NULL,       -- 每次取得新生成；续约/交出/认领核验都带它
+  lease_expires_at   BIGINT        NOT NULL,   -- DB 时钟
+  acquired_at        BIGINT        NULL,
+  engine_version     VARCHAR(64)   NULL,
+  updated_at         BIGINT        NOT NULL,
+  CONSTRAINT pk_writer_lease PRIMARY KEY (lease_name),
+  CONSTRAINT ck_writer_lease CHECK (epoch >= 0 AND ((holder_instance_id IS NULL AND holder_token IS NULL)
+                                    OR (holder_instance_id IS NOT NULL AND holder_token IS NOT NULL
+                                        AND LENGTH(holder_token) = 16)))
+) ${table_options};
+
+INSERT INTO writer_lease (lease_name, epoch, holder_instance_id, holder_token, lease_expires_at, acquired_at,
+                          engine_version, updated_at)
+VALUES ('room-writer', 0, NULL, NULL, 0, NULL, NULL, 0);
+
+CREATE TABLE instance_heartbeat (
+  instance_id      VARCHAR(64)  NOT NULL,       -- 主机名 + 启动 UUID
+  engine_version   VARCHAR(64)  NOT NULL,
+  build_id         VARCHAR(128) NULL,
+  started_at       BIGINT       NOT NULL,
+  heartbeat_at     BIGINT       NOT NULL,       -- 进程存活（任何状态）
+  writer_epoch     BIGINT       NULL,
+  alive_at         BIGINT       NULL,           -- 仅在"同一事务内续约成功且本实例没有未落库的房间挂起"时推进：
+                                                -- 含义 = 截至此刻，本实例名下状态为 ACTIVE/PREP 的房间均可服务
+  serving_status   VARCHAR(16)  NOT NULL,
+  ready_at         BIGINT       NULL,
+  stopped_at       BIGINT       NULL,
+  CONSTRAINT pk_instance_heartbeat PRIMARY KEY (instance_id),
+  CONSTRAINT ck_instance_status CHECK (serving_status IN ('STARTING', 'STANDBY', 'RECOVERING', 'SERVING',
+                                                          'DRAINING', 'FENCED', 'ROLLBACK_HALT', 'STOPPED'))
+) ${table_options};
+
+CREATE INDEX ix_instance_heartbeat_at ON instance_heartbeat (heartbeat_at);
+
+-- ---------------------------------------------------------------------
+-- 8. 恢复尝试与房间事故
+--    每次恢复尝试一行（独立 attempt_id），同一 epoch 可多次恢复（无 UNIQUE(room_id, writer_epoch)）。
+--    "同一房间同时只有一个进行中的尝试"由 room_head.current_recovery_id 的 CAS 保证。
+-- ---------------------------------------------------------------------
+CREATE TABLE room_recovery (
+  attempt_id          VARBINARY(16) NOT NULL,
+  room_id             BIGINT        NOT NULL,
+  kind                VARCHAR(16)   NOT NULL,   -- CLAIM（新写者认领）/ UNKNOWN（同写者消解未知提交）/ STALL（房间执行器卡住）
+  writer_epoch        BIGINT        NOT NULL,
+  writer_token        VARBINARY(16) NOT NULL,
+  phase               VARCHAR(16)   NOT NULL,
+  started_at          BIGINT        NOT NULL,
+  outage_started_at   BIGINT        NOT NULL,
+  outage_evidence     VARCHAR(16)   NOT NULL,   -- LAST_COMMIT / INSTANCE_ALIVE / SUSPEND_MARK / FAILED_ATTEMPT / INHERITED
+  evidence_gap_ms     BIGINT        NULL,       -- 证据时刻与检测时刻之差（观测误差上界的记录，不是承诺）
+  unknown_resolution  VARCHAR(16)   NULL,       -- COMMITTED / NOT_COMMITTED（仅 UNKNOWN）
+  resumed_at          BIGINT        NULL,       -- 房间对玩家开放（可连接/同步）的时刻，补偿输入中的 resumedAt
+  covered_before      BIGINT        NULL,
+  covered_after       BIGINT        NULL,
+  shift_ms            BIGINT        NULL,
+  prep_applied_ms     BIGINT        NULL,
+  downtime_before_ms  BIGINT        NULL,
+  downtime_after_ms   BIGINT        NULL,
+  compensation_seq    BIGINT        NULL,
+  finished_at         BIGINT        NULL,
+  detail              VARCHAR(512)  NULL,
+  CONSTRAINT pk_room_recovery PRIMARY KEY (attempt_id),
+  CONSTRAINT ck_room_recovery_kind CHECK (kind IN ('CLAIM', 'UNKNOWN', 'STALL')),
+  CONSTRAINT ck_room_recovery_phase CHECK (phase IN ('OPEN', 'RESOLVED', 'VERIFIED', 'COMPENSATED', 'RESUMED_NO_SHIFT',
+                                                     'FROZEN', 'ABORTED', 'QUARANTINED', 'INCOMPATIBLE',
+                                                     'SUPERSEDED', 'FENCED')),
+  CONSTRAINT ck_room_recovery_evidence CHECK (outage_evidence IN ('LAST_COMMIT', 'INSTANCE_ALIVE', 'SUSPEND_MARK',
+                                                                  'FAILED_ATTEMPT', 'INHERITED')),
+  CONSTRAINT ck_room_recovery_unknown CHECK (unknown_resolution IS NULL
+                                          OR (kind = 'UNKNOWN' AND unknown_resolution IN ('COMMITTED', 'NOT_COMMITTED'))),
+  CONSTRAINT ck_room_recovery_values CHECK ((shift_ms IS NULL OR shift_ms >= 0)
+                                         AND (prep_applied_ms IS NULL OR prep_applied_ms >= 0)
+                                         AND (downtime_after_ms IS NULL OR downtime_after_ms >= 0)
+                                         AND LENGTH(attempt_id) = 16)
+) ${table_options};
+
+CREATE INDEX ix_room_recovery_room ON room_recovery (room_id, started_at);
+
+CREATE TABLE room_incident (
+  incident_id    BIGINT        NOT NULL AUTO_INCREMENT,
+  room_id        BIGINT        NULL,          -- 进程级事故（如数据库回退）可为空
+  kind           VARCHAR(24)   NOT NULL,      -- KERNEL_FAULT / CORRUPT_LOG / REPLAY_MISMATCH / COMMIT_UNKNOWN / FENCED /
+                                              -- DB_ROLLBACK / CURSOR_AHEAD / REVISION_ANOMALY / UNAUDITABLE / MANUAL
+  input_seq      BIGINT        NULL,
+  writer_epoch   BIGINT        NULL,
+  dedupe_key     VARBINARY(32) NULL,          -- 本地补录去重：SHA-256(instance_id ‖ 本地序号)
+  detail         VARCHAR(4000) NULL,          -- 只含摘要，应用脱敏并截断；不含秘密明文
+  created_at     BIGINT        NOT NULL,
+  resolved_at    BIGINT        NULL,
+  resolved_by    VARCHAR(64)   NULL,
+  resolution     VARCHAR(512)  NULL,
+  CONSTRAINT pk_room_incident PRIMARY KEY (incident_id),
+  CONSTRAINT uk_room_incident_dedupe UNIQUE (dedupe_key)
+) ${table_options};
+
+CREATE INDEX ix_room_incident_room ON room_incident (room_id, created_at);
+CREATE INDEX ix_room_incident_open ON room_incident (resolved_at, kind, created_at);
+
+-- ---------------------------------------------------------------------
+-- 9. 战绩：开局即写 PLAYING；GameEnded -> FINISHED；GameAborted / 停机中止 / 管理性中止 -> ABORTED。
+--    名次/资产为 NULL 表示"无正常结算数值"（中止局），不是 0。
+-- ---------------------------------------------------------------------
+CREATE TABLE game_record (
+  record_id         BIGINT        NOT NULL AUTO_INCREMENT,
+  room_id           BIGINT        NOT NULL,
+  segment_no        INT           NOT NULL,
+  game_no           INT           NOT NULL,
+  status            VARCHAR(16)   NOT NULL,
+  end_mode          VARCHAR(16)   NOT NULL,     -- 引擎 EndMode 名
+  time_limit_min    SMALLINT      NULL,
+  board_id          VARCHAR(32)   NOT NULL,
+  initial_cash      BIGINT        NOT NULL,
+  player_count      SMALLINT      NOT NULL,
+  started_at        BIGINT        NOT NULL,     -- GameStarted 所在批的业务时间（真实开局时刻，补偿不平移它）
+  ended_at          BIGINT        NULL,         -- 终局批的业务时间；管理性中止为操作时刻
+  downtime_ms       BIGINT        NOT NULL DEFAULT 0,  -- 本局累计补偿（含准备期），来自引擎状态
+  duration_ms       BIGINT        NULL,         -- 展示时长 = ended_at - started_at - downtime_ms
+  end_reason        VARCHAR(32)   NULL,
+  end_source        VARCHAR(8)    NULL,         -- LOG（GameEnded/GameAborted 事件）/ ADMIN（管理性中止，无日志事件）
+  start_seq         BIGINT        NOT NULL,
+  end_seq           BIGINT        NULL,
+  engine_version    VARCHAR(64)   NOT NULL,
+  config_hash       VARBINARY(32) NOT NULL,
+  created_at        BIGINT        NOT NULL,
+  updated_at        BIGINT        NOT NULL,
+  CONSTRAINT pk_game_record PRIMARY KEY (record_id),
+  CONSTRAINT uk_game_record_game UNIQUE (room_id, segment_no, game_no),
+  CONSTRAINT ck_game_record_status CHECK (
+       (status = 'PLAYING' AND ended_at IS NULL AND end_reason IS NULL AND end_source IS NULL AND end_seq IS NULL
+                           AND duration_ms IS NULL)
+    OR (status = 'FINISHED' AND ended_at IS NOT NULL AND end_reason IS NOT NULL AND end_source = 'LOG'
+                           AND end_seq IS NOT NULL)
+    OR (status = 'ABORTED' AND ended_at IS NOT NULL AND end_reason IS NOT NULL
+                           AND ((end_source = 'LOG' AND end_seq IS NOT NULL) OR (end_source = 'ADMIN' AND end_seq IS NULL)))),
+  CONSTRAINT ck_game_record_values CHECK (downtime_ms >= 0 AND player_count >= 1 AND game_no >= 1
+                                          AND (ended_at IS NULL OR ended_at >= started_at))
+) ${table_options};
+
+CREATE INDEX ix_game_record_ended ON game_record (ended_at);
+CREATE INDEX ix_game_record_room_status ON game_record (room_id, status);   -- 管理性中止定位 PLAYING 局
+
+CREATE TABLE game_record_player (
+  record_id           BIGINT        NOT NULL,
+  user_id             BIGINT        NOT NULL,
+  seat_no             SMALLINT      NOT NULL,
+  nickname_snapshot   VARCHAR(32)   NOT NULL,   -- 开局时昵称（来自 GameStarted 前的房间状态）；注销后改为固定占位
+  status              VARCHAR(16)   NOT NULL,   -- 冗余 game_record.status
+  ended_at            BIGINT        NULL,       -- 冗余，供"我的最近 20 局"索引
+  finish_rank         SMALLINT      NULL,       -- 并列 1、1、3；中止局为 NULL
+  final_net_worth     BIGINT        NULL,
+  final_cash          BIGINT        NULL,
+  life_state          VARCHAR(16)   NULL,       -- 终局前状态取值（ALIVE / BANKRUPT / SURRENDERED）
+  elimination_reason  VARCHAR(32)   NULL,
+  eliminated_at       BIGINT        NULL,
+  CONSTRAINT pk_game_record_player PRIMARY KEY (record_id, user_id),
+  CONSTRAINT uk_game_record_player_seat UNIQUE (record_id, seat_no),
+  CONSTRAINT fk_grp_record FOREIGN KEY (record_id) REFERENCES game_record (record_id),
+  CONSTRAINT ck_grp_values CHECK (seat_no >= 0
+                                  AND status IN ('PLAYING', 'FINISHED', 'ABORTED')
+                                  AND (life_state IS NULL OR life_state IN ('ALIVE', 'BANKRUPT', 'SURRENDERED'))
+                                  AND (finish_rank IS NULL OR finish_rank >= 1)
+                                  AND (status <> 'PLAYING' OR (ended_at IS NULL AND finish_rank IS NULL))
+                                  AND (status = 'PLAYING' OR ended_at IS NOT NULL)
+                                  AND (status <> 'ABORTED' OR finish_rank IS NULL))
+) ${table_options};
+
+CREATE INDEX ix_grp_user_ended ON game_record_player (user_id, ended_at DESC, record_id DESC);
+
+-- ---------------------------------------------------------------------
+-- 10. 聊天（保留期待产品/合规确认）与后台操作审计
+-- ---------------------------------------------------------------------
+CREATE TABLE chat_message (
+  msg_id          BIGINT        NOT NULL AUTO_INCREMENT,
+  room_id         BIGINT        NOT NULL,
+  game_no         INT           NULL,
+  sender_user_id  BIGINT        NOT NULL,
+  kind            VARCHAR(8)    NOT NULL,     -- 仅 TEXT 入库（固定表情不入库）
+  content         VARCHAR(200)  NOT NULL,
+  sec_status      VARCHAR(16)   NOT NULL,     -- 内容安全检测结果
+  hold_until      BIGINT        NULL,         -- 举报证据保全到期时刻（非空时普通清理跳过；注销时按保全规则处理）
+  created_at      BIGINT        NOT NULL,
+  CONSTRAINT pk_chat_message PRIMARY KEY (msg_id),
+  CONSTRAINT ck_chat_message CHECK (kind IN ('TEXT') AND sec_status IN ('PASS', 'REVIEW', 'RISKY', 'UNCHECKED'))
+) ${table_options};
+
+CREATE INDEX ix_chat_room_time ON chat_message (room_id, created_at);
+CREATE INDEX ix_chat_time ON chat_message (created_at);
+CREATE INDEX ix_chat_sender ON chat_message (sender_user_id, created_at);   -- 注销定位
+
+CREATE TABLE admin_audit (
+  audit_id     BIGINT        NOT NULL AUTO_INCREMENT,
+  operator     VARCHAR(64)   NOT NULL,        -- 经认证的操作者标识
+  action       VARCHAR(48)   NOT NULL,        -- DECRYPT_LOG / ADMIN_TERMINATE / QUARANTINE_RELEASE / DELETE_ACCOUNT / EXPORT ...
+  target_type  VARCHAR(32)   NOT NULL,
+  target_id    VARCHAR(64)   NOT NULL,
+  purpose      VARCHAR(256)  NOT NULL,        -- 用途（导出/解密必须填写）
+  result       VARCHAR(8)    NOT NULL,        -- STARTED（先于动作提交）/ OK / FAILED
+  detail       VARCHAR(4000) NULL,
+  created_at   BIGINT        NOT NULL,
+  CONSTRAINT pk_admin_audit PRIMARY KEY (audit_id),
+  CONSTRAINT ck_admin_audit CHECK (result IN ('STARTED', 'OK', 'FAILED'))
+) ${table_options};
+
+CREATE INDEX ix_admin_audit_target ON admin_audit (target_type, target_id);
+CREATE INDEX ix_admin_audit_time ON admin_audit (created_at);

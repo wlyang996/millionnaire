@@ -187,7 +187,7 @@ class M3aFixTest {
         int i = indexOf(t.log, GameEvent.PlayerMoved.class, 0);
         var e = (GameEvent.PlayerMoved) t.log.get(i);
         var log = new ArrayList<>(t.log);
-        log.set(i, new GameEvent.PlayerMoved(e.playerId(), e.from(), e.to(), e.steps() + 1, e.chainId(), e.segmentNo(), e.kind()));
+        log.set(i, new GameEvent.PlayerMoved(e.playerId(), e.from(), e.to(), e.steps() + 1, e.chainId(), e.segmentNo(), e.kind(), e.plannedDistance(), e.stoppedBy()));
         rejectsAt(t, log, i);
         // Isolate the committed-die check: endpoint geometry would also reject this field, but for a different reason.
         var ex = assertThrows(StateValidationException.class, () -> t.engine.rebuild(log));

@@ -192,7 +192,8 @@ final class EventModule {
                             : l.event().kind() == EventKind.MOVE && e.kind() == l.event().moveKind() && e.distance() == l.event().distance())
                         && k.eventMove() == null, "event relocation source mismatch");
                 var credential = new EventMove(e.landingId(), e.cursor(), e.playerId(), e.kind(), e.distance());
-                yield g.withTurn(t.withLanding(LandingRules.consume(c, g, l, LandingResult.MOVED)).withTrack(k.redirect(credential)));
+                yield g.withTurn(t.withLanding(LandingRules.consume(c, g, l, LandingResult.MOVED)).withTrack(k.redirect(credential))
+                        .withChain(t.chain().authorize(new MovePlan(e.kind(), e.distance(), e.landingId(), e.cursor()))));
             }
             case GameEvent.EventCardReceived e -> {
                 LobbyModule.check(source(g, e.recipient(), e.landingId(), e.cursor(), LandingStep.CARD)

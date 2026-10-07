@@ -1,7 +1,6 @@
--- 精简版 V1 冒烟正例（H2 MODE=MySQL；语法限定在 MySQL5.7/8.0公共子集）。由 h2-lean-smoke.sh 拼接在 V1 之后执行。
+-- 精简版 V1 冒烟正例（H2 MODE=MySQL；语法限定在 MySQL 8 公共子集）。由 h2-lean-smoke.sh 拼接在 V1 之后执行。
 -- 断言机制（v2，替代 v1 的除零）：向 smoke_assert 插入 ok=0 会违反 CHECK 而报错。
 -- 该机制在 MySQL 8.0.16+ 同样报错（CHECK 3819），不依赖"除零报错"这一 H2 特有行为（评审 G3）。
--- 5.7忽略CHECK，smoke_assert不再能判失败，真机须JDBC/JUnit读值断言；反转见mysql57-check-reversal.md。
 -- 注意：CASE WHEN <NULL 比较> 落入 ELSE 0，故子查询返回 NULL 时断言失败而不是放行。
 CREATE TABLE smoke_assert (name VARCHAR(64) NOT NULL, ok INT NOT NULL, CONSTRAINT ck_smoke_assert CHECK (ok = 1));
 
@@ -33,10 +32,10 @@ INSERT INTO room (room_id,room_code,held_code,created_by,create_request_id,statu
   SELECT 13, 99, 99, 1, X'0102030405060708090A0B0C0D0E0F12', 'OPEN', 3000, 3000
   FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM room WHERE held_code = 42 AND status = 'OPEN');
 -- （v3：v2 的"关房对账 RECONCILE"正例已删除，关房对账移入后补清单）
--- 建房的历史唯一性核验：候选 room_id 在 room/game_record/game_log/chat_message 中都不存在才可用；11 已被占用
+-- 建房的历史唯一性核验：候选 room_id 在 room/game_record/game_log 中都不存在才可用；11 已被占用
 INSERT INTO smoke_assert SELECT 'room id history check', CASE WHEN
   (SELECT COUNT(*) FROM room WHERE room_id = 11) + (SELECT COUNT(*) FROM game_record WHERE room_id = 11)
-  + (SELECT COUNT(*) FROM game_log WHERE room_id = 11) + (SELECT COUNT(*) FROM chat_message WHERE room_id = 11) > 0 THEN 1 ELSE 0 END FROM DUAL;
+  + (SELECT COUNT(*) FROM game_log WHERE room_id = 11) > 0 THEN 1 ELSE 0 END FROM DUAL;
 
 -- 战绩：正常结束一局（2 人）+ 中止一局（排名/资产为 NULL）+ 并列一局
 -- RecordStore 协议：先按 user_id 升序 SELECT ... FOR UPDATE 锁定参与者行，跳过 status='DELETED' 的人（此处单线程示意）
@@ -74,14 +73,10 @@ CREATE TABLE smoke_check AS
 INSERT INTO smoke_assert SELECT 'trim backlog found', CASE WHEN
   (SELECT COUNT(*) FROM (SELECT user_id FROM game_record_player GROUP BY user_id HAVING COUNT(*) > 2) b) = 2
   THEN 1 ELSE 0 END FROM DUAL;
--- v4改写（原断言不删）：两步边界，N=2（生产N=20用LIMIT19,1），DELETE不读同表，避1093。
--- 生产由JDBC读取边界再绑定DELETE参数；smoke用另一张临时测试表承载返回值。
-CREATE TABLE smoke_cutoff AS SELECT ended_at, record_id FROM game_record_player
- WHERE user_id=1 AND user_live=1 ORDER BY ended_at DESC,record_id DESC LIMIT 1,1;
-DELETE FROM game_record_player WHERE user_id=1 AND user_live=1
- AND (ended_at < (SELECT ended_at FROM smoke_cutoff)
-   OR (ended_at = (SELECT ended_at FROM smoke_cutoff) AND record_id < (SELECT record_id FROM smoke_cutoff))) LIMIT 1000;
-DROP TABLE smoke_cutoff;
+-- 修剪用户 1：删除第 2 条以后的行（演示 N=2；生产 N=20）。双层派生表 + 窗口函数，需在 MySQL 再验证（1093）。
+DELETE FROM game_record_player WHERE user_id = 1 AND record_id IN (
+  SELECT record_id FROM (SELECT record_id, ROW_NUMBER() OVER (ORDER BY ended_at DESC, record_id DESC) AS rn
+                         FROM game_record_player WHERE user_id = 1) t WHERE t.rn > 2);
 
 -- 可选日志与聊天（聊天主键 = 房间 + 房间内序号，由外壳转发时分配）
 INSERT INTO game_log VALUES (11, 1, 'FINISHED', 'PUBLIC_EVENTS', 'GZIP_EVLOG1', 'engine-0.8.1-m3a', 'h', 3, 10,
@@ -141,42 +136,3 @@ INSERT INTO smoke_assert SELECT 'identities', CASE WHEN (SELECT COUNT(*) FROM wx
 INSERT INTO smoke_assert SELECT 'varbinary bytes', CASE WHEN (SELECT LENGTH(create_request_id) FROM room WHERE room_id = 13) = 16 THEN 1 ELSE 0 END FROM DUAL;  -- LENGTH = 字节数（v2 用 boot_id）
 INSERT INTO smoke_assert SELECT 'assert count', CASE WHEN (SELECT COUNT(*) FROM smoke_assert) = 16 THEN 1 ELSE 0 END FROM DUAL;
 DROP TABLE smoke_check;
-
--- ===== v4新增：只测数据库协议部分，不声称实现内存入口/后台队列 =====
--- R1-a：模拟重启内存丢失后的原请求仍命中旧OPEN；调用方必须拒绝创世。
-INSERT INTO smoke_assert SELECT 'R1 restart old request finds OPEN', CASE WHEN
- (SELECT COUNT(*) FROM room WHERE created_by=1 AND create_request_id=X'0102030405060708090A0B0C0D0E0F12' AND room_id=13 AND status='OPEN')=1 THEN 1 ELSE 0 END FROM DUAL;
--- R1-b：模拟关房事务已执行后失败并rollback；内存已移除不能据OPEN再注册。
-SET AUTOCOMMIT FALSE;
-UPDATE room SET status='CLOSED',closed_at=4000,close_reason='ENGINE' WHERE room_id=13 AND status='OPEN';
-ROLLBACK;
-SET AUTOCOMMIT TRUE;
-INSERT INTO smoke_assert SELECT 'R1 close failure leaves OPEN', CASE WHEN
- (SELECT COUNT(*) FROM room WHERE room_id=13 AND status='OPEN' AND closed_at IS NULL)=1 THEN 1 ELSE 0 END FROM DUAL;
-INSERT INTO smoke_assert SELECT 'R1 close failure keeps request', CASE WHEN
- (SELECT create_request_id FROM room WHERE room_id=13)=X'0102030405060708090A0B0C0D0E0F12' THEN 1 ELSE 0 END FROM DUAL;
--- I2：关闭房间清理后只有被保全聊天留存，旧三表核验会漏；四表核验阻止复用。
-INSERT INTO room (room_id,room_code,held_code,created_by,create_request_id,status,created_at,updated_at,closed_at,close_reason)
- VALUES (99,88,NULL,3,X'99999999999999999999999999999999','CLOSED',0,0,1,'ADMIN');
-INSERT INTO chat_message VALUES (99,1,9007199254740991,'held history','PASS',99999,1,0);
-DELETE FROM room WHERE room_id=99;
-INSERT INTO smoke_assert SELECT 'I2 chat survives room cleanup', CASE WHEN
- (SELECT COUNT(*) FROM room WHERE room_id=99)+(SELECT COUNT(*) FROM game_record WHERE room_id=99)+(SELECT COUNT(*) FROM game_log WHERE room_id=99)=0
- AND (SELECT COUNT(*) FROM chat_message WHERE room_id=99)=1 THEN 1 ELSE 0 END FROM DUAL;
-INSERT INTO room (room_id,room_code,held_code,created_by,create_request_id,status,created_at,updated_at)
- SELECT 99,88,88,3,X'99999999999999999999999999999999','OPEN',2,2 FROM DUAL
- WHERE NOT EXISTS(SELECT 1 FROM room WHERE room_id=99)
- AND NOT EXISTS(SELECT 1 FROM game_record WHERE room_id=99)
- AND NOT EXISTS(SELECT 1 FROM game_log WHERE room_id=99)
- AND NOT EXISTS(SELECT 1 FROM chat_message WHERE room_id=99);
-INSERT INTO smoke_assert SELECT 'I2 full history blocks candidate', CASE WHEN
- (SELECT COUNT(*) FROM room WHERE room_id=99)=0 THEN 1 ELSE 0 END FROM DUAL;
--- I3数据库部分：任务终止必须rollback整事务，不能残留半份草稿（真实锁超时另由Java探针测）。
-SET AUTOCOMMIT FALSE;
-INSERT INTO game_record (room_id,game_no,outcome,end_reason,end_mode,time_limit_min,board_id,initial_cash,player_count,started_at,ended_at,engine_version,config_hash,draft_sha256,created_at)
- VALUES(13,90,'FINISHED','ALL_AWAY','BANKRUPTCY',NULL,'classic',1,1,0,1,'v','h',X'9999999999999999999999999999999999999999999999999999999999999999',1);
-ROLLBACK;
-SET AUTOCOMMIT TRUE;
-INSERT INTO smoke_assert SELECT 'I3 abandoned transaction atomic', CASE WHEN
- (SELECT COUNT(*) FROM game_record WHERE room_id=13 AND game_no=90)=0 THEN 1 ELSE 0 END FROM DUAL;
-INSERT INTO smoke_assert SELECT 'v4 assert count', CASE WHEN (SELECT COUNT(*) FROM smoke_assert)=23 THEN 1 ELSE 0 END FROM DUAL;

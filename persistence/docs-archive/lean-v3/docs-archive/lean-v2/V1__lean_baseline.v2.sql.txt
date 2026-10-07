@@ -1,27 +1,22 @@
 -- =====================================================================
--- millionnaire 持久化层 V1 基线（精简版 · 测试版 v4）
--- 设计说明：.discuss/db-design-lean.md（v4 测试版）；收口说明：.discuss/db-lean-trim-note.md
--- 精简版 v2（含 service_control、boot_id 等，已收口删除）归档在 persistence/docs-archive/lean-v2/
--- 完整版（18 表，已废弃）归档在 persistence/docs-archive/V1__full_baseline.sql.txt
+-- millionnaire 持久化层 V1 基线（精简版 Lean v2，阶段 L1.1）
+-- 设计说明：.discuss/db-design-lean.md（v2）；评审回应：.discuss/db-lean-response.md
+-- 完整版（18 表，已废弃为体验版方案）归档在 persistence/docs-archive/V1__full_baseline.sql.txt
 --
--- 前提：对局状态只在内存；测试阶段不做发版流程、重启善后与故障恢复。重启即重启，
---       上一个进程留下的 OPEN 房间不清扫（孤儿行），外壳按号加入时以内存为准。
---       本库只保存：账号与微信身份、房间号与房间元数据、局结束时的战绩、（可选）对局公开事件日志、（可选）聊天。
+-- 前提：对局状态只在内存；服务崩溃/发版时房间与对局直接解散，不做恢复。
+--       本库只保存：账号与微信身份、服务控制行（维护触发/可选的进程租约）、房间号与房间元数据、
+--       局结束时的战绩、（可选）对局公开事件日志、（可选）聊天。
 --
 -- 方言约定：
---   * 以MySQL5.7/8.0、InnoDB为准；5.7忽略CHECK，Store须验证全部谓词（设计§1.1）；同时限定在 H2 (MODE=MySQL) 可执行的子集。
---     H2 1.4.200 已执行通过（persistence/ops/h2-lean-smoke.sh）；真实 MySQL 未验证 [未验证-MySQL5.7]。
+--   * 以 MySQL 8.0（>= 8.0.17：CHECK 生效 + utf8mb4_0900_bin）/ InnoDB 为准；同时限定在 H2 (MODE=MySQL) 可执行的子集。
+--     H2 1.4.200 已执行通过（persistence/ops/h2-lean-smoke.sh）；真实 MySQL 未验证 [未验证-MySQL]。
 --   * 表选项经 Flyway 占位符 ${table_options} 注入（Maven 资源过滤必须对 db/migration 关闭）：
---       MySQL: ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
+--       MySQL: ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin
 --       H2   : 空串
---     utf8mb4_bin为PAD SPACE，精确身份不依赖文本排序。
---     需要"按字节精确相等"的标识符（openid、appid、建房请求 ID）一律 VARBINARY，不依赖排序规则。
+--     utf8mb4_0900_bin 为 NO PAD（'a' 与 'a ' 不相等）；utf8mb4_bin 为 PAD SPACE，故不用。
+--     需要"按字节精确相等"的标识符（openid、appid、建房请求 ID、启动 ID）一律 VARBINARY，不依赖排序规则。
 --   * 二进制长度检查用 LENGTH()（MySQL = 字节数）；H2 1.4.200 的 OCTET_LENGTH(VARBINARY) 返回 2 倍字节数，故不用。
 --   * 时间一律 UTC epoch 毫秒 BIGINT（*_at），由应用时钟写入。
---   * 不用JSON/窗口函数/CTE/DEFAULT表达式；CHECK与宽度规则须应用校验/单测，5.7反转清单见ops/mysql57-check-reversal.md。
---   * 最大显式索引键96字节，低于5.7的767/3072；最近索引全升序、查询反向扫描。
---   * OPEN幂等仅复用本进程对象/仍持有原上下文，否则报解散，绝不据DB创世。
---   * 当前文字聊天只存内存，本表为可选契约，当前不接线。
 --   * 索引单独 CREATE INDEX；外键默认 RESTRICT，无级联。外键共 5 个（见各表）。
 --   * 可空列的 CHECK 一律写显式 IS [NOT] NULL 分支（CHECK 对 UNKNOWN 放行）。
 --   * MySQL DDL 隐式提交，本文件不是可回滚单元：基线中途失败时库内只有本文件的对象 →
@@ -29,11 +24,33 @@
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
+-- 0. 服务控制（单行）：维护触发（方案 P、Q 共用）+ 进程租约（仅方案 Q 使用，见设计 §4.4）
+-- ---------------------------------------------------------------------
+CREATE TABLE service_control (
+  id               TINYINT       NOT NULL,              -- 恒为 1
+  holder_boot_id   VARBINARY(16) NULL,                  -- 当前持有者的启动 ID；NULL = 已释放/无人持有
+  epoch            BIGINT        NOT NULL DEFAULT 0,    -- 每次换持有者 +1（方案 Q 的写入围栏）
+  renew_count      BIGINT        NOT NULL DEFAULT 0,    -- 持有者每次续约 +1；接任者据"整整一个 TTL 未变化"判定旧持有者已失效
+  drain_notice_at  BIGINT        NULL,                  -- 运维写入：开始提示"即将更新"的时刻
+  drain_at         BIGINT        NULL,                  -- 运维写入：开始解散的时刻（= notice + 约 5 分钟）
+  updated_at       BIGINT        NOT NULL,
+  CONSTRAINT pk_service_control PRIMARY KEY (id),
+  CONSTRAINT ck_service_control_id CHECK (id = 1),
+  CONSTRAINT ck_service_control_holder CHECK (holder_boot_id IS NULL OR LENGTH(holder_boot_id) = 16),
+  CONSTRAINT ck_service_control_counts CHECK (epoch >= 0 AND renew_count >= 0),
+  CONSTRAINT ck_service_control_drain CHECK ((drain_notice_at IS NULL AND drain_at IS NULL)
+                                          OR (drain_notice_at IS NOT NULL AND drain_at IS NOT NULL AND drain_at >= drain_notice_at))
+) ${table_options};
+
+INSERT INTO service_control (id, holder_boot_id, epoch, renew_count, drain_notice_at, drain_at, updated_at)
+  VALUES (1, NULL, 0, 0, NULL, NULL, 0);
+
+-- ---------------------------------------------------------------------
 -- 1. 用户与微信身份
 -- ---------------------------------------------------------------------
 CREATE TABLE app_user (
   user_id        BIGINT        NOT NULL,              -- 随机正整数（SecureRandom，<= 2^53-1，JS 安全）；引擎 playerId = 十进制字符串；墓碑永久保留 → 永不复用
-  nickname       VARCHAR(32)   NOT NULL,              -- 可重复；trim后1..32 UTF-16码元与完整引擎规则由应用校验（设计§2.1）；注销后改为固定占位
+  nickname       VARCHAR(32)   NOT NULL,              -- 可重复；码点长度与零宽/双向控制符由应用校验；注销后改为固定占位
   avatar_id      SMALLINT      NOT NULL DEFAULT 0,
   status         VARCHAR(8)    NOT NULL DEFAULT 'ACTIVE',
   created_at     BIGINT        NOT NULL,              -- 注销时改写为 deleted_at（墓碑不保留注册/登录时间）
@@ -66,13 +83,13 @@ CREATE TABLE wx_identity (
 -- 2. 房间：房间号唯一 + 关闭后失效 + 冷却（无单独的号码表）
 --    held_code：房间 OPEN 时等于 room_code；关闭后仍占着号码直到被新建房事务在冷却期满后释放（置 NULL）。
 --    UNIQUE(held_code) 保证"占用中或冷却中"的号码全局唯一；多个 NULL 不冲突（MySQL 与 H2 均如此）。
---    按号查房只认 status='OPEN'，且外壳必须再核验内存房间存在且可加入（重启后上一进程的 OPEN 行是孤儿，见设计 §3.3）。
---    测试版不记录建房进程（v2 的 boot_id 已删除，启动清扫在后补清单中）。
+--    按号查房只认 status='OPEN'，且外壳必须再核验内存房间存在且可加入（设计 §3.3 I3）。
 -- ---------------------------------------------------------------------
 CREATE TABLE room (
-  room_id           BIGINT        NOT NULL,           -- 随机正整数；引擎 roomId = 十进制字符串；建房时还须核验room/game_record/game_log/chat_message（含保全）及本进程待写引用无同号（设计 §1）
+  room_id           BIGINT        NOT NULL,           -- 随机正整数；引擎 roomId = 十进制字符串；建房时还须核验 game_record/game_log 无同号（设计 §1 G1）
   room_code         INT           NOT NULL,           -- 六位房间号（展示时补零）；历史值
   held_code         INT           NULL,               -- 见上
+  boot_id           VARBINARY(16) NOT NULL,           -- 建房进程的启动 ID（来源标记，不是写权围栏；围栏见 service_control）
   created_by        BIGINT        NOT NULL,
   create_request_id VARBINARY(16) NOT NULL,           -- 建房幂等键（客户端 UUID 的 16 字节）
   status            VARCHAR(8)    NOT NULL,           -- OPEN / CLOSED（大厅/对局中的区别只在内存）
@@ -88,15 +105,14 @@ CREATE TABLE room (
   CONSTRAINT ck_room_id CHECK (room_id > 0 AND room_id <= 9007199254740991),
   CONSTRAINT ck_room_code CHECK (room_code >= 0 AND room_code <= 999999),
   CONSTRAINT ck_room_held CHECK (held_code IS NULL OR held_code = room_code),
-  CONSTRAINT ck_room_ids CHECK (LENGTH(create_request_id) = 16 AND max_saved_game_no >= 0),
-  -- 关闭原因：测试版实际只写 ENGINE（引擎 RoomClosed）、IDLE（7 天无人）、FAULT（内核故障停房）、ADMIN；
-  -- UPGRADE / RESTART 保留为合法取值（后补的发版与启动清扫会用到），测试版不依赖。CLOSED 时原因必须非空。
+  CONSTRAINT ck_room_ids CHECK (LENGTH(boot_id) = 16 AND LENGTH(create_request_id) = 16 AND max_saved_game_no >= 0),
   CONSTRAINT ck_room_status CHECK (
        (status = 'OPEN' AND held_code IS NOT NULL AND closed_at IS NULL AND close_reason IS NULL)
     OR (status = 'CLOSED' AND closed_at IS NOT NULL AND close_reason IS NOT NULL
-        AND close_reason IN ('ENGINE', 'IDLE', 'UPGRADE', 'RESTART', 'FAULT', 'ADMIN')))
+        AND close_reason IN ('ENGINE', 'IDLE', 'UPGRADE', 'RESTART', 'FAULT', 'ADMIN', 'RECONCILE')))
 ) ${table_options};
 
+CREATE INDEX ix_room_status_boot ON room (status, boot_id);   -- 启动清扫 / 关房对账
 CREATE INDEX ix_room_closed ON room (closed_at);              -- 关闭房间的保留期清理
 
 -- ---------------------------------------------------------------------
@@ -108,8 +124,8 @@ CREATE TABLE game_record (
   record_id         BIGINT        NOT NULL AUTO_INCREMENT,
   room_id           BIGINT        NOT NULL,           -- 不设外键：房间行到期清理后战绩仍保留
   game_no           INT           NOT NULL,           -- 引擎 gameNo（long）；超出 INT 的草稿被拒绝，不截断
-  outcome           VARCHAR(8)    NOT NULL,           -- FINISHED（GameEnded）/ ABORTED（GameAborted；测试版外壳不发 EndGame，故实际不产生，保留取值）
-  end_reason        VARCHAR(32)   NOT NULL,           -- FINISHED：引擎 reason（当前 TIME_UP / NO_PLAYERS / LAST_SURVIVOR / ALL_ELIMINATED / ALL_AWAY）；ABORTED：EndGame.reason
+  outcome           VARCHAR(8)    NOT NULL,           -- FINISHED（GameEnded）/ ABORTED（GameAborted 或内核故障时外壳直接中止）
+  end_reason        VARCHAR(32)   NOT NULL,           -- FINISHED：引擎 reason（当前 TIME_UP / NO_PLAYERS / LAST_SURVIVOR / ALL_ELIMINATED）；ABORTED：UPGRADE / FAULT / ADMIN
   end_mode          VARCHAR(16)   NOT NULL,           -- 引擎 EndMode 名
   time_limit_min    SMALLINT      NULL,               -- 限时模式的分钟数；破产模式为 NULL
   board_id          VARCHAR(32)   NOT NULL,
@@ -134,8 +150,8 @@ CREATE TABLE game_record (
 CREATE INDEX ix_game_record_ended ON game_record (ended_at);   -- 孤儿表头清理（ended_at 早于 30 天且无明细）
 
 -- 每局每人一行；玩家只看自己的行（+ 表头）。不存昵称快照（界面不展示他人，最小必要）。
--- (user_id, user_live) 外键指向 app_user(user_id, live_mark)：子行恒user_live=1且父元组合法时拒绝墓碑明细；5.7错用0须Store拒绝；
--- 注销事务必须先删本人明细再把 live_mark 置 0（否则 RESTRICT 拒绝）。这是兜底；正常路径由 RecordStore 先 FOR UPDATE 锁用户行并跳过已注销者（设计 §5.1）。
+-- (user_id, user_live) 外键指向 app_user(user_id, live_mark)：已注销用户（live_mark=0）不可能再被插入明细；
+-- 注销事务必须先删本人明细再把 live_mark 置 0（否则 RESTRICT 拒绝）。这是兜底；正常路径由 RecordStore 先锁用户行并跳过。
 CREATE TABLE game_record_player (
   record_id         BIGINT        NOT NULL,
   seat_no           SMALLINT      NOT NULL,           -- GameStarted.seats 中的下标
@@ -159,7 +175,7 @@ CREATE TABLE game_record_player (
 ) ${table_options};
 
 -- 最近 20 局查询：WHERE user_id=? AND user_live=1 ORDER BY ended_at DESC, record_id DESC LIMIT 20；同时满足外键 4 的子表索引要求
-CREATE INDEX ix_grp_user_ended ON game_record_player (user_id, user_live, ended_at, record_id);
+CREATE INDEX ix_grp_user_ended ON game_record_player (user_id, user_live, ended_at DESC, record_id DESC);
 
 -- ---------------------------------------------------------------------
 -- 4.（可选）对局公开事件日志：局结束时写一行，只含该局 GameStarted..终局之间的 PUBLIC 事件（无手牌、无随机状态）。
@@ -191,7 +207,7 @@ CREATE INDEX ix_game_log_ended ON game_log (ended_at);   -- 90 天清理
 -- ---------------------------------------------------------------------
 -- 5.（可选）文字聊天：保留 30 天（待合规核实）；被举报消息 hold_until 保全；固定表情不入库。
 --    主键 (room_id, msg_no)：msg_no 由房间串行执行器在转发时分配并随消息广播 → 客户端举报时引用的标识可信且在入库前已知。
---    (sender_user_id, sender_live) 外键：Store锁合法父元组、新插入恒sender_live=1；5.7错误0/NULL须Store拒绝；注销时保全中的消息把 sender_live 置 NULL（脱离外键，保留证据）。
+--    (sender_user_id, sender_live) 外键：未注销发送者才能插入；注销时保全中的消息把 sender_live 置 NULL（脱离外键，保留证据）。
 -- ---------------------------------------------------------------------
 CREATE TABLE chat_message (
   room_id         BIGINT        NOT NULL,

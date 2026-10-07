@@ -2,6 +2,8 @@ package com.millionnaire.engine.core.engine;
 import com.millionnaire.engine.core.state.MoveChain;
 import com.millionnaire.engine.core.state.MoveKind;
 import com.millionnaire.engine.core.state.MoveSegment;
+import com.millionnaire.engine.core.state.BoardState;
+import com.millionnaire.engine.core.state.Roadblock;
 import java.util.ArrayList;
 import java.util.List;
 /** 决定和重建共用的几何与起点规则；玩法模块提供核验来源与实际距离。 */
@@ -33,21 +35,48 @@ final class MovementRules {
         if (enteredCount < 1 || enteredCount > planned.walked().size()) {
             throw new IllegalArgumentException("forced stop must be on an entered tile");
         }
-        return segment(planned.number(), planned.kind(), planned.from(), enteredCount, size);
+        return stopAt(planned, enteredCount, size, null);
+    }
+
+    static MoveSegment stopAt(MoveSegment planned, int enteredCount, int size, Roadblock source) {
+        MoveSegment prefix = segment(planned.number(), planned.kind(), planned.from(), enteredCount, size);
+        return new MoveSegment(prefix.number(), prefix.kind(), prefix.from(), prefix.to(), prefix.distance(),
+                prefix.walked(), prefix.startEligible(), planned.plannedDistance(), source);
+    }
+
+    /** The board is authoritative. Include the endpoint, exclude the departure, stop at the first foreign object. */
+    static MoveSegment resolve(MoveSegment plan, BoardState board, String player, int size) {
+        if (plan.kind() == MoveKind.TO_JAIL) { return jailJump(plan.number(), plan.from(), plan.to(), size); }
+        MoveSegment expected = segment(plan.number(), plan.kind(), plan.from(), plan.plannedDistance(), size);
+        for (int i = 0; i < expected.walked().size(); i++) {
+            var block = board.roadblock(expected.walked().get(i)).orElse(null);
+            if (block != null && !block.owner().equals(player)) { return stopAt(expected, i + 1, size, block); }
+        }
+        return expected;
     }
 
     /** 几何及累积规则不限定玩法来源；来源授权由事件演化另行核对。 */
     static boolean valid(MoveChain chain, int size) {
-        if (chain.segments().isEmpty()) { return false; }
+        if (chain.segments().isEmpty() || chain.plans().size() != chain.segments().size()) { return false; }
         int from = chain.origin();
         int walked = 0;
         boolean eligible = false;
         for (int i = 0; i < chain.segments().size(); i++) {
             MoveSegment actual = chain.segments().get(i);
             if (actual == null || actual.from() != from) { return false; }
+            var authority = chain.plans().get(i);
+            if (authority == null || authority.kind() != actual.kind() || authority.distance() != actual.plannedDistance()) { return false; }
+            if (actual.plannedDistance() < actual.distance() || actual.distance() < 0) { return false; }
             MoveSegment expected = actual.kind() == MoveKind.TO_JAIL
                     ? jailJump(i + 1, from, actual.to(), size)
-                    : segment(i + 1, actual.kind(), from, actual.distance(), size);
+                    : segment(i + 1, actual.kind(), from, actual.plannedDistance(), size);
+            if (actual.stoppedBy() != null) {
+                Roadblock block = actual.stoppedBy();
+                if (actual.kind() == MoveKind.TARGETED || actual.kind() == MoveKind.TO_JAIL
+                        || block.owner() == null || block.owner().equals(chain.playerId()) || block.tile() != actual.to()
+                        || actual.distance() < 1 || block.id() < 1 || block.placedTurn() < 1 || block.placedTurn() > chain.turnNo()) { return false; }
+                expected = stopAt(expected, actual.distance(), size, block);
+            }
             if (!expected.equals(actual)) { return false; }
             walked = Math.addExact(walked, actual.walked().size());
             eligible |= actual.startEligible();

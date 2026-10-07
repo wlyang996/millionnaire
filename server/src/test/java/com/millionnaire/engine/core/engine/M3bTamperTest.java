@@ -154,7 +154,7 @@ class M3bTamperTest {
         int i = M2bReviewTest.indexOf(t.log, GameEvent.PlayerMoved.class, 1);
         var e = (GameEvent.PlayerMoved)t.log.get(i);
         var log = new ArrayList<>(t.log);
-        log.set(i, new GameEvent.PlayerMoved(e.playerId(), e.from(), 9, e.steps(), e.chainId(), e.segmentNo(), e.kind()));
+        log.set(i, new GameEvent.PlayerMoved(e.playerId(), e.from(), 9, e.steps(), e.chainId(), e.segmentNo(), e.kind(), e.plannedDistance(), e.stoppedBy()));
         M2bReviewTest.rejectsAt(t, log, i);
     }
     @Test void everyEventDrawPointChecksItsBoundAtTheCorrespondingResult() {

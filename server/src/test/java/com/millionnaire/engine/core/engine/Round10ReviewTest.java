@@ -39,7 +39,7 @@ class Round10ReviewTest {
         t.roll();
         assertDoesNotThrow(() -> t.engine.rebuild(t.log));
         List<Event> moved = tamper(t.log, e -> e instanceof GameEvent.PlayerMoved m
-                ? new GameEvent.PlayerMoved(m.playerId(), m.from(), 4, m.steps(), m.chainId(), m.segmentNo(), m.kind()) : e);
+                ? new GameEvent.PlayerMoved(m.playerId(), m.from(), 4, m.steps(), m.chainId(), m.segmentNo(), m.kind(), m.plannedDistance(), m.stoppedBy()) : e);
         assertThrows(StateValidationException.class, () -> t.engine.rebuild(moved));
         List<Event> landed = tamper(t.log, e -> e instanceof GameEvent.Landed l
                 ? new GameEvent.Landed(l.playerId(), 5, l.type(), l.placeholder()) : e);
