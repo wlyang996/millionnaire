@@ -22,16 +22,17 @@ export class LobbyScreen extends Screen {
         art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
 
         // 顶部：头像 + 昵称 + 在线信号 + 设置/音量
-        const me = mk(this.root, 'MeBar', 80, 18, 330, 72);
+        // 昵称胶囊收窄到 x 80–354，音量 / 设置紧随其后，右侧留给微信胶囊（约 x 540 起）
+        const me = mk(this.root, 'MeBar', 80, 18, 274, 72);
         const g = gfx(me);
-        fillRR(g, 0, 3, 330, 68, 34, Theme.c.shadow);
-        fillRR(g, 0, 0, 330, 68, 34, Theme.c.ivory);
+        fillRR(g, 0, 3, 274, 68, 34, Theme.c.shadow);
+        fillRR(g, 0, 0, 274, 68, 34, Theme.c.ivory);
         avatar(me, 4, 4, 60, st.profile.avatar, st.profile.nickname || '我');
-        text(me, st.profile.nickname || '微信用户', 76, 0, 190, 68, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
-        for (let i = 0; i < 3; i++) fillRR(gfx(mk(me, 'Sig', 280 + i * 11, 40 - i * 8, 7, 12 + i * 8)), 0, 0, 7, 12 + i * 8, 2, Theme.c.green);
+        text(me, st.profile.nickname || '微信用户', 76, 0, 150, 68, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
+        for (let i = 0; i < 3; i++) fillRR(gfx(mk(me, 'Sig', 230 + i * 11, 40 - i * 8, 7, 12 + i * 8)), 0, 0, 7, 12 + i * 8, 2, Theme.c.green);
         // 设计稿 08：昵称胶囊右侧依次是音量、设置（"…"与圆点由微信胶囊绘制）
-        new IconButton(this.root, 424, 22, 64, '♪', () => Toast.show('音量设置（演示）'));
-        const settings = new IconButton(this.root, 500, 22, 64, '', () => Toast.show('房间内可调整地图、资金与回合设置'));
+        new IconButton(this.root, 366, 22, 64, '♪', () => Toast.show('音量设置（演示）'));
+        const settings = new IconButton(this.root, 440, 22, 64, '', () => Toast.show('房间内可调整地图、资金与回合设置'));
         art(settings.node, 'icon_settings', 10, 10, 44, 44);
 
         // 设计稿 08：彩色木牌品牌标志（与登录资料页同一素材）+ 四人围坐桌游插画
