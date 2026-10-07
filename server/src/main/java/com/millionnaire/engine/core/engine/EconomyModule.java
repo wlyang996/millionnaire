@@ -167,6 +167,8 @@ final class EconomyModule {
             case BANK -> g.phase() == GamePhase.RUNNING || StageTable.rule(StageTable.Point.BANK).drainingAllowed()
                     ? LandingStep.BANK : null;
             case EVENT -> g.turn().chain() != null && !g.turn().chain().eventDrawn() ? LandingStep.EVENT : null;
+            // 游戏区：至少两名存活者才启动虎口拔牙（#15）
+            case GAME_ZONE -> MinigameModule.eligible(config, g, tileIndex) ? LandingStep.MINIGAME : null;
             default -> null;
         };
     }
@@ -182,6 +184,7 @@ final class EconomyModule {
             case WINDOW -> openStep(ctx, l.next(), leadMs);
             case RENT -> chargeRent(ctx, game(ctx).board().ownable(l.tile()).orElseThrow(), leadMs);
             case EFFECT -> EventModule.performEffect(ctx);
+            case FLOW -> MinigameModule.start(ctx, leadMs);
         }
     }
 
@@ -675,6 +678,10 @@ final class EconomyModule {
         if (g.debt() != null && (playerId.equals(g.debt().creditor()) || playerId.equals(g.debt().debtor()))) {
             return true;
         }
+        // 小游戏：全体参与者（#15 中途认输延后到小游戏结束清算）
+        if (g.minigame() != null && g.minigame().participants().contains(playerId)) {
+            return true;
+        }
         for (FlowFrame f : g.flow().frames()) {
             if (f.kind() == FlowKind.AUCTION && g.player(playerId).map(PlayerState::alive).orElse(false)
                     || f.kind() != FlowKind.TURN && f.kind() != FlowKind.DEBT && playerId.equals(f.owner())) {
@@ -686,7 +693,7 @@ final class EconomyModule {
 
     /** 是否仍有流程在进行（债务或任一覆盖窗口）。 */
     static boolean flowsRunning(GameState g) {
-        return g.debt() != null || g.flow().frames().stream().anyMatch(f -> f.kind() != FlowKind.TURN);
+        return g.debt() != null || g.minigame() != null || g.flow().frames().stream().anyMatch(f -> f.kind() != FlowKind.TURN);
     }
 
     /** 结束原因（E5）：进入 DRAINING 后固定为到时结束；否则零存活 → 全员淘汰，一人 → 最后存活者。 */
@@ -785,7 +792,7 @@ final class EconomyModule {
                 check(l != null && l.landingId() == e.landingId() && e.cursor() == l.cursor(), "landing step for another landing or cursor");
                 boolean ok = LandingRules.canEnter(rules, g, l, e.step(), e.payment());
                 check(ok, "landing step " + e.step() + " not legal here (next " + l.next() + ")");
-                boolean decision = e.step() != LandingStep.DEBT;
+                boolean decision = e.step() != LandingStep.DEBT && e.step() != LandingStep.MINIGAME;
                 yield g.withTurn(t.withLanding(l.withStep(e.step(), e.payment()).decision(decision)));
             }
             case LandingFinished e -> {
@@ -1063,7 +1070,7 @@ final class EconomyModule {
         if (l != null) {
             expect(LandingRules.valid(l) && l.step() != null && l.landingId() >= 1 && l.landingId() == t.lastLandingId()
                     && t.chain() != null && l.chainId() == t.chain().chainId() && l.cursor() < l.tasks().size() && l.next() == null
-                    && l.decisionOpen() == (l.step() != LandingStep.DEBT)
+                    && l.decisionOpen() == (l.step() != LandingStep.DEBT && l.step() != LandingStep.MINIGAME)
                     && (l.step() == LandingStep.DEBT || l.currentTask() == l.step())
                     && (l.step() == LandingStep.DEBT || l.pendingPayment() == 0)
                     && g.player(t.currentPlayer()).orElseThrow().position() == l.tile(), "landing invalid");

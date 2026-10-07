@@ -130,12 +130,32 @@ public final class Table {
         return new StepResult(state, new ArrayList<>(log.subList(start, log.size())), r.outcome(), r.rejection());
     }
 
-    /** 明确的"先完成当前落点（手动放弃 / 不升级 / 结束银行）再投骰"；不处理投骰后的新落点。 */
+    /** 明确的"先完成当前落点（手动放弃 / 不升级 / 结束银行）与进行中的小游戏，再投骰"；不处理投骰后的新落点。 */
     public StepResult passThenRoll() {
+        finishMinigame();
         while (session().inGame() && game().turn().stage() == com.millionnaire.engine.core.state.TurnStage.LANDING) {
             pass();
+            finishMinigame();
         }
         return rollOnly();
+    }
+
+    /** 走完进行中的虎口拔牙：手动选牙者按下编号最小的剩余牙，需要代选的等服务端到期代选。 */
+    public void finishMinigame() {
+        while (session().inGame() && game().minigame() != null) {
+            pickTooth();
+        }
+    }
+
+    /** 当前选牙者选一颗牙（手动：编号最小的剩余牙；托管 / 掉线：推进到窗口截止由服务端代选）。 */
+    public StepResult pickTooth() {
+        var m = game().minigame();
+        FlowFrame w = window();
+        if (game().player(m.picker()).orElseThrow().automated() || game().pendingSurrenders().contains(m.picker())) {
+            return tick(Math.max(now, w.window().deadline()));
+        }
+        return send(Math.max(now + 10, w.window().opensAt()),
+                new GameCommand.PickTooth(m.picker(), w.windowId(), m.remaining().get(0)));
     }
 
     /**
@@ -146,9 +166,11 @@ public final class Table {
     public StepResult roll() {
         int from = log.size();
         StepResult r = passThenRoll();
+        finishMinigame();
         while (session().inGame() && game().turn().stage() == com.millionnaire.engine.core.state.TurnStage.LANDING
                 && !game().player(current()).orElseThrow().automated()) {
             pass();
+            finishMinigame();
         }
         List<Event> all = new ArrayList<>(log.subList(from, log.size()));
         return new StepResult(state, all, r.outcome(), r.rejection());

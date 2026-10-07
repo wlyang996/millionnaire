@@ -59,6 +59,7 @@ class M3cReplayTest {
             Command c;
             var l = g.turn().landing();
             if (g.debt() != null) { c = new GameCommand.DeclareBankruptcy(t.current(), w.windowId()); }
+            else if (g.minigame() != null) { c = new GameCommand.PickTooth(w.owner(), w.windowId(), g.minigame().remaining().get(0)); }
             else if (l == null) { c = new GameCommand.RollDice(t.current(), w.windowId()); }
             else {
                 c = switch (l.step()) {

@@ -54,7 +54,8 @@ import org.junit.jupiter.api.TestInstance;
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LongGameTest {
-    private static final long[] RANDOM_SEEDS = {101L, 202L, 303L};
+    // 505：游戏区接入虎口拔牙后随机轨迹改变，补一局覆盖"事件罚款 → 欠款"
+    private static final long[] RANDOM_SEEDS = {101L, 202L, 303L, 505L};
     private final List<Table> games = new ArrayList<>();
 
     @BeforeAll
@@ -75,6 +76,7 @@ class LongGameTest {
         while (passive.session().inGame()) {
             var g = passive.game();
             if (g.debt() != null) { passive.tick(passive.window().window().deadline()); }
+            else if (g.minigame() != null) { passive.pickTooth(); }
             else if (g.turn().stage() == TurnStage.LANDING) {
                 if (g.turn().landing().step() == com.millionnaire.engine.core.state.LandingStep.EVENT && g.turn().turnNo() % 3 == 0) {
                     passive.tick(passive.window().window().deadline());
@@ -187,6 +189,10 @@ class LongGameTest {
             }
             return;
         }
+        if (w.kind() == FlowKind.MINIGAME) {
+            t.pickTooth();
+            return;
+        }
         if (g.player(cur).orElseThrow().automated()) {
             waitAuto(t);
             return;
@@ -272,6 +278,18 @@ class LongGameTest {
                 t.send(t.now + 1, new GameCommand.BuyProperty(someone, w.windowId() - 1));
             } else if (w.kind() == FlowKind.DEBT) {
                 randomDebt(t, rnd, g, w);
+            } else if (w.kind() == FlowKind.MINIGAME) {
+                // 虎口拔牙：随机选一颗剩余牙、选已按下的牙（被拒）、或等超时代选
+                var m = g.minigame();
+                int r = rnd.nextInt(10);
+                if (r < 6) {
+                    t.send(at(t, w, rnd.nextInt(5000)), new GameCommand.PickTooth(w.owner(), w.windowId(),
+                            m.remaining().get(rnd.nextInt(m.remaining().size()))));
+                } else if (r < 7 && !m.picks().isEmpty()) {
+                    assertNotNull(t.send(at(t, w, 10), new GameCommand.PickTooth(w.owner(), w.windowId(), m.picks().get(0))).rejection());
+                } else {
+                    t.tick(Math.max(t.now, w.window().deadline()));
+                }
             } else if (g.player(cur).orElseThrow().automated()) {
                 PlayerState p = g.player(cur).orElseThrow();
                 if (p.control() != ControlMode.MANUAL && p.conn() != ConnState.OFFLINE && choice < 600) {
@@ -379,7 +397,8 @@ class LongGameTest {
             GameView view = v.game();
             assertEquals(p.hand(), view.myHand(), "each client sees exactly its own hand");
             GameView publicPart = new GameView(view.gameNo(), view.phase(), view.players(), view.orderDraws(), view.board(),
-                    view.turnNo(), view.currentPlayer(), view.stage(), view.globalEndsAt(), view.windows(), view.landing(), view.debt(), List.of());
+                    view.turnNo(), view.currentPlayer(), view.stage(), view.globalEndsAt(), view.windows(), view.landing(), view.debt(), List.of(),
+                    view.minigame());
             if (reference == null) {
                 reference = publicPart;
             }
@@ -435,6 +454,9 @@ class LongGameTest {
         c.put("discard", count(log, e -> e instanceof GameEvent.EventCardDiscarded));
         c.put("fineDebt", count(log, e -> e instanceof GameEvent.DebtCreated d && d.debt().source().kind() == com.millionnaire.engine.core.state.FeeSource.Kind.FINE));
         c.put("eventAuto", count(log, e -> e instanceof GameEvent.EventDrawn d && d.auto()));
+        c.put("minigame", count(log, e -> e instanceof GameEvent.MinigameEnded));
+        c.put("toothManual", count(log, e -> e instanceof GameEvent.ToothPicked p && !p.auto()));
+        c.put("toothAuto", count(log, e -> e instanceof GameEvent.ToothPicked p && p.auto()));
         c.put("staleObservation", count(log, e -> e instanceof KernelEvent.InputRejected r
                 && r.code() == RejectionCode.STALE_OBSERVATION));
         c.put("timeUp", count(log, e -> e instanceof GameEvent.GameEnded x && x.reason().equals("TIME_UP")));
@@ -461,7 +483,8 @@ class LongGameTest {
         }
         TreeMap<String, Long> all = new TreeMap<>();
         games.forEach(t -> coverage(t.log).forEach((k, v) -> all.merge(k, v, Long::sum)));
-        for (String path : List.of("event.CASH_REWARD", "event.CASH_FINE", "event.CARD", "event.MOVE", "event.JAIL", "eventAuto", "fineDebt", "discard")) {
+        for (String path : List.of("event.CASH_REWARD", "event.CASH_FINE", "event.CARD", "event.MOVE", "event.JAIL", "eventAuto", "fineDebt", "discard",
+                "minigame", "toothManual", "toothAuto")) {
             assertTrue(all.get(path) > 0, "M3b long games cover " + path + " " + all);
         }
         for (String path : List.of("decline", "bail", "debtSegment2", "bankMortgage", "redeem", "emergencyMortgage",

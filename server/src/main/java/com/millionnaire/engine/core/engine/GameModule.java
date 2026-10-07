@@ -227,6 +227,7 @@ final class GameModule {
         LobbyModule.expect(g.flow() != null && g.flow().nextWindowId() >= s.nextWindowId(), "window ids must not go back");
         List<FlowCoordinator.TaskClaim> claims = new java.util.ArrayList<>(TurnModule.validate(engine, g, config, full));
         claims.addAll(FlowCoordinator.validate(engine, g.flow()));
+        MinigameModule.validate(g, config);
         for (var frame : g.flow().frames()) {
             if (frame.kind() == FlowKind.TURN) { continue; }
             FlowOrigin o = frame.origin();
@@ -242,6 +243,11 @@ final class GameModule {
                 LobbyModule.expect(o.scopeId() == g.turn().turnNo() && o.kind() == FlowOrigin.Kind.ACTIVE_CARD
                         && o.ref() == 0 && o.cursor() == -1 && o.actor().equals(g.turn().currentPlayer())
                         && StageTable.rule(StageTable.turnPoint(g)).preemptible(FlowKind.ATTACK), "attack flow origin invalid");
+            } else if (frame.kind() == FlowKind.MINIGAME) {
+                var m = g.minigame();
+                LobbyModule.expect(m != null && o.kind() == FlowOrigin.Kind.MINIGAME && o.scopeId() == g.turn().turnNo()
+                        && o.ref() == m.landingId() && o.cursor() == m.cursor() && o.actor().equals(m.picker()),
+                        "minigame flow origin invalid");
             } else if (frame.kind() == FlowKind.RESPONSE) {
                 // M4 must bind a real attack's target set. The scaffold accepts a live responder, not only the attacker.
                 var parent = g.flow().frame(o.ref()).orElse(null);
@@ -333,6 +339,14 @@ final class GameModule {
         }
         if (g.debt() != null) { return "flow cannot open while a debt is open"; }
         var top = g.flow().top().orElse(null);
+        if (kind == FlowKind.MINIGAME) {
+            var m = g.minigame();
+            return origin.kind() == FlowOrigin.Kind.MINIGAME && m != null && origin.ref() == m.landingId()
+                    && origin.cursor() == m.cursor() && owner.equals(m.picker()) && top == null
+                    && g.turn().stage() == TurnStage.AWAITING_FLOW && g.turn().landing() != null
+                    && g.turn().landing().landingId() == m.landingId()
+                    ? null : "minigame pick source mismatch";
+        }
         if (kind == FlowKind.ATTACK) {
             return origin.kind() == FlowOrigin.Kind.ACTIVE_CARD && origin.ref() == 0 && origin.cursor() == -1
                     && owner.equals(g.turn().currentPlayer()) && g.phase() == GamePhase.RUNNING && top != null
@@ -382,7 +396,8 @@ final class GameModule {
         var mine = viewerId == null ? List.<com.millionnaire.engine.config.CardType>of()
                 : g.player(viewerId).map(PlayerState::hand).orElse(List.of());
         return new GameView(g.gameNo(), g.phase(), players, g.orderDraws(), g.board(), g.turn().turnNo(),
-                g.turn().currentPlayer(), g.turn().stage(), g.clock().endsAt(), windows, publicLanding(g), publicDebt(g), mine);
+                g.turn().currentPlayer(), g.turn().stage(), g.clock().endsAt(), windows, publicLanding(g), publicDebt(g), mine,
+                MinigameModule.view(g));
     }
 
     /** E6：当前落点的公开部分（步骤与决策是否仍待做）。 */

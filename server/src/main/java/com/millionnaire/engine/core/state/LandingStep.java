@@ -24,5 +24,7 @@ public enum LandingStep {
     EVENT,
     /** M3b/M3c 消费位移来源，接续同一 MoveChain 中的下一落点。 */
     MOVE,
-    REWARD, FINE, CARD, DISCARD, TO_JAIL
+    REWARD, FINE, CARD, DISCARD, TO_JAIL,
+    /** 游戏区：虎口拔牙（回合处于 AWAITING_FLOW，等待小游戏结束；不足两名存活者不启动）。 */
+    MINIGAME
 }

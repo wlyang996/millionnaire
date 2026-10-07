@@ -32,6 +32,9 @@ final class OverlayModule {
                     if (f.kind() == FlowKind.DEBT) {
                         // 债务两段（M2 P5）：第一段到期 → 第二段弹窗；第二段到期 → 破产
                         EconomyModule.onDebtExpired(ctx, f);
+                    } else if (f.kind() == FlowKind.MINIGAME) {
+                        // 选牙超时 / 托管：服务端代选
+                        MinigameModule.onExpired(ctx, f);
                     } else {
                         GameModule.closeOverlay(ctx, f.windowId(), CloseReason.EXPIRED);
                     }

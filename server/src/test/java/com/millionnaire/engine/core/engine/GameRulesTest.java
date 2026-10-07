@@ -75,7 +75,8 @@ class GameRulesTest {
 
     @Test
     void startRewardOncePerTurnForLandingOrPassingAndNeverAtGameStart() {
-        List<Integer> p1 = List.of(6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 6);  // 第 5 次落在起点；第 11 次从 29 越过起点
+        // 第 5 次落在起点；第 11 次从 28 越过起点（避开 23 号游戏区，不触发虎口拔牙）
+        List<Integer> p1 = List.of(6, 6, 6, 6, 6, 4, 6, 6, 6, 6, 6);
         List<Integer> p2 = List.of(1, 1, 1, 1, 1, 1, 1, 2, 1, 1);
         List<ScriptedRandom.Step> moves = new ArrayList<>();
         for (int i = 0; i < p1.size(); i++) {
@@ -94,7 +95,7 @@ class GameRulesTest {
         for (int i = 0; i < 12; i++) {
             t.roll();
         }
-        assertEquals(5, t.position("p1"));
+        assertEquals(4, t.position("p1"));
         assertEquals(5000, t.cash("p1"), "passing start pays once");
         assertEquals(3000, t.cash("p2"));
         assertEquals(2, count(t.log, GameEvent.StartRewardPaid.class));

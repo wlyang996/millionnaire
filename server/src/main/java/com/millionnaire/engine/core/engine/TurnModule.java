@@ -144,6 +144,7 @@ final class TurnModule {
         return switch (command) {
             case GameCommand.DrawEventCard c -> EventModule.decide(ctx, c);
             case GameCommand.DiscardCard c -> EventModule.decide(ctx, c);
+            case GameCommand.PickTooth c -> MinigameModule.decide(ctx, c);
             case RollDice c -> {
                 RejectionCode why = checkTurnWindow(ctx, c.actor(), c.windowId());
                 if (why != null) {
@@ -455,7 +456,7 @@ final class TurnModule {
             ctx.emit(new PlayerJailed(player));
             endTurn(ctx, animation);
         } else {
-            // 落点推进器（M2）：地产、车站、银行等；事件格（M3）与游戏区（M6）为占位，直接结束
+            // 落点推进器：地产、车站、银行、事件格、游戏区（虎口拔牙）等
             EconomyModule.land(ctx, to, animation);
         }
     }
@@ -494,9 +495,9 @@ final class TurnModule {
         openStage(ctx, TurnStage.PRE_ROLL, 0, remaining, null);
     }
 
-    /** 事件格（M3）与游戏区（M6）尚未接入。 */
+    /** 尚未接入效果的格子：事件格（M3b）与游戏区（虎口拔牙）都已接入，现无占位格。 */
     static boolean placeholder(TileType type) {
-        return type == TileType.GAME_ZONE;
+        return false;
     }
 
     static void endTurn(DecisionContext<SessionState> ctx, long leadMs) {
@@ -937,6 +938,7 @@ final class TurnModule {
             }
             default -> {
                 if (EventModule.handles(event)) { yield EventModule.evolve(g, event, draws, rules); }
+                if (MinigameModule.handles(event)) { yield MinigameModule.evolve(g, event, draws, rules); }
                 if (EconomyModule.handles(event)) {
                     yield EconomyModule.evolve(g, event, rules);
                 }

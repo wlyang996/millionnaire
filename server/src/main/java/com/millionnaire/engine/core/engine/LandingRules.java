@@ -13,7 +13,8 @@ import java.util.List;
  */
 final class LandingRules {
     private LandingRules() { }
-    enum Execution { WINDOW, RENT, EFFECT }
+    /** WINDOW：回合决策窗口；RENT：缴租；EFFECT：即时效果；FLOW：覆盖流程（回合进入 AWAITING_FLOW，如小游戏）。 */
+    enum Execution { WINDOW, RENT, EFFECT, FLOW }
     @FunctionalInterface
     interface Gate { boolean allows(RuleConfig config, GameState game, LandingState landing); }
     static final Gate ALWAYS = (c, g, l) -> true;
@@ -71,7 +72,9 @@ final class LandingRules {
         new Rule(LandingStep.MOVE, Execution.EFFECT, null, ALWAYS, (c, g, l) -> false,
                 List.of(new Outcome(LandingResult.MOVED, List.of()))),
         new Rule(LandingStep.TO_JAIL, Execution.EFFECT, null, ALWAYS, (c, g, l) -> false,
-                List.of(new Outcome(LandingResult.MOVED, List.of()))));
+                List.of(new Outcome(LandingResult.MOVED, List.of()))),
+        new Rule(LandingStep.MINIGAME, Execution.FLOW, null, (c, g, l) -> MinigameModule.eligible(c, g, l.tile()),
+                (c, g, l) -> MinigameModule.resting(g, l), List.of(new Outcome(LandingResult.PLAYED, List.of()))));
 
     static boolean eventTile(RuleConfig c, GameState g, LandingState l) {
         return LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type() == com.millionnaire.engine.config.TileType.EVENT;
@@ -86,7 +89,8 @@ final class LandingRules {
                     && d.path() == com.millionnaire.engine.core.state.DebtPath.MANUAL && d.amount() == payment && d.segment() == 0;
         }
         Rule r = rule(step);
-        return r.execution() == Execution.WINDOW && l.next() == step && payment == 0 && r.prerequisite().allows(c, g, l);
+        return (r.execution() == Execution.WINDOW || r.execution() == Execution.FLOW) && l.next() == step && payment == 0
+                && r.prerequisite().allows(c, g, l);
     }
     static boolean resting(RuleConfig c, GameState g, LandingState l) {
         if (l.step() == LandingStep.DEBT) {
@@ -96,6 +100,7 @@ final class LandingRules {
                     && d.source() != null && d.amount() == l.pendingPayment();
         }
         Rule r = rule(l.step());
+        if (r.execution() == Execution.FLOW) { return r.resting().allows(c, g, l); }
         // Cash may change during a decision (redeem); entry affordability is not a resting invariant.
         return r.execution() == Execution.WINDOW && g.turn().stage() == com.millionnaire.engine.core.state.TurnStage.LANDING
                 && r.resting().allows(c, g, l);

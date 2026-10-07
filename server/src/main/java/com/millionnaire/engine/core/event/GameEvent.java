@@ -247,6 +247,27 @@ public sealed interface GameEvent extends Event {
     record SurrenderBatchEnded(long batch) implements GameEvent, PublicEvent {
     }
 
+    // ------------------------------------------------------------ 小游戏（虎口拔牙）
+
+    /**
+     * 游戏区启动虎口拔牙：落点编号即小游戏编号；参与者为全部存活玩家（从触发者起按行动顺序）；牙齿数 = 人数 × 2。
+     * 危险牙在演化时由 R10 抽取结果确定，<b>不出现在本事件中</b>。
+     */
+    record MinigameStarted(long landingId, int cursor, String trigger, List<String> participants, int teeth)
+            implements GameEvent, PublicEvent {
+        public MinigameStarted {
+            participants = Immutable.list(participants);
+        }
+    }
+
+    /** 选牙：auto 为超时 / 托管 / 掉线时服务端代选（R11 在剩余牙中等概率抽取）。 */
+    record ToothPicked(long landingId, String playerId, int tooth, boolean auto) implements GameEvent, PublicEvent {
+    }
+
+    /** 小游戏结束：按到危险牙者为输家，危险牙公开；其余参与者各获系统奖励 reward（输家不扣钱）。 */
+    record MinigameEnded(long landingId, String loser, int danger, long reward) implements GameEvent, PublicEvent {
+    }
+
     // ------------------------------------------------------------ 监狱
 
     record PlayerJailed(String playerId) implements GameEvent, PublicEvent {

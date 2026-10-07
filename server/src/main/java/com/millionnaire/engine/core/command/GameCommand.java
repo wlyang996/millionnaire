@@ -89,6 +89,10 @@ public sealed interface GameCommand extends Command {
     record DeclareBankruptcy(String actor, long windowId) implements GameCommand {
     }
 
+    /** 客户端：虎口拔牙中选一颗未按下的牙（只有当前选牙者、在其选牙窗口内）。 */
+    record PickTooth(String actor, long windowId, int tooth) implements GameCommand {
+    }
+
     /** 客户端：认输（已二次确认）。流程参与者延后到流程结束；欠款中的债务人认输等同于确认破产（O7）。 */
     record Surrender(String actor, long gameNo) implements GameCommand {
     }

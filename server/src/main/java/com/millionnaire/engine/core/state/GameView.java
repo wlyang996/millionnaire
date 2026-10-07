@@ -13,7 +13,14 @@ import java.util.List;
  */
 public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                        BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
-                       List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand) {
+                       List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
+                       PublicMinigame minigame) {
+    public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
+                    BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
+                    List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand) {
+        this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt, myHand, null);
+    }
+
     public GameView {
         players = Immutable.list(players);
         orderDraws = Immutable.list(orderDraws);
@@ -40,5 +47,17 @@ public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players,
      */
     public record PublicDebt(long debtId, String debtor, String creditor, long amount, int segment, boolean continued,
                              boolean continueAvailable, long windowId) {
+    }
+
+    /**
+     * 进行中的虎口拔牙（危险牙保密，不在视图中）：小游戏编号（= 落点编号）、触发者、参与者（选牙顺序）、牙齿数、
+     * 已按下的牙（按先后）、当前选牙者及其窗口。
+     */
+    public record PublicMinigame(long minigameId, String trigger, List<String> participants, int teeth, List<Integer> picks,
+                                 String picker, long windowId) {
+        public PublicMinigame {
+            participants = Immutable.list(participants);
+            picks = Immutable.list(picks);
+        }
     }
 }

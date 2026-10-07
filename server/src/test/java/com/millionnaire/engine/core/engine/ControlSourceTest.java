@@ -86,7 +86,7 @@ class ControlSourceTest {
     @Test void everyGameCommandIsExplicitlyClassifiedAndNewOnesRequireAClassification() throws ReflectiveOperationException {
         Set<String> business=Set.of("RollDice","PayBail","BuyProperty","DeclinePurchase","StartLandAuction","UpgradeProperty",
                 "SkipUpgrade","BankMortgage","Redeem","FinishBank","EmergencyMortgage","ContinueDebt","DeclareBankruptcy",
-                "Surrender","DrawEventCard","DiscardCard");
+                "Surrender","DrawEventCard","DiscardCard","PickTooth");
         Set<String> control=Set.of("ResumeControl");
         Set<String> system=Set.of("SetControl","ConnectionSuspected","ConnectionConfirmed","Reconnected");
         Set<String> actual=new TreeSet<>();

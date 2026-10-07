@@ -14,7 +14,7 @@ public record LandingState(long landingId, long chainId, int tile, LandingStep s
     public LandingState { tasks = Immutable.list(tasks); generatedBy = Immutable.list(generatedBy); results = Immutable.list(results); }
     public LandingStep currentTask() { return cursor < tasks.size() ? tasks.get(cursor) : null; }
     public LandingStep next() {
-        return decisionOpen || pendingPayment != 0 || step == LandingStep.DEBT ? null : currentTask();
+        return decisionOpen || pendingPayment != 0 || step == LandingStep.DEBT || step == LandingStep.MINIGAME ? null : currentTask();
     }
     public LandingState withStep(LandingStep value, long payment) {
         return new LandingState(landingId, chainId, tile, value, payment, bought, tasks, generatedBy, results, cursor, decisionOpen, event);
