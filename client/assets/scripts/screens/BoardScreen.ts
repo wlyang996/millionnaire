@@ -568,11 +568,7 @@ export class BoardScreen extends Screen {
             }, 'debt'));
         } else if (w.kind === 'DISCARD') {
             this.openedFor = id;
-            const last = g.myHand.length - 1;
-            ctx.popups.open(new ConfirmPopup({
-                title: '手牌超过上限', message: '最多持有 6 张道具，需要弃掉一张。', confirmText: '弃掉最新的一张',
-                onConfirm: () => void online.act('DiscardCard', { windowId: id, index: Math.max(0, last) }),
-            }, 'discard'));
+            ctx.popups.open(new DiscardPopup(id).withDeadline(w.deadline));
         }
     }
 }
