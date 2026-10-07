@@ -1104,10 +1104,14 @@ final class TurnModule {
                 && c.segments().getLast().to() == g.player(c.playerId()).orElseThrow().position(), "move chain segment/flags invalid");
         if (c.segments().size() == 2) {
             var second = c.segments().getLast();
-            LobbyModule.expect(c.eventDrawn() && LobbyModule.board(config, g.settings()).tiles().get(segment.to()).type() == TileType.EVENT
+            TileType from = LobbyModule.board(config, g.settings()).tiles().get(segment.to()).type();
+            // 事件位移：抽卡事件的前进 / 后退（距离在事件区间内），或 2026-10-08 的去车站 / 回起点（前进，距离不足一圈）
+            boolean drawnMove = second.plannedDistance() >= config.economy().eventMoveMinSteps()
+                    && second.plannedDistance() <= config.economy().eventMoveMaxSteps();
+            boolean jump = second.kind() == MoveKind.EVENT_FORWARD && second.plannedDistance() >= 1 && second.plannedDistance() < size;
+            LobbyModule.expect(c.eventDrawn() && (from == TileType.EVENT || from == TileType.FIXED_EVENT)
                     && (second.kind() == MoveKind.EVENT_FORWARD || second.kind() == MoveKind.EVENT_BACKWARD)
-                    && second.plannedDistance() >= config.economy().eventMoveMinSteps() && second.plannedDistance() <= config.economy().eventMoveMaxSteps(),
-                    "event movement segment invalid");
+                    && (drawnMove || jump), "event movement segment invalid");
             LobbyModule.expect(c.plans().getLast().landingId() >= 1 && c.plans().getLast().landingId() < t.lastLandingId()
                     && c.plans().getLast().cursor() == 1, "event movement plan source invalid");
         } else {

@@ -129,6 +129,7 @@ export class TeethScreen extends Screen {
     private finishOnline(): void {
         const r = ctx.store.toothResult;
         if (!r || r.minigameId !== this.minigameId) return;
+        r.seen = true; // 结果只展示一次，之后不再把棋盘拉回结果页
         r.picks.forEach((t) => (this.pressed[t] = true));
         this.phase = 'closed';
         this.reward = r.reward;

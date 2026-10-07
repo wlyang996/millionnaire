@@ -29,7 +29,9 @@ class M3bProbabilityTest {
         var c = TestBoards.legacyV1();
         var events = new EnumMap<EventKind, Integer>(EventKind.class);
         for (int i = 0; i < 100; i++) { events.merge(EventModule.pick(c, i), 1, Integer::sum); }
-        assertEquals(c.eventWeights(), events);
+        var configured = new EnumMap<EventKind, Integer>(EventKind.class);
+        c.eventWeights().forEach((k, w) -> { if (w > 0) { configured.put(k, w); } }); // 权重为 0 的种类抽不到
+        assertEquals(configured, events);
         var cards = new EnumMap<CardType, Integer>(CardType.class);
         for (int i = 0; i < 1000; i++) { cards.merge(CardDeck.pick(c, i), 1, Integer::sum); }
         assertEquals(c.cardWeights(), cards);

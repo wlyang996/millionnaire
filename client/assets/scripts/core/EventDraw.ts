@@ -14,7 +14,8 @@
 import { CardType } from './Models';
 
 export type EventDrawPhase = 'IDLE' | 'WAITING' | 'FLIPPING' | 'RESULT';
-export type EventKind = 'CASH_REWARD' | 'CASH_FINE' | 'CARD' | 'MOVE' | 'JAIL';
+export type EventKind = 'CASH_REWARD' | 'CASH_FINE' | 'CARD' | 'MOVE' | 'JAIL'
+    | 'BUILD' | 'DOWNGRADE' | 'TO_STATION' | 'TO_START';
 
 export interface EventResult {
     kind: EventKind;
@@ -24,6 +25,43 @@ export interface EventResult {
     card: CardType | null;
     /** 位移格数：前进为正、后退为负（仅 MOVE，绝对值 1～3） */
     steps: number;
+    /** 选描述文案用的种子（联机为落点编号，所有人一致）；演示为 0 */
+    seed?: number;
+    /** 固定事件格的名字（如"随地吐痰"），有则作为描述文案；抽卡事件为空 */
+    label?: string;
+}
+
+/** 奖励 / 罚款的事件描述（用户 2026-10-08：不能只写加减，要有缘由）。按种子挑一条，所有客户端相同。 */
+export const REWARD_STORIES = [
+    '扶老奶奶过马路，好心有好报', '捡到钱包交还失主，获得酬谢', '参加社区义务植树，获得奖励', '小镇征文比赛获奖',
+    '帮邻居找回走失的小狗', '街头义演收到打赏', '买彩票中了小奖', '帮面包店搬货，老板发了红包',
+];
+export const FINE_STORIES = [
+    '随地吐痰，被罚款', '闯红灯被交警拦下', '乱扔垃圾被城管发现', '深夜喧哗被邻居投诉',
+    '违章停车被贴罚单', '在公园踩踏草坪', '图书馆的书逾期未还', '不小心打碎了商店的花瓶',
+];
+
+export function eventStory(r: EventResult): string {
+    if (r.label) return r.label;
+    const list = r.kind === 'CASH_REWARD' ? REWARD_STORIES : r.kind === 'CASH_FINE' ? FINE_STORIES : null;
+    if (!list) return '';
+    const i = Math.abs(((r.seed ?? 0) * 31 + r.amount / 10) | 0) % list.length;
+    return list[i];
+}
+
+/** 固定事件格的效果说明（格子详情页用）。 */
+export function fixedEventText(f: { kind: string; amount: number }): string {
+    switch (f.kind) {
+        case 'CASH_REWARD': return '踩到即奖励 ' + f.amount + ' 金币';
+        case 'CASH_FINE': return '踩到即罚款 ' + f.amount + ' 金币，现金不足按欠款处理';
+        case 'CARD': return '踩到即获得一张随机道具';
+        case 'JAIL': return '踩到即被送入监狱';
+        case 'BUILD': return '踩到即为自己随机一处房产免费加盖一级（满级或没有房产则无事发生）';
+        case 'DOWNGRADE': return '踩到即自己随机一处房产降一级（没有房子则无事发生）';
+        case 'TO_STATION': return '踩到即前进到随机一个车站，按车站规则结算；经过起点照常领奖励';
+        case 'TO_START': return '踩到即前进回到起点，领取起点奖励';
+        default: return '踩到即自动触发';
+    }
 }
 
 export interface EventDrawState {
@@ -42,6 +80,7 @@ export const EVENT_IDLE: EventDrawState = { phase: 'IDLE', actor: null, since: 0
 
 export const EVENT_KIND_LABEL: Record<EventKind, string> = {
     CASH_REWARD: '现金奖励', CASH_FINE: '现金罚款', CARD: '获得道具', MOVE: '位置移动', JAIL: '入狱',
+    BUILD: '免费加盖', DOWNGRADE: '房屋降级', TO_STATION: '前往车站', TO_START: '回到起点',
 };
 
 /** 事件类别概率（累计阈值，总和 100%）。 */
@@ -140,6 +179,10 @@ export function eventResultText(r: EventResult): { title: string; detail: string
         case 'CASH_FINE': return { title: EVENT_KIND_LABEL.CASH_FINE, detail: '罚款 ' + r.amount };
         case 'CARD': return { title: EVENT_KIND_LABEL.CARD, detail: '获得一张道具' };
         case 'MOVE': return { title: EVENT_KIND_LABEL.MOVE, detail: (r.steps > 0 ? '前进 ' : '后退 ') + Math.abs(r.steps) + ' 格' };
+        case 'BUILD': return { title: EVENT_KIND_LABEL.BUILD, detail: '随机一处房产免费加盖一级' };
+        case 'DOWNGRADE': return { title: EVENT_KIND_LABEL.DOWNGRADE, detail: '随机一处房产降一级' };
+        case 'TO_STATION': return { title: EVENT_KIND_LABEL.TO_STATION, detail: '前往随机一个车站' };
+        case 'TO_START': return { title: EVENT_KIND_LABEL.TO_START, detail: '回到起点' };
         default: return { title: EVENT_KIND_LABEL.JAIL, detail: '被送入监狱' };
     }
 }

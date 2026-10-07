@@ -192,7 +192,7 @@ export interface SHistoryRow {
 
 export interface BoardTemplateTile {
     index: number;
-    type: 'START' | 'PROPERTY' | 'STATION' | 'EVENT' | 'BANK' | 'JAIL' | 'REST' | 'GAME_ZONE';
+    type: 'START' | 'PROPERTY' | 'STATION' | 'EVENT' | 'FIXED_EVENT' | 'BANK' | 'JAIL' | 'REST' | 'GAME_ZONE';
     tier: 'LOW' | 'MID' | 'HIGH' | null;
     auctionDesignated: boolean;
 }
@@ -202,6 +202,8 @@ export interface BoardTemplate {
     minPlayers: number;
     maxPlayers: number;
     tiles: BoardTemplateTile[];
+    /** 固定事件格效果，第 k 项对应第 k 个 FIXED_EVENT 格（旧服务端没有） */
+    fixedEvents?: { kind: string; amount: number; label: string }[];
 }
 
 /** 客户端可发的对局命令（GAME 消息的 command）。 */

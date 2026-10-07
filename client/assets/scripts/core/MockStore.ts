@@ -21,6 +21,12 @@ export const ME = 'p1';
 
 /** 事件卡结果展示时长，到时自动收起。 */
 export const EVENT_RESULT_SHOW_MS = 3000;
+/** 奖励 / 罚款结果停留更短（金钱一眼看完，道具等要看效果，用户 2026-10-08）。 */
+export const EVENT_CASH_SHOW_MS = 1600;
+
+function isCash(r: EventResult | null): boolean {
+    return !!r && (r.kind === 'CASH_REWARD' || r.kind === 'CASH_FINE');
+}
 
 export type ConnPreset = 'normal' | 'mixed' | 'mySuspect';
 
@@ -356,6 +362,24 @@ export class MockStore {
         this.emit();
     }
 
+    /** 走到固定事件格（演示）：不等点击，直接翻开格子写明的效果。 */
+    eventFixed(actor: string, tileIndex: number): void {
+        const f = this.game.tiles[tileIndex]?.fixed;
+        const p = this.player(actor);
+        if (!f || !p || this.eventDraw.phase !== 'IDLE') return;
+        const n = this.game.tiles.length;
+        let steps = 0;
+        if (f.kind === 'TO_START') steps = (n - tileIndex) % n;
+        else if (f.kind === 'TO_STATION') {
+            const st = this.game.tiles.filter((t) => t.type === 'STATION');
+            const target = st[Math.floor(Math.random() * st.length)].index;
+            steps = (((target - tileIndex) % n) + n) % n;
+        }
+        const result: EventResult = { kind: f.kind as EventResult['kind'], amount: f.amount, card: null, steps, label: f.label };
+        this.eventDraw = { phase: 'FLIPPING', actor, since: Date.now(), result, settled: this.eventDraw.settled };
+        this.emit();
+    }
+
     /** 点击卡片（仅触发者本人有效；重复点击被忽略）。返回是否被接受。 */
     eventClick(viewer: string): boolean {
         if (this.online) {
@@ -383,7 +407,7 @@ export class MockStore {
             if (e.phase === 'FLIPPING' && e.result && now - e.since >= Theme.anim.eventFlipMs) {
                 this.eventDraw = { ...e, phase: 'RESULT', since: now };
                 this.emit();
-            } else if (e.phase === 'RESULT' && now - e.since >= EVENT_RESULT_SHOW_MS) {
+            } else if (e.phase === 'RESULT' && now - e.since >= (isCash(e.result) ? EVENT_CASH_SHOW_MS : EVENT_RESULT_SHOW_MS)) {
                 this.eventDraw = { ...EVENT_IDLE, settled: e.settled };
                 this.emit();
             }
@@ -417,7 +441,15 @@ export class MockStore {
         const n = this.game.tiles.length;
         if (r.kind === 'CASH_REWARD') p.cash += r.amount;
         else if (r.kind === 'CASH_FINE' && p.cash >= r.amount) p.cash -= r.amount;
-        else if (r.kind === 'MOVE') p.position = (((p.position + r.steps) % n) + n) % n; // 演示：直接位移，不再触发落点/第二个事件格
+        else if (r.kind === 'TO_STATION' || r.kind === 'TO_START') {
+            if (p.position + r.steps >= n) p.cash += START_BONUS;
+            p.position = (p.position + r.steps) % n;
+        } else if (r.kind === 'BUILD' || r.kind === 'DOWNGRADE') {
+            const up = r.kind === 'BUILD';
+            const mine = this.game.properties.filter((q) => q.owner === actor && !q.mortgaged
+                && this.game.tiles[q.tileIndex].type === 'PROPERTY' && (up ? q.level < 3 : q.level > 0));
+            if (mine.length) mine[Math.floor(Math.random() * mine.length)].level += up ? 1 : -1;
+        } else if (r.kind === 'MOVE') p.position = (((p.position + r.steps) % n) + n) % n; // 演示：直接位移，不再触发落点/第二个事件格
         else if (r.kind === 'JAIL') {
             const j = this.game.tiles.findIndex((t) => t.type === 'JAIL');
             if (j >= 0) p.position = j;

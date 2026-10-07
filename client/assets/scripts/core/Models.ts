@@ -11,7 +11,10 @@ export type GamePhase = 'ORDERING' | 'PLAYING' | 'FINISHED';
 export type EndMode = 'TIME_LIMIT' | 'BANKRUPTCY';
 export type TurnStage = 'NONE' | 'JAIL_DECISION' | 'PRE_ROLL' | 'LANDING' | 'AWAITING_FLOW';
 export type FlowKind = 'TURN' | 'AUCTION' | 'TRADE' | 'ATTACK' | 'DEBT' | 'MINIGAME' | 'DISCARD' | 'RESPONSE' | 'LAND_AUCTION';
-export type TileType = 'START' | 'PROPERTY' | 'STATION' | 'EVENT' | 'BANK' | 'JAIL' | 'REST' | 'GAME_ZONE';
+export type TileType = 'START' | 'PROPERTY' | 'STATION' | 'EVENT' | 'FIXED_EVENT' | 'BANK' | 'JAIL' | 'REST' | 'GAME_ZONE';
+
+/** 固定事件格的效果（服务端 BoardTemplate.fixedEvents，按固定事件格顺序）。 */
+export interface FixedEventSpec { kind: string; amount: number; label: string }
 export type Tier = 'LOW' | 'MID' | 'HIGH';
 
 /** 14 种道具（与服务端 CardType 一致） */
@@ -63,6 +66,8 @@ export interface BoardTile {
     tier?: Tier; // 仅 PROPERTY
     /** 指定拍卖地产（30 格 3 块、50 格 5 块） */
     auctionLot?: boolean;
+    /** 仅 FIXED_EVENT：踩到即自动触发的效果 */
+    fixed?: FixedEventSpec;
 }
 
 /** [公开][待服务端] 地产/车站动态状态 */

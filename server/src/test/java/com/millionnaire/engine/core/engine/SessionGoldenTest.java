@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 class SessionGoldenTest {
     private static final String CONFIG_HASH = "15be5a0b1185660540974ce2b74ac25d73bfb205f06e368cdb3c79b0ed26b668";
     /** 测试配置新增道具开关（cardsEnabled，测试配置关闭）后的配置哈希；换回 CONFIG_HASH 后历史黄金值不变。 */
-    private static final String CARDS_CONFIG_HASH = "dc874ba180688decc09099487a7c79aa42754ff1c271a1a4aba2c84a9f692ba9";
+    private static final String CARDS_CONFIG_HASH = "993156dea48867f0056d486d725558496081183a4e68027df45e83def2db7edd"; // engine-0.13.0-m6c 起（事件拆分，测试配置行为不变）
     private static final String PREVIOUS_CONFIG_HASH = "f8524a62880278ca3e3a0e6838140e916f28cf1b2498111c53a29ddb38ef709d";
 
     @Test void scriptedSessionDebtToFinalLogHasStableBytes() {
@@ -20,10 +20,10 @@ class SessionGoldenTest {
         String raw = t.engine.encodeEvents(t.log);
         assertEquals(raw, t.engine.encodeEvents(t.engine.decodeEvents(raw)));
         // 虎口拔牙接入（engine-0.11.0-m6a）不改变这段债务会话：换回 m3c 版本号后，以下历史黄金值逐字节不变
-        // 开局道具数接入（engine-0.12.0-m6b）给房间设置加了 initialCards；旧局沿用配置（-1），去掉这个字段后与历史字节一致
-        String bytes = raw.replace("engine-0.12.0-m6b", "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
+        // 开局道具数接入（engine-0.13.0-m6c）给房间设置加了 initialCards；旧局沿用配置（-1），去掉这个字段后与历史字节一致
+        String bytes = raw.replace("engine-0.13.0-m6c", "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
                 .replace(",\"initialCards\":-1", "");
-        assertEquals(1, raw.split("engine-0.12.0-m6b", -1).length - 1, "only the version header changes");
+        assertEquals(1, raw.split("engine-0.13.0-m6c", -1).length - 1, "only the version header changes");
         // Preserve the historical behavioral golden after removing only this revision's source metadata.
         var historicalEvents = t.log.stream().map(e -> {
             if (e instanceof com.millionnaire.engine.core.event.KernelEvent.InputAccepted a
@@ -38,7 +38,7 @@ class SessionGoldenTest {
         String historicalBytes = t.engine.encodeEvents(historicalEvents).replace(CARDS_CONFIG_HASH, CONFIG_HASH)
                 .replace(",\"initialCards\":-1", "")
                 .replaceAll(",\"plannedDistance\":\\d+,\"stoppedBy\":null", "")
-                .replace("engine-0.12.0-m6b", "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")
+                .replace("engine-0.13.0-m6c", "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")
                 .replace(CONFIG_HASH, PREVIOUS_CONFIG_HASH);
         assertEquals("46953a081aa15740d69b5fbee5670e036bff181e77ac3130cd3e40e68135e5de",
                 Canonical.sha256Hex(historicalBytes.getBytes(StandardCharsets.UTF_8)),

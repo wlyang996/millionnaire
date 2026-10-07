@@ -6,7 +6,7 @@
  */
 import { Node } from 'cc';
 import { CARD_NAMES } from '../../core/Models';
-import { EventDrawState } from '../../core/EventDraw';
+import { EventDrawState, eventStory } from '../../core/EventDraw';
 import { Theme } from '../../core/Theme';
 import { col, fillCircle, fillRR, gfx, line, mk, onTap, text } from '../../ui/Kit';
 import { inlineRow, Seg } from '../../popups/Common';
@@ -26,6 +26,10 @@ const FACE: Record<string, { title: string; note: string }> = {
     CARD: { title: '道具', note: '手牌满时进入弃牌' },
     MOVE: { title: '位移', note: '按落点规则结算·不连抽事件' },
     JAIL: { title: '入狱', note: '本回合结束' },
+    BUILD: { title: '加盖', note: '自己的房产随机一处，满级则无' },
+    DOWNGRADE: { title: '降级', note: '自己的房产随机一处，无房则无' },
+    TO_STATION: { title: '车站', note: '前进到车站·经过起点领奖励' },
+    TO_START: { title: '起点', note: '前进到起点·领起点奖励' },
 };
 
 export class EventOverlay {
@@ -97,7 +101,10 @@ export class EventOverlay {
         g.fill();
         const r = state.result;
         if (!r) return;
-        const key = { CASH_REWARD: 'event_reward', CASH_FINE: 'event_fine', CARD: 'event_tool', MOVE: 'event_move', JAIL: 'event_jail' }[r.kind];
+        const key = {
+            CASH_REWARD: 'event_reward', CASH_FINE: 'event_fine', CARD: 'event_tool', MOVE: 'event_move', JAIL: 'event_jail',
+            BUILD: 'event_tool', DOWNGRADE: 'event_fine', TO_STATION: 'event_move', TO_START: 'event_move',
+        }[r.kind];
         if (art(n, key, -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 'stretch')) g.clear();
         const f = FACE[r.kind];
         text(n, f.title, -CARD_W / 2, -CARD_H / 2 + 8, CARD_W, 34, 26, Theme.c.white, { bold: true });
@@ -107,7 +114,15 @@ export class EventOverlay {
             : r.kind === 'CASH_FINE' ? [{ t: '-' + r.amount, size: 26, color: red }, { t: '金币', size: 18, color: navy }]
                 : r.kind === 'CARD' ? [{ t: '获得' + (r.card ? CARD_NAMES[r.card] : '道具') + '×1', size: 18, color: navy }]
                     : r.kind === 'MOVE' ? [{ t: r.steps > 0 ? '前进' : '后退', size: 20, color: navy }, { t: String(Math.abs(r.steps)), size: 24, color: red }, { t: '格', size: 20, color: navy }]
-                        : [{ t: '前往监狱', size: 20, color: navy }];
+                        : r.kind === 'JAIL' ? [{ t: '前往监狱', size: 20, color: navy }]
+                            : [{ t: ({ BUILD: '免费加盖一级', DOWNGRADE: '房屋降一级', TO_STATION: '前往车站', TO_START: '回到起点' } as Record<string, string>)[r.kind] ?? '', size: 18, color: navy }];
+        const story = eventStory(r);
+        if (story) {
+            // 奖励 / 罚款：缘由（两行以内）+ 金额，例如"随地吐痰，被罚款 -200"
+            text(n, story, -CARD_W / 2 + 8, CARD_H / 2 - 78, CARD_W - 16, 40, 13, navy, { bold: true, wrap: true, lineHeight: 18 });
+            inlineRow(n, 0, CARD_H / 2 - 38, 32, segs, 2);
+            return;
+        }
         inlineRow(n, 0, CARD_H / 2 - 66, 34, segs, 2);
         text(n, f.note, -CARD_W / 2 + 6, CARD_H / 2 - 30, CARD_W - 12, 22, 12, Theme.c.noteGray, { bold: true });
     }

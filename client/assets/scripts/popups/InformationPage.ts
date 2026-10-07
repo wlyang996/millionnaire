@@ -4,6 +4,9 @@ import { Theme } from '../core/Theme';
 import { art } from '../ui/Art';
 import { col, fillRR, gfx, mk, onTap, paintPanel, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
+import { primaryButton } from '../ui/Buttons';
+import { ctx } from '../ui/Ctx';
+import { Toast } from '../ui/Toast';
 
 export abstract class InformationPage extends Popup {
     get coversScreen(): boolean { return true; }
@@ -55,4 +58,40 @@ export function informationClose(parent: Node, x: number, y: number, w: number, 
 
 export function shopKey(type: string, tier?: string): string {
     return type === 'STATION' ? 'shop_station' : tier === 'HIGH' ? 'shop_high' : tier === 'MID' ? 'shop_mid' : 'shop_low';
+}
+
+/**
+ * 格子详情底部（用户 2026-10-08）：我的已抵押资产在"关闭"旁多一个"赎回"。只在自己回合的操作窗口里可用
+ * （投骰前、狱中、买地 / 升级 / 银行窗口，与服务端规则一致），需付抵押本金；不在银行另收 10% 手续费。
+ * 否则只有"关闭"。返回 true 表示画了赎回按钮。
+ */
+export function redeemOrClose(parent: Node, index: number, x: number, y: number, w: number, close: () => void): boolean {
+    const st = ctx.store;
+    const prop = st.prop(index);
+    const online = st.online;
+    if (!online || !prop || !prop.mortgaged || prop.owner !== st.myId) {
+        informationClose(parent, x, y, w, close);
+        return false;
+    }
+    const me = st.me();
+    const atBank = st.tile(me.position).type === 'BANK';
+    const cost = prop.mortgagePaid + (atBank ? 0 : Math.floor(prop.mortgagePaid / 10));
+    const half = (w - 16) / 2;
+    informationClose(parent, x, y, half, close);
+    const win = online.myWindow('TURN');
+    const g = st.game;
+    const stageOk = g.stage === 'PRE_ROLL' || g.stage === 'JAIL_DECISION'
+        || (g.stage === 'LANDING' && !!g.landing && g.landing.decisionPending && ['BUY', 'UPGRADE', 'BANK'].includes(g.landing.step));
+    const ok = !!win && online.isOpen(win) && stageOk && g.phase === 'PLAYING';
+    const b = primaryButton(parent, '赎回 ' + cost, x + half + 16, y, half, 86, () => {
+        if (!win) return;
+        void online.act('Redeem', { windowId: win.windowId, tile: index }).then((r) => {
+            if (r.ok) {
+                Toast.show('已赎回，花费 ' + cost);
+                close();
+            }
+        });
+    }, 34);
+    b.setEnabled(ok && me.cash >= cost, !ok ? '只能在自己回合的投骰前或买地 / 升级 / 银行操作时赎回' : '现金不足，需要 ' + cost);
+    return true;
 }

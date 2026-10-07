@@ -28,7 +28,11 @@ public enum LandingStep {
     /** 游戏区：虎口拔牙（回合处于 AWAITING_FLOW，等待小游戏结束；不足两名存活者不启动）。 */
     MINIGAME,
     /** 指定拍卖地：到达者发起土地拍卖后，回合处于 AWAITING_FLOW，等待拍卖结束。 */
-    AUCTION;
+    AUCTION,
+    /** 固定事件格（2026-10-08）：停下立即按格子的固定效果生效，不抽卡。 */
+    FIXED_EVENT,
+    /** 事件"免费加盖" / "房屋失修"：随机挑自己的一块地产升 / 降一级（没有合适的地就无事发生）。 */
+    EVENT_BUILD, EVENT_DOWNGRADE;
 
     /** 等待覆盖流程返回的步骤（决策不在回合窗口里）。 */
     public boolean awaitsFlow() {

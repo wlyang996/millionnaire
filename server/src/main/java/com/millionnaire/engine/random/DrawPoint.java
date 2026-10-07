@@ -22,6 +22,10 @@ public enum DrawPoint {
     EVENT_MOVE_DIRECTION("R8a"),
     /** R8 事件位移距离。 */
     EVENT_MOVE_DISTANCE("R8b"),
+    /** R8c 事件"去车站"的目标车站（2026-10-08）。 */
+    EVENT_STATION("R8c"),
+    /** R7b 事件"加盖 / 降级"的目标地产（2026-10-08）。 */
+    EVENT_TARGET("R7b"),
     /** R10 危险牙。 */
     DANGER_TOOTH("R10"),
     /** R11 代选牙。 */

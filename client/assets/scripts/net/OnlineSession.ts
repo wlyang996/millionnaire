@@ -61,6 +61,8 @@ export class OnlineSession {
     private hadGame = false;
     /** 本条推送里抽到事件卡时动画队列的长度：翻牌插在这里（之前的走棋播完、之后的事件位移等翻牌看完）。 */
     private eventCueAt = -1;
+    /** 最近一次事件的种类（加盖 / 降级提示用） */
+    private lastEventKind = '';
     /** 已为当前的"等待抽卡"排过提示（避免每条推送重复排）。 */
     private eventWaitQueued = false;
     /** 房间最近聊天（服务端 CHAT 推送的完整列表）。 */
@@ -263,8 +265,19 @@ export class OnlineSession {
                 // 事件后退：步数记为负，棋盘页逐格往回跳
                 const back = String(d.kind ?? '').indexOf('BACK') >= 0;
                 this.cues.push({ kind: 'move', playerId: String(d.playerId), from: Number(d.from), steps: (back ? -1 : 1) * Number(d.steps) });
-            } else if (e.kind === 'EventDrawn') {
+            } else if (e.kind === 'EventDrawn' || e.kind === 'FixedEventTriggered') {
                 this.eventCueAt = this.cues.length;
+                this.lastEventKind = String(d.kind);
+            } else if (e.kind === 'EventPropertyChanged') {
+                // 事件加盖 / 降级：翻牌之后提示落到了哪块地（没有可变的房产也说一声）
+                const pid = String(d.playerId);
+                const g0 = this.store.session.game;
+                const who = pid === this.myId ? '你' : g0?.players.find((p) => p.playerId === pid)?.nickname ?? '玩家';
+                const ti = Number(d.tile);
+                const up = this.lastEventKind !== 'DOWNGRADE';
+                const text = ti < 0 ? who + (up ? '没有可以加盖的房产' : '没有可以降级的房产')
+                    : who + '的' + (g0?.tiles[ti]?.name ?? '') + (up ? '免费加盖到 ' : '降到 ') + Number(d.level) + ' 级';
+                this.cues.push({ kind: 'notice', playerId: pid, text });
             } else if (e.kind === 'PlayerJailed') {
                 this.cues.push({ kind: 'jail', playerId: String(d.playerId) });
             }
@@ -309,15 +322,20 @@ export class OnlineSession {
     private trackEventDraw(u: UpdateMsg): void {
         let result: EventResult | null = null;
         let actor: string | null = null;
+        let landingTile = -1;
         for (const e of u.events) {
             const d = e.data ?? {};
-            if (e.kind === 'EventDrawn') {
+            if (e.kind === 'LandingStarted') {
+                landingTile = Number(d.tile);
+            } else if (e.kind === 'EventDrawn' || e.kind === 'FixedEventTriggered') {
                 actor = String(d.playerId);
                 const back = String(d.moveKind ?? '').indexOf('BACK') >= 0;
                 result = {
                     kind: String(d.kind) as EventKind, amount: Number(d.amount ?? 0), card: null,
-                    steps: (back ? -1 : 1) * Number(d.distance ?? 0),
+                    steps: (back ? -1 : 1) * Number(d.distance ?? 0), seed: Number(d.landingId ?? 0),
                 };
+                // 固定事件格：踩上就自动翻开，描述用格子的名字（如"随地吐痰"）
+                if (e.kind === 'FixedEventTriggered') result.label = this.store.session.game?.tiles[landingTile]?.fixed?.label;
             } else if (e.kind === 'EventCardReceived' && result) {
                 result.card = String(d.card) as CardType;
             }
@@ -426,6 +444,7 @@ export class OnlineSession {
         for (const e of u.events) {
             const d = e.data ?? {};
             if (e.kind === 'MinigameStarted') {
+                this.store.toothResult = null; // 新一局开始：丢掉上一局的结果
                 participants = Array.isArray(d.participants) ? (d.participants as unknown[]).map(String) : [];
                 picks = [];
             } else if (e.kind === 'ToothPicked') {

@@ -24,8 +24,16 @@ export function tilesFor(boardId: string, boards: BoardTemplate[] | null): Board
     const tpl = boards?.find((b) => b.id === boardId);
     if (!tpl) return buildBoard(size);
     const names = boardNames(size);
+    let fixedNo = 0;
     return tpl.tiles.map((t): BoardTile => {
         const tile: BoardTile = { index: t.index, type: t.type, name: names[t.index] ?? String(t.index) };
+        if (t.type === 'FIXED_EVENT') {
+            const f = tpl.fixedEvents?.[fixedNo++];
+            if (f) {
+                tile.fixed = f;
+                tile.name = f.label;
+            }
+        }
         if (t.type === 'PROPERTY' && t.tier) {
             tile.tier = t.tier;
             tile.auctionLot = t.auctionDesignated;
