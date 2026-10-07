@@ -122,6 +122,7 @@ export class OnlineSession {
                 minutes: Math.max(1, Math.round((r.endedAt - r.startedAt) / 60000)),
                 rank: r.rank ?? 0,
                 finalAssets: r.netWorth ?? r.cash ?? 0,
+                endedAt: r.endedAt,
             }));
             return true;
         } catch {

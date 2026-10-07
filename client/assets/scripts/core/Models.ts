@@ -182,6 +182,8 @@ export interface HistoryEntry {
     minutes: number;
     rank: number;
     finalAssets: number;
+    /** 结束时间（epoch 毫秒）；演示数据没有 */
+    endedAt?: number;
 }
 
 /** 本机资料 */
