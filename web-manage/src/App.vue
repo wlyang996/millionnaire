@@ -5,14 +5,17 @@ import { call, setToken, token } from './api.js'
 
 const TIER_LABEL = { LOW: '低价地产', MID: '中价地产', HIGH: '高价地产' }
 const LEVELS = ['未升级', '一级', '二级', '三级']
-const EVENT_LABEL = { CASH_REWARD: '现金奖励', CASH_FINE: '现金罚款', CARD: '获得道具', MOVE: '随机移动', JAIL: '进监狱' }
+const EVENT_LABEL = {
+  CASH_REWARD: '现金奖励', CASH_FINE: '现金罚款', CARD: '获得道具', MOVE: '随机移动', JAIL: '进监狱',
+  BUILD: '免费升级一块地', DOWNGRADE: '自己一块地降级', TO_STATION: '前往随机车站', TO_START: '回到起点',
+}
 const CARD_LABEL = {
   ROADBLOCK: '路障', RENT_WAIVER: '免租', BUILD: '建造', DOWNGRADE: '降级', FIXED_MOVE: '定点移动',
   JAIL_RELEASE: '出狱', AUCTION: '拍卖', TRADE: '交易', REFUSE_PURCHASE: '拒绝购买', HOUSE_PROTECTION: '房屋保护',
   QUERY: '查询', FORCED_PURCHASE: '强制购房', DEMOLISH: '拆楼', CLEAR_LAND: '清地',
 }
 const TILE_LABEL = {
-  START: '起点', STATION: '车站', EVENT: '事件', BANK: '银行', JAIL: '监狱', REST: '休息', GAME_ZONE: '小游戏',
+  START: '起点', STATION: '车站', EVENT: '事件', FIXED_EVENT: '固定事件', BANK: '银行', JAIL: '监狱', REST: '休息', GAME_ZONE: '小游戏',
 }
 const BOARD_LABEL = { 'classic-30': '30 格地图', 'classic-50': '50 格地图' }
 
