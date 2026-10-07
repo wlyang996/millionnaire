@@ -25,6 +25,10 @@ type Pose = 'crouch' | 'airborne' | 'land' | 'ready';
 /** 棋子：idle 为站立立绘；跳跃时切换分镜 02 的四个姿态帧（同一 355×306 画布、脚底基线一致），在脚底支点做挤压拉伸。 */
 interface Token {
     node: Node; s: number; offX: number; offY: number; avatar: number;
+    /** 单独站一格时的偏移：走棋途中从同格挤着的位置平滑移到格子正中，之后每格都落在正中。 */
+    soloX: number; soloY: number;
+    /** 本次走棋的起点格（null = 不在走棋中）。 */
+    hopStart: number | null;
     body: Node; idle: Node | null; poses: Map<Pose, Node> | null; pose: Pose | null;
 }
 const POSE_CANVAS = { w: 355, h: 306, figure: 288, feet: 298 };
@@ -518,7 +522,7 @@ export class BoardView {
             if (!idle) avatar(n, 0, 0, s, p.avatar, p.nickname, { ring: me ? Theme.c.blue : cur ? Theme.c.yellow : undefined });
             if (p.inJail) this.drawBars(n, s);
             if (me) this.drawBubble(n, s, '我·' + myName);
-            this.tokens.set(p.playerId, { node: n, s, offX, offY, avatar: p.avatar, body, idle, poses: null, pose: null });
+            this.tokens.set(p.playerId, { node: n, s, offX, offY, soloX: 0, soloY: t * 0.14 - s / 2, hopStart: null, avatar: p.avatar, body, idle, poses: null, pose: null });
         }
     }
 
@@ -540,7 +544,9 @@ export class BoardView {
         const inRow = row < rows - 1 ? perRow : together - row * 4;
         const step = t * (together > 2 ? 0.26 : 0.34);
         const offX = together <= 1 ? 0 : (col0 - (inRow - 1) / 2) * step;
-        const offY = (rows > 1 ? (row - 0.5) * t * 0.28 : 0) + t * 0.12 - s / 2;
+        // 立牌（圆牌 + 底座）整体落在格子正中：节点顶在中心上方约 0.58 个边长
+        const soloY = -s * 0.08;
+        const offY = (rows > 1 ? (row - 0.5) * t * 0.28 : 0) + soloY;
         const n = mk(parent, 'Token:' + p.playerId, c.x + offX - s / 2, c.y + offY - s / 2, s, s);
         const gg = gfx(n);
         // 底座：投影 + 深色侧面 + 浅色顶面（"我"用蓝色发光底座）
@@ -582,7 +588,7 @@ export class BoardView {
         }
         if (p.inJail) this.drawBars(n, s, badge ? 1.06 : 1.42);
         if (me) this.drawBubble(n, badge ? s * 0.9 : s * 1.1, '我·' + myName);
-        this.tokens.set(p.playerId, { node: n, s, offX, offY, avatar: p.avatar, body, idle, poses: badge ? new Map() : null, pose: null });
+        this.tokens.set(p.playerId, { node: n, s, offX, offY, soloX: 0, soloY, hopStart: null, avatar: p.avatar, body, idle, poses: badge ? new Map() : null, pose: null });
     }
 
     /** 在监狱里：人物前面一排铁栏杆。 */
@@ -658,7 +664,12 @@ export class BoardView {
         }
         const x = A.x + (B.x - A.x) * u;
         const y = A.y + (B.y - A.y) * u;
-        place(tk.node, x + tk.offX - tk.s / 2, y + tk.offY - tk.s / 2 - lift);
+        // 第一跳从同格挤着的位置滑到正中，之后每格都落在格子正中
+        if (tk.hopStart === null) tk.hopStart = a;
+        const w = a === tk.hopStart ? u : 1;
+        const ox = tk.offX + (tk.soloX - tk.offX) * w;
+        const oy = tk.offY + (tk.soloY - tk.offY) * w;
+        place(tk.node, x + ox - tk.s / 2, y + oy - tk.s / 2 - lift);
         tk.body.setScale(sx, sy, 1);
         this.showPose(tk, pose);
         return { x, y };
@@ -669,6 +680,7 @@ export class BoardView {
         const tk = this.tokens.get(id);
         if (!tk) return;
         tk.body.setScale(1, 1, 1);
+        tk.hopStart = null;
         this.showPose(tk, null);
     }
 
