@@ -66,6 +66,16 @@ export interface SDebt {
     windowId: number;
 }
 
+export interface SMinigame {
+    minigameId: number;
+    trigger: string;
+    participants: string[];
+    teeth: number;
+    picks: number[];
+    picker: string;
+    windowId: number;
+}
+
 export interface SGame {
     gameNo: number;
     phase: 'RUNNING' | 'DRAINING';
@@ -80,6 +90,8 @@ export interface SGame {
     landing: SLanding | null;
     debt: SDebt | null;
     myHand: string[];
+    /** 进行中的虎口拔牙（旧版后台没有该字段） */
+    minigame?: SMinigame | null;
 }
 
 export interface SStanding {
@@ -166,4 +178,4 @@ export interface BoardTemplate {
 export type GameCommandName =
     | 'RollDice' | 'PayBail' | 'DrawEventCard' | 'DiscardCard' | 'BuyProperty' | 'DeclinePurchase'
     | 'StartLandAuction' | 'UpgradeProperty' | 'SkipUpgrade' | 'BankMortgage' | 'Redeem' | 'EmergencyMortgage'
-    | 'FinishBank' | 'ContinueDebt' | 'DeclareBankruptcy' | 'ResumeControl' | 'Surrender';
+    | 'FinishBank' | 'ContinueDebt' | 'DeclareBankruptcy' | 'ResumeControl' | 'Surrender' | 'PickTooth';

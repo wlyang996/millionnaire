@@ -108,5 +108,6 @@ function adaptGame(g: SGame, boards: BoardTemplate[] | null, lastDice: number, n
         chat: [],
         landing: g.landing,
         debt: g.debt,
+        minigame: g.minigame ?? null,
     };
 }

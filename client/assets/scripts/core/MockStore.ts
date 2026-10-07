@@ -10,7 +10,7 @@ import { Theme } from './Theme';
 import type { OnlineSession } from '../net/OnlineSession';
 import {
     AuctionView, BoardTile, Card, CardType, ChatLine, ConnState, ControlMode, DebtView, GameResult, GameView,
-    HistoryEntry, Member, PlayerView, Profile, PropertyState, RoomSettings, SessionView,
+    HistoryEntry, Member, MinigameOutcome, PlayerView, Profile, PropertyState, RoomSettings, SessionView,
 } from './Models';
 import {
     auctionParams, boardSizeOf, emergencyMortgage, landPrice, maxPlayers, netWorth, rankStandings, standardValue, START_BONUS,
@@ -59,6 +59,8 @@ export class MockStore {
     matchOverrideSec: number | null = null;
     /** 事件卡抽卡状态机（core/EventDraw.ts）；动画/超时用 Date.now()（不受演示暂停影响） */
     eventDraw: EventDrawState = EVENT_IDLE;
+    /** [联机] 最近一次虎口拔牙的结果（棋盘页据此进入结果页） */
+    toothResult: MinigameOutcome | null = null;
     private listeners: Listener[] = [];
 
     constructor() {

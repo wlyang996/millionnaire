@@ -527,6 +527,12 @@ export class BoardScreen extends Screen {
         if (this.dice && this.dice.playing) return;
         // 事件卡翻牌与结果展示期间不播后续走棋（先看清结果再移动）
         if (st.eventDraw.phase === 'FLIPPING' || st.eventDraw.phase === 'RESULT') return;
+        // 虎口拔牙（落到游戏区、走棋动画播完后）：所有人进入小游戏页；刚结束的也去看一眼结果
+        const tr = st.toothResult;
+        if (ctx.screens.currentId === this.id && online.cues.length === 0 && (g.minigame || (tr && !tr.seen))) {
+            ctx.screens.push('teeth');
+            return;
+        }
         const cue = online.cues.shift();
         if (cue) {
             const who = st.player(cue.playerId);
@@ -557,6 +563,7 @@ export class BoardScreen extends Screen {
             else if (landing.step === 'UPGRADE') ctx.popups.open(new UpgradePopup(landing.tile, id).withDeadline(w.deadline));
             else if (landing.step === 'BANK') ctx.popups.open(new BankPopup(id));
             else if (landing.step === 'EVENT') this.openedFor = -1; // 事件格不弹窗：棋盘中央的卡牌由 eventDraw 驱动，点卡即抽
+            else if (landing.step === 'DISCARD') ctx.popups.open(new DiscardPopup(id).withDeadline(w.deadline)); // 事件得卡超出上限
             else this.openedFor = -1; // 其他步骤由服务端自动推进
         } else if (w.kind === 'TURN' && g.stage === 'JAIL_DECISION') {
             // 设计稿 15 右：出狱判定页；掷骰交回棋盘页播放骰子动画

@@ -2,10 +2,11 @@
  * 页面 5：虎口拔牙。牙齿数 = 参与人数 × 2；每颗牙独立可点，已按压牙变暗；危险牙从外观上无法识别
  * （演示里危险牙由客户端随机，真实由服务端固定且结束前不公开）。每次选择 10 秒（截止时间驱动），
  * 超时由系统随机代选；触发闭合者输，其余玩家各获 500，输家不扣钱。
+ * 联机：参与者、已按下的牙、当前选牙者与倒计时都取服务端视图（game.minigame 与对应窗口）；轮到我时点牙发送 PickTooth，
+ * 代选由服务端完成；结束后按 MinigameEnded（store.toothResult）显示合嘴与结果页，再回到棋盘。联机时不显示返回按钮。
  */
 import { Label, Node } from 'cc';
 import { Countdown } from '../core/Clock';
-import { ME } from '../core/MockStore';
 import { PlayerView } from '../core/Models';
 import { MINIGAME_REWARD, SECONDS, toothCount } from '../core/Rules';
 import { Theme, textWidth } from '../core/Theme';
@@ -39,13 +40,26 @@ export class TeethScreen extends Screen {
     private loser: PlayerView | null = null;
     /** 闭合后先看鳄鱼合嘴，到此时刻切到结算页 */
     private resultAt = 0;
+    /** 联机：本页对应的小游戏编号、本局奖励、已同步的窗口、选牙请求进行中 */
+    private minigameId = 0;
+    private reward = MINIGAME_REWARD;
+    private syncedWindow = 0;
+    private sending = false;
 
     onShow(): void {
         this.inited = false;
     }
 
+    private get myId(): string {
+        return ctx.store.myId;
+    }
+
     private init(): void {
         const st = ctx.store;
+        if (st.online) {
+            this.initOnline();
+            return;
+        }
         this.participants = st.game.players.filter((p) => p.life === 'ALIVE');
         // 从触发者（当前回合玩家）起按顺序轮流
         const start = Math.max(0, this.participants.findIndex((p) => p.playerId === st.game.currentPlayer));
@@ -61,6 +75,80 @@ export class TeethScreen extends Screen {
         this.inited = true;
     }
 
+    // ---------- 联机 ----------
+    private initOnline(): void {
+        const st = ctx.store;
+        const m = st.game?.minigame;
+        const r = st.toothResult;
+        this.phase = 'picking';
+        this.loser = null;
+        this.syncedWindow = 0;
+        this.sending = false;
+        if (m) {
+            this.minigameId = m.minigameId;
+            this.participants = this.players(m.participants);
+            this.pressed = new Array<boolean>(m.teeth).fill(false);
+            this.syncOnline();
+        } else if (r) {
+            this.minigameId = r.minigameId;
+            this.participants = this.players(r.participants);
+            this.pressed = new Array<boolean>(r.participants.length * 2).fill(false);
+            this.finishOnline();
+        } else {
+            this.participants = [];
+            this.pressed = [];
+        }
+        this.inited = true;
+    }
+
+    private players(ids: string[]): PlayerView[] {
+        const st = ctx.store;
+        return ids.map((id) => st.player(id)).filter((p): p is PlayerView => !!p);
+    }
+
+    /** 按服务端视图同步按下的牙、当前选牙者与倒计时；小游戏已结束则转入合嘴。 */
+    private syncOnline(): void {
+        const st = ctx.store;
+        const m = st.game?.minigame;
+        if (!m || m.minigameId !== this.minigameId) {
+            const r = st.toothResult;
+            if (this.phase === 'picking' && r && r.minigameId === this.minigameId) this.finishOnline();
+            return;
+        }
+        m.picks.forEach((t) => (this.pressed[t] = true));
+        this.turn = Math.max(0, this.participants.findIndex((p) => p.playerId === m.picker));
+        if (m.windowId !== this.syncedWindow) {
+            const w = st.game.windows.find((x) => x.windowId === m.windowId);
+            if (w) {
+                this.syncedWindow = m.windowId;
+                this.cd.setDeadline(w.deadline, Math.max(1, Math.round((w.deadline - w.opensAt) / 1000)));
+            }
+        }
+    }
+
+    private finishOnline(): void {
+        const r = ctx.store.toothResult;
+        if (!r || r.minigameId !== this.minigameId) return;
+        r.picks.forEach((t) => (this.pressed[t] = true));
+        this.phase = 'closed';
+        this.reward = r.reward;
+        this.loser = ctx.store.player(r.loser) ?? null;
+        this.resultAt = Date.now() + 1200;
+        this.endAt = this.resultAt + 8000;
+    }
+
+    private pickOnline(idx: number): void {
+        const st = ctx.store;
+        const m = st.game?.minigame;
+        if (!m || this.phase !== 'picking' || this.sending) return;
+        if (m.picker !== this.myId) return Toast.show('还没轮到你');
+        if (this.pressed[idx]) return Toast.show('这颗牙已经被按过了');
+        this.sending = true;
+        void st.online!.act('PickTooth', { windowId: m.windowId, tooth: idx }).then(() => {
+            this.sending = false;
+        });
+    }
+
     protected build(): void {
         if (!this.inited) this.init();
         if (this.phase === 'closed' && Date.now() >= this.resultAt) {
@@ -70,7 +158,9 @@ export class TeethScreen extends Screen {
         this.backdrop('sky');
         art(this.root, 'card_detail_background', 0, 0, Theme.W, Theme.H, 'stretch');
         art(this.root, 'scene_game_center', 160, 96, 400, 200);
-        new IconButton(this.root, 80, 24, 60, '', () => ctx.screens.back('board'), Theme.c.ivory, Theme.c.ink, (g, s) => drawBack(g, s / 2, s / 2, s * 0.6, Theme.c.ink));
+        if (!ctx.store.online) {
+            new IconButton(this.root, 80, 24, 60, '', () => ctx.screens.back('board'), Theme.c.ivory, Theme.c.ink, (g, s) => drawBack(g, s / 2, s / 2, s * 0.6, Theme.c.ink));
+        }
         const hd = mk(this.root, 'Header', 150, 24, 360, 60);
         text(hd, '虎口拔牙', 0, 0, 360, 60, Theme.font.lg, Theme.c.ink, { bold: true });
 
@@ -84,7 +174,7 @@ export class TeethScreen extends Screen {
             const cell = mk(this.root, 'Pl' + i, x0 + i * 82, 304, 82, 132);
             if (cur) fillRR(gfx(cell), 2, 0, 78, 130, 16, '#FFF1C9CC');
             avatar(cell, 9, 6, 64, p.avatar, p.nickname, { ring: cur ? Theme.c.yellow : Theme.c.white });
-            text(cell, p.playerId === ME ? '你' : p.nickname, 0, 74, 82, 26, 20, Theme.c.navy, { bold: true });
+            text(cell, p.playerId === this.myId ? '你' : p.nickname, 0, 74, 82, 26, 20, Theme.c.navy, { bold: true });
             if (cur) text(cell, '选牙中', 0, 100, 82, 24, 16, '#B07A00', { bold: true });
         });
 
@@ -104,7 +194,7 @@ export class TeethScreen extends Screen {
         text(info, this.phase === 'closed' ? (this.loser?.nickname ?? '') + '触发闭合' : '请选择一颗牙齿', 0, 8, 520, 52, Theme.font.lg, Theme.c.ink, { bold: true });
         text(info, '其余玩家各获得', 120, 58, 190, 40, Theme.font.sm, Theme.c.inkSoft, { align: 'r' });
         drawCoin(gfx(mk(info, 'C', 320, 60, 36, 36)), 18, 18, 15);
-        text(info, String(MINIGAME_REWARD), 362, 58, 120, 40, Theme.font.lg, Theme.c.yellowDark, { bold: true, align: 'l' });
+        text(info, String(this.reward), 362, 58, 120, 40, Theme.font.lg, Theme.c.yellowDark, { bold: true, align: 'l' });
 
         // 语音 / 聊天
         new IconButton(this.root, 24, 1190, 72, '', () => Toast.show('麦克风已开启（演示）'), Theme.c.ivory, Theme.c.blueDark, (g, s) => drawMic(g, s / 2, s / 2, s * 0.6, Theme.c.blueDark));
@@ -163,7 +253,7 @@ export class TeethScreen extends Screen {
                 fillRR(g, 0, 0, tw, th, 14, pressed ? '#9AA3AD' : '#FFFFFF');
             }
             this.teethNodes[idx] = t;
-            onTap(t, () => this.pick(idx, ME), false);
+            onTap(t, () => (ctx.store.online ? this.pickOnline(idx) : this.pick(idx, this.myId)), false);
         };
         for (let i = 0; i < top; i++) place(i, top, true, i);
         for (let j = 0; j < bottom; j++) place(top + j, bottom, false, j);
@@ -199,7 +289,7 @@ export class TeethScreen extends Screen {
         if (!this.turnLabel) return;
         const cur = this.participants[this.turn];
         if (this.phase === 'closed') setText(this.turnLabel, (this.loser ? this.loser.nickname : '') + ' 触发闭合！', Theme.c.red);
-        else setText(this.turnLabel, '轮到' + (cur.playerId === ME ? '我' : cur.nickname), Theme.c.ink);
+        else if (cur) setText(this.turnLabel, '轮到' + (cur.playerId === this.myId ? '我' : cur.nickname), Theme.c.ink);
         this.ring?.update(this.cd);
     }
 
@@ -207,6 +297,14 @@ export class TeethScreen extends Screen {
         if (!this.inited) return;
         this.tickTexts();
         const now = Date.now();
+        if (ctx.store.online) {
+            // 联机：选牙与代选都由服务端推进，这里只管合嘴 → 结果页 → 回棋盘
+            if (this.phase === 'closed') {
+                if (now >= this.endAt) this.backToBoard();
+                else if (now >= this.resultAt && !this.showingResult) this.rebuild();
+            } else if (!ctx.store.game?.minigame && !ctx.store.toothResult) this.backToBoard();
+            return;
+        }
         if (this.phase === 'closed') {
             if (now >= this.endAt) this.backToBoard();
             else if (now >= this.resultAt && !this.showingResult) this.rebuild();
@@ -214,12 +312,12 @@ export class TeethScreen extends Screen {
         }
         const cur = this.participants[this.turn];
         // 他人回合：模拟其选择；超时（含我自己）由系统随机代选
-        if (cur.playerId !== ME && this.nextAutoAt && now >= this.nextAutoAt && ctx.store.autoplay !== false) {
+        if (cur.playerId !== this.myId && this.nextAutoAt && now >= this.nextAutoAt && ctx.store.autoplay !== false) {
             this.nextAutoAt = 0;
             this.pick(this.randomFree(), cur.playerId);
             return;
         }
-        if (cur.playerId !== ME && !this.nextAutoAt) this.nextAutoAt = now + 1500;
+        if (cur.playerId !== this.myId && !this.nextAutoAt) this.nextAutoAt = now + 1500;
         if (this.cd.consumeExpire()) {
             Toast.show(cur.nickname + ' 超时，系统随机代选');
             this.pick(this.randomFree(), cur.playerId);
@@ -232,6 +330,8 @@ export class TeethScreen extends Screen {
         if (!this.inited) return;
         this.inited = false;
         this.showingResult = false;
+        const r = ctx.store.toothResult;
+        if (r && r.minigameId === this.minigameId) r.seen = true;
         ctx.store.emit();
         ctx.screens.back('board');
     }
@@ -243,6 +343,9 @@ export class TeethScreen extends Screen {
      */
     private buildResult(): void {
         this.showingResult = true;
+        // 结果页没有"轮到谁"条：旧节点已随重建销毁，不能再更新
+        this.turnLabel = null;
+        this.ring = null;
         const st = ctx.store;
         const loser = this.loser;
         const iLost = !!loser && loser.playerId === st.myId;
@@ -273,20 +376,23 @@ export class TeethScreen extends Screen {
             text(pnl, '0', 456, 26, 80, 96, 48, Theme.c.payRed, { bold: true, align: 'l' });
             fillRR(gfx(mk(pnl, 'Line', 30, 140, 580, 2)), 0, 0, 580, 2, 1, Theme.c.panelLine);
             text(pnl, '其余 ' + others + ' 名参与者各获得', 40, 150, 380, 90, 30, Theme.c.navy, { bold: true, align: 'l' });
-            text(pnl, '+' + MINIGAME_REWARD, 430, 150, 180, 90, 52, Theme.c.payRed, { bold: true, align: 'l' });
-            const mine = mk(this.root, 'Mine', 60, 978, 600, 160);
-            if (!art(mine, 'result_reward_panel', 0, 0, 600, 160, 'stretch')) fillRR(gfx(mine), 0, 0, 600, 160, 26, '#DCEBFF');
-            const me = st.me();
-            if (me) avatar(mine, 40, 24, 112, me.avatar, me.nickname, { ring: Theme.c.white });
-            text(mine, '你获得的奖励', 190, 18, 340, 50, 30, Theme.c.navy, { bold: true, align: 'l' });
-            drawCoin(gfx(mk(mine, 'Coin', 190, 76, 56, 56)), 28, 28, 28);
-            text(mine, '+' + MINIGAME_REWARD, 258, 70, 260, 70, 56, Theme.c.payRed, { bold: true, align: 'l' });
+            text(pnl, '+' + this.reward, 430, 150, 180, 90, 52, Theme.c.payRed, { bold: true, align: 'l' });
+            // 观战者（未参与）没有"你获得的奖励"卡
+            if (this.participants.some((p) => p.playerId === st.myId)) {
+                const mine = mk(this.root, 'Mine', 60, 978, 600, 160);
+                if (!art(mine, 'result_reward_panel', 0, 0, 600, 160, 'stretch')) fillRR(gfx(mine), 0, 0, 600, 160, 26, '#DCEBFF');
+                const me = st.me();
+                if (me) avatar(mine, 40, 24, 112, me.avatar, me.nickname, { ring: Theme.c.white });
+                text(mine, '你获得的奖励', 190, 18, 340, 50, 30, Theme.c.navy, { bold: true, align: 'l' });
+                drawCoin(gfx(mk(mine, 'Coin', 190, 76, 56, 56)), 28, 28, 28);
+                text(mine, '+' + this.reward, 258, 70, 260, 70, 56, Theme.c.payRed, { bold: true, align: 'l' });
+            }
         } else {
             const pnl = mk(this.root, 'Panel', 40, 712, 640, 426);
             if (!art(pnl, 'result_zero_panel', 0, 0, 640, 426, 'stretch')) fillRR(gfx(pnl), 0, 0, 640, 426, 28, '#FFFBF3');
             drawCoin(gfx(mk(pnl, 'Coin', 236, 30, 60, 60)), 30, 30, 30);
             text(pnl, '0', 306, 22, 100, 76, 64, Theme.c.payRed, { bold: true, align: 'l' });
-            text(pnl, '其他参与玩家各 +' + MINIGAME_REWARD, 0, 100, 640, 50, 30, Theme.c.navy, { bold: true });
+            text(pnl, '其他参与玩家各 +' + this.reward, 0, 100, 640, 50, 30, Theme.c.navy, { bold: true });
             this.participants.slice(0, 8).forEach((p, i) => {
                 const cx = 36 + (i % 4) * 146;
                 const cy = 156 + Math.floor(i / 4) * 130;
@@ -295,7 +401,7 @@ export class TeethScreen extends Screen {
                 if (lost) fillRR(gfx(cell), 0, 0, 130, 124, 16, '#FFF1C9');
                 avatar(cell, 27, 4, 76, p.avatar, p.nickname, { dim: lost });
                 text(cell, p.nickname, 0, 80, 130, 22, 20, Theme.c.navy, { bold: true });
-                text(cell, lost ? '0' : '+' + MINIGAME_REWARD, 0, 100, 130, 24, 20, lost ? Theme.c.noteGray : Theme.c.payRed, { bold: true });
+                text(cell, lost ? '0' : '+' + this.reward, 0, 100, 130, 24, 20, lost ? Theme.c.noteGray : Theme.c.payRed, { bold: true });
             });
         }
         const back = primaryButton(this.root, '返回棋盘', 140, 1158, 440, 96, () => this.backToBoard(), 36);
@@ -303,7 +409,8 @@ export class TeethScreen extends Screen {
     }
 
     refresh(): void {
-        // 对局数据变化不重置小游戏进度
+        // 对局数据变化不重置小游戏进度；联机先按服务端视图同步
+        if (this.inited && ctx.store.online) this.syncOnline();
         this.rebuild();
     }
 }

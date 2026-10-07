@@ -123,6 +123,30 @@ export interface GameView {
     landing?: LandingInfo | null;
     /** [联机] 进行中的债务（服务端 PublicDebt）；演示模式不设 */
     debt?: DebtInfo | null;
+    /** [联机] 进行中的虎口拔牙（服务端 PublicMinigame，危险牙保密）；演示模式不设 */
+    minigame?: MinigameInfo | null;
+}
+
+/** [联机] 进行中的虎口拔牙：参与者按选牙顺序；picks 为已按下的牙（按先后）；picker 为当前选牙者及其窗口 */
+export interface MinigameInfo {
+    minigameId: number;
+    trigger: string;
+    participants: string[];
+    teeth: number;
+    picks: number[];
+    picker: string;
+    windowId: number;
+}
+
+/** [联机] 刚结束的虎口拔牙结果（来自 MinigameEnded 事件）；seen 为结果页已展示过 */
+export interface MinigameOutcome {
+    minigameId: number;
+    loser: string;
+    danger: number;
+    reward: number;
+    participants: string[];
+    picks: number[];
+    seen: boolean;
 }
 
 /** [联机] 当前落点：格号、等待的步骤（如 BUY / UPGRADE）、决策是否仍待做 */

@@ -187,6 +187,7 @@ export class OnlineSession {
             }
         }
         this.trackEventDraw(u);
+        this.trackMinigame(u);
         this.lastDice = lastDiceFrom(u.events, this.lastDice);
         const s = adaptSession(u.view, this.boards, this.lastDice);
         s.roomId = u.roomCode; // 界面上的"房间号"是六位房间号
@@ -233,6 +234,27 @@ export class OnlineSession {
         }
     }
 
+    /** 小游戏结束（MinigameEnded）：记下输家、危险牙与全部按牙顺序，供结果页展示（视图里小游戏已清除）。 */
+    private trackMinigame(u: UpdateMsg): void {
+        const prev = this.store.session.game?.minigame ?? null;
+        let participants = prev ? prev.participants.slice() : [];
+        let picks = prev ? prev.picks.slice() : [];
+        for (const e of u.events) {
+            const d = e.data ?? {};
+            if (e.kind === 'MinigameStarted') {
+                participants = Array.isArray(d.participants) ? (d.participants as unknown[]).map(String) : [];
+                picks = [];
+            } else if (e.kind === 'ToothPicked') {
+                picks.push(Number(d.tooth));
+            } else if (e.kind === 'MinigameEnded') {
+                this.store.toothResult = {
+                    minigameId: Number(d.landingId), loser: String(d.loser), danger: Number(d.danger), reward: Number(d.reward),
+                    participants, picks, seen: false,
+                };
+            }
+        }
+    }
+
     private receiveChat(raw: unknown): void {
         const lines = Array.isArray(raw) ? raw : [];
         this.chat = lines.map((l: { nickname?: unknown; text?: unknown }) => ({
@@ -248,6 +270,7 @@ export class OnlineSession {
         this.chat = [];
         this.store.roomChat = this.chat;
         this.store.eventDraw = EVENT_IDLE;
+        this.store.toothResult = null;
         this.cues.length = 0;
         this.store.session = emptySession(this.store.session?.settings);
         this.store.emit();
