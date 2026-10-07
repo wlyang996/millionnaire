@@ -25,6 +25,7 @@ import { beginDebt } from '../popups/DebtPopup';
 import { BuyPopup } from '../popups/BuyPopup';
 import { ConfirmPopup } from '../popups/ConfirmPopup';
 import { UpgradePopup } from '../popups/UpgradePopup';
+import { BankPopup } from '../popups/BankPopup';
 import { DiscardPopup } from '../popups/DiscardPopup';
 import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
@@ -548,10 +549,7 @@ export class BoardScreen extends Screen {
             this.openedFor = id;
             if (landing.step === 'BUY') ctx.popups.open(new BuyPopup(landing.tile, id).withDeadline(w.deadline));
             else if (landing.step === 'UPGRADE') ctx.popups.open(new UpgradePopup(landing.tile, id).withDeadline(w.deadline));
-            else if (landing.step === 'BANK') ctx.popups.open(new ConfirmPopup({
-                title: '银行', message: '可以在"我的资产"里抵押（按原价 100%）或赎回（免手续费）。办完后结束银行操作。',
-                confirmText: '结束银行操作', onConfirm: () => void online.act('FinishBank', { windowId: id }),
-            }, 'bank'));
+            else if (landing.step === 'BANK') ctx.popups.open(new BankPopup(id));
             else if (landing.step === 'EVENT') this.openedFor = -1; // 事件格不弹窗：棋盘中央的卡牌由 eventDraw 驱动，点卡即抽
             else this.openedFor = -1; // 其他步骤由服务端自动推进
         } else if (w.kind === 'DEBT' && g.debt && g.debt.debtor === this.myId) {

@@ -5,6 +5,7 @@ import { ctx } from '../ui/Ctx';
 import { Popup } from '../ui/Popup';
 import { AssetsPopup } from './AssetsPopup';
 import { AuctionPopup } from './AuctionPopup';
+import { BankPopup } from './BankPopup';
 import { BuyPopup } from './BuyPopup';
 import { ChatPopup } from './ChatPopup';
 import { surrenderConfirm } from './ConfirmPopup';
@@ -58,6 +59,7 @@ export const POPUP_CATALOG: PopupEntry[] = [
     { id: 'auction', label: '拍卖 20秒', make: () => new AuctionPopup(pick((t, p) => !!t.auctionLot && !(p && p.owner), 1)) },
     { id: 'debt1', label: '欠款·首段 30秒', make: () => new DebtPopup(ctx.store.me().cash + 700, 'p2') },
     { id: 'debt2', label: '欠款·第二段', make: () => new DebtSecondPopup(ctx.store.me().cash + 700, 'p2') },
+    { id: 'bank', label: '银行 抵押/赎回', make: () => new BankPopup() },
     { id: 'assets', label: '资产总览', make: () => new AssetsPopup() },
     { id: 'discard', label: '弃牌 15秒', make: () => new DiscardPopup() },
     { id: 'resync', label: '重连同步遮罩', make: () => new ResyncPopup() },

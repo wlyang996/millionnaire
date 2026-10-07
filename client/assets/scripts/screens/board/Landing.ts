@@ -1,6 +1,7 @@
 /** 落点处理（演示）：按落点格弹出买地/升级/租金响应/欠款/事件/虎口拔牙；不弹文字提示（扣钱、路过等都不提示）。 */
 import { Card } from '../../core/Models';
 import { rentOf, stationRent } from '../../core/Rules';
+import { BankPopup } from '../../popups/BankPopup';
 import { BuyPopup } from '../../popups/BuyPopup';
 import { beginDebt } from '../../popups/DebtPopup';
 import { RentPopup } from '../../popups/RentPopup';
@@ -25,6 +26,8 @@ export function handleLanding(i: number): void {
             else if (me.cash >= amount) st.spend(amount);
             else beginDebt(amount, prop.owner);
         }
+    } else if (t.type === 'BANK') {
+        ctx.popups.open(new BankPopup());
     } else if (t.type === 'GAME_ZONE') {
         ctx.screens.push('teeth');
     } else if (t.type === 'EVENT') {
