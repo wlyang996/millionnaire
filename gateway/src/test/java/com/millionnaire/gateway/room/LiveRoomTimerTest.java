@@ -176,4 +176,64 @@ class LiveRoomTimerTest {
         return room.view(player).game().players().stream().filter(p -> p.playerId().equals(player)).findFirst()
                 .orElseThrow().conn().name();
     }
+
+    /**
+     * 虎口拔牙走完整条联机链路：落到游戏区后推送里带 minigame 视图与 MinigameStarted（不含危险牙），
+     * 选牙经 Wire 解析 GAME/PickTooth，结束时推送 MinigameEnded 并发奖励。
+     */
+    @Test
+    void minigameRunsOverTheWireProtocol() {
+        MutableClock clock = new MutableClock(System.currentTimeMillis());
+        List<String> sent = new CopyOnWriteArrayList<>();
+        RoomStore store = new RoomStore(new StaticListableBeanFactory().getBeanProvider(JdbcTemplate.class), clock);
+        Wire wire = new Wire(new ObjectMapper());
+        RoomService rooms = new RoomService(store, (player, json) -> sent.add(json), wire, clock);
+        try {
+            LiveRoom room = rooms.create(new User(1, "阿杰"), "c", null).room();
+            assertThat(rooms.join(new User(2, "糖糖"), room.codeNumber(), "j").ok()).isTrue();
+            assertThat(room.submitClient("1", "r1", new SetReady("1", true)).ok()).isTrue();
+            assertThat(room.submitClient("2", "r2", new SetReady("2", true)).ok()).isTrue();
+            assertThat(room.submitClient("1", "s", new StartGame("1")).ok()).isTrue();
+            int req = 0;
+            // 手动投骰（避免连续超时被判挂机），其余窗口等到期自动处理，直到有人落在游戏区
+            for (int i = 0; i < 2000 && room.view("1").game() != null && room.view("1").game().minigame() == null; i++) {
+                var g = room.view("1").game();
+                var top = g.windows().get(g.windows().size() - 1);
+                if (top.kind() == com.millionnaire.engine.core.state.FlowKind.TURN
+                        && (g.stage() == com.millionnaire.engine.core.state.TurnStage.PRE_ROLL
+                            || g.stage() == com.millionnaire.engine.core.state.TurnStage.JAIL_DECISION)) {
+                    clock.now = Math.max(clock.now + 1, top.opensAt());
+                    room.submitClient(top.owner(), "roll" + (++req),
+                            wire.gameCommand("RollDice", wire.object().put("windowId", top.windowId()), top.owner()));
+                } else {
+                    long due = room.scheduledWakeAt();
+                    clock.now = Math.max(clock.now, due);
+                    rooms.wake(room, due);
+                }
+            }
+            var m = room.view("1").game().minigame();
+            assertThat(m).as("someone reached the game zone").isNotNull();
+            assertThat(m.teeth()).isEqualTo(4);
+            assertThat(sent).anyMatch(j -> j.contains("\"MinigameStarted\"") && j.contains("\"minigame\":{"));
+            assertThat(sent).noneMatch(j -> j.contains("danger"));
+            long before1 = room.view("1").game().players().stream().filter(p -> p.playerId().equals("1")).findFirst().orElseThrow().cash();
+            long before2 = room.view("1").game().players().stream().filter(p -> p.playerId().equals("2")).findFirst().orElseThrow().cash();
+            while (room.view("1").game() != null && room.view("1").game().minigame() != null) {
+                var now = room.view("1").game().minigame();
+                var w = room.view("1").game().windows().stream().filter(x -> x.windowId() == now.windowId()).findFirst().orElseThrow();
+                clock.now = Math.max(clock.now + 1, w.opensAt());
+                int tooth = java.util.stream.IntStream.range(0, now.teeth()).filter(t -> !now.picks().contains(t)).findFirst().orElseThrow();
+                var reply = room.submitClient(now.picker(), "pick" + (++req), wire.gameCommand("PickTooth",
+                        wire.object().put("windowId", now.windowId()).put("tooth", tooth), now.picker()));
+                assertThat(reply.ok()).isTrue();
+            }
+            assertThat(sent).anyMatch(j -> j.contains("\"MinigameEnded\"") && j.contains("\"danger\""));
+            var after = room.view("1").game().players();
+            long after1 = after.stream().filter(p -> p.playerId().equals("1")).findFirst().orElseThrow().cash();
+            long after2 = after.stream().filter(p -> p.playerId().equals("2")).findFirst().orElseThrow().cash();
+            assertThat((after1 - before1) + (after2 - before2)).as("exactly one winner gets 500").isEqualTo(500);
+        } finally {
+            rooms.shutdown();
+        }
+    }
 }
