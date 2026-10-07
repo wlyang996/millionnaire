@@ -1,11 +1,11 @@
 /**
  * 棋盘页底部（设计稿 01）：手牌栏（y 1102–1192，观战时换成聊天条）+ 深蓝页脚（y 1198–1280：头像、"昵称 · 我"、金币现金、
- * 红字认输、描边"我的资产 ›"、语音、聊天）。
+ * 描边"我的资产 ›"、语音、聊天；点自己头像弹出"主动托管 / 认输"菜单）。
  */
 import { Theme } from '../../core/Theme';
 import { AssetsPopup } from '../../popups/AssetsPopup';
 import { ChatPopup } from '../../popups/ChatPopup';
-import { surrenderConfirm } from '../../popups/ConfirmPopup';
+import { SelfMenuPopup } from '../../popups/SelfMenuPopup';
 import { IconButton, primaryButton, secondaryButton } from '../../ui/Buttons';
 import { ctx } from '../../ui/Ctx';
 import { drawChat, drawCoin, drawMic } from '../../ui/Icons';
@@ -44,8 +44,15 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
     const row = mk(root, 'Bottom', 20, 1198, 680, 82);
     fillRR(gfx(row), 0, 4, 680, 82, 30, Theme.c.shadow);
     fillRR(gfx(row), 0, 0, 680, 82, 30, '#1F4E8CE6');
+    // 点自己头像：弹出"主动托管 / 认输"菜单（不再打开详情；详情在顶部玩家条查看）。观战时头像不可点。
     const ownAvatar = avatar(row, 10, 6, 70, me.avatar, me.nickname, { ring: Theme.c.white });
-    onTap(ownAvatar, () => ctx.popups.open(new AssetsPopup(me.playerId)));
+    if (!spectator) {
+        const dot = mk(row, 'MenuHint', 58, 52, 26, 26);
+        fillRR(gfx(dot), 0, 0, 26, 26, 13, Theme.c.white);
+        text(dot, '⋯', 0, -2, 26, 26, 18, Theme.c.navy, { bold: true });
+        onTap(ownAvatar, () => ctx.popups.open(new SelfMenuPopup()));
+        onTap(dot, () => ctx.popups.open(new SelfMenuPopup()));
+    }
     text(row, me.nickname + ' · 我', 98, 8, 150, 28, 20, Theme.c.white, { align: 'l' });
     if (!spectator) {
         drawCoin(gfx(mk(row, 'Coin', 98, 42, 30, 30)), 15, 15, 14);
@@ -64,12 +71,5 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
         (g, s) => drawChat(g, s / 2, s / 2, s * 0.62, Theme.c.white));
     if (spectator) {
         primaryButton(row, '返回大厅', 520, 6, 150, 70, () => ctx.screens.go('lobby'), Theme.font.md);
-    } else {
-        const sur = mk(row, 'Btn:surrender', 244, 21, 56, 40);
-        text(sur, '认输', 0, 0, 56, 40, 24, '#FF5A55', { bold: true });
-        onTap(sur, () => ctx.popups.open(surrenderConfirm(() => {
-            st.surrender();
-            ctx.screens.go('spectator');
-        })));
     }
 }

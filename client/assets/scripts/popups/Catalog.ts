@@ -17,6 +17,7 @@ import { HistoryPopup } from './HistoryPopup';
 import { JoinRoomPopup } from './JoinRoomPopup';
 import { RentPopup } from './RentPopup';
 import { ResyncPopup } from './ResyncPopup';
+import { SelfMenuPopup } from './SelfMenuPopup';
 import { TradePopup } from './TradePopup';
 import { TileInfoPopup } from './TileInfoPopup';
 import { UpgradePopup } from './UpgradePopup';
@@ -65,6 +66,7 @@ export const POPUP_CATALOG: PopupEntry[] = [
     { id: 'assets', label: '资产总览', make: () => new AssetsPopup() },
     { id: 'discard', label: '弃牌 15秒', make: () => new DiscardPopup() },
     { id: 'resync', label: '重连同步遮罩', make: () => new ResyncPopup() },
+    { id: 'self-menu', label: '头像菜单(托管/认输)', make: () => new SelfMenuPopup() },
     { id: 'surrender', label: '二次确认(认输)', make: () => surrenderConfirm(() => ctx.store.surrender()) },
     { id: 'join', label: '房号加入', make: () => new JoinRoomPopup() },
     { id: 'history', label: '我的战绩', make: () => new HistoryPopup() },
