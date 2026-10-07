@@ -69,19 +69,23 @@ export class TeethScreen extends Screen {
         }
         this.backdrop('sky');
         art(this.root, 'card_detail_background', 0, 0, Theme.W, Theme.H, 'stretch');
-        art(this.root, 'scene_game_center', 50, 110, 620, 260);
+        art(this.root, 'scene_game_center', 160, 96, 400, 200);
         new IconButton(this.root, 80, 24, 60, '', () => ctx.screens.back('board'), Theme.c.ivory, Theme.c.ink, (g, s) => drawBack(g, s / 2, s / 2, s * 0.6, Theme.c.ink));
         const hd = mk(this.root, 'Header', 150, 24, 360, 60);
         text(hd, '虎口拔牙', 0, 0, 360, 60, Theme.font.lg, Theme.c.ink, { bold: true });
 
-        // 参与者
+        // 参与者：摊位图下方一排（最多 8 人，每人 82 宽），当前选牙者黄色圈；不与摊位图、彼此重叠
+        const n = this.participants.length;
+        const x0 = (Theme.W - n * 82) / 2;
+        const strip = mk(this.root, 'PlayersStrip', x0 - 12, 298, n * 82 + 24, 144);
+        fillRR(gfx(strip), 0, 0, n * 82 + 24, 144, 24, '#FFFFFFB8');
         this.participants.forEach((p, i) => {
-            const cx = 20 + (i % 4) * 172;
-            const cy = 270 + Math.floor(i / 4) * 88;
             const cur = i === this.turn && this.phase === 'picking';
-            const cell = mk(this.root, 'Pl' + i, cx, cy, 160, 116);
-            avatar(cell, 46, 0, 66, p.avatar, p.nickname, { ring: cur ? Theme.c.yellow : undefined });
-            text(cell, p.nickname, 0, 66, 160, 26, Theme.font.sm, Theme.c.ink, { bold: true });
+            const cell = mk(this.root, 'Pl' + i, x0 + i * 82, 304, 82, 132);
+            if (cur) fillRR(gfx(cell), 2, 0, 78, 130, 16, '#FFF1C9CC');
+            avatar(cell, 9, 6, 64, p.avatar, p.nickname, { ring: cur ? Theme.c.yellow : Theme.c.white });
+            text(cell, p.playerId === ME ? '你' : p.nickname, 0, 74, 82, 26, 20, Theme.c.navy, { bold: true });
+            if (cur) text(cell, '选牙中', 0, 100, 82, 24, 16, '#B07A00', { bold: true });
         });
 
         // 轮到谁 + 倒计时
