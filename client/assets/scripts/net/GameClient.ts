@@ -75,12 +75,9 @@ export class GameClient {
 
     /** 服务端开放的登录方式（微信登录要服务端配好 AppID / AppSecret）。旧后台没有这个接口时当作只有测试登录。 */
     async authMethods(): Promise<{ wechat: boolean; test: boolean }> {
-        try {
-            const r = await requestJson<{ wechat?: boolean; test?: boolean }>('GET', this.baseUrl + '/api/auth/methods');
-            if (r.status === 200 && r.body) return { wechat: !!r.body.wechat, test: r.body.test !== false };
-        } catch {
-            // 网络失败：按旧后台处理，后面的登录请求会再报错
-        }
+        // 网络失败直接抛出（不再悄悄退回测试登录，免得把"连不上服务器"显示成"测试登录失败"）；旧后台没有这个接口（404）时当作只有测试登录
+        const r = await requestJson<{ wechat?: boolean; test?: boolean }>('GET', this.baseUrl + '/api/auth/methods');
+        if (r.status === 200 && r.body) return { wechat: !!r.body.wechat, test: r.body.test !== false };
         return { wechat: false, test: true };
     }
 
