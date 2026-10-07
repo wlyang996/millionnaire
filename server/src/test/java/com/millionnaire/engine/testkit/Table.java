@@ -186,9 +186,7 @@ public final class Table {
             long due = auto != 0 ? state.timers().find(auto).orElseThrow().dueAt() : w.window().deadline();
             return tick(Math.max(now, due));
         }
-        boolean postLanding = config.economy().cardsEnabled() && landing == null
-                && game().turn().continuation() instanceof com.millionnaire.engine.core.state.Continuation.EndTurn;
-        Command c = postLanding ? new GameCommand.FinishTurn(current(), w.windowId()) : landing == null ? new Tick() : switch (landing.step()) {
+        Command c = landing == null ? new Tick() : switch (landing.step()) {
             case BUY -> new GameCommand.DeclinePurchase(current(), w.windowId());
             case UPGRADE -> new GameCommand.SkipUpgrade(current(), w.windowId());
             case BANK -> new GameCommand.FinishBank(current(), w.windowId());
@@ -198,16 +196,6 @@ public final class Table {
             default -> throw new IllegalStateException("no decision window for " + landing.step());
         };
         return c instanceof Tick ? tick(w.window().deadline()) : send(at, c);
-    }
-
-    /** 落点后用卡阶段（正式配置、手里有可用的卡时开启）：不用卡，直接结束回合。没有该阶段时什么也不做。 */
-    public void finishPostLanding() {
-        while (session().inGame() && game().turn().stage() == com.millionnaire.engine.core.state.TurnStage.LANDING
-                && game().turn().landing() == null && game().flow().frames().size() == 1
-                && game().turn().continuation() instanceof com.millionnaire.engine.core.state.Continuation.EndTurn) {
-            FlowFrame w = window();
-            send(Math.max(now + 10, w.window().opensAt()), new GameCommand.FinishTurn(current(), w.windowId()));
-        }
     }
 
     /** 在当前回合窗口开放后发送一条带窗口 ID 的命令。 */

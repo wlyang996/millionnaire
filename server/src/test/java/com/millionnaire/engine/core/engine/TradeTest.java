@@ -40,7 +40,6 @@ class TradeTest {
                 dice(DrawPoint.MOVE_DIE, 1, 2, 3, 3))), 1).start(3);
         t.rollOnly();
         t.act(w -> new GameCommand.BuyProperty("p1", w));
-        t.finishPostLanding();
         assertEquals("p1", tile(t, 1).owner());
         assertEquals("p2", t.current());
         return t;
@@ -68,7 +67,6 @@ class TradeTest {
         while (t.game().trade() == null && t.game().turn().landing() != null) {
             t.pass();
         }
-        t.finishPostLanding();
     }
 
     private static StepResult answer(Table t, String who, boolean accept) {

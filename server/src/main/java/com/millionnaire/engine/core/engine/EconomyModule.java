@@ -230,12 +230,6 @@ final class EconomyModule {
 
     static void finishLanding(DecisionContext<SessionState> ctx, long leadMs) {
         completeLanding(ctx);
-        // 落点结算后的用卡阶段（15 秒，可直接结束回合）：只在手动玩家还有机会、手里有此刻可用的卡时开启
-        if (CardModule.offerPostLanding(ctx.config(), game(ctx))) {
-            TurnModule.openDecision(ctx, new Continuation.EndTurn(game(ctx).turn().turnNo()), leadMs,
-                    ctx.config().timing().decisionWindowMs());
-            return;
-        }
         TurnModule.endTurn(ctx, leadMs);
     }
 

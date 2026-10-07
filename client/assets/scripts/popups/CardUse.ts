@@ -68,16 +68,15 @@ export function cardUsable(type: CardType): Usable {
     if (!st.isMyTurn()) return no('只能在自己的回合使用');
     if (me.control !== 'MANUAL' || me.conn === 'OFFLINE') return no('托管中不能用卡');
     const online = st.online;
-    let post = g.stage === 'LANDING';
     if (online) {
         const w = online.myWindow('TURN');
         if (!w || !online.isOpen(w)) return no('当前不是用卡时机');
         if (g.cards?.chanceUsed.includes(st.myId)) return no('本回合已经用过道具了');
-        post = g.stage === 'LANDING' && !g.landing;
     }
     const pre = g.stage === 'PRE_ROLL';
     const jail = g.stage === 'JAIL_DECISION';
-    if (!pre && !jail && !post) return no('投骰前或落点结算后才能用卡');
+    // 主动卡只在投骰前用（落点后没有用卡阶段，用户 2026-10-07 裁决）
+    if (!pre && !jail) return no('投骰前才能用卡');
     const h = here();
     const tile = st.tile(h.index);
     const other = !!h.prop && !!h.prop.owner && h.prop.owner !== st.myId && !h.prop.mortgaged;

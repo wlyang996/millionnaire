@@ -85,9 +85,7 @@ final class StageTable {
                     Duration.DECISION, Action.SKIP, Action.UPGRADE_IF_AFFORDABLE, Action.SKIP, false, true, List.of()),
             new Rule(Point.BANK, List.of(GameCommand.BankMortgage.class, GameCommand.Redeem.class, GameCommand.FinishBank.class),
                     Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, false, List.of()),
-            // 落点后用卡阶段（也用于无推进器的普通等待）：用卡、直接结束回合、赎回
-            new Rule(Point.WAIT, List.of(GameCommand.UseCard.class, GameCommand.FinishTurn.class, GameCommand.Redeem.class),
-                    Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, true, List.of(FlowKind.ATTACK)),
+            new Rule(Point.WAIT, List.of(), Duration.DECISION, Action.FINISH, Action.FINISH, Action.FINISH, false, true, List.of(FlowKind.ATTACK)),
             new Rule(Point.DEBT, List.of(GameCommand.EmergencyMortgage.class, GameCommand.ContinueDebt.class,
                     GameCommand.DeclareBankruptcy.class), Duration.DEBT_SEGMENT, Action.NEXT_SEGMENT_OR_BANKRUPT,
                     Action.NEXT_SEGMENT_OR_BANKRUPT, Action.NEXT_SEGMENT_OR_BANKRUPT, false, true, List.of()),

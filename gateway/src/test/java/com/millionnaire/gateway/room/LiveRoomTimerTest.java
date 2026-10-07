@@ -207,9 +207,9 @@ class LiveRoomTimerTest {
                             wire.gameCommand("RollDice", wire.object().put("windowId", top.windowId()), top.owner()));
                 } else if (top.kind() == com.millionnaire.engine.core.state.FlowKind.TURN
                         && g.stage() == com.millionnaire.engine.core.state.TurnStage.LANDING) {
-                    // 落点决策直接处理（不等 15 秒超时，免得全局时钟先到）：放弃购买 / 抽事件卡 / 不用卡结束回合等
+                    // 落点决策直接处理（不等 15 秒超时，免得全局时钟先到）：放弃购买 / 抽事件卡 / 不用免租卡等
                     var landing = g.landing();
-                    String command = landing == null ? "FinishTurn" : switch (landing.step()) {
+                    String command = landing == null ? null : switch (landing.step()) {
                         case BUY -> "DeclinePurchase";
                         case UPGRADE -> "SkipUpgrade";
                         case BANK -> "FinishBank";

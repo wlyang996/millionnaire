@@ -246,12 +246,6 @@ export class BoardScreen extends Screen {
         onTap(this.dice.node, () => {
             if (this.canRoll()) this.startRoll();
         }, false);
-        // 落点结算后的用卡阶段（服务端只在手里有此刻能用的卡时开启）：可点手牌用卡，或直接结束回合
-        const postWin = st.online && myTurn && game.stage === 'LANDING' && !game.landing ? st.online.myWindow('TURN') : undefined;
-        if (postWin) {
-            text(this.root, '落点已结算，可使用道具', cx - 220, 736, 440, 40, Theme.font.sm, Theme.c.ink, { bold: true });
-            primaryButton(this.root, '结束回合', cx - 120, 780, 240, 80, () => void st.online!.act('FinishTurn', { windowId: postWin.windowId }), Theme.font.lg);
-        }
         const jailWin = st.online && myTurn && game.stage === 'JAIL_DECISION' ? st.online.myWindow('TURN') : undefined;
         if (jailWin) {
             text(this.root, '点骰子掷出狱判定（偶数出狱）', cx - 220, 736, 440, 40, Theme.font.sm, Theme.c.ink, { bold: true });

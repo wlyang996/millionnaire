@@ -32,7 +32,6 @@ final class BusinessCommands {
             case GameCommand.PickTooth ignored -> Kind.BUSINESS;
             case GameCommand.UseCard ignored -> Kind.BUSINESS;
             case GameCommand.RespondCard ignored -> Kind.BUSINESS;
-            case GameCommand.FinishTurn ignored -> Kind.BUSINESS;
             case GameCommand.RequestAuction ignored -> Kind.BUSINESS;
             case GameCommand.Bid ignored -> Kind.BUSINESS;
             case GameCommand.RequestTrade ignored -> Kind.BUSINESS;

@@ -63,8 +63,7 @@ class CardLongGameTest {
         String target = g.players().get(rnd.nextInt(g.players().size())).playerId();
         if (rnd.nextInt(10) < 7) {
             // 多数时候挑一张此刻能用的卡、合法的查询对象
-            boolean post = CardModule.postLandingWindow(g);
-            var usable = hand.stream().distinct().filter(c -> CardModule.usable(RULES, g, cur, c, post)).toList();
+            var usable = hand.stream().distinct().filter(c -> usable(g, cur, c)).toList();
             if (!usable.isEmpty()) {
                 card = usable.get(rnd.nextInt(usable.size()));
             }
@@ -74,6 +73,23 @@ class CardLongGameTest {
             }
         }
         return new GameCommand.UseCard(cur, window, card, target, 1 + rnd.nextInt(6));
+    }
+
+    /** 主动卡此刻（自己回合的投骰前 / 狱中判定）是否有可用的目标。 */
+    private static boolean usable(GameState g, String player, CardType card) {
+        var p = g.player(player).orElseThrow();
+        int pos = p.position();
+        var board = LobbyModule.board(RULES, g.settings());
+        return switch (card) {
+            case ROADBLOCK -> !p.inJail() && board.tiles().get(pos).type() != com.millionnaire.engine.config.TileType.JAIL
+                    && g.board().roadblock(pos).isEmpty();
+            case FIXED_MOVE -> !p.inJail();
+            case JAIL_RELEASE -> p.inJail();
+            case QUERY -> g.players().stream().anyMatch(x -> x.alive() && !x.playerId().equals(player));
+            case BUILD, DOWNGRADE, DEMOLISH, CLEAR_LAND, FORCED_PURCHASE -> !p.inJail()
+                    && CardModule.tileCondition(RULES, g, player, card, pos) == null;
+            default -> false;
+        };
     }
 
     private static void play(Table t, SplittableRandom rnd) {
@@ -152,11 +168,6 @@ class CardLongGameTest {
                     if (c == null) {
                         c = new GameCommand.RollDice(cur, w.windowId());
                     }
-                } else if (l == null) {
-                    c = r < 60 ? randomCard(g, cur, w.windowId(), rnd) : null;
-                    if (c == null) {
-                        c = new GameCommand.FinishTurn(cur, w.windowId());
-                    }
                 } else {
                     c = switch (l.step()) {
                         case BUY -> r < 25 ? new GameCommand.StartLandAuction(cur, w.windowId())
@@ -215,7 +226,7 @@ class CardLongGameTest {
     @Test
     void randomCardGamesReplayAndResumeExactly() {
         TreeMap<String, Long> all = new TreeMap<>();
-        for (long seed : new long[] {7L, 77L, 777L, 7777L, 5L, 19L, 24L}) {
+        for (long seed : new long[] {7L, 77L, 777L, 7777L, 5L, 19L, 24L, 26L}) {
             Table t = start(seed);
             play(t, new SplittableRandom(seed));
             assertEquals(t.state, t.engine.rebuild(t.log), "seed " + seed + " replays exactly");

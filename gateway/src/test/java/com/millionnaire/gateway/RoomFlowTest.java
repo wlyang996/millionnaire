@@ -235,7 +235,7 @@ class RoomFlowTest {
                 if (mine != null && "LANDING".equals(game.path("stage").asText())
                         && mine.path("opensAt").asLong() <= last.path("serverTime").asLong()) {
                     JsonNode landing = game.path("landing");
-                    String command = landing.isNull() || landing.isMissingNode() ? "FinishTurn" : switch (landing.path("step").asText()) {
+                    String command = landing.isNull() || landing.isMissingNode() ? null : switch (landing.path("step").asText()) {
                         case "BUY" -> "DeclinePurchase";
                         case "UPGRADE" -> "SkipUpgrade";
                         case "BANK" -> "FinishBank";

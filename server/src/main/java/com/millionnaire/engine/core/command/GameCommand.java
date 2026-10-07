@@ -117,10 +117,6 @@ public sealed interface GameCommand extends Command {
     record Bid(String actor, long windowId, long amount) implements GameCommand {
     }
 
-    /** 客户端：落点后用卡阶段不用卡，直接结束回合。 */
-    record FinishTurn(String actor, long windowId) implements GameCommand {
-    }
-
     /** 客户端：虎口拔牙中选一颗未按下的牙（只有当前选牙者、在其选牙窗口内）。 */
     record PickTooth(String actor, long windowId, int tooth) implements GameCommand {
     }

@@ -147,7 +147,6 @@ final class TurnModule {
             case GameCommand.PickTooth c -> MinigameModule.decide(ctx, c);
             case GameCommand.UseCard c -> CardModule.decide(ctx, c);
             case GameCommand.RespondCard c -> CardModule.decide(ctx, c);
-            case GameCommand.FinishTurn c -> CardModule.decide(ctx, c);
             case GameCommand.RequestAuction c -> AuctionModule.requestCardAuction(ctx, c);
             case GameCommand.Bid c -> AuctionModule.bid(ctx, c);
             case GameCommand.RequestTrade c -> TradeModule.request(ctx, c);
@@ -1111,9 +1110,7 @@ final class TurnModule {
             LobbyModule.expect(c.plans().getLast().landingId() >= 1 && c.plans().getLast().landingId() < t.lastLandingId()
                     && c.plans().getLast().cursor() == 1, "event movement plan source invalid");
         } else {
-            // 落点后用卡阶段（落点已结束、回合尚未结束）：链仍在，事件是否抽过不再对应某个落点
-            boolean settled = t.landing() == null && t.stage() == TurnStage.LANDING && t.continuation() instanceof Continuation.EndTurn;
-            LobbyModule.expect(settled || c.eventDrawn() == (t.landing() != null && t.landing().event() != null), "move chain invalid");
+            LobbyModule.expect(c.eventDrawn() == (t.landing() != null && t.landing().event() != null), "move chain invalid");
         }
     }
 

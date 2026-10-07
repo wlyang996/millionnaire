@@ -23,7 +23,6 @@ import com.millionnaire.engine.core.event.GameEvent.ResponseDeclined;
 import com.millionnaire.engine.core.event.GameEvent.ResponseOffered;
 import com.millionnaire.engine.core.event.RejectionCode;
 import com.millionnaire.engine.core.state.CardState;
-import com.millionnaire.engine.core.state.Continuation;
 import com.millionnaire.engine.core.state.FlowFrame;
 import com.millionnaire.engine.core.state.FlowKind;
 import com.millionnaire.engine.core.state.FlowOrigin;
@@ -44,11 +43,9 @@ import java.util.List;
 /**
  * 道具（requirements 第 14 节；已采纳默认值 #9 卡牌窗口、#10 拆楼 / 清地、#14 路障、#17 托管；O4 响应窗；O9 出狱卡）：
  * <ul>
- *   <li><b>主动卡</b>只在自己回合的投骰前（含狱中判定，仅出狱与查询）或落点结算后的用卡阶段使用，两阶段共一次；
- *       每个自己的回合开始恢复一次机会；全局到时后不能再用（O16）；托管 / 暂离 / 掉线不主动用卡。
+ *   <li><b>主动卡</b>只在自己回合的投骰前（含狱中判定，仅出狱与查询）使用，每回合一次；落点后没有用卡阶段（用户 2026-10-07 裁决），
+ *       落点结算完直接结束回合。每个自己的回合开始恢复一次机会；全局到时后不能再用（O16）；托管 / 暂离 / 掉线不主动用卡。
  *       未确认或条件不满足不消耗；生效消耗；被响应抵挡时双方的卡都消耗。</li>
- *   <li><b>落点后用卡阶段</b>：落点结算完、回合结束前，若手动玩家还有机会且手里有此刻可用的卡，开 15 秒窗口（可直接结束回合）；
- *       用掉一张卡后回合随即结束，超时也结束回合。</li>
  *   <li><b>响应卡</b>（免租、房屋保护、拒绝购买）只在持卡时弹 10 秒窗口，可提前选"不使用"，超时不使用；
  *       托管、确认掉线、暂离的持卡者立即自动使用。响应先于付款与现金不足判定。不占主动机会。</li>
  *   <li>目标格一律是使用者当前位置；降级 / 拆楼 / 清地只对他人未抵押普通地产，强购对他人未抵押地产或车站（价格 = 标准价值 × 1.5 向下取整，
@@ -127,61 +124,14 @@ final class CardModule {
         return g.player(target).map(PlayerState::alive).orElse(false) ? null : RejectionCode.NO_TARGET;
     }
 
-    /** 主动卡在此刻（自己回合的投骰前 / 狱中判定 / 落点后阶段）是否有可用的目标，供落点后阶段决定是否开窗口。 */
-    static boolean usable(RuleConfig config, GameState g, String player, CardType card, boolean postLanding) {
-        PlayerState p = g.player(player).orElseThrow();
-        int pos = p.position();
-        BoardTemplate board = LobbyModule.board(config, g.settings());
-        return switch (card) {
-            case ROADBLOCK -> !p.inJail() && board.tiles().get(pos).type() != TileType.JAIL && g.board().roadblock(pos).isEmpty();
-            case FIXED_MOVE -> !postLanding && !p.inJail();
-            case JAIL_RELEASE -> !postLanding && p.inJail();
-            case QUERY -> g.players().stream().anyMatch(x -> x.alive() && !x.playerId().equals(player));
-            case BUILD, DOWNGRADE, DEMOLISH, CLEAR_LAND, FORCED_PURCHASE -> !p.inJail() && tileCondition(config, g, player, card, pos) == null;
-            default -> false;
-        };
-    }
-
-    /** 落点结算完毕时是否开"落点后用卡阶段"。 */
-    static boolean offerPostLanding(RuleConfig config, GameState g) {
-        String player = g.turn().currentPlayer();
-        PlayerState p = g.player(player).orElse(null);
-        if (!enabled(config) || p == null || !p.alive() || p.automated() || p.inJail() || g.phase() != GamePhase.RUNNING
-                || g.cards().used(player) || g.debt() != null || g.minigame() != null || !g.flow().frames().isEmpty()) {
-            return false;
-        }
-        return p.hand().stream().distinct().anyMatch(c -> usable(config, g, player, c, true));
-    }
-
-    /** 当前回合窗口是否为落点后用卡阶段（LANDING、没有落点、续接为结束回合）。 */
-    static boolean postLandingWindow(GameState g) {
-        var t = g.turn();
-        return t.stage() == TurnStage.LANDING && t.landing() == null && t.continuation() instanceof Continuation.EndTurn;
-    }
-
     // ================================================================ 命令
 
     static RejectionCode decide(DecisionContext<SessionState> ctx, GameCommand command) {
         return switch (command) {
             case GameCommand.UseCard c -> useCard(ctx, c);
             case GameCommand.RespondCard c -> respond(ctx, c);
-            case GameCommand.FinishTurn c -> finishTurn(ctx, c);
             default -> throw new IllegalArgumentException("not a card command: " + command);
         };
-    }
-
-    private static RejectionCode finishTurn(DecisionContext<SessionState> ctx, GameCommand.FinishTurn c) {
-        RejectionCode why = TurnModule.checkTurnWindow(ctx, c.actor(), c.windowId());
-        if (why != null) {
-            return why;
-        }
-        GameState g = ctx.state().game();
-        if (!postLandingWindow(g)) {
-            return RejectionCode.WRONG_STAGE;
-        }
-        TurnModule.closeDecision(ctx);
-        TurnModule.endTurn(ctx, 0);
-        return null;
     }
 
     private static RejectionCode useCard(DecisionContext<SessionState> ctx, GameCommand.UseCard c) {
@@ -215,7 +165,6 @@ final class CardModule {
         if (g.cards().used(actor)) {
             return RejectionCode.CARD_USED;
         }
-        boolean post = postLandingWindow(g);
         boolean jail = g.turn().stage() == TurnStage.JAIL_DECISION;
         PlayerState p = g.player(actor).orElseThrow();
         int pos = p.position();
@@ -227,7 +176,6 @@ final class CardModule {
                 }
                 ctx.emit(new CardUsed(actor, CardType.ROADBLOCK, pos, null, true));
                 MovementEffects.placeRoadblock(ctx, actor, c.windowId());
-                afterActive(ctx, post);
             }
             case FIXED_MOVE -> {
                 why = MovementEffects.rejection(g, ctx.config(), ctx.now(), actor, c.windowId(), MovementEffect.Kind.TARGETED, c.steps());
@@ -251,7 +199,6 @@ final class CardModule {
                 }
                 ctx.emit(new CardUsed(actor, CardType.QUERY, -1, c.target(), true));
                 ctx.emit(new QueryRevealed(actor, c.target(), ctx.state().game().player(c.target()).orElseThrow().hand()));
-                afterActive(ctx, post);
             }
             case BUILD -> {
                 if (jail) {
@@ -263,7 +210,6 @@ final class CardModule {
                 }
                 ctx.emit(new CardUsed(actor, CardType.BUILD, pos, actor, true));
                 ctx.emit(new PropertyBuilt(actor, pos, g.board().ownable(pos).orElseThrow().level() + 1));
-                afterActive(ctx, post);
             }
             case DOWNGRADE, DEMOLISH, CLEAR_LAND, FORCED_PURCHASE -> {
                 if (jail) {
@@ -273,7 +219,7 @@ final class CardModule {
                 if (why != null) {
                     return why;
                 }
-                attack(ctx, actor, c.card(), pos, post);
+                attack(ctx, actor, c.card(), pos);
             }
             default -> {
                 return RejectionCode.NOT_ALLOWED;
@@ -282,29 +228,18 @@ final class CardModule {
         return null;
     }
 
-    /** 主动卡生效后：落点后阶段随即结束回合；投骰前（含狱中）窗口继续计时。 */
-    private static void afterActive(DecisionContext<SessionState> ctx, boolean post) {
-        if (post && ctx.state().inGame() && postLandingWindow(ctx.state().game())
-                && ctx.state().game().flow().frames().size() == 1) {
-            TurnModule.closeDecision(ctx);
-            TurnModule.endTurn(ctx, 0);
-        }
-    }
-
     /** 攻击卡：目标所有者持有对应响应卡则先问他（托管 / 掉线 / 暂离立即自动使用），否则直接生效。 */
-    private static void attack(DecisionContext<SessionState> ctx, String actor, CardType card, int tile, boolean post) {
+    private static void attack(DecisionContext<SessionState> ctx, String actor, CardType card, int tile) {
         GameState g = ctx.state().game();
         String owner = g.board().ownable(tile).orElseThrow().owner();
         CardType response = responseTo(card);
         ctx.emit(new CardUsed(actor, card, tile, owner, true));
         if (!holds(g, owner, response)) {
             applyAttack(ctx);
-            afterActive(ctx, post);
             return;
         }
         if (MinigameModule.automatic(g, owner)) {
             block(ctx, true);
-            afterActive(ctx, post);
             return;
         }
         ctx.emit(new ResponseOffered(actor, owner, tile, card, response));
@@ -391,19 +326,9 @@ final class CardModule {
         closeResponse(ctx, frame.windowId(), CloseReason.EXPIRED);
     }
 
-    /** 关闭响应窗、恢复回合窗口；攻击发生在落点后阶段时随即结束回合。 */
+    /** 关闭响应窗、恢复投骰前的回合窗口。 */
     private static void closeResponse(DecisionContext<SessionState> ctx, long windowId, CloseReason reason) {
-        long turn = ctx.state().game().turn().turnNo();
         GameModule.closeOverlay(ctx, windowId, reason);
-        if (!ctx.state().inGame()) {
-            return;
-        }
-        GameState g = ctx.state().game();
-        if (g.turn().turnNo() == turn && postLandingWindow(g) && g.flow().frames().size() == 1
-                && g.flow().top().map(f -> f.kind() == FlowKind.TURN && !f.window().paused()).orElse(false)) {
-            TurnModule.closeDecision(ctx);
-            TurnModule.endTurn(ctx, 0);
-        }
     }
 
     // ================================================================ 免租（落点 RESPONSE 步骤）
@@ -548,10 +473,9 @@ final class CardModule {
         PlayerState p = g.player(x.playerId()).orElseThrow();
         boolean jail = t.stage() == TurnStage.JAIL_DECISION;
         boolean preRoll = t.stage() == TurnStage.PRE_ROLL && t.chain() == null;
-        boolean post = postLandingWindow(g);
         boolean window = g.flow().frames().size() == 1 && g.flow().top().map(f -> f.kind() == FlowKind.TURN
                 && f.windowId() == t.windowId()).orElse(false) && !p.automated() && g.debt() == null && g.minigame() == null;
-        if (!window || !(jail || preRoll || post)) {
+        if (!window || !(jail || preRoll)) {
             return false;
         }
         return switch (x.card()) {

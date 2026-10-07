@@ -114,7 +114,6 @@ class AuctionTest {
         assertEquals(0, t.game().ledger().frozen("p2"));
         assertEquals(p1 + 45, t.cash("p1"), "the initiator gets 10% (floor)");
         assertEquals(45, events(t.log, GameEvent.AuctionSettled.class).getLast().commission());
-        t.finishPostLanding();
         assertEquals("p2", t.current(), "the landing and turn end after the auction");
         t.game().ledger().verifyInvariants();
         assertEquals(t.state, t.engine.rebuild(t.log));
@@ -225,7 +224,6 @@ class AuctionTest {
         Table t = cardTable();
         t.rollOnly();                                                          // p1 → 1：买下
         t.act(w -> new GameCommand.BuyProperty("p1", w));
-        t.finishPostLanding();
         assertEquals("p2", t.current());
         assertNull(t.send(t.now + 10, new GameCommand.RequestAuction("p1", 1)).rejection(), "requests are accepted any time");
         assertEquals(1, t.game().flow().queue().size());
@@ -234,7 +232,6 @@ class AuctionTest {
                 "one chance per turn: a second request is refused");
         t.rollOnly();                                                          // p2 → 2（事件）
         while (t.game().turn().landing() != null) { t.pass(); }
-        t.finishPostLanding();
         // 回合交界：拍卖卡开拍（p3 的回合在拍卖结束后才开始）
         AuctionState a = t.game().auction();
         assertNotNull(a);
@@ -275,7 +272,6 @@ class AuctionTest {
         craft(t, g -> g.withBoard(g.board().with(g.board().ownable(4).orElseThrow().mortgage(1000))));
         t.rollOnly();                                                          // p1 → 1：放弃
         t.act(w -> new GameCommand.DeclinePurchase("p1", w));
-        t.finishPostLanding();
         assertNull(t.game().auction());
         assertTrue(t.game().flow().queue().isEmpty());
         assertEquals(1, events(t.log, GameEvent.FlowRequestCancelled.class).size());
@@ -287,11 +283,9 @@ class AuctionTest {
         Table t = cardTable();
         t.rollOnly();
         t.act(w -> new GameCommand.BuyProperty("p1", w));
-        t.finishPostLanding();
         t.send(t.now + 10, new GameCommand.RequestAuction("p1", 1));
         t.rollOnly();
         while (t.game().turn().landing() != null) { t.pass(); }
-        t.finishPostLanding();
         assertNotNull(t.game().auction());
         t.tick(top(t).window().deadline());
         assertEquals("p1", tile(t, 1).owner());

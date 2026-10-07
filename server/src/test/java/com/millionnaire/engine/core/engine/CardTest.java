@@ -154,8 +154,7 @@ class CardTest {
         assertTrue(t.game().player("p1").orElseThrow().inJail());
         assertEquals("p2", t.current());
         t.rollOnly();                                                          // p2 → 1
-        t.finishPostLanding();
-        while (t.game().turn().stage() == TurnStage.LANDING) { t.pass(); t.finishPostLanding(); }
+        while (t.game().turn().stage() == TurnStage.LANDING) { t.pass(); }
         assertEquals("p1", t.current());
         assertEquals(TurnStage.JAIL_DECISION, t.game().turn().stage());
         assertEquals(RejectionCode.WRONG_STAGE, use(t, CardType.FIXED_MOVE, null, 2).rejection(), "fixed move cannot escape jail");
@@ -183,17 +182,23 @@ class CardTest {
     }
 
     @Test
-    void buildCannotBeUsedOnLandJustBoughtThisTurn() {
-        Table t = table(1);
-        craft(t, hand("p1", CardType.BUILD, CardType.QUERY));
-        t.rollOnly();                                                          // p1 → 1（无主 L）
-        t.act(w -> new GameCommand.BuyProperty("p1", w));
-        assertEquals("p1", tile(t, 1).owner());
-        // 还有查询卡可用 → 落点后用卡阶段开启，但建造对刚买下的地不可用
-        assertEquals(TurnStage.LANDING, t.game().turn().stage());
-        assertNull(t.game().turn().landing());
-        assertEquals(RejectionCode.NO_TARGET, use(t, CardType.BUILD).rejection());
-        assertEquals(0, tile(t, 1).level());
+    void thereIsNoCardPhaseAfterLanding() {
+        // 用户 2026-10-07 裁决：落点后没有用卡阶段，落点结算完直接结束回合；主动卡只在投骰前用
+        Table t = table(1, 1);
+        craft(t, own(3, "p2", 2));
+        craft(t, hand("p1", CardType.BUILD, CardType.QUERY, CardType.ROADBLOCK));
+        craft(t, at("p1", 2));
+        long p1 = t.cash("p1");
+        t.rollOnly();                                                          // p1 → 3：缴租 450，回合随即结束
+        assertEquals(p1 - 450, t.cash("p1"));
+        assertEquals("p2", t.current(), "the turn ends right after the landing");
+        assertEquals(RejectionCode.NOT_YOUR_TURN, t.send(t.now + 10,
+                new GameCommand.UseCard("p1", t.window().windowId(), CardType.QUERY, "p2", 0)).rejection());
+        t.rollOnly();                                                          // p2 → 1（无主）：买下，回合随即结束
+        t.act(w -> new GameCommand.BuyProperty("p2", w));
+        assertEquals("p1", t.current());
+        assertEquals(TurnStage.PRE_ROLL, t.game().turn().stage());
+        assertEquals(3, t.game().player("p1").orElseThrow().hand().size());
         consistent(t);
     }
 
@@ -404,62 +409,15 @@ class CardTest {
         consistent(t);
     }
 
-    // ------------------------------------------------------------ 落点后用卡阶段
-
     @Test
-    void postLandingWindowOpensOnlyWithAUsableCardAndEndsTheTurnAfterUse() {
-        Table t = table(1, 1);
-        craft(t, own(1, "p2", 2));
-        craft(t, hand("p1", CardType.DOWNGRADE));
-        craft(t, hand("p2", CardType.FIXED_MOVE));                            // 定点移动在落点后不可用
-        long p1 = t.cash("p1");
-        t.rollOnly();                                                          // p1 → 1：缴租 450，然后可降级
-        assertEquals(p1 - 450, t.cash("p1"));
-        assertEquals(TurnStage.LANDING, t.game().turn().stage());
-        assertNull(t.game().turn().landing());
-        assertEquals("p1", t.current());
-        assertEquals(t.config.timing().decisionWindowMs(), t.window().window().deadline() - t.window().window().opensAt());
-        assertNull(use(t, CardType.DOWNGRADE).rejection());
-        assertEquals(1, tile(t, 1).level());
-        assertEquals("p2", t.current(), "using the card ends the turn");
-        t.rollOnly();                                                          // p2 → 1：自己的地（不可升级卡）……
-        while (t.session().inGame() && "p2".equals(t.current()) && t.game().turn().stage() == TurnStage.LANDING
-                && t.game().turn().landing() != null) {
-            t.pass();
-        }
-        assertEquals("p1", t.current(), "no post-landing window without a usable card");
-        consistent(t);
-    }
-
-    @Test
-    void postLandingWindowCanBeSkippedOrTimesOut() {
-        Table t = table(1, 2);
-        craft(t, hand("p1", CardType.ROADBLOCK));
-        craft(t, hand("p2", CardType.ROADBLOCK));
-        t.rollOnly();                                                          // p1 → 1（无主）：放弃
-        t.act(w -> new GameCommand.DeclinePurchase("p1", w));
-        assertEquals(TurnStage.LANDING, t.game().turn().stage());
-        assertNull(t.game().turn().landing());
-        assertNull(t.act(w -> new GameCommand.FinishTurn("p1", w)).rejection());
-        assertEquals("p2", t.current());
-        t.rollOnly();                                                          // p2 → 2（事件）
-        while (t.game().turn().landing() != null) { t.pass(); }
-        if ("p2".equals(t.current()) && t.game().turn().stage() == TurnStage.LANDING) {
-            t.tick(t.window().window().deadline());                            // 用卡阶段超时：结束回合
-        }
-        assertEquals("p1", t.current());
-        consistent(t);
-    }
-
-    @Test
-    void hostedPlayersNeverGetAPostLandingWindow() {
+    void hostedPlayersNeverUseActiveCards() {
         Table t = table(1);
         craft(t, hand("p1", CardType.ROADBLOCK, CardType.QUERY));
         t.send(t.now + 1, new GameCommand.SetControl(t.game().gameNo(), "p1", ControlMode.HOSTED));
         long due = t.state.timers().find(t.game().turn().autoTaskId()).orElseThrow().dueAt();
         t.tick(due);                                                           // 托管：自动投骰，足额就买
         while ("p1".equals(t.current()) && t.game().turn().stage() == TurnStage.LANDING) {
-            assertNotNull(t.game().turn().landing(), "no post-landing card window for a hosted player");
+            assertNotNull(t.game().turn().landing());
             t.pass();
         }
         assertEquals("p2", t.current());
@@ -473,33 +431,39 @@ class CardTest {
         // 发牌（权重区间）：p1 = 强制购房 950、清地 985；p2 = 拒绝购买 800、房屋保护 850
         Table t = new Table(RULES, ScriptedRandom.withEventCards(script(order(90, 10),
                 Table.steps(DrawPoint.INITIAL_CARD, 1000, 950, 985, 800, 850),
-                dice(DrawPoint.MOVE_DIE, 1, 3, 2, 1, 1))), 1).start(2);
+                dice(DrawPoint.MOVE_DIE, 1, 3, 2, 2, 2, 4, 4))), 1).start(2);
         assertEquals(List.of(CardType.FORCED_PURCHASE, CardType.CLEAR_LAND), t.game().player("p1").orElseThrow().hand());
-        t.rollOnly();                                                          // p1 → 1：放弃（手里的卡此刻都不能用：无用卡阶段）
+        t.rollOnly();                                                          // p1 → 1：放弃
         t.act(w -> new GameCommand.DeclinePurchase("p1", w));
         assertEquals("p2", t.current());
         t.rollOnly();                                                          // p2 → 3：买下
         t.act(w -> new GameCommand.BuyProperty("p2", w));
         assertEquals("p1", t.current());
         long p1 = t.cash("p1");
-        t.rollOnly();                                                          // p1 → 3：缴租 100，随后落点后用卡阶段
+        t.rollOnly();                                                          // p1 → 3：缴租 100，回合结束（落点后没有用卡阶段）
         assertEquals(p1 - 100, t.cash("p1"));
-        assertNull(t.game().turn().landing());
-        assertNull(use(t, CardType.FORCED_PURCHASE).rejection());              // p2 持拒绝购买 → 响应窗
+        assertEquals("p2", t.current());
+        t.rollOnly();                                                          // p2 → 5：买下
+        t.act(w -> new GameCommand.BuyProperty("p2", w));
+        assertEquals("p1", t.current());
+        assertNull(use(t, CardType.FORCED_PURCHASE).rejection());              // 投骰前：p1 站在 p2 的 3 上；p2 持拒绝购买 → 响应窗
         assertEquals(FlowKind.RESPONSE, t.window().kind());
         t.send(t.now + 10, new GameCommand.RespondCard("p2", t.window().windowId(), true));
         assertEquals("p2", tile(t, 3).owner());
-        assertEquals("p2", t.current(), "the post-landing card ends the turn after the response");
-        t.rollOnly();                                                          // p2 → 4（车站）：放弃
+        assertEquals(TurnStage.PRE_ROLL, t.game().turn().stage(), "the pre-roll window resumes after the response");
+        assertEquals(RejectionCode.CARD_USED, use(t, CardType.CLEAR_LAND).rejection(), "one active card per turn");
+        t.rollOnly();                                                          // p1 → 5：缴租 200
+        assertEquals("p2", t.current());
+        t.rollOnly();                                                          // p2 → 9：放弃
         t.act(w -> new GameCommand.DeclinePurchase("p2", w));
         assertEquals("p1", t.current());
-        assertNull(use(t, CardType.CLEAR_LAND).rejection());                   // 投骰前：p1 仍站在 p2 的 3 上
+        assertNull(use(t, CardType.CLEAR_LAND).rejection());                   // 投骰前：p1 站在 p2 的 5 上
         t.send(t.now + 10, new GameCommand.RespondCard("p2", t.window().windowId(), false));
-        assertNull(tile(t, 3).owner(), "cleared after the owner declined to protect");
+        assertNull(tile(t, 5).owner(), "cleared after the owner declined to protect");
         assertEquals(List.of(CardType.HOUSE_PROTECTION), t.game().player("p2").orElseThrow().hand());
         assertEquals(TurnStage.PRE_ROLL, t.game().turn().stage());
         t.rollOnly();                                                          // p1 照常投骰
-        assertEquals(4, t.position("p1"));
+        assertEquals(9, t.position("p1"));
         assertEquals(t.state, t.engine.rebuild(t.log));
         assertEquals(t.state, t.engine.restore(t.engine.snapshot(t.state)));
         assertEquals(List.of(GameEvent.AttackBlocked.class, GameEvent.ResponseDeclined.class),
