@@ -112,6 +112,24 @@ export class OnlineSession {
         return this.check(await this.client.addBot());
     }
 
+    /** 从服务端读取我的最近 20 局，写入 store.history（失败时保留空列表并返回 false）。 */
+    async loadHistory(): Promise<boolean> {
+        try {
+            const rows = await this.client.history();
+            this.store.history = rows.map((r) => ({
+                mode: r.endMode === 'TIME_LIMIT' ? '限时模式' : '破产模式',
+                players: r.playerCount,
+                minutes: Math.max(1, Math.round((r.endedAt - r.startedAt) / 60000)),
+                rank: r.rank ?? 0,
+                finalAssets: r.netWorth ?? r.cash ?? 0,
+            }));
+            return true;
+        } catch {
+            this.store.history = [];
+            return false;
+        }
+    }
+
     async start(): Promise<ResultMsg> {
         return this.check(await this.client.startGame());
     }

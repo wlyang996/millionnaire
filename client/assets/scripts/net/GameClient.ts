@@ -7,7 +7,7 @@
  * - 时间：用每条 UPDATE / PONG 的 serverTime 估算与服务器的时钟偏差，倒计时用 serverNow()。
  */
 import { requestJson } from './Http';
-import { BoardTemplate, GameCommandName, HelloMsg, ResultMsg, SSettings, UpdateMsg } from './Protocol';
+import { BoardTemplate, GameCommandName, HelloMsg, ResultMsg, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
 
 export type LinkState = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
 
@@ -75,6 +75,13 @@ export class GameClient {
     async boards(): Promise<BoardTemplate[]> {
         const r = await requestJson<BoardTemplate[]>('GET', this.baseUrl + '/api/boards');
         if (r.status !== 200 || !r.body) throw new Error('cannot load boards');
+        return r.body;
+    }
+
+    /** 我的最近 20 局（服务端从数据库读）。 */
+    async history(): Promise<SHistoryRow[]> {
+        const r = await requestJson<SHistoryRow[]>('GET', this.baseUrl + '/api/me/history', undefined, this.token ?? undefined);
+        if (r.status !== 200 || !Array.isArray(r.body)) throw new Error('cannot load history');
         return r.body;
     }
 

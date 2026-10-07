@@ -141,6 +141,13 @@ export interface HelloMsg {
     roomCode: string | null;
 }
 
+/** GET /api/me/history 的一行（我的最近 20 局，新的在前）。rank 等为 null 表示中止局。 */
+export interface SHistoryRow {
+    gameNo: number; endMode: 'TIME_LIMIT' | 'BANKRUPTCY'; timeLimitMinutes: number | null; boardId: string;
+    playerCount: number; startedAt: number; endedAt: number; endReason: string;
+    rank: number | null; netWorth: number | null; cash: number | null; life: string;
+}
+
 export interface BoardTemplateTile {
     index: number;
     type: 'START' | 'PROPERTY' | 'STATION' | 'EVENT' | 'BANK' | 'JAIL' | 'REST' | 'GAME_ZONE';
