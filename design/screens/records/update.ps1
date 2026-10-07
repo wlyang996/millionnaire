@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 # Current gallery only. Historical sources are preserved separately.
 $galleryRoot = [IO.Path]::GetFullPath((Split-Path $PSScriptRoot -Parent))
 $designRoot = Split-Path $galleryRoot -Parent
@@ -48,7 +48,12 @@ $entries = @(
     [pscustomobject]@{ File = '22-事件土地-中央抽卡与休息区-停留提示-候选.png'; Source = (Join-Path $sourceUi 'special-lands-v1/事件土地-中央抽卡与休息区-停留提示-v1.png'); Role = '事件土地-中央抽卡与休息区-停留提示'; Version = 1; Status = 'design candidate' },
     [pscustomobject]@{ File = '23-起点-经过奖励与车站-产权租金详情-候选.png'; Source = (Join-Path $sourceUi 'special-lands-v1/起点-经过奖励与车站-产权租金详情-v1.png'); Role = '起点-经过奖励与车站-产权租金详情'; Version = 1; Status = 'design candidate' },
     [pscustomobject]@{ File = '24-小镇入口-游戏大厅-候选.png'; Source = (Join-Path $sourceUi 'town-entrance-v1/小镇入口-游戏大厅-v1.png'); Role = '小镇入口-游戏大厅'; Version = 1; Status = 'misinterpreted request; retained for history; not adopted' },
-    [pscustomobject]@{ File = '25-小镇入口-起点土地详情-候选.png'; Source = (Join-Path $sourceUi 'start-tile-v1/小镇入口-起点土地详情-v1.png'); Role = '小镇入口-起点土地详情'; Version = 1; Status = 'design candidate; not implemented' }
+    [pscustomobject]@{ File = '25-小镇入口-起点土地详情-候选.png'; Source = (Join-Path $sourceUi 'start-tile-v1/小镇入口-起点土地详情-v1.png'); Role = '小镇入口-起点土地详情'; Version = 1; Status = 'design candidate; not implemented' },
+    [pscustomobject]@{ File = '26-道具响应-拒绝购买-房屋保护-建造确认.png'; Source = (Join-Path $sourceUi 'interaction-supplement-2026-10-07/道具响应-拒绝购买-房屋保护-建造确认-v3.png'); Role = '道具响应-拒绝购买-房屋保护-建造确认'; Version = 3; Status = 'design candidate; not implemented in this request' },
+    [pscustomobject]@{ File = '27-发起拍卖-选择拍卖资产-卖家观看.png'; Source = (Join-Path $sourceUi 'interaction-supplement-2026-10-07/发起拍卖-选择拍卖资产-卖家观看-v3.png'); Role = '发起拍卖-选择拍卖资产-卖家观看'; Version = 3; Status = 'design candidate; not implemented in this request' },
+    [pscustomobject]@{ File = '28-发起交易-等待答复.png'; Source = (Join-Path $sourceUi 'interaction-supplement-2026-10-07/发起交易-等待答复-v3.png'); Role = '发起交易-等待答复'; Version = 3; Status = 'design candidate; not implemented in this request' },
+    [pscustomobject]@{ File = '29-拍卖交易-排队横幅与结果提示.png'; Source = (Join-Path $sourceUi 'interaction-supplement-2026-10-07/拍卖交易-排队横幅与结果提示-v3.png'); Role = '拍卖交易-排队横幅与结果提示'; Version = 3; Status = 'design candidate; not implemented in this request' },
+    [pscustomobject]@{ File = '30-房屋保护-拆楼响应.png'; Source = (Join-Path $sourceUi 'interaction-supplement-2026-10-07/房屋保护-拆楼响应-v3.png'); Role = '房屋保护-拆楼响应'; Version = 3; Status = 'design candidate; not implemented in this request' }
 )
 
 # Check every source before copying any file.

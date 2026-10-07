@@ -1,232 +1,277 @@
-{
-  "board_version": 7,
-  "motion_version": 8,
-  "ui_states_version": 7,
-  "files": [
-    {
-      "file": "01-对局棋盘-普通回合.png",
-      "source": "screens/ui/board-v7/对局棋盘-普通回合-v7.png",
-      "version": 7,
-      "role": "对局棋盘-普通回合",
-      "status": "design candidate",
-      "sha256": "6bc6908e8739fc80ecaf688c7054f1ca01f279992be07aa8c7291c2d7eb270f5",
-      "bytes": 2552761
-    },
-    {
-      "file": "02-骰子翻滚与人物逐格跳跃-动作分镜.png",
-      "source": "screens/ui/board-v8/骰子翻滚与人物逐格跳跃-分镜-v8.png",
-      "version": 8,
-      "role": "骰子翻滚与人物逐格跳跃-动作分镜",
-      "status": "design candidate",
-      "sha256": "1ec35fd724036881fc8fb845af27bfe86cc0c8904bd46911aabd86c6dea31fc5",
-      "bytes": 2090961
-    },
-    {
-      "file": "03-登录资料-本局结算-破产观战.png",
-      "source": "screens/ui/refresh-v3/登录资料-本局结算-破产观战-v3.png",
-      "version": 3,
-      "role": "登录资料-本局结算-破产观战",
-      "status": "design candidate",
-      "sha256": "9e80a17d051e6b00f1eacd4afcaf02799443b51621bf2480d6658798aa00ef67",
-      "bytes": 2365867
-    },
-    {
-      "file": "04-购买地产-升级-租金响应-交易确认.png",
-      "source": "screens/ui/refresh-v3/购买地产-升级-租金响应-交易确认-v3.png",
-      "version": 3,
-      "role": "购买地产-升级-租金响应-交易确认",
-      "status": "design candidate",
-      "sha256": "d846e1f736716fa2c9c1fe321a8e2887efeda4ff1e42cccf77d31cc6ab43d99f",
-      "bytes": 2652296
-    },
-    {
-      "file": "05-拍卖竞价-应急抵押-欠款第二阶段.png",
-      "source": "screens/ui/refresh-v3/拍卖竞价-应急抵押-欠款第二阶段-v3.png",
-      "version": 3,
-      "role": "拍卖竞价-应急抵押-欠款第二阶段",
-      "status": "design candidate",
-      "sha256": "34729103eb6f36ab9d2d28bf345a88cdbfbaea1bf1c10de2c0b26c3b38ea1582",
-      "bytes": 2209260
-    },
-    {
-      "file": "06-好友房间-连接状态-重连同步.png",
-      "source": "screens/ui/refresh-v3/好友房间-连接状态-重连同步-v3.png",
-      "version": 3,
-      "role": "好友房间-连接状态-重连同步",
-      "status": "design candidate",
-      "sha256": "208a9522f0df5b73cd6d2e9d1eb6cd4a9966b0473e8f0fb9882575b4b04b1e91",
-      "bytes": 2334520
-    },
-    {
-      "file": "07-风格参考A-历史四界面总览.png",
-      "source": "screens/ui/main-screens-v1.png",
-      "version": 1,
-      "role": "风格参考A-历史四界面总览",
-      "status": "historical style reference",
-      "sha256": "5b3af725b161149e1459843fe1e455a310ace2cb3932300a37e4e6b5a7d61133",
-      "bytes": 2305244
-    },
-    {
-      "file": "08-风格参考B-大厅与好友房间.png",
-      "source": "screens/assets-v2/layout_preview.png",
-      "version": 2,
-      "role": "风格参考B-大厅与好友房间",
-      "status": "design candidate",
-      "sha256": "75ed82d85de7d4090c65584b9abd6aebfad4951a17c10467f8216ba1b3c34dfd",
-      "bytes": 2254020
-    },
-    {
-      "file": "09-道具横滑-回合提示-时间警示规范.png",
-      "source": "screens/ui/board-v7/道具栏-回合提示-时间警示规范-v7.png",
-      "version": 7,
-      "role": "道具横滑-回合提示-时间警示规范",
-      "status": "design candidate",
-      "sha256": "f5ec7b53b99eddc8e74d17c2fd101c6e51960d161a4bf8992418e1a4b2e7c60c",
-      "bytes": 2087903
-    },
-    {
-      "file": "10-事件抽卡-本人中央点击卡背.png",
-      "source": "screens/ui/event-card-preview/事件抽卡-本人中央点击卡背-v4.png",
-      "version": 4,
-      "role": "事件抽卡-本人中央点击卡背",
-      "status": "design candidate",
-      "sha256": "6dfe172ad8fe30a937997470280966339879408226cbe547babd9a90a00d7b4d",
-      "bytes": 2295007
-    },
-    {
-      "file": "11-对局棋盘-他人回合等待.png",
-      "source": "screens/ui/board-v7/对局棋盘-他人回合等待-v7.png",
-      "version": 7,
-      "role": "对局棋盘-他人回合等待",
-      "status": "design candidate",
-      "sha256": "79e0663d043d83f7b39bf1bf0b020fb96fb45d2f1e38abe0687ac63ac578d012",
-      "bytes": 2558759
-    },
-    {
-      "file": "12-事件卡-五类卡面与问号卡背.png",
-      "source": "screens/ui/supplement-v1/事件卡-五类卡面与问号卡背-v1.png",
-      "version": 1,
-      "role": "事件卡-五类卡面与问号卡背",
-      "status": "design candidate",
-      "sha256": "fbf9de878de2e01b0c01d36f50bdbcdd6d3568d6e0f426798d6c1956a0e6b502",
-      "bytes": 2296920
-    },
-    {
-      "file": "13-路障放置-定点移动-查询目标与结果.png",
-      "source": "screens/ui/supplement-v1/路障放置-定点移动-查询目标与结果-v1.png",
-      "version": 1,
-      "role": "路障放置-定点移动-查询目标与结果",
-      "status": "design candidate",
-      "sha256": "19e45d42d71f05c5c439eab5dce60c889bb6aa6966811494ba6d6253b877aeca",
-      "bytes": 2433963
-    },
-    {
-      "file": "14-强制购房-降级-拆楼-清地.png",
-      "source": "screens/ui/supplement-v1/强制购房-降级-拆楼-清地-v1.png",
-      "version": 1,
-      "role": "强制购房-降级-拆楼-清地",
-      "status": "design candidate",
-      "sha256": "5ac5481eaeb8721047a2d3dea2eda2b3b18c9058a1175f5b358841006a6c0b3a",
-      "bytes": 2347832
-    },
-    {
-      "file": "15-银行抵押与赎回-监狱操作.png",
-      "source": "screens/ui/supplement-v1/银行抵押与赎回-监狱操作-v1.png",
-      "version": 1,
-      "role": "银行抵押与赎回-监狱操作",
-      "status": "design candidate",
-      "sha256": "d9e2824d8f66957cda630329cd28ccba91cbe9bbd49ae70584b83e318d6839b7",
-      "bytes": 2290743
-    },
-    {
-      "file": "16-虎口拔牙结果-定点移动与房屋保护详情.png",
-      "source": "screens/ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png",
-      "version": 1,
-      "role": "虎口拔牙结果-定点移动与房屋保护详情",
-      "status": "design candidate",
-      "sha256": "59a03225f83a88a0d070dd6f406052af238407ec12fed9d8b95de5bf04532410",
-      "bytes": 2208800
-    },
-    {
-      "file": "17-弃牌-认输二次确认-本人战绩.png",
-      "source": "screens/ui/supplement-v1/弃牌-认输二次确认-本人战绩-v1.png",
-      "version": 1,
-      "role": "弃牌-认输二次确认-本人战绩",
-      "status": "design candidate",
-      "sha256": "72c27eb9a0a2c4da98a59e8eac976c2df075f646e2af0e96a730723094f1d5bb",
-      "bytes": 2194017
-    },
-    {
-      "file": "18-资产总览-格子详情-房间号键盘-候选.png",
-      "source": "screens/ui/supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png",
-      "version": 1,
-      "role": "资产总览-格子详情-房间号键盘-候选",
-      "status": "assets and tile layout adopted and browser checked; keypad candidate; exact artwork fidelity pending",
-      "sha256": "b71680df2610d34e87e7f6ae3c0aa4bbb23ff9ebacf41904250f70e0b728e8c0",
-      "bytes": 2067272
-    },
-    {
-      "file": "19-道具详情与聊天-待审阅.png",
-      "source": "screens/ui/details-chat-v1/道具详情与聊天-待审阅-v1.png",
-      "version": 1,
-      "role": "道具详情与聊天-待审阅",
-      "status": "chat layout approved; card dialog superseded by screen 16; artwork integration pending",
-      "sha256": "2d32b18048ed0153b3b544661768c332475e1b06b488fb5806af7ec4111a3ae5",
-      "bytes": 2161337
-    },
-    {
-      "file": "20-银行-抵押与赎回-候选.png",
-      "source": "screens/ui/special-lands-v1/银行-抵押与赎回-v1.png",
-      "version": 1,
-      "role": "银行-抵押与赎回",
-      "status": "design candidate",
-      "sha256": "78000b335480045efc996b795d798518e21efe84c70aefddede4418aea8c70a8",
-      "bytes": 2056029
-    },
-    {
-      "file": "21-监狱-出狱判定与游戏中心-虎口拔牙-候选.png",
-      "source": "screens/ui/special-lands-v1/监狱-出狱判定与游戏中心-虎口拔牙-v1.png",
-      "version": 1,
-      "role": "监狱-出狱判定与游戏中心-虎口拔牙",
-      "status": "design candidate",
-      "sha256": "ed56057dc354e982b4973177f87b22b8059679fd3b33965f868aafaadfdb0723",
-      "bytes": 2181314
-    },
-    {
-      "file": "22-事件土地-中央抽卡与休息区-停留提示-候选.png",
-      "source": "screens/ui/special-lands-v1/事件土地-中央抽卡与休息区-停留提示-v1.png",
-      "version": 1,
-      "role": "事件土地-中央抽卡与休息区-停留提示",
-      "status": "design candidate",
-      "sha256": "dca38fb8099546c142b724757f374404348b06ebf29c3b734a081b1709c7db81",
-      "bytes": 2364031
-    },
-    {
-      "file": "23-起点-经过奖励与车站-产权租金详情-候选.png",
-      "source": "screens/ui/special-lands-v1/起点-经过奖励与车站-产权租金详情-v1.png",
-      "version": 1,
-      "role": "起点-经过奖励与车站-产权租金详情",
-      "status": "design candidate",
-      "sha256": "3a749d08d3c26eac7fae21ab3eea173c5fa6c72ea35db3ad939cfe292b09a5f7",
-      "bytes": 2143194
-    },
-    {
-      "file": "24-小镇入口-游戏大厅-候选.png",
-      "source": "screens/ui/town-entrance-v1/小镇入口-游戏大厅-v1.png",
-      "version": 1,
-      "role": "小镇入口-游戏大厅",
-      "status": "misinterpreted request; retained for history; not adopted",
-      "sha256": "5bcf937d1b8545b5ba42bc3c9e9edb2e139f9aa5560cd1eb8fb3e53b66cb6748",
-      "bytes": 2365804
-    },
-    {
-      "file": "25-小镇入口-起点土地详情-候选.png",
-      "source": "screens/ui/start-tile-v1/小镇入口-起点土地详情-v1.png",
-      "version": 1,
-      "role": "小镇入口-起点土地详情",
-      "status": "design candidate; not implemented",
-      "sha256": "2dd8b13f741f714aa58d18c2e2968c02d022503b9fa576c0ad72c7386bd0114c",
-      "bytes": 1995655
-    }
-  ]
+﻿{
+    "board_version":  7,
+    "motion_version":  8,
+    "ui_states_version":  7,
+    "files":  [
+                  {
+                      "file":  "01-对局棋盘-普通回合.png",
+                      "source":  "screens/ui/board-v7/对局棋盘-普通回合-v7.png",
+                      "version":  7,
+                      "role":  "对局棋盘-普通回合",
+                      "status":  "design candidate",
+                      "sha256":  "6bc6908e8739fc80ecaf688c7054f1ca01f279992be07aa8c7291c2d7eb270f5",
+                      "bytes":  2552761
+                  },
+                  {
+                      "file":  "02-骰子翻滚与人物逐格跳跃-动作分镜.png",
+                      "source":  "screens/ui/board-v8/骰子翻滚与人物逐格跳跃-分镜-v8.png",
+                      "version":  8,
+                      "role":  "骰子翻滚与人物逐格跳跃-动作分镜",
+                      "status":  "design candidate",
+                      "sha256":  "1ec35fd724036881fc8fb845af27bfe86cc0c8904bd46911aabd86c6dea31fc5",
+                      "bytes":  2090961
+                  },
+                  {
+                      "file":  "03-登录资料-本局结算-破产观战.png",
+                      "source":  "screens/ui/refresh-v3/登录资料-本局结算-破产观战-v3.png",
+                      "version":  3,
+                      "role":  "登录资料-本局结算-破产观战",
+                      "status":  "design candidate",
+                      "sha256":  "9e80a17d051e6b00f1eacd4afcaf02799443b51621bf2480d6658798aa00ef67",
+                      "bytes":  2365867
+                  },
+                  {
+                      "file":  "04-购买地产-升级-租金响应-交易确认.png",
+                      "source":  "screens/ui/refresh-v3/购买地产-升级-租金响应-交易确认-v3.png",
+                      "version":  3,
+                      "role":  "购买地产-升级-租金响应-交易确认",
+                      "status":  "design candidate",
+                      "sha256":  "d846e1f736716fa2c9c1fe321a8e2887efeda4ff1e42cccf77d31cc6ab43d99f",
+                      "bytes":  2652296
+                  },
+                  {
+                      "file":  "05-拍卖竞价-应急抵押-欠款第二阶段.png",
+                      "source":  "screens/ui/refresh-v3/拍卖竞价-应急抵押-欠款第二阶段-v3.png",
+                      "version":  3,
+                      "role":  "拍卖竞价-应急抵押-欠款第二阶段",
+                      "status":  "design candidate",
+                      "sha256":  "34729103eb6f36ab9d2d28bf345a88cdbfbaea1bf1c10de2c0b26c3b38ea1582",
+                      "bytes":  2209260
+                  },
+                  {
+                      "file":  "06-好友房间-连接状态-重连同步.png",
+                      "source":  "screens/ui/refresh-v3/好友房间-连接状态-重连同步-v3.png",
+                      "version":  3,
+                      "role":  "好友房间-连接状态-重连同步",
+                      "status":  "design candidate",
+                      "sha256":  "208a9522f0df5b73cd6d2e9d1eb6cd4a9966b0473e8f0fb9882575b4b04b1e91",
+                      "bytes":  2334520
+                  },
+                  {
+                      "file":  "07-风格参考A-历史四界面总览.png",
+                      "source":  "screens/ui/main-screens-v1.png",
+                      "version":  1,
+                      "role":  "风格参考A-历史四界面总览",
+                      "status":  "historical style reference",
+                      "sha256":  "5b3af725b161149e1459843fe1e455a310ace2cb3932300a37e4e6b5a7d61133",
+                      "bytes":  2305244
+                  },
+                  {
+                      "file":  "08-风格参考B-大厅与好友房间.png",
+                      "source":  "screens/assets-v2/layout_preview.png",
+                      "version":  2,
+                      "role":  "风格参考B-大厅与好友房间",
+                      "status":  "design candidate",
+                      "sha256":  "75ed82d85de7d4090c65584b9abd6aebfad4951a17c10467f8216ba1b3c34dfd",
+                      "bytes":  2254020
+                  },
+                  {
+                      "file":  "09-道具横滑-回合提示-时间警示规范.png",
+                      "source":  "screens/ui/board-v7/道具栏-回合提示-时间警示规范-v7.png",
+                      "version":  7,
+                      "role":  "道具横滑-回合提示-时间警示规范",
+                      "status":  "design candidate",
+                      "sha256":  "f5ec7b53b99eddc8e74d17c2fd101c6e51960d161a4bf8992418e1a4b2e7c60c",
+                      "bytes":  2087903
+                  },
+                  {
+                      "file":  "10-事件抽卡-本人中央点击卡背.png",
+                      "source":  "screens/ui/event-card-preview/事件抽卡-本人中央点击卡背-v4.png",
+                      "version":  4,
+                      "role":  "事件抽卡-本人中央点击卡背",
+                      "status":  "design candidate",
+                      "sha256":  "6dfe172ad8fe30a937997470280966339879408226cbe547babd9a90a00d7b4d",
+                      "bytes":  2295007
+                  },
+                  {
+                      "file":  "11-对局棋盘-他人回合等待.png",
+                      "source":  "screens/ui/board-v7/对局棋盘-他人回合等待-v7.png",
+                      "version":  7,
+                      "role":  "对局棋盘-他人回合等待",
+                      "status":  "design candidate",
+                      "sha256":  "79e0663d043d83f7b39bf1bf0b020fb96fb45d2f1e38abe0687ac63ac578d012",
+                      "bytes":  2558759
+                  },
+                  {
+                      "file":  "12-事件卡-五类卡面与问号卡背.png",
+                      "source":  "screens/ui/supplement-v1/事件卡-五类卡面与问号卡背-v1.png",
+                      "version":  1,
+                      "role":  "事件卡-五类卡面与问号卡背",
+                      "status":  "design candidate",
+                      "sha256":  "fbf9de878de2e01b0c01d36f50bdbcdd6d3568d6e0f426798d6c1956a0e6b502",
+                      "bytes":  2296920
+                  },
+                  {
+                      "file":  "13-路障放置-定点移动-查询目标与结果.png",
+                      "source":  "screens/ui/supplement-v1/路障放置-定点移动-查询目标与结果-v1.png",
+                      "version":  1,
+                      "role":  "路障放置-定点移动-查询目标与结果",
+                      "status":  "design candidate",
+                      "sha256":  "19e45d42d71f05c5c439eab5dce60c889bb6aa6966811494ba6d6253b877aeca",
+                      "bytes":  2433963
+                  },
+                  {
+                      "file":  "14-强制购房-降级-拆楼-清地.png",
+                      "source":  "screens/ui/supplement-v1/强制购房-降级-拆楼-清地-v1.png",
+                      "version":  1,
+                      "role":  "强制购房-降级-拆楼-清地",
+                      "status":  "design candidate",
+                      "sha256":  "5ac5481eaeb8721047a2d3dea2eda2b3b18c9058a1175f5b358841006a6c0b3a",
+                      "bytes":  2347832
+                  },
+                  {
+                      "file":  "15-银行抵押与赎回-监狱操作.png",
+                      "source":  "screens/ui/supplement-v1/银行抵押与赎回-监狱操作-v1.png",
+                      "version":  1,
+                      "role":  "银行抵押与赎回-监狱操作",
+                      "status":  "design candidate",
+                      "sha256":  "d9e2824d8f66957cda630329cd28ccba91cbe9bbd49ae70584b83e318d6839b7",
+                      "bytes":  2290743
+                  },
+                  {
+                      "file":  "16-虎口拔牙结果-定点移动与房屋保护详情.png",
+                      "source":  "screens/ui/supplement-v1/虎口拔牙结果-定点移动与房屋保护详情-v1.png",
+                      "version":  1,
+                      "role":  "虎口拔牙结果-定点移动与房屋保护详情",
+                      "status":  "design candidate",
+                      "sha256":  "59a03225f83a88a0d070dd6f406052af238407ec12fed9d8b95de5bf04532410",
+                      "bytes":  2208800
+                  },
+                  {
+                      "file":  "17-弃牌-认输二次确认-本人战绩.png",
+                      "source":  "screens/ui/supplement-v1/弃牌-认输二次确认-本人战绩-v1.png",
+                      "version":  1,
+                      "role":  "弃牌-认输二次确认-本人战绩",
+                      "status":  "design candidate",
+                      "sha256":  "72c27eb9a0a2c4da98a59e8eac976c2df075f646e2af0e96a730723094f1d5bb",
+                      "bytes":  2194017
+                  },
+                  {
+                      "file":  "18-资产总览-格子详情-房间号键盘-候选.png",
+                      "source":  "screens/ui/supplement-v1/资产总览-格子详情-房间号键盘-候选-v1.png",
+                      "version":  1,
+                      "role":  "资产总览-格子详情-房间号键盘-候选",
+                      "status":  "assets and tile layout adopted and browser checked; keypad candidate; exact artwork fidelity pending",
+                      "sha256":  "b71680df2610d34e87e7f6ae3c0aa4bbb23ff9ebacf41904250f70e0b728e8c0",
+                      "bytes":  2067272
+                  },
+                  {
+                      "file":  "19-道具详情与聊天-待审阅.png",
+                      "source":  "screens/ui/details-chat-v1/道具详情与聊天-待审阅-v1.png",
+                      "version":  1,
+                      "role":  "道具详情与聊天-待审阅",
+                      "status":  "chat layout approved; card dialog superseded by screen 16; artwork integration pending",
+                      "sha256":  "2d32b18048ed0153b3b544661768c332475e1b06b488fb5806af7ec4111a3ae5",
+                      "bytes":  2161337
+                  },
+                  {
+                      "file":  "20-银行-抵押与赎回-候选.png",
+                      "source":  "screens/ui/special-lands-v1/银行-抵押与赎回-v1.png",
+                      "version":  1,
+                      "role":  "银行-抵押与赎回",
+                      "status":  "design candidate",
+                      "sha256":  "78000b335480045efc996b795d798518e21efe84c70aefddede4418aea8c70a8",
+                      "bytes":  2056029
+                  },
+                  {
+                      "file":  "21-监狱-出狱判定与游戏中心-虎口拔牙-候选.png",
+                      "source":  "screens/ui/special-lands-v1/监狱-出狱判定与游戏中心-虎口拔牙-v1.png",
+                      "version":  1,
+                      "role":  "监狱-出狱判定与游戏中心-虎口拔牙",
+                      "status":  "design candidate",
+                      "sha256":  "ed56057dc354e982b4973177f87b22b8059679fd3b33965f868aafaadfdb0723",
+                      "bytes":  2181314
+                  },
+                  {
+                      "file":  "22-事件土地-中央抽卡与休息区-停留提示-候选.png",
+                      "source":  "screens/ui/special-lands-v1/事件土地-中央抽卡与休息区-停留提示-v1.png",
+                      "version":  1,
+                      "role":  "事件土地-中央抽卡与休息区-停留提示",
+                      "status":  "design candidate",
+                      "sha256":  "dca38fb8099546c142b724757f374404348b06ebf29c3b734a081b1709c7db81",
+                      "bytes":  2364031
+                  },
+                  {
+                      "file":  "23-起点-经过奖励与车站-产权租金详情-候选.png",
+                      "source":  "screens/ui/special-lands-v1/起点-经过奖励与车站-产权租金详情-v1.png",
+                      "version":  1,
+                      "role":  "起点-经过奖励与车站-产权租金详情",
+                      "status":  "design candidate",
+                      "sha256":  "3a749d08d3c26eac7fae21ab3eea173c5fa6c72ea35db3ad939cfe292b09a5f7",
+                      "bytes":  2143194
+                  },
+                  {
+                      "file":  "24-小镇入口-游戏大厅-候选.png",
+                      "source":  "screens/ui/town-entrance-v1/小镇入口-游戏大厅-v1.png",
+                      "version":  1,
+                      "role":  "小镇入口-游戏大厅",
+                      "status":  "misinterpreted request; retained for history; not adopted",
+                      "sha256":  "5bcf937d1b8545b5ba42bc3c9e9edb2e139f9aa5560cd1eb8fb3e53b66cb6748",
+                      "bytes":  2365804
+                  },
+                  {
+                      "file":  "25-小镇入口-起点土地详情-候选.png",
+                      "source":  "screens/ui/start-tile-v1/小镇入口-起点土地详情-v1.png",
+                      "version":  1,
+                      "role":  "小镇入口-起点土地详情",
+                      "status":  "design candidate; not implemented",
+                      "sha256":  "2dd8b13f741f714aa58d18c2e2968c02d022503b9fa576c0ad72c7386bd0114c",
+                      "bytes":  1995655
+                  },
+                  {
+                      "file":  "26-道具响应-拒绝购买-房屋保护-建造确认.png",
+                      "source":  "screens/ui/interaction-supplement-2026-10-07/道具响应-拒绝购买-房屋保护-建造确认-v3.png",
+                      "version":  3,
+                      "role":  "道具响应-拒绝购买-房屋保护-建造确认",
+                      "status":  "design candidate; not implemented in this request",
+                      "sha256":  "30270289ce422ab658a5c7f53aa1793ec6cce57c4494b0a7cf375b5ffbae3372",
+                      "bytes":  2562783
+                  },
+                  {
+                      "file":  "27-发起拍卖-选择拍卖资产-卖家观看.png",
+                      "source":  "screens/ui/interaction-supplement-2026-10-07/发起拍卖-选择拍卖资产-卖家观看-v3.png",
+                      "version":  3,
+                      "role":  "发起拍卖-选择拍卖资产-卖家观看",
+                      "status":  "design candidate; not implemented in this request",
+                      "sha256":  "045892d6c5308ec2cc7f53c2785359c84391040ba9a2f4df6588e31f68c19d66",
+                      "bytes":  2529746
+                  },
+                  {
+                      "file":  "28-发起交易-等待答复.png",
+                      "source":  "screens/ui/interaction-supplement-2026-10-07/发起交易-等待答复-v3.png",
+                      "version":  3,
+                      "role":  "发起交易-等待答复",
+                      "status":  "design candidate; not implemented in this request",
+                      "sha256":  "79df2e87d1a86503fd13e0bba8a0ede5ea398985fec587d2849d7b67346ef3f1",
+                      "bytes":  2406294
+                  },
+                  {
+                      "file":  "29-拍卖交易-排队横幅与结果提示.png",
+                      "source":  "screens/ui/interaction-supplement-2026-10-07/拍卖交易-排队横幅与结果提示-v3.png",
+                      "version":  3,
+                      "role":  "拍卖交易-排队横幅与结果提示",
+                      "status":  "design candidate; not implemented in this request",
+                      "sha256":  "2bc6cf1743e598cadf390400e3710c4b826b7006b0eb242de29ab6f66a26d511",
+                      "bytes":  2597720
+                  },
+                  {
+                      "file":  "30-房屋保护-拆楼响应.png",
+                      "source":  "screens/ui/interaction-supplement-2026-10-07/房屋保护-拆楼响应-v3.png",
+                      "version":  3,
+                      "role":  "房屋保护-拆楼响应",
+                      "status":  "design candidate; not implemented in this request",
+                      "sha256":  "433e815f00b10ca35a319cef0777313d89791d5a6ad6b5451f4dfeb265d54816",
+                      "bytes":  2172697
+                  }
+              ]
 }

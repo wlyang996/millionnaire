@@ -1,0 +1,10 @@
+[
+  [
+    "拍卖交易-排队横幅与结果提示",
+    "Keep all 4 panels, banners and exact result example text unchanged. Replace bottom five navigation buttons with tool cards 免租、建造、拍卖、定点移动、路障. In queue panels1,2 label 青麦路 未升级 with owner 糖糖, instead of 可可 and2级. Results are explicitly alternative examples, retain 成交示例/流拍示例/被拒绝示例/超时示例. No new controls."
+  ],
+  [
+    "房屋保护-拆楼响应",
+    "Change top 我 badge and highlight from 糖糖 to 可可, current defender is 可可, attacker 糖糖. Leave bottom defense panel and all correct text/numbers untouched. Replace invented bottom navigation 地图/卡片/骰子/商店/任务 with five tool cards 免租、建造、拍卖、定点移动、路障, with smaller current-player 可可 footer beneath. No new gameplay controls."
+  ]
+]

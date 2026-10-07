@@ -1,0 +1,14 @@
+[
+  [
+    "道具响应-拒绝购买-房屋保护-建造确认",
+    "Preserve the four panel layout and all bottom confirmation contents. Correct identity: in panels 1,2,3 the defender/current viewer is 可可, mark 我 on 可可 top avatar instead of 糖糖; attacker still 糖糖. Panel4 current viewer 糖糖, change floating owner label from 可可 to 糖糖. In all panels room remaining 30:00 must be dark blue #1F3F7A, while response 10秒 remains red. Restore the existing bottom 5 tool tiles 免租、建造、拍卖、定点移动、路障 instead of invented navigation bar; do not change confirmation text or numerical effects."
+  ],
+  [
+    "发起拍卖-选择拍卖资产-卖家观看",
+    "Preserve all four panels and content. Change gray mortgaged asset name 灰苑路 to 石桥路. In first panel unowned 木匠街 board tile remove 2级, replace with 未升级 and no owner. Panels2,3 property belongs to 糖糖 and is 未升级. Panel4 unownedauction 木匠街 is 未升级. Correct first room clock08:46 red unchanged. Replace bottom invented navigation with five tool cards 免租、建造、拍卖、定点移动、路障. Retain all numerical details, 3 purchase choices, 2 distinct seller/initiator views."
+  ],
+  [
+    "发起交易-等待答复",
+    "Preserve the three panels and all form and banner layout and exact prices. Change mortgaged asset 灰苑路 to 石桥路 in both forms. Board owner label must be 糖糖 (seller/current viewer), board 青麦路 must say 未升级 rather than 2级 in all panels. Asset selection remains 青麦路 standard500 and 木匠街1级1300. Replace invented bottom navigation with five tool tiles 免租、建造、拍卖、定点移动、路障. Keep application disabled in incompleteform, keep spectator waiting nonmodal."
+  ]
+]
