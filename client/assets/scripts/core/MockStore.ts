@@ -8,6 +8,7 @@ import { remainingSecFromMs } from './MatchClock';
 import { advanceEvent, clickCard, closeResult, EVENT_IDLE, EventDrawState, EventResult, triggerEvent } from './EventDraw';
 import { Theme } from './Theme';
 import type { OnlineSession } from '../net/OnlineSession';
+import type { LogLine } from '../net/GameLog';
 import {
     AuctionView, BoardTile, Card, CardType, ChatLine, ConnState, ControlMode, DebtView, GameResult, GameView,
     HistoryEntry, Member, FlowResult, MinigameOutcome, PendingRequest, PlayerView, Profile, PropertyState, QueryResult, RoomSettings, SessionView,
@@ -73,6 +74,8 @@ export class MockStore {
     myRequest: PendingRequest | null = null;
     /** [联机] 最近一次拍卖 / 交易的结果提示（设计稿 29 结果卡） */
     flowResult: FlowResult | null = null;
+    /** 对局记录（联机由 OnlineSession 按推送事件追加；演示为空） */
+    gameLog: LogLine[] = [];
     /** [联机] 从分享卡片 / ?room= 带来的房间号：登录进大厅后自动加入 */
     pendingRoom: string | null = null;
     private listeners: Listener[] = [];

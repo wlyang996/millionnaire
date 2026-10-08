@@ -2,6 +2,8 @@
 import { BoardTile, PropertyState } from '../core/Models';
 import { standardValue } from '../core/Rules';
 import { ctx } from '../ui/Ctx';
+import { GameLogPopup } from './GameLogPopup';
+import { RulesPopup } from './RulesPopup';
 import { Popup } from '../ui/Popup';
 import { AssetsPopup } from './AssetsPopup';
 import { AuctionPopup } from './AuctionPopup';
@@ -72,4 +74,6 @@ export const POPUP_CATALOG: PopupEntry[] = [
     { id: 'history', label: '我的战绩', make: () => new HistoryPopup() },
     { id: 'tile', label: '格子详情', make: () => new TileInfoPopup(pick((t, p) => t.type === 'PROPERTY' && !!p && !!p.owner, 1)) },
     { id: 'chat', label: '聊天', make: () => new ChatPopup() },
+    { id: 'game-log', label: '对局记录', make: () => new GameLogPopup() },
+    { id: 'rules', label: '游戏规则', make: () => new RulesPopup() },
 ];

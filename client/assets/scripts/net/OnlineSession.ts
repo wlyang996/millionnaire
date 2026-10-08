@@ -10,6 +10,7 @@ import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { applyServerNames } from '../core/BoardNames';
 import { applyServerRules, BAIL_COST, luckyPool, rentPercent, setRentPercent } from '../core/Rules';
 import { applyServerSets } from '../core/SetBonus';
+import { appendLog } from './GameLog';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
 import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
@@ -299,6 +300,7 @@ export class OnlineSession {
         this.trackCards(u, s);
         const hasGame = !!s.game;
         if (hasGame && !this.hadGame) {
+            this.store.gameLog = []; // 新的一局（或重连进来）：记录从这里开始
             this.cues.length = 0; // 开局前的事件不做动画
             this.onRoute?.('board');
         } else if (!hasGame && this.hadGame) {
@@ -306,6 +308,14 @@ export class OnlineSession {
             this.onRoute?.('result');
         }
         this.hadGame = hasGame;
+        if (s.game) {
+            const g0 = s.game;
+            appendLog(this.store.gameLog, u.events, {
+                myId: this.myId,
+                name: (id) => (String(id) === this.myId ? '你' : g0.players.find((p) => p.playerId === String(id))?.nickname ?? '玩家'),
+                tile: (i) => g0.tiles[Number(i)]?.name ?? '',
+            });
+        }
         // 抽卡结果：排进动画队列（在本步之前的走棋之后翻牌，之后的事件位移等翻牌看完再走）
         this.trackEventDraw(u);
         // 当前玩家踩到事件格、等待抽卡：所有人都显示中央卡牌（只有本人能点），同样排在走棋动画之后

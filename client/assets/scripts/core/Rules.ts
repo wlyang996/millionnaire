@@ -37,6 +37,10 @@ export function luckyPool(unlucky = false): PoolItem[] {
     return (luckyOverride ?? ([...LUCKY_POOL, ...UNLUCKY_POOL] as PoolItem[])).filter((f) => !!f.unlucky === unlucky && f.weight > 0);
 }
 
+/** 破产模式租金随轮数上涨的参数（规则页说明用；实际倍率以服务端视图的 rentPercent 为准）。 */
+export interface RentRiseRule { freeRounds: number; everyRounds: number; stepPercent: number; capPercent: number }
+export let RENT_RISE: RentRiseRule = { freeRounds: 10, everyRounds: 5, stepPercent: 20, capPercent: 300 };
+
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
 export interface ServerRules {
     lucky?: { kind: string; amount: number; label: string; weight: number; unlucky?: boolean }[];
@@ -44,6 +48,7 @@ export interface ServerRules {
     station: { price: number; rentPerStation: number };
     fees: { startReward: number; miniGameWinReward: number; bailCost: number };
     handLimit?: number;
+    rentRise?: RentRiseRule;
     /** 同组地产加成（由 SetBonus.applyServerSets 使用） */
     sets?: { rentPercent: number; groups: Record<string, number[]> };
     room?: {
@@ -67,6 +72,7 @@ export function applyServerRules(r: ServerRules): void {
     MINIGAME_REWARD = r.fees.miniGameWinReward;
     BAIL_COST = r.fees.bailCost;
     if (r.handLimit && r.handLimit > 0) MAX_HAND = r.handLimit;
+    if (r.rentRise) RENT_RISE = { ...r.rentRise };
     if (r.room) {
         replaceAll(INITIAL_CASH_OPTIONS, r.room.initialCashOptions);
         replaceAll(TIME_LIMIT_OPTIONS, r.room.timeLimitMinutesOptions);

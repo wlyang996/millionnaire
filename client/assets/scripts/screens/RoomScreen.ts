@@ -5,6 +5,7 @@ import { BANKRUPTCY_CAP_MINUTES, boardSizeOf, INITIAL_CASH_OPTIONS, MAX_HAND, ma
 import { EndMode, Member } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { ChatPopup } from '../popups/ChatPopup';
+import { RulesPopup } from '../popups/RulesPopup';
 import { ConfirmPopup } from '../popups/ConfirmPopup';
 import { Button, IconButton, primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -40,6 +41,10 @@ export class RoomScreen extends Screen {
         // 房间号卡
         const code = roundedPanel(this.root, 24, 96, 672, 130);
         text(code, '房间号', 28, 12, 200, 34, Theme.font.sm, Theme.c.inkSoft, { align: 'l' });
+        // 规则说明（数值随房间绑定的参数）
+        const rules = mk(code, 'RulesLink', 200, 4, 150, 42);
+        text(rules, '规则说明 ›', 0, 0, 150, 42, Theme.font.sm, Theme.c.blueDark, { bold: true, align: 'l' });
+        onTap(rules, () => ctx.popups.open(new RulesPopup()));
         text(code, s.roomId, 24, 40, 330, 84, 76, Theme.c.ink, { bold: true, align: 'l' });
         new IconButton(code, 360, 40, 64, '', () => {
             if (!st.online) return Toast.show('房间号已复制：' + s.roomId);

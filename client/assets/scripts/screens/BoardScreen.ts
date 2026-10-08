@@ -11,6 +11,8 @@ import { GameView, PlayerView } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { TileInfoPopup } from '../popups/TileInfoPopup';
 import { AssetsPopup } from '../popups/AssetsPopup';
+import { GameLogPopup } from '../popups/GameLogPopup';
+import { RulesPopup } from '../popups/RulesPopup';
 import { ghostButton, IconButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { DiceView } from '../ui/DiceView';
@@ -39,7 +41,8 @@ import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
 import { CASH_DELTA_MS, CashChange, CashChangeNode, drawPlayerBar, tickCashDelta } from './board/PlayerBar';
-import { BAIL_COST } from '../core/Rules';
+import { BAIL_COST, MAX_HAND } from '../core/Rules';
+import { currentStep, drawGuide } from './board/Guide';
 import { boardHooks } from './board/BoardHooks';
 
 /** 停在休息区时自动展示休息区页面的时长 */
@@ -147,6 +150,10 @@ export class BoardScreen extends Screen {
         const cur = st.player(game.currentPlayer);
         if (this.cam.follow && cur && !this.move) this.view.focusTile(cur.position, false);
 
+        // 棋盘内圈右侧（幸运卡堆下方、不压格子）：对局记录 / 规则（用户 2026-10-08）
+        this.sideButton('记录', VP_Y + 236, () => ctx.popups.open(new GameLogPopup()));
+        this.sideButton('规则', VP_Y + 292, () => ctx.popups.open(new RulesPopup()));
+
         this.buildOverlays();
         // 设计稿 28 / 29：交易等待、排队申请、拍卖 / 交易结果横幅（玩家条下方，不拦截棋盘）
         this.banners = drawFlowBanners(this.root, 74 + (game.players.length > 4 ? 144 : 68) + 12);
@@ -154,6 +161,9 @@ export class BoardScreen extends Screen {
             game.players.find((p) => p.playerId === this.myId)?.cash);
         this.buildAwayOverlay();
         this.jailOv = this.jail ? new JailOverlay(this.root, this.jail.name, this.jail.start) : null;
+        // 新手引导：按当时情形提示一次（有弹窗时先不提示，免得叠在一起）
+        const step = ctx.popups.count === 0 && !this.jail ? currentStep(game, st.me(), this.myId, st.eventDraw, this.spectator) : null;
+        if (step) drawGuide(this.root, step, () => this.refresh());
         this.tickTexts();
     }
 
@@ -381,12 +391,12 @@ export class BoardScreen extends Screen {
     private confirmEvent(): void {
         const st = ctx.store;
         st.eventClose(this.myId);
-        // 罚款不足：确认后走欠款流程；道具超过 6 张：弃牌
+        // 罚款不足：确认后走欠款流程；道具超过上限：弃牌
         if (this.pendingFine > 0) {
             const f = this.pendingFine;
             this.pendingFine = 0;
             beginDebt(f, null);
-        } else if (st.game.myHand.length > 6) ctx.popups.open(new DiscardPopup());
+        } else if (st.game.myHand.length > MAX_HAND) ctx.popups.open(new DiscardPopup());
     }
 
     private tickEvent(): void {
@@ -446,6 +456,15 @@ export class BoardScreen extends Screen {
     private tickCashChanges(): void {
         const now = Date.now();
         for (const change of this.cashChangeNodes) tickCashDelta(change, now);
+    }
+
+    /** 棋盘右侧的小胶囊按钮（半透明白底、深蓝字）。 */
+    private sideButton(label: string, y: number, fn: () => void): void {
+        const b = mk(this.root, 'Side:' + label, Theme.W - 200, y, 86, 46);
+        fillRR(gfx(b), 0, 3, 86, 46, 23, '#00000022');
+        fillRR(gfx(b), 0, 0, 86, 46, 23, '#FFFFFFE6');
+        text(b, label, 0, 0, 86, 46, 22, Theme.c.navy, { bold: true });
+        onTap(b, fn);
     }
 
     private tickTexts(): void {

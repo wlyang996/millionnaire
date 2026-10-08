@@ -11,6 +11,7 @@ import {
 import { axisCell, boardAxis, eventDeckRect } from './BoardLayout';
 import { buildBoard, countTypes, gridCell, gridFor, ringLength } from './BoardLayout';
 import { defaultGroups } from './SetBonus';
+import { appendLog } from '../net/GameLog';
 import { Clock, Countdown } from './Clock';
 import { MockStore } from './MockStore';
 import {
@@ -68,6 +69,18 @@ export function runSelfCheck(): CheckResult {
 
     // ---- 棋盘模板（requirements 第 3 节；2026-10-08 事件格拆成抽卡事件 + 固定事件）----
     const c30 = countTypes(buildBoard(30));
+    // 对局记录：事件翻成一句话，内部事件不记，和我有关的标记 mine
+    {
+        const log: { seq: number; text: string; header?: boolean; mine?: boolean }[] = [];
+        const names = { myId: 'me', name: (id: unknown) => (id === 'me' ? '你' : '小明'), tile: (i: unknown) => ['起点', '东湖路'][Number(i)] ?? '' };
+        appendLog(log, [
+            { kind: 'TurnStarted', data: { turnNo: 3, playerId: 'p2' } },
+            { kind: 'WindowOpened', data: {} },
+            { kind: 'RentPaid', data: { payer: 'me', owner: 'p2', tile: 1, amount: 150 } },
+        ], names);
+        eq('对局记录', log.map((l) => [l.seq, l.text, !!l.header, !!l.mine]),
+            [[1, '第 3 回合 · 小明', true, false], [2, '你向小明支付东湖路的租金 150', false, true]]);
+    }
     // 同组地产默认分组（与服务端 SetBonus.bySides 一致）：30 格 8 组、50 格 14 组，每组 2～3 块且只含普通地产
     const g30 = defaultGroups(buildBoard(30));
     eq('30格同组', [[1, 3], [5, 6], [27, 28]].map(([a, b]) => g30[a] === g30[b] && g30[a] > 0), [true, true, true]);
