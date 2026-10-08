@@ -41,6 +41,9 @@ import { handleLanding } from './board/Landing';
 import { CASH_DELTA_MS, CashChange, CashChangeNode, drawPlayerBar, tickCashDelta } from './board/PlayerBar';
 import { BAIL_COST } from '../core/Rules';
 
+/** 停在休息区时自动展示休息区页面的时长 */
+const REST_SHOW_MS = 3000;
+
 /** 设计稿 01：棋盘区 y≈262–1095（视口 256–1098），手牌栏 1102–1192，页脚 1198–1280。 */
 const VP_Y = 256;
 const VP_H = 842;
@@ -344,13 +347,17 @@ export class BoardScreen extends Screen {
                 // 联机：位置已是服务端结果，动画结束后按真实视图重绘
                 if (m.id === this.myId) this.view.pulse(at(count));
                 st.emit();
+                if (m.id === this.myId) this.showRest(at(count));
                 return;
             }
             const mv = st.moveBy(m.id, m.steps);
             if (m.id === this.myId) this.view.pulse(mv.pos);
             if (m.endTurn) this.pendingEnd = true;
             st.emit();
-            if (m.id === this.myId && m.endTurn && !m.demo) handleLanding(mv.pos);
+            if (m.id === this.myId && m.endTurn && !m.demo) {
+                handleLanding(mv.pos);
+                this.showRest(mv.pos);
+            }
             return;
         }
         const k = (e - step * hop) / hop;
@@ -358,6 +365,14 @@ export class BoardScreen extends Screen {
         const b = at(step + 1);
         const pt = this.view.hopTo(m.id, a, b, k);
         if (pt) this.view.followPoint(pt);
+    }
+
+    /** 用户 2026-10-08：自己停在休息区时自动展示休息区页面（设计稿 22），3 秒后自动收起，也可点"返回棋盘"。 */
+    private showRest(tileIndex: number): void {
+        if (ctx.store.tile(tileIndex).type !== 'REST' || ctx.popups.has('tile')) return;
+        const page = new TileInfoPopup(tileIndex);
+        ctx.popups.open(page);
+        setTimeout(() => page.close(), REST_SHOW_MS);
     }
 
     // ---------- 事件卡抽卡 ----------
