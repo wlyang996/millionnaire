@@ -51,10 +51,12 @@ export class EventOverlay {
     build(state: EventDrawState, onCard: () => void, interactive: boolean, actorName: string, onClose?: () => void,
         dim?: { x: number; y: number; w: number; h: number }): void {
         this.state = state;
+        const lucky = !!state.result?.lucky;
         if (dim) fillRR(gfx(mk(this.root, 'Dim', dim.x, dim.y, dim.w, dim.h)), 0, 0, dim.w, dim.h, 12, '#0A142873');
-        // 金色标题，两侧装饰线
-        text(this.root, '触发事件', CX - 118, 443, 240, 54, 42, '#3A2A0A', { bold: true });
-        text(this.root, '触发事件', CX - 120, 440, 240, 54, 42, CARD_BACK.gold, { bold: true });
+        // 金色标题，两侧装饰线（幸运格：标题"幸运降临"，红色卡背）
+        const title = lucky ? '幸运降临' : '触发事件';
+        text(this.root, title, CX - 118, 443, 240, 54, 42, '#3A2A0A', { bold: true });
+        text(this.root, title, CX - 120, 440, 240, 54, 42, CARD_BACK.gold, { bold: true });
         const dec = gfx(mk(this.root, 'TitleDeco', 0, 440, Theme.W, 54));
         line(dec, CX - 196, 28, CX - 132, 28, CARD_BACK.gold, 3);
         line(dec, CX + 132, 28, CX + 196, 28, CARD_BACK.gold, 3);
@@ -67,8 +69,8 @@ export class EventOverlay {
         // centerNode 以父节点左上为参照；卡片内部子节点用中心为原点，需要回到 (0,0)
         this.back.setPosition(0, 0, 0);
         art(this.back, 'event_card_highlight', -CARD_W / 2 - 14, -CARD_H / 2 - 14, CARD_W + 28, CARD_H + 28, 'stretch');
-        if (!art(this.back, 'event_card_back', -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 'stretch'))
-            drawCardBack(this.back, CARD_W, CARD_H);
+        if (!art(this.back, lucky ? 'lucky_card_back' : 'event_card_back', -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 'stretch'))
+            drawCardBack(this.back, CARD_W, CARD_H, true, lucky ? 'lucky' : 'event');
         this.face = centerNode(this.card, 'Face', 0, 0, CARD_W, CARD_H);
         this.face.setPosition(0, 0, 0);
         this.drawFace(this.face, state);
@@ -107,7 +109,8 @@ export class EventOverlay {
         }[r.kind];
         if (art(n, key, -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 'stretch')) g.clear();
         const f = FACE[r.kind];
-        text(n, f.title, -CARD_W / 2, -CARD_H / 2 + 8, CARD_W, 34, 26, Theme.c.white, { bold: true });
+        // 幸运卡题头写"幸运"，卡名（如"好人好事"）作为描述写在下方
+        text(n, r.lucky ? '幸运' : f.title, -CARD_W / 2, -CARD_H / 2 + 8, CARD_W, 34, 26, Theme.c.white, { bold: true });
         const red = Theme.c.payRed;
         const navy = Theme.c.navy;
         const segs: Seg[] = r.kind === 'CASH_REWARD' ? [{ t: '+' + r.amount, size: 26, color: red }, { t: '金币', size: 18, color: navy }]

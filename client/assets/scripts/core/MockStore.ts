@@ -362,11 +362,14 @@ export class MockStore {
         this.emit();
     }
 
-    /** 走到固定事件格（演示）：不等点击，直接翻开格子写明的效果。 */
+    /** 走到幸运格（演示）：不等点击，从奖池按权重随机抽一张红色幸运卡直接翻开。 */
     eventFixed(actor: string, tileIndex: number): void {
-        const f = this.game.tiles[tileIndex]?.fixed;
+        const pool = this.game.tiles[tileIndex]?.lucky ?? [];
         const p = this.player(actor);
-        if (!f || !p || this.eventDraw.phase !== 'IDLE') return;
+        if (!pool.length || !p || this.eventDraw.phase !== 'IDLE') return;
+        const total = pool.reduce((a, x) => a + (x.weight ?? 1), 0);
+        let roll = Math.random() * total;
+        const f = pool.find((x) => (roll -= x.weight ?? 1) < 0) ?? pool[pool.length - 1];
         const n = this.game.tiles.length;
         let steps = 0;
         if (f.kind === 'TO_START') steps = (n - tileIndex) % n;
@@ -375,7 +378,7 @@ export class MockStore {
             const target = st[Math.floor(Math.random() * st.length)].index;
             steps = (((target - tileIndex) % n) + n) % n;
         }
-        const result: EventResult = { kind: f.kind as EventResult['kind'], amount: f.amount, card: null, steps, label: f.label };
+        const result: EventResult = { kind: f.kind as EventResult['kind'], amount: f.amount, card: null, steps, label: f.label, lucky: true };
         this.eventDraw = { phase: 'FLIPPING', actor, since: Date.now(), result, settled: this.eventDraw.settled };
         this.emit();
     }

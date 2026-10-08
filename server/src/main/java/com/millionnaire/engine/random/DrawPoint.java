@@ -26,6 +26,8 @@ public enum DrawPoint {
     EVENT_STATION("R8c"),
     /** R7b 事件"加盖 / 降级"的目标地产（2026-10-08）。 */
     EVENT_TARGET("R7b"),
+    /** R5b 幸运格从本棋盘奖池抽一项（加权，2026-10-08）。 */
+    LUCKY_EVENT("R5b"),
     /** R10 危险牙。 */
     DANGER_TOOTH("R10"),
     /** R11 代选牙。 */

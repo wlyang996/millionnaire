@@ -192,5 +192,7 @@ export const ART_PATHS: Record<string, string> = {
     'minigame_title': 'art/completion/minigame_title',
     'result_reward_panel': 'art/completion/result_reward_panel',
     'result_zero_panel': 'art/completion/result_zero_panel',
+    'lucky_card_back': 'art/lucky/lucky_card_back',
+    'lucky_card_fan': 'art/lucky/lucky_card_fan',
     'scene_jail_closeup': 'art/alignment/scene_jail_closeup',
 };

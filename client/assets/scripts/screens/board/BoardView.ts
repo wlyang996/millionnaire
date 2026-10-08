@@ -175,6 +175,9 @@ export class BoardView {
         this.drawHouses(mk(this.world, 'Houses', 0, 0, ww, wh));
         // 事件牌堆：棋盘内圈左上角展开的三张卡（设计稿 01：约 250×172，含"事件卡"木牌），在格子之上、棋子之下
         drawEventDeck(this.world, this.xs[1] + 29, this.ys[1] + 18, 250, 172, deckMode, 1);
+        // 幸运牌堆（用户 2026-10-08）：与事件牌堆左右对称，放在内圈右上角，红色卡背；踩到幸运格时自动抽一张
+        if (game.tiles.some((t) => t.type === 'FIXED_EVENT'))
+            drawEventDeck(this.world, this.xs[this.g.cols - 1] - 29 - 250, this.ys[1] + 18, 250, 172, 'fan', 1, 'lucky');
         this.tokens.clear();
         const tokens = mk(this.world, 'Tokens', 0, 0, ww, wh);
         this.drawTokens(tokens, game, myId, myName);

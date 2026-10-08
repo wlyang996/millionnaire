@@ -9,6 +9,10 @@ import { col, fillRR, gfx, mk, text } from '../../ui/Kit';
 import { art } from '../../ui/Art';
 
 export const CARD_BACK = { blue: '#1E7FC4', blueDark: '#155E96', blueLight: '#3AA0E0', gold: '#F2C24B', goldDark: '#C9962A', cream: '#FFF1C2' };
+/** 幸运卡（用户 2026-10-08）：与事件卡同款，蓝色改红（素材 design/screens/assets-lucky-v1）。 */
+const LUCKY_BACK = { blue: '#C8222A', blueDark: '#8E1218' };
+
+export type DeckKind = 'event' | 'lucky';
 
 /** 创建锚点居中的节点（旋转/缩放以中心为轴）。 */
 export function centerNode(parent: Node, name: string, cx: number, cy: number, w: number, h: number): Node {
@@ -18,10 +22,11 @@ export function centerNode(parent: Node, name: string, cx: number, cy: number, w
 }
 
 /** 在居中节点上画问号卡背（原点=卡片中心）。 */
-export function drawCardBack(n: Node, w: number, h: number, withMark = true): void {
+export function drawCardBack(n: Node, w: number, h: number, withMark = true, kind: DeckKind = 'event'): void {
     const g = gfx(n);
     g.clear();
-    if (art(n, 'event_card_back', -w / 2, -h / 2, w, h, 'stretch')) return;
+    if (art(n, kind === 'lucky' ? 'lucky_card_back' : 'event_card_back', -w / 2, -h / 2, w, h, 'stretch')) return;
+    const face = kind === 'lucky' ? LUCKY_BACK : CARD_BACK;
     const r = w * 0.1;
     g.fillColor = col('#00000033');
     g.roundRect(-w / 2 + 2, -h / 2 - 5, w, h, r);
@@ -32,10 +37,10 @@ export function drawCardBack(n: Node, w: number, h: number, withMark = true): vo
     g.fillColor = col(CARD_BACK.gold);
     g.roundRect(-w / 2 + w * 0.025, -h / 2 + w * 0.025, w * 0.95, h - w * 0.05, r * 0.85);
     g.fill();
-    g.fillColor = col(CARD_BACK.blueDark);
+    g.fillColor = col(face.blueDark);
     g.roundRect(-w / 2 + w * 0.06, -h / 2 + w * 0.06, w * 0.88, h - w * 0.12, r * 0.7);
     g.fill();
-    g.fillColor = col(CARD_BACK.blue);
+    g.fillColor = col(face.blue);
     g.roundRect(-w / 2 + w * 0.075, -h / 2 + w * 0.075, w * 0.85, h - w * 0.15, r * 0.6);
     g.fill();
     g.strokeColor = col(CARD_BACK.gold);
@@ -52,16 +57,19 @@ export function drawCardBack(n: Node, w: number, h: number, withMark = true): vo
  * 事件牌堆。(x,y,w,h) 为世界坐标（左上角，y 向下）里的占位框；mode='fan' 为默认三张扇形，'single' 为抽卡状态的单张小卡。
  */
 /** @param aspect 父节点显示时的纵横拉伸比（棋盘世界纵向有拉伸），美术图按它抵消、保持原比例 */
-export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: number, mode: 'fan' | 'single', aspect = 1): Node {
-    const root = mk(parent, 'EventDeck', x, y, w, h);
-    if (mode === 'fan' && art(root, 'event_card_fan', 0, 0, w, h - 20, 'contain', false, { aspect })) {
+/** @param kind 'lucky' 为右上角的红色幸运卡牌堆（标签"幸运卡"） */
+export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: number, mode: 'fan' | 'single', aspect = 1,
+    kind: DeckKind = 'event'): Node {
+    const root = mk(parent, kind === 'lucky' ? 'LuckyDeck' : 'EventDeck', x, y, w, h);
+    const label = kind === 'lucky' ? '幸运卡' : '事件卡';
+    if (mode === 'fan' && art(root, kind === 'lucky' ? 'lucky_card_fan' : 'event_card_fan', 0, 0, w, h - 20, 'contain', false, { aspect })) {
         // 设计稿 01：扇形牌堆下方的木牌"事件卡"
         const pw = 104;
         const ph = 30;
         const plaque = gfx(mk(root, 'Plaque', (w - pw) / 2, h - ph, pw, ph));
         fillRR(plaque, 0, 0, pw, ph, 10, '#8B5A2B');
         fillRR(plaque, 2, 2, pw - 4, ph - 5, 8, '#E9C792');
-        text(root, '事件卡', (w - pw) / 2, h - ph, pw, ph - 2, 20, '#5A3410', { bold: true });
+        text(root, label, (w - pw) / 2, h - ph, pw, ph - 2, 20, '#5A3410', { bold: true });
         return root;
     }
     const labelH = Math.min(h * 0.2, 28);
@@ -73,18 +81,18 @@ export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: 
     if (mode === 'fan') {
         const side = cw * 0.55;
         const left = centerNode(root, 'DeckL', cx - side, cy + ch * 0.05, cw, ch);
-        drawCardBack(left, cw, ch);
+        drawCardBack(left, cw, ch, true, kind);
         left.angle = 14;
         const right = centerNode(root, 'DeckR', cx + side, cy + ch * 0.05, cw, ch);
-        drawCardBack(right, cw, ch);
+        drawCardBack(right, cw, ch, true, kind);
         right.angle = -14;
         const mid = centerNode(root, 'DeckM', cx, cy, cw, ch);
-        drawCardBack(mid, cw, ch);
+        drawCardBack(mid, cw, ch, true, kind);
     } else {
         const small = cw * 0.62;
         const sh = small * 1.42;
         const c = centerNode(root, 'DeckOne', small / 2 + 4, sh / 2 + 2, small, sh);
-        drawCardBack(c, small, sh);
+        drawCardBack(c, small, sh, true, kind);
     }
     // 低矮木底座 + "事件卡"标签
     const bw = mode === 'fan' ? w * 0.56 : cw * 0.8;
@@ -94,6 +102,6 @@ export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: 
     fillRR(gfx(base), 0, 2, bw, labelH, labelH / 2, '#00000033');
     fillRR(gfx(base), 0, 0, bw, labelH, labelH / 2, '#A4723C');
     fillRR(gfx(base), 2, 2, bw - 4, labelH - 4, labelH / 2 - 2, '#C28E52');
-    text(base, '事件卡', 0, 0, bw, labelH, Math.max(11, Math.round(labelH * 0.55)), '#FFF3C4', { bold: true });
+    text(base, label, 0, 0, bw, labelH, Math.max(11, Math.round(labelH * 0.55)), '#FFF3C4', { bold: true });
     return root;
 }

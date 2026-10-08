@@ -202,16 +202,22 @@ public final class ConfigValidator {
             if (jails != 1) {
                 fail(p + " must have exactly one JAIL");
             }
-            // 固定事件格：每格一项效果，按顺序对应；奖励 / 罚款金额须在事件金额区间内，其余为 0；去车站需要棋盘上有车站
+            // 幸运格奖池：棋盘有幸运格时必须非空，没有时必须为空；每项权重为正；奖励 / 罚款金额须在事件金额区间内，其余为 0；去车站需要棋盘上有车站
             long fixedTiles = b.count(TileType.FIXED_EVENT);
-            if (b.fixedEvents().size() != fixedTiles) {
-                fail(p + " needs one fixed event per FIXED_EVENT tile (" + fixedTiles + "), got " + b.fixedEvents().size());
+            if ((fixedTiles > 0) != !b.fixedEvents().isEmpty()) {
+                fail(p + " lucky pool must be non-empty exactly when the board has FIXED_EVENT tiles (" + fixedTiles + "), got "
+                        + b.fixedEvents().size());
             }
+            long luckyTotal = 0;
             for (FixedEvent f : b.fixedEvents()) {
                 if (f == null || f.kind() == null || blank(f.label())) {
                     fail(p + " fixed event incomplete");
                     continue;
                 }
+                if (f.weight() <= 0 || f.weight() > EVENT_WEIGHT_TOTAL) {
+                    fail(p + " lucky event " + f.label() + " weight must be 1.." + EVENT_WEIGHT_TOTAL);
+                }
+                luckyTotal += Math.max(0, f.weight());
                 boolean cash = f.kind() == EventKind.CASH_REWARD || f.kind() == EventKind.CASH_FINE;
                 if (f.kind() == EventKind.MOVE) {
                     fail(p + " fixed event cannot be MOVE (direction / distance are drawn)");
@@ -223,6 +229,9 @@ public final class ConfigValidator {
                 if (f.kind() == EventKind.TO_STATION && b.count(TileType.STATION) == 0) {
                     fail(p + " fixed TO_STATION needs a station");
                 }
+            }
+            if (luckyTotal > 10_000) {
+                fail(p + " lucky pool weight too large");
             }
             // 单回合最长前进链（骰子 + 事件位移）必须小于格子数，使"超过一圈"不可达
             if (longestChain >= b.tiles().size()) {

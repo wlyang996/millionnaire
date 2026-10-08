@@ -3,6 +3,7 @@
  * 取整：向上取整（open-decisions #1 / #12 的口径）。
  */
 import { PropertyState, Standing, Tier } from './Models';
+import { LUCKY_POOL } from './EventDraw';
 
 export interface TierRule {
     name: string;
@@ -26,8 +27,16 @@ export const MAX_HAND = 6;
 export let MINIGAME_REWARD = 500;
 export let BAIL_COST = 500;
 
+/** 幸运格奖池（内置默认见 EventDraw.LUCKY_POOL；联机按房间绑定的参数版本覆盖）。 */
+let luckyOverride: { kind: string; amount: number; label: string; weight: number }[] | null = null;
+
+export function luckyPool(): { kind: string; amount: number; label: string; weight: number }[] {
+    return (luckyOverride ?? LUCKY_POOL).filter((f) => f.weight > 0);
+}
+
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
 export interface ServerRules {
+    lucky?: { kind: string; amount: number; label: string; weight: number }[];
     tiers: { tier: Tier; basePrice: number; upgradeCost: number; rents: number[] }[];
     station: { price: number; rentPerStation: number };
     fees: { startReward: number; miniGameWinReward: number; bailCost: number };
@@ -47,6 +56,7 @@ export function applyServerRules(r: ServerRules): void {
     START_BONUS = r.fees.startReward;
     MINIGAME_REWARD = r.fees.miniGameWinReward;
     BAIL_COST = r.fees.bailCost;
+    if (r.lucky && r.lucky.length) luckyOverride = r.lucky.map((f) => ({ ...f }));
 }
 export const INITIAL_CASH_OPTIONS = [2000, 3000, 5000];
 export const TIME_LIMIT_OPTIONS = [15, 30, 60];

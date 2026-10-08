@@ -7,6 +7,7 @@ import com.millionnaire.engine.config.CardType;
 import com.millionnaire.engine.config.ConfigValidator;
 import com.millionnaire.engine.config.EconomyConfig;
 import com.millionnaire.engine.config.EventKind;
+import com.millionnaire.engine.config.FixedEvent;
 import com.millionnaire.engine.config.RuleConfig;
 import com.millionnaire.engine.config.RuleConfigs;
 import com.millionnaire.engine.config.StationPricing;
@@ -14,6 +15,7 @@ import com.millionnaire.engine.config.Tier;
 import com.millionnaire.engine.config.TierPricing;
 import com.millionnaire.gateway.config.GameSettings.EventCash;
 import com.millionnaire.gateway.config.GameSettings.Fees;
+import com.millionnaire.gateway.config.GameSettings.LuckySetting;
 import com.millionnaire.gateway.config.GameSettings.StationSetting;
 import com.millionnaire.gateway.config.GameSettings.TierSetting;
 import java.io.IOException;
@@ -52,7 +54,20 @@ public final class SettingsMapper {
                 new StationSetting(BASE.station().price(), BASE.station().rentPerStation()),
                 new Fees(e.startReward(), e.miniGameWinReward(), e.bailCost()),
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
-                events, cards, DEFAULT_NAMES);
+                events, cards, DEFAULT_NAMES, defaultLucky());
+    }
+
+    /** 内置幸运奖池（两张地图共用，取引擎正式配置）。 */
+    static List<LuckySetting> defaultLucky() {
+        List<LuckySetting> out = new ArrayList<>();
+        for (FixedEvent f : BASE.boards().get(0).fixedEvents()) {
+            out.add(new LuckySetting(f.kind().name(), f.label(), f.amount(), f.weight()));
+        }
+        return List.copyOf(out);
+    }
+
+    private static List<LuckySetting> luckyOf(GameSettings s) {
+        return s.lucky() == null ? defaultLucky() : s.lucky();
     }
 
     /** 校验：返回中文错误列表（空表示可以发布）。 */
@@ -134,6 +149,36 @@ public final class SettingsMapper {
         weights(errors, "事件概率", s.eventWeights(), EventKind.values(), 100);
         weights(errors, "道具概率", s.cardWeights(), CardType.values(), 1000);
         names(errors, s.tileNames());
+        lucky(errors, s.lucky() == null ? defaultLucky() : s.lucky());
+    }
+
+    /** 幸运奖池：种类与默认一致（不增删、不换序），权重 0～100 且合计大于 0，"好人好事"金额与事件金额同样上限。 */
+    private static void lucky(List<String> errors, List<LuckySetting> lucky) {
+        List<LuckySetting> base = defaultLucky();
+        if (lucky.size() != base.size()) {
+            errors.add("幸运奖池必须是 " + base.size() + " 项");
+            return;
+        }
+        int total = 0;
+        for (int i = 0; i < base.size(); i++) {
+            LuckySetting l = lucky.get(i);
+            LuckySetting b = base.get(i);
+            if (l == null || !b.kind().equals(l.kind())) {
+                errors.add("幸运奖池第 " + (i + 1) + " 项应为" + b.label());
+                continue;
+            }
+            if (l.weight() < 0 || l.weight() > 100) {
+                errors.add("幸运「" + b.label() + "」概率必须在 0～100 之间");
+            } else {
+                total += l.weight();
+            }
+            if (EventKind.CASH_REWARD.name().equals(b.kind())) {
+                amount(errors, "幸运「" + b.label() + "」金额", l.amount());
+            }
+        }
+        if (total <= 0) {
+            errors.add("幸运奖池的概率不能全为 0");
+        }
     }
 
     private static final String[] LEVELS = {"未升级", "一级", "二级", "三级"};
@@ -229,7 +274,17 @@ public final class SettingsMapper {
         for (CardType k : CardType.values()) {
             cards.put(k.name(), s.cardWeights().get(k.name()));
         }
-        return new GameSettings(List.copyOf(tiers), s.station(), s.fees(), s.eventCash(), events, cards, names);
+        List<LuckySetting> lucky = new ArrayList<>();
+        List<LuckySetting> base = defaultLucky();
+        List<LuckySetting> given = luckyOf(s);
+        for (int i = 0; i < base.size(); i++) {
+            LuckySetting b = base.get(i);
+            LuckySetting g = given.get(i);
+            long amount = EventKind.CASH_REWARD.name().equals(b.kind()) ? g.amount() : 0;
+            lucky.add(new LuckySetting(b.kind(), b.label(), amount, g.weight()));
+        }
+        return new GameSettings(List.copyOf(tiers), s.station(), s.fees(), s.eventCash(), events, cards, names,
+                List.copyOf(lucky));
     }
 
     /** 调用前须先通过 {@link #validate} 的结构检查。 */
@@ -260,7 +315,18 @@ public final class SettingsMapper {
         for (EventKind k : EventKind.values()) {
             events.put(k, s.eventWeights().get(k.name()));
         }
-        return new RuleConfig(BASE.ruleVersion(), BASE.boards(), tiers, st, economy, BASE.ratios(), cards, events,
+        List<FixedEvent> pool = new ArrayList<>();
+        for (LuckySetting l : luckyOf(s)) {
+            if (l.weight() > 0) { // 概率为 0 的项不进奖池（引擎要求权重为正）
+                pool.add(new FixedEvent(EventKind.valueOf(l.kind()), l.amount(), l.label(), l.weight()));
+            }
+        }
+        List<BoardTemplate> boards = new ArrayList<>();
+        for (BoardTemplate b : BASE.boards()) {
+            boards.add(b.fixedEvents().isEmpty() ? b
+                    : new BoardTemplate(b.id(), b.minPlayers(), b.maxPlayers(), b.tiles(), List.copyOf(pool)));
+        }
+        return new RuleConfig(BASE.ruleVersion(), boards, tiers, st, economy, BASE.ratios(), cards, events,
                 BASE.timing(), BASE.room());
     }
 

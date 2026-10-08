@@ -9,7 +9,7 @@ import { boardNames } from '../core/BoardNames';
 import {
     BoardTile, Card, CardType, GameResult, GameView, Member, PlayerView, PropertyState, RoomSettings, SessionView,
 } from '../core/Models';
-import { boardSizeOf, TIERS } from '../core/Rules';
+import { boardSizeOf, luckyPool, TIERS } from '../core/Rules';
 import { BoardTemplate, SEvent, SGame, SView } from './Protocol';
 
 /** playerId → 头像编号 0..7（同一玩家在所有人屏幕上一致）。 */
@@ -24,16 +24,9 @@ export function tilesFor(boardId: string, boards: BoardTemplate[] | null): Board
     const tpl = boards?.find((b) => b.id === boardId);
     if (!tpl) return buildBoard(size);
     const names = boardNames(size);
-    let fixedNo = 0;
     return tpl.tiles.map((t): BoardTile => {
         const tile: BoardTile = { index: t.index, type: t.type, name: names[t.index] ?? String(t.index) };
-        if (t.type === 'FIXED_EVENT') {
-            const f = tpl.fixedEvents?.[fixedNo++];
-            if (f) {
-                tile.fixed = f;
-                tile.name = f.label;
-            }
-        }
+        if (t.type === 'FIXED_EVENT') tile.lucky = luckyPool();
         if (t.type === 'PROPERTY' && t.tier) {
             tile.tier = t.tier;
             tile.auctionLot = t.auctionDesignated;

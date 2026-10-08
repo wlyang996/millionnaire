@@ -135,9 +135,10 @@ final class EventModule {
         switch (l.currentTask()) {
             case FIXED_EVENT -> {
                 var board = LobbyModule.board(ctx.config(), g.settings());
-                var f = board.fixedEvent(l.tile());
+                int pick = board.luckyIndex(ctx.draw(DrawPoint.LUCKY_EVENT, board.luckyWeight()));
+                var f = board.fixedEvents().get(pick);
                 Motion m = motion(ctx.config(), board, f.kind(), l.tile(), ctx::draw);
-                ctx.emit(new GameEvent.FixedEventTriggered(player, l.landingId(), l.cursor(), f.kind(), f.amount(), m.kind(), m.distance()));
+                ctx.emit(new GameEvent.FixedEventTriggered(player, l.landingId(), l.cursor(), f.kind(), f.amount(), m.kind(), m.distance(), pick));
                 EconomyModule.resumeLanding(ctx, 0);
             }
             case EVENT_BUILD, EVENT_DOWNGRADE -> {
@@ -229,8 +230,9 @@ final class EventModule {
                 LobbyModule.check(source(g, e.playerId(), e.landingId(), e.cursor(), LandingStep.FIXED_EVENT)
                         && l.event() == null && t.chain() != null && !t.chain().eventDrawn(), "fixed event source mismatch");
                 var board = LobbyModule.board(c, g.settings());
-                var f = board.fixedEvent(l.tile());
-                LobbyModule.check(e.kind() == f.kind() && e.amount() == f.amount(), "fixed event does not match the board");
+                int pick = board.luckyIndex(draws.take(DrawPoint.LUCKY_EVENT, board.luckyWeight()));
+                var f = board.fixedEvents().get(pick);
+                LobbyModule.check(e.pick() == pick && e.kind() == f.kind() && e.amount() == f.amount(), "lucky event does not match draw");
                 Motion m = motion(c, board, f.kind(), l.tile(), draws::take);
                 LobbyModule.check(e.moveKind() == m.kind() && e.distance() == m.distance(), "fixed event motion does not match draw");
                 var result = new EventResolution(f.kind(), f.amount(), m.kind(), m.distance(), -1, false);

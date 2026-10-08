@@ -50,7 +50,7 @@ const BOOT_KEYS = [
 /** 后台加载的先后：先大厅 / 房间，再棋盘与对局弹窗，其余（详情页、场景大图等）最后。 */
 const BACKGROUND_ORDER: (string | RegExp)[] = [
     /^avatar_[a-z]+$/, 'lobby_friends', 'board_town', 'icon_settings', 'icon_house', 'icon_copy', 'icon_share', 'icon_mic', 'icon_chat', 'icon_coin',
-    /^pawn_[a-z]+$/, /^house_lv\d$/, 'icon_bank', 'icon_jail', 'event_card_back', 'event_card_fan', 'croc_open',
+    /^pawn_[a-z]+$/, /^house_lv\d$/, 'icon_bank', 'icon_jail', 'event_card_back', 'event_card_fan', 'lucky_card_back', 'lucky_card_fan', 'croc_open',
     /^dice_/, /^event_/, /^card_(?!detail|face)/, /^icon_clock/, /^info_/, /^shop_/, 'icon_shield', 'scene_jail_closeup',
 ];
 

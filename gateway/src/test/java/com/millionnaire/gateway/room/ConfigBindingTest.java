@@ -47,6 +47,35 @@ class ConfigBindingTest {
     }
 
     @Test
+    void luckyPoolWeightsAndRewardAreEditable() {
+        GameSettings d = SettingsMapper.defaults();
+        assertThat(d.lucky()).extracting(GameSettings.LuckySetting::kind)
+                .containsExactly("CASH_REWARD", "BUILD", "TO_STATION", "TO_START");
+        List<GameSettings.LuckySetting> lucky = new ArrayList<>(d.lucky());
+        lucky.set(0, new GameSettings.LuckySetting("CASH_REWARD", "好人好事", 450, 40));
+        lucky.set(3, new GameSettings.LuckySetting("TO_START", "回到起点", 0, 0));
+        GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), lucky);
+        assertThat(SettingsMapper.validate(edited)).isEmpty();
+        var pool = SettingsMapper.toRuleConfig(edited).board("classic-30").orElseThrow().fixedEvents();
+        assertThat(pool).hasSize(3);
+        assertThat(pool.get(0).amount()).isEqualTo(450);
+        assertThat(pool.get(0).weight()).isEqualTo(40);
+
+        List<GameSettings.LuckySetting> zero = d.lucky().stream()
+                .map(l -> new GameSettings.LuckySetting(l.kind(), l.label(), l.amount(), 0)).toList();
+        assertThat(SettingsMapper.validate(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
+                d.eventWeights(), d.cardWeights(), d.tileNames(), zero))).anyMatch(e -> e.contains("不能全为 0"));
+        lucky.set(0, new GameSettings.LuckySetting("CASH_REWARD", "好人好事", 470, 40)); // 不符合 50 的步长
+        assertThat(SettingsMapper.validate(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
+                d.eventWeights(), d.cardWeights(), d.tileNames(), lucky))).isNotEmpty();
+        // 旧版本快照没有 lucky：按默认处理，规则与默认一致
+        GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+    }
+
+    @Test
     void newRoomsUseThePublishedVersionOldRoomsKeepTheirs() throws Exception {
         Clock clock = Clock.systemUTC();
         List<String> sent = new java.util.concurrent.CopyOnWriteArrayList<>();

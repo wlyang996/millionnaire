@@ -7,7 +7,7 @@ import { Button } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { mk, onTap, text } from '../ui/Kit';
 import { Toast } from '../ui/Toast';
-import { fixedEventText } from '../core/EventDraw';
+import { luckyEffectText } from '../core/EventDraw';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar, chip } from '../ui/Widgets';
 import { informationCard, informationClose, informationPanel, redeemOrClose, shopKey } from './InformationPage';
@@ -111,13 +111,14 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         const confirm = new Button(p, redeem ? '确认赎回' : '确认抵押', 364, 1156, 312, 86, redeem ? 'secondary' : 'primary', () => {}, 32);
         confirm.setEnabled(false, '银行办理结算尚未接入服务端');
     } else if (tile.type === 'FIXED_EVENT') {
-        // 用户 2026-10-08：固定事件格踩到即自动生效，不抽卡；详情页写明效果
+        // 用户 2026-10-08：幸运格踩到即从红色幸运卡里随机抽一张，自动生效（全是好事）；详情页列出奖池
         const panel = informationPanel(p, 'info_rent_panel', 32, 300, 656, 440);
         caption(panel, tile.name, 40, 30, 576, 62, 44);
-        chip(panel, 40, 112, '固定事件', '#FFE3D6', '#C2461C', 24, 38);
-        caption(panel, '自动触发', 196, 114, 240, 40, 24);
+        chip(panel, 40, 112, '幸运', '#FFE3D6', '#C2461C', 24, 38);
+        caption(panel, '踩到自动抽一张', 156, 114, 300, 40, 24);
         const body = informationPanel(panel, 'info_summary_panel', 20, 180, 616, 220);
-        caption(body, tile.fixed ? fixedEventText(tile.fixed) : '踩到即自动触发', 24, 20, 568, 180, 30);
+        const pool = tile.lucky ?? [];
+        caption(body, pool.length ? pool.map(luckyEffectText).join('\n') : '踩到即随机抽一张幸运卡', 24, 14, 568, 192, 26);
         new Button(p, '知道了', 204, 800, 312, 86, 'primary', close, 32);
     } else if (tile.type === 'JAIL') {
         // Screen21 has large illustrated operation cards, not small gray capsules.

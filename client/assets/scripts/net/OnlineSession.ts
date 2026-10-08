@@ -8,7 +8,7 @@ import type { MockStore } from '../core/MockStore';
 import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { applyServerNames } from '../core/BoardNames';
-import { applyServerRules, BAIL_COST } from '../core/Rules';
+import { applyServerRules, BAIL_COST, luckyPool } from '../core/Rules';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
 import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
@@ -334,8 +334,11 @@ export class OnlineSession {
                     kind: String(d.kind) as EventKind, amount: Number(d.amount ?? 0), card: null,
                     steps: (back ? -1 : 1) * Number(d.distance ?? 0), seed: Number(d.landingId ?? 0),
                 };
-                // 固定事件格：踩上就自动翻开，描述用格子的名字（如"随地吐痰"）
-                if (e.kind === 'FixedEventTriggered') result.label = this.store.session.game?.tiles[landingTile]?.fixed?.label;
+                // 幸运格：踩上就自动翻开红色幸运卡，描述用抽到的卡名（如"好人好事"）
+                if (e.kind === 'FixedEventTriggered') {
+                    result.lucky = true;
+                    result.label = luckyPool().find((f) => f.kind === result!.kind)?.label;
+                }
             } else if (e.kind === 'EventCardReceived' && result) {
                 result.card = String(d.card) as CardType;
             }

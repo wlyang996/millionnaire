@@ -1,0 +1,16 @@
+{
+  "sprites": [
+    {
+      "name": "lucky_card_back",
+      "file": "png/lucky_card_back.png",
+      "source": "assets-supplement-v1/png/event_art/06-event_card_back.png",
+      "note": "蓝色部分改为红色（recolor.py）"
+    },
+    {
+      "name": "lucky_card_fan",
+      "file": "png/lucky_card_fan.png",
+      "source": "assets-supplement-v1/png/event_art/07-event_card_fan.png",
+      "note": "蓝色部分改为红色（recolor.py）"
+    }
+  ]
+}

@@ -5,16 +5,11 @@
  */
 import { boardNames } from './BoardNames';
 import { BoardTile, Tier, TileType } from './Models';
+import { luckyPool } from './Rules';
 
 /** 与服务端 RuleConfigs.LAYOUT_30 一致：E 抽卡事件，F 固定事件。 */
 const SEQ30 = 'S L E M T H L J M F L T H M B G L E M T H L R M F L T M H E'.split(' ');
 
-/** 固定事件格效果（与服务端 RuleConfigs.FIXED_30 / FIXED_50 一致；联机以服务端下发为准）。 */
-const FIXED30 = [{ kind: 'CASH_FINE', amount: 200, label: '随地吐痰' }, { kind: 'TO_STATION', amount: 0, label: '搭乘快车' }];
-const FIXED50 = [
-    { kind: 'CASH_REWARD', amount: 300, label: '好人好事' }, { kind: 'BUILD', amount: 0, label: '免费加盖' },
-    { kind: 'CASH_FINE', amount: 200, label: '随地吐痰' }, { kind: 'TO_START', amount: 0, label: '回到起点' },
-];
 
 function build50(): string[] {
     const fixed: Record<number, string> = {
@@ -63,8 +58,6 @@ export function buildBoard(size: 30 | 50): BoardTile[] {
     const names = boardNames(size);
     const pick = size === 30 ? AUCTION_PICK30 : AUCTION_PICK50;
     const seen: Record<Tier, number> = { LOW: 0, MID: 0, HIGH: 0 };
-    const fixed = size === 30 ? FIXED30 : FIXED50;
-    let fixedNo = 0;
     return seq.map((code, index): BoardTile => {
         if (TIER_OF[code]) {
             const tier = TIER_OF[code];
@@ -72,10 +65,7 @@ export function buildBoard(size: 30 | 50): BoardTile[] {
             return { index, type: 'PROPERTY', tier, name: names[index], auctionLot: pick[tier].indexOf(n) >= 0 };
         }
         const type = TYPE_OF[code];
-        if (type === 'FIXED_EVENT') {
-            const f = fixed[fixedNo++];
-            return { index, type, name: f.label, fixed: f };
-        }
+        if (type === 'FIXED_EVENT') return { index, type, name: names[index], lucky: luckyPool() };
         return { index, type, name: names[index] };
     });
 }

@@ -52,34 +52,56 @@ class EventsV2Test {
         var b30 = RULES.board(RuleConfigs.BOARD_30).orElseThrow();
         assertEquals(3, b30.count(TileType.EVENT));
         assertEquals(2, b30.count(TileType.FIXED_EVENT));
-        assertEquals(EventKind.CASH_FINE, b30.fixedEvent(9).kind());
-        assertEquals(EventKind.TO_STATION, b30.fixedEvent(24).kind());
+        assertEquals(RuleConfigs.LUCKY, b30.fixedEvents());
         var b50 = RULES.board(RuleConfigs.BOARD_50).orElseThrow();
         assertEquals(5, b50.count(TileType.EVENT));
         assertEquals(4, b50.count(TileType.FIXED_EVENT));
+        assertEquals(RuleConfigs.LUCKY, b50.fixedEvents());
+        assertTrue(RuleConfigs.LUCKY.stream().noneMatch(f -> f.kind() == EventKind.CASH_FINE), "lucky tiles only do good things");
     }
 
     @Test
-    void aFixedFineAppliesOnArrivalWithoutDrawing() {
-        // p1 3 → 3（放弃），p2 1 → 1（放弃），p1 6 → 9 固定事件"随地吐痰"
-        var t = table(Table.dice(DrawPoint.MOVE_DIE, 3, 1, 6));
+    void aLuckyRewardPaysOnArrivalWithoutAWindow() {
+        // p1 3 → 3（放弃），p2 1 → 1（放弃），p1 6 → 9 幸运格，奖池抽到 [0,25)"好人好事" +300
+        var t = table(Table.dice(DrawPoint.MOVE_DIE, 3, 1, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 10));
         turn(t);
         turn(t);
         long before = t.cash("p1");
         t.rollOnly();
         assertEquals(9, t.position("p1"));
-        assertEquals(before - 200, t.cash("p1"));
+        assertEquals(before + 300, t.cash("p1"));
         var fixed = t.log.stream().filter(GameEvent.FixedEventTriggered.class::isInstance).map(GameEvent.FixedEventTriggered.class::cast).toList();
         assertEquals(1, fixed.size());
-        assertEquals(EventKind.CASH_FINE, fixed.get(0).kind());
-        assertEquals("p2", t.current(), "no window: the fine settles and the turn ends");
+        assertEquals(EventKind.CASH_REWARD, fixed.get(0).kind());
+        assertEquals(0, fixed.get(0).pick());
+        assertEquals("p2", t.current(), "no window: the reward settles and the turn ends");
         consistent(t);
     }
 
     @Test
-    void aFixedExpressMovesForwardToARandomStation() {
-        // p1 6/6/6/6 → 6、12、18、24；p2 1/2/1 → 1、3、4。24 号"搭乘快车"抽到第 4 个车站（26 号）
-        var t = table(Table.dice(DrawPoint.MOVE_DIE, 6, 1, 6, 2, 6, 1, 6), Table.steps(DrawPoint.EVENT_STATION, 4, 3));
+    void aLuckyTileDrawsFromThePoolEachTime() {
+        // 同一个幸运格（9 号）两次落点抽到不同结果：p1 先抽到"回到起点"[75,100)，p2 后抽到"免费加盖"[25,50)（无地，无事发生）
+        var t = table(Table.dice(DrawPoint.MOVE_DIE, 3, 3, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 80),
+                Table.dice(DrawPoint.MOVE_DIE, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 30));
+        turn(t);
+        turn(t);
+        long before = t.cash("p1");
+        t.rollOnly();
+        assertEquals(0, t.position("p1"), "back to start");
+        assertEquals(before + RULES.economy().startReward(), t.cash("p1"));
+        t.rollOnly();
+        assertEquals(9, t.position("p2"));
+        var fixed = t.log.stream().filter(GameEvent.FixedEventTriggered.class::isInstance).map(GameEvent.FixedEventTriggered.class::cast).toList();
+        assertEquals(List.of(EventKind.TO_START, EventKind.BUILD), fixed.stream().map(GameEvent.FixedEventTriggered::kind).toList());
+        assertEquals(List.of(3, 1), fixed.stream().map(GameEvent.FixedEventTriggered::pick).toList());
+        consistent(t);
+    }
+
+    @Test
+    void aLuckyExpressMovesForwardToARandomStation() {
+        // p1 6/6/6/6 → 6、12、18、24；p2 1/2/1 → 1、3、4。24 号幸运格抽到"搭乘快车"[50,75)，再抽到第 4 个车站（26 号）
+        var t = table(Table.dice(DrawPoint.MOVE_DIE, 6, 1, 6, 2, 6, 1, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 60),
+                Table.steps(DrawPoint.EVENT_STATION, 4, 3));
         for (int i = 0; i < 6; i++) {
             turn(t);
         }

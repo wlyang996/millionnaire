@@ -14,6 +14,8 @@ import java.util.Map;
  * @param eventWeights 事件格抽到各类结果的权重（百分比，合计 100）
  * @param cardWeights  抽到各种道具的权重（千分比，合计 1000）
  * @param tileNames    地图 ID → 逐格名称（下标 = 格子序号）
+ * @param lucky        幸运格奖池（两张地图共用）：每项的权重与金额（只有"好人好事"有金额）；种类与卡名不开放修改。
+ *                     早于 2026-10-08 发布的版本没有此项（null），按内置默认处理。
  */
 public record GameSettings(
         List<TierSetting> tiers,
@@ -22,7 +24,18 @@ public record GameSettings(
         EventCash eventCash,
         Map<String, Integer> eventWeights,
         Map<String, Integer> cardWeights,
-        Map<String, List<String>> tileNames) {
+        Map<String, List<String>> tileNames,
+        List<LuckySetting> lucky) {
+
+    /** 旧版本快照（没有幸运奖池）的兼容构造。 */
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, null);
+    }
+
+    public record LuckySetting(String kind, String label, long amount, int weight) {
+    }
 
     public record TierSetting(String tier, long basePrice, long upgradeCost, List<Long> rents) {
     }

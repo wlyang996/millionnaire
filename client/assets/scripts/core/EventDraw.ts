@@ -27,8 +27,10 @@ export interface EventResult {
     steps: number;
     /** 选描述文案用的种子（联机为落点编号，所有人一致）；演示为 0 */
     seed?: number;
-    /** 固定事件格的名字（如"随地吐痰"），有则作为描述文案；抽卡事件为空 */
+    /** 幸运卡的名字（如"好人好事"），有则作为描述文案；抽卡事件为空 */
     label?: string;
+    /** 幸运格抽到的（红色幸运卡，自动翻开） */
+    lucky?: boolean;
 }
 
 /** 奖励 / 罚款的事件描述（用户 2026-10-08：不能只写加减，要有缘由）。按种子挑一条，所有客户端相同。 */
@@ -49,20 +51,26 @@ export function eventStory(r: EventResult): string {
     return list[i];
 }
 
-/** 固定事件格的效果说明（格子详情页用）。 */
-export function fixedEventText(f: { kind: string; amount: number }): string {
+/** 幸运卡的效果短说明（格子详情页列出奖池用）。 */
+export function luckyEffectText(f: { kind: string; amount: number; label: string }): string {
     switch (f.kind) {
-        case 'CASH_REWARD': return '踩到即奖励 ' + f.amount + ' 金币';
-        case 'CASH_FINE': return '踩到即罚款 ' + f.amount + ' 金币，现金不足按欠款处理';
-        case 'CARD': return '踩到即获得一张随机道具';
-        case 'JAIL': return '踩到即被送入监狱';
-        case 'BUILD': return '踩到即为自己随机一处房产免费加盖一级（满级或没有房产则无事发生）';
-        case 'DOWNGRADE': return '踩到即自己随机一处房产降一级（没有房子则无事发生）';
-        case 'TO_STATION': return '踩到即前进到随机一个车站，按车站规则结算；经过起点照常领奖励';
-        case 'TO_START': return '踩到即前进回到起点，领取起点奖励';
-        default: return '踩到即自动触发';
+        case 'CASH_REWARD': return f.label + '：奖励 ' + f.amount + ' 金币';
+        case 'CASH_FINE': return f.label + '：罚款 ' + f.amount + ' 金币';
+        case 'BUILD': return f.label + '：自己随机一处房产免费加盖一级';
+        case 'DOWNGRADE': return f.label + '：自己随机一处房产降一级';
+        case 'TO_STATION': return f.label + '：前进到随机一个车站';
+        case 'TO_START': return f.label + '：前进回到起点，领起点奖励';
+        default: return f.label;
     }
 }
+
+/** 内置幸运奖池（与服务端 RuleConfigs.LUCKY 一致；联机以后台发布的参数为准）。 */
+export const LUCKY_POOL = [
+    { kind: 'CASH_REWARD', amount: 300, label: '好人好事', weight: 25 },
+    { kind: 'BUILD', amount: 0, label: '免费加盖', weight: 25 },
+    { kind: 'TO_STATION', amount: 0, label: '搭乘快车', weight: 25 },
+    { kind: 'TO_START', amount: 0, label: '回到起点', weight: 25 },
+];
 
 export interface EventDrawState {
     phase: EventDrawPhase;

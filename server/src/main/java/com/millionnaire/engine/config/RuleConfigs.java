@@ -23,15 +23,12 @@ public final class RuleConfigs {
             "S M E L T H B L M* F H J M E L* T H L F M H* T M E L G H L F T "
             + "M* B H E M L* R H F L T M H E G M L T L M";
 
-    /** 固定事件格的效果，按格子顺序。 */
-    public static final List<FixedEvent> FIXED_30 = List.of(
-            new FixedEvent(EventKind.CASH_FINE, 200, "随地吐痰"),
-            new FixedEvent(EventKind.TO_STATION, 0, "搭乘快车"));
-    public static final List<FixedEvent> FIXED_50 = List.of(
-            new FixedEvent(EventKind.CASH_REWARD, 300, "好人好事"),
-            new FixedEvent(EventKind.BUILD, 0, "免费加盖"),
-            new FixedEvent(EventKind.CASH_FINE, 200, "随地吐痰"),
-            new FixedEvent(EventKind.TO_START, 0, "回到起点"));
+    /** 幸运格奖池（用户 2026-10-08：只放好事，两张地图共用，等概率）。 */
+    public static final List<FixedEvent> LUCKY = List.of(
+            new FixedEvent(EventKind.CASH_REWARD, 300, "好人好事", 25),
+            new FixedEvent(EventKind.BUILD, 0, "免费加盖", 25),
+            new FixedEvent(EventKind.TO_STATION, 0, "搭乘快车", 25),
+            new FixedEvent(EventKind.TO_START, 0, "回到起点", 25));
 
     private RuleConfigs() {
     }
@@ -55,7 +52,7 @@ public final class RuleConfigs {
     }
 
     /**
-     * @param eventsV2 2026-10-08 的事件规则：抽卡事件加入加盖 / 降级 / 去车站 / 回起点，固定事件格按 FIXED_30 / FIXED_50 生效。
+     * @param eventsV2 2026-10-08 的事件规则：抽卡事件加入加盖 / 降级 / 去车站 / 回起点，幸运格从 LUCKY 奖池抽取。
      *                 关闭时新事件权重为 0、没有固定事件（旧测试夹具与旧对局行为不变）。
      */
     public static RuleConfig v1(String layout30, String layout50, boolean production, boolean eventsV2) {
@@ -88,8 +85,8 @@ public final class RuleConfigs {
 
         return new RuleConfig(
                 RULE_VERSION,
-                List.of(board(BOARD_30, 2, 4, layout30, eventsV2 ? FIXED_30 : List.of()),
-                        board(BOARD_50, 2, 8, layout50, eventsV2 ? FIXED_50 : List.of())),
+                List.of(board(BOARD_30, 2, 4, layout30, eventsV2 ? LUCKY : List.of()),
+                        board(BOARD_50, 2, 8, layout50, eventsV2 ? LUCKY : List.of())),
                 List.of(
                         new TierPricing(Tier.LOW, 500, 300, List.of(100L, 250L, 450L, 700L), Ratio.percent(80)),
                         new TierPricing(Tier.MID, 1000, 600, List.of(200L, 500L, 900L, 1400L), Ratio.percent(70)),

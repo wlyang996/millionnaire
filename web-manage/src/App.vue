@@ -34,6 +34,7 @@ const history = ref([])
 const dirty = computed(() => form.value && JSON.stringify(form.value) !== saved.value)
 const eventTotal = computed(() => sum(form.value?.eventWeights))
 const cardTotal = computed(() => sum(form.value?.cardWeights))
+const luckyTotal = computed(() => (form.value?.lucky || []).reduce((a, l) => a + (Number(l.weight) || 0), 0))
 const cashChoices = computed(() => {
   const c = form.value?.eventCash
   if (!c || c.step <= 0 || c.max < c.min) return []
@@ -293,6 +294,19 @@ onMounted(() => {
             <span class="muted">{{ ((form.cardWeights[k] || 0) / 10).toFixed(1) }}%</span>
           </div>
         </div>
+        <h3>幸运格（踩到自动抽一张）<el-tag size="small">合计 {{ luckyTotal }}</el-tag></h3>
+        <p class="muted">只放好事，两张地图共用。按权重抽取（概率 = 本项 ÷ 合计），填 0 表示不出现。</p>
+        <el-form label-width="140px" class="narrow">
+          <el-form-item v-for="l in form.lucky" :key="l.kind" :label="l.label">
+            <el-input-number v-model="l.weight" :min="0" :max="100" />
+            <span class="hint">{{ luckyTotal ? Math.round((l.weight || 0) * 1000 / luckyTotal) / 10 : 0 }}%</span>
+            <template v-if="l.kind === 'CASH_REWARD'">
+              <span class="hint">奖励金额</span>
+              <el-input-number v-model="l.amount" :min="1" :step="50" style="margin-left: 8px" />
+            </template>
+          </el-form-item>
+        </el-form>
+        <p class="muted">"好人好事"的金额须在「金额与固定费用」里事件现金的范围内、并符合步长。</p>
       </el-tab-pane>
 
       <el-tab-pane label="金额与固定费用" name="money">
