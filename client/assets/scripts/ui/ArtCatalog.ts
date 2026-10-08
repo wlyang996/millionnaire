@@ -194,5 +194,7 @@ export const ART_PATHS: Record<string, string> = {
     'result_zero_panel': 'art/completion/result_zero_panel',
     'lucky_card_back': 'art/lucky/lucky_card_back',
     'lucky_card_fan': 'art/lucky/lucky_card_fan',
+    'unlucky_card_back': 'art/lucky/unlucky_card_back',
+    'unlucky_card_fan': 'art/lucky/unlucky_card_fan',
     'scene_jail_closeup': 'art/alignment/scene_jail_closeup',
 };

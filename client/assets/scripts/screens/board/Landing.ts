@@ -33,8 +33,8 @@ export function handleLanding(i: number): void {
     } else if (t.type === 'EVENT') {
         // 事件格：触发事件卡抽卡流程（仅本人界面中央出现问号卡背，点击卡片翻开；见 core/EventDraw.ts）
         st.eventStart(st.myId);
-    } else if (t.type === 'FIXED_EVENT') {
-        // 固定事件格：踩到即自动翻开效果（不抽卡）
+    } else if (t.type === 'FIXED_EVENT' || t.type === 'UNLUCKY_EVENT') {
+        // 幸运 / 不幸格：踩到即自动抽一张并翻开
         st.eventFixed(st.myId, i);
     }
 }

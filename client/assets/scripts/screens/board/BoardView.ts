@@ -178,6 +178,9 @@ export class BoardView {
         // 幸运牌堆（用户 2026-10-08）：与事件牌堆左右对称，放在内圈右上角，红色卡背；踩到幸运格时自动抽一张
         if (game.tiles.some((t) => t.type === 'FIXED_EVENT'))
             drawEventDeck(this.world, this.xs[this.g.cols - 1] - 29 - 250, this.ys[1] + 18, 250, 172, 'fan', 1, 'lucky');
+        // 不幸牌堆：内圈左下角，紫黑色卡背
+        if (game.tiles.some((t) => t.type === 'UNLUCKY_EVENT'))
+            drawEventDeck(this.world, this.xs[1] + 29, this.ys[this.g.rows - 1] - 18 - 172, 250, 172, 'fan', 1, 'unlucky');
         this.tokens.clear();
         const tokens = mk(this.world, 'Tokens', 0, 0, ww, wh);
         this.drawTokens(tokens, game, myId, myName);
@@ -348,7 +351,7 @@ export class BoardView {
         const band = Math.max(6, Math.round(bh * 0.2));
         const isProp = tile.type === 'PROPERTY';
         const prop = game.properties.find((p) => p.tileIndex === tile.index);
-        const face = tile.type === 'EVENT' ? '#FFF4D8' : tile.type === 'FIXED_EVENT' ? '#FFE9E0' : '#FFFFFF';
+        const face = tile.type === 'EVENT' ? '#FFF4D8' : tile.type === 'FIXED_EVENT' ? '#FFE9E0' : tile.type === 'UNLUCKY_EVENT' ? '#EEE6F5' : '#FFFFFF';
         // 用户 2026-10-08：土地（地产 / 车站）下边框默认白色，被买下后换成所有者的颜色；格面不再染色。其他格子保持浅灰
         const ownable = isProp || tile.type === 'STATION';
         const ownerCol = prop && prop.owner ? this.ownerColor(prop, game) : null;
@@ -424,8 +427,9 @@ export class BoardView {
                 text(gg.node, '?', cx - s * 0.4, cy - s * 0.42, s * 0.8, s * 0.8, Math.round(s * 0.56), Theme.c.white, { bold: true });
                 break;
             case 'FIXED_EVENT':
-                // 固定事件：紫红圆底 + 白色感叹号（与抽卡事件的问号区分），格名写效果名
-                fillCircle(gg, cx, cy, s * 0.4, '#C2367A');
+            case 'UNLUCKY_EVENT':
+                // 幸运（紫红圆底）/ 不幸（深紫圆底）+ 白色感叹号，与抽卡事件的问号区分
+                fillCircle(gg, cx, cy, s * 0.4, tile.type === 'UNLUCKY_EVENT' ? '#4B2470' : '#C2367A');
                 text(gg.node, '!', cx - s * 0.4, cy - s * 0.42, s * 0.8, s * 0.8, Math.round(s * 0.56), Theme.c.white, { bold: true });
                 break;
             case 'BANK':

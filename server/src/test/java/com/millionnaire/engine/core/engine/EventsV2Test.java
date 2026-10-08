@@ -51,13 +51,19 @@ class EventsV2Test {
     void productionBoardsSplitEventTilesIntoDrawnAndFixed() {
         var b30 = RULES.board(RuleConfigs.BOARD_30).orElseThrow();
         assertEquals(3, b30.count(TileType.EVENT));
-        assertEquals(2, b30.count(TileType.FIXED_EVENT));
-        assertEquals(RuleConfigs.LUCKY, b30.fixedEvents());
+        assertEquals(1, b30.count(TileType.FIXED_EVENT));
+        assertEquals(1, b30.count(TileType.UNLUCKY_EVENT));
+        assertEquals(TileType.FIXED_EVENT, b30.tiles().get(9).type());
+        assertEquals(TileType.UNLUCKY_EVENT, b30.tiles().get(24).type());
+        assertEquals(RuleConfigs.LUCKY, b30.pool(TileType.FIXED_EVENT));
+        assertEquals(RuleConfigs.UNLUCKY, b30.pool(TileType.UNLUCKY_EVENT));
         var b50 = RULES.board(RuleConfigs.BOARD_50).orElseThrow();
         assertEquals(5, b50.count(TileType.EVENT));
-        assertEquals(4, b50.count(TileType.FIXED_EVENT));
-        assertEquals(RuleConfigs.LUCKY, b50.fixedEvents());
+        assertEquals(2, b50.count(TileType.FIXED_EVENT));
+        assertEquals(2, b50.count(TileType.UNLUCKY_EVENT));
+        assertEquals(RuleConfigs.UNLUCKY, b50.pool(TileType.UNLUCKY_EVENT));
         assertTrue(RuleConfigs.LUCKY.stream().noneMatch(f -> f.kind() == EventKind.CASH_FINE), "lucky tiles only do good things");
+        assertTrue(RuleConfigs.UNLUCKY.stream().noneMatch(f -> f.kind() == EventKind.CASH_REWARD), "unlucky tiles only do bad things");
     }
 
     @Test
@@ -99,15 +105,59 @@ class EventsV2Test {
 
     @Test
     void aLuckyExpressMovesForwardToARandomStation() {
-        // p1 6/6/6/6 → 6、12、18、24；p2 1/2/1 → 1、3、4。24 号幸运格抽到"搭乘快车"[50,75)，再抽到第 4 个车站（26 号）
-        var t = table(Table.dice(DrawPoint.MOVE_DIE, 6, 1, 6, 2, 6, 1, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 60),
-                Table.steps(DrawPoint.EVENT_STATION, 4, 3));
+        // p1 3 → 3，p2 1 → 1，p1 6 → 9 幸运格抽到"搭乘快车"[50,75)，再抽到第 2 个车站（11 号）
+        var t = table(Table.dice(DrawPoint.MOVE_DIE, 3, 1, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 60),
+                Table.steps(DrawPoint.EVENT_STATION, 4, 1));
+        turn(t);
+        turn(t);
+        t.rollOnly();
+        assertEquals(11, t.position("p1"));
+        assertEquals(LandingStep.BUY, t.game().turn().landing().step(), "the station landing settles normally");
+        consistent(t);
+    }
+
+    /** p1 6/6/6/6 → 6、12、18、24（不幸格）；p2 1/2/1 → 1、3、4。 */
+    private static Table toUnlucky(int roll, List<ScriptedRandom.Step> after) {
+        return table(Table.dice(DrawPoint.MOVE_DIE, 6, 1, 6, 2, 6, 1, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, roll), after);
+    }
+
+    private static void walkToUnlucky(Table t) {
         for (int i = 0; i < 6; i++) {
             turn(t);
         }
+    }
+
+    @Test
+    void anUnluckyFineChargesOnArrival() {
+        var t = toUnlucky(10, List.of());
+        walkToUnlucky(t);
+        long before = t.cash("p1");
         t.rollOnly();
-        assertEquals(26, t.position("p1"));
-        assertEquals(LandingStep.BUY, t.game().turn().landing().step(), "the station landing settles normally");
+        assertEquals(24, t.position("p1"));
+        assertEquals(before - 200, t.cash("p1"));
+        var fixed = t.log.stream().filter(GameEvent.FixedEventTriggered.class::isInstance).map(GameEvent.FixedEventTriggered.class::cast).toList();
+        assertEquals(List.of(EventKind.CASH_FINE), fixed.stream().map(GameEvent.FixedEventTriggered::kind).toList());
+        assertEquals("p2", t.current());
+        consistent(t);
+    }
+
+    @Test
+    void anUnluckyDetourAlwaysMovesBack() {
+        // 抽到"迷路倒退"[50,75)：不抽方向，只抽格数（1 + 1 = 2），从 24 退到 22（休息区）
+        var t = toUnlucky(60, Table.steps(DrawPoint.EVENT_MOVE_DISTANCE, 3, 1));
+        walkToUnlucky(t);
+        t.rollOnly();
+        assertEquals(22, t.position("p1"));
+        consistent(t);
+    }
+
+    @Test
+    void anUnluckyArrestSendsToJail() {
+        var t = toUnlucky(90, List.of());
+        walkToUnlucky(t);
+        t.rollOnly();
+        assertEquals(7, t.position("p1"));
+        assertTrue(t.game().player("p1").orElseThrow().inJail(), "p1 is in jail");
         consistent(t);
     }
 

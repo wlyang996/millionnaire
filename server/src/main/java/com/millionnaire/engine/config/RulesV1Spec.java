@@ -53,10 +53,10 @@ public final class RulesV1Spec {
                 errors.add(p + " capacity must be " + spec.minPlayers() + ".." + spec.maxPlayers());
             }
             for (TileType type : TileType.values()) {
-                if (type == TileType.FIXED_EVENT) {
+                if (type == TileType.FIXED_EVENT || type == TileType.UNLUCKY_EVENT) {
                     continue; // 固定事件格算在事件格数里（2026-10-08 拆分，格数不变）
                 }
-                long actual = b.count(type) + (type == TileType.EVENT ? b.count(TileType.FIXED_EVENT) : 0);
+                long actual = b.count(type) + (type == TileType.EVENT ? b.count(TileType.FIXED_EVENT) + b.count(TileType.UNLUCKY_EVENT) : 0);
                 if (actual != spec.counts().get(type)) {
                     errors.add(p + " must have " + spec.counts().get(type) + " " + type + ", got " + actual);
                 }

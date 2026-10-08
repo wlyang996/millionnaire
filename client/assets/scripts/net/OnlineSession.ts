@@ -336,8 +336,10 @@ export class OnlineSession {
                 };
                 // 幸运格：踩上就自动翻开红色幸运卡，描述用抽到的卡名（如"好人好事"）
                 if (e.kind === 'FixedEventTriggered') {
-                    result.lucky = true;
-                    result.label = luckyPool().find((f) => f.kind === result!.kind)?.label;
+                    const unlucky = this.store.session.game?.tiles[landingTile]?.type === 'UNLUCKY_EVENT';
+                    if (unlucky) result.unlucky = true;
+                    else result.lucky = true;
+                    result.label = luckyPool(unlucky).find((f) => f.kind === result!.kind)?.label;
                 }
             } else if (e.kind === 'EventCardReceived' && result) {
                 result.card = String(d.card) as CardType;

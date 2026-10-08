@@ -50,25 +50,29 @@ class ConfigBindingTest {
     void luckyPoolWeightsAndRewardAreEditable() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(d.lucky()).extracting(GameSettings.LuckySetting::kind)
-                .containsExactly("CASH_REWARD", "BUILD", "TO_STATION", "TO_START");
+                .containsExactly("CASH_REWARD", "BUILD", "TO_STATION", "TO_START", "CASH_FINE", "DOWNGRADE", "MOVE", "JAIL");
         List<GameSettings.LuckySetting> lucky = new ArrayList<>(d.lucky());
-        lucky.set(0, new GameSettings.LuckySetting("CASH_REWARD", "好人好事", 450, 40));
-        lucky.set(3, new GameSettings.LuckySetting("TO_START", "回到起点", 0, 0));
+        lucky.set(0, new GameSettings.LuckySetting("CASH_REWARD", "好人好事", 450, 40, false));
+        lucky.set(3, new GameSettings.LuckySetting("TO_START", "回到起点", 0, 0, false));
         GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames(), lucky);
         assertThat(SettingsMapper.validate(edited)).isEmpty();
-        var pool = SettingsMapper.toRuleConfig(edited).board("classic-30").orElseThrow().fixedEvents();
+        var board = SettingsMapper.toRuleConfig(edited).board("classic-30").orElseThrow();
+        var pool = board.pool(com.millionnaire.engine.config.TileType.FIXED_EVENT);
         assertThat(pool).hasSize(3);
+        assertThat(board.pool(com.millionnaire.engine.config.TileType.UNLUCKY_EVENT)).hasSize(4);
         assertThat(pool.get(0).amount()).isEqualTo(450);
         assertThat(pool.get(0).weight()).isEqualTo(40);
 
         List<GameSettings.LuckySetting> zero = d.lucky().stream()
-                .map(l -> new GameSettings.LuckySetting(l.kind(), l.label(), l.amount(), 0)).toList();
+                .map(l -> new GameSettings.LuckySetting(l.kind(), l.label(), l.amount(), l.unlucky() ? l.weight() : 0, l.unlucky())).toList();
         assertThat(SettingsMapper.validate(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
                 d.eventWeights(), d.cardWeights(), d.tileNames(), zero))).anyMatch(e -> e.contains("不能全为 0"));
-        lucky.set(0, new GameSettings.LuckySetting("CASH_REWARD", "好人好事", 470, 40)); // 不符合 50 的步长
+        lucky.set(0, new GameSettings.LuckySetting("CASH_REWARD", "好人好事", 470, 40, false)); // 不符合 50 的步长
         assertThat(SettingsMapper.validate(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
                 d.eventWeights(), d.cardWeights(), d.tileNames(), lucky))).isNotEmpty();
+        // 早先只有幸运奖池（4 项、没有 unlucky 字段）的快照：补齐不幸奖池后与默认一致
+        assertThat(SettingsMapper.mergeLucky(d.lucky().subList(0, 4))).isEqualTo(d.lucky());
         // 旧版本快照没有 lucky：按默认处理，规则与默认一致
         GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames());

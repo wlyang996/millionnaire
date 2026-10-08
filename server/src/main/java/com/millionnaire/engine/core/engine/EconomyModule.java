@@ -168,7 +168,7 @@ final class EconomyModule {
             case BANK -> g.phase() == GamePhase.RUNNING || StageTable.rule(StageTable.Point.BANK).drainingAllowed()
                     ? LandingStep.BANK : null;
             case EVENT -> g.turn().chain() != null && !g.turn().chain().eventDrawn() ? LandingStep.EVENT : null;
-            case FIXED_EVENT -> g.turn().chain() != null && !g.turn().chain().eventDrawn() ? LandingStep.FIXED_EVENT : null;
+            case FIXED_EVENT, UNLUCKY_EVENT -> g.turn().chain() != null && !g.turn().chain().eventDrawn() ? LandingStep.FIXED_EVENT : null;
             // 游戏区：至少两名存活者才启动虎口拔牙（#15）
             case GAME_ZONE -> MinigameModule.eligible(config, g, tileIndex) ? LandingStep.MINIGAME : null;
             default -> null;

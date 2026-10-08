@@ -3,7 +3,7 @@
  * 取整：向上取整（open-decisions #1 / #12 的口径）。
  */
 import { PropertyState, Standing, Tier } from './Models';
-import { LUCKY_POOL } from './EventDraw';
+import { LUCKY_POOL, UNLUCKY_POOL } from './EventDraw';
 
 export interface TierRule {
     name: string;
@@ -28,15 +28,17 @@ export let MINIGAME_REWARD = 500;
 export let BAIL_COST = 500;
 
 /** 幸运格奖池（内置默认见 EventDraw.LUCKY_POOL；联机按房间绑定的参数版本覆盖）。 */
-let luckyOverride: { kind: string; amount: number; label: string; weight: number }[] | null = null;
+type PoolItem = { kind: string; amount: number; label: string; weight: number; unlucky?: boolean };
+let luckyOverride: PoolItem[] | null = null;
 
-export function luckyPool(): { kind: string; amount: number; label: string; weight: number }[] {
-    return (luckyOverride ?? LUCKY_POOL).filter((f) => f.weight > 0);
+/** 幸运（默认）或不幸格的奖池，去掉概率为 0 的项。 */
+export function luckyPool(unlucky = false): PoolItem[] {
+    return (luckyOverride ?? ([...LUCKY_POOL, ...UNLUCKY_POOL] as PoolItem[])).filter((f) => !!f.unlucky === unlucky && f.weight > 0);
 }
 
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
 export interface ServerRules {
-    lucky?: { kind: string; amount: number; label: string; weight: number }[];
+    lucky?: { kind: string; amount: number; label: string; weight: number; unlucky?: boolean }[];
     tiers: { tier: Tier; basePrice: number; upgradeCost: number; rents: number[] }[];
     station: { price: number; rentPerStation: number };
     fees: { startReward: number; miniGameWinReward: number; bailCost: number };

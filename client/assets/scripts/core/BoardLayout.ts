@@ -8,14 +8,14 @@ import { BoardTile, Tier, TileType } from './Models';
 import { luckyPool } from './Rules';
 
 /** 与服务端 RuleConfigs.LAYOUT_30 一致：E 抽卡事件，F 固定事件。 */
-const SEQ30 = 'S L E M T H L J M F L T H M B G L E M T H L R M F L T M H E'.split(' ');
+const SEQ30 = 'S L E M T H L J M F L T H M B G L E M T H L R M U L T M H E'.split(' ');
 
 
 function build50(): string[] {
     const fixed: Record<number, string> = {
         0: 'S', 11: 'J', 25: 'G', 36: 'R', 6: 'B', 31: 'B', 44: 'G',
         4: 'T', 15: 'T', 21: 'T', 29: 'T', 40: 'T', 47: 'T',
-        2: 'E', 9: 'F', 13: 'E', 18: 'F', 23: 'E', 28: 'F', 33: 'E', 38: 'F', 43: 'E',
+        2: 'E', 9: 'F', 13: 'E', 18: 'U', 23: 'E', 28: 'F', 33: 'E', 38: 'U', 43: 'E',
     };
     const left: Record<string, number> = { L: 10, M: 10, H: 8 };
     const rot = ['M', 'L', 'H', 'L', 'M', 'H'];
@@ -43,10 +43,10 @@ function build50(): string[] {
 
 const TIER_OF: Record<string, Tier> = { L: 'LOW', M: 'MID', H: 'HIGH' };
 const TYPE_OF: Record<string, TileType> = {
-    S: 'START', E: 'EVENT', F: 'FIXED_EVENT', B: 'BANK', J: 'JAIL', R: 'REST', G: 'GAME_ZONE', T: 'STATION',
+    S: 'START', E: 'EVENT', F: 'FIXED_EVENT', U: 'UNLUCKY_EVENT', B: 'BANK', J: 'JAIL', R: 'REST', G: 'GAME_ZONE', T: 'STATION',
 };
 export const TILE_TYPE_NAME: Record<TileType, string> = {
-    START: '起点', PROPERTY: '地产', STATION: '车站', EVENT: '事件', FIXED_EVENT: '固定事件', BANK: '银行', JAIL: '监狱', REST: '休息', GAME_ZONE: '游戏区',
+    START: '起点', PROPERTY: '地产', STATION: '车站', EVENT: '事件', FIXED_EVENT: '幸运', UNLUCKY_EVENT: '不幸', BANK: '银行', JAIL: '监狱', REST: '休息', GAME_ZONE: '游戏区',
 };
 
 /** 每档里被标记为"拍卖地产"的是该档第 n 块（0 起） */
@@ -65,7 +65,7 @@ export function buildBoard(size: 30 | 50): BoardTile[] {
             return { index, type: 'PROPERTY', tier, name: names[index], auctionLot: pick[tier].indexOf(n) >= 0 };
         }
         const type = TYPE_OF[code];
-        if (type === 'FIXED_EVENT') return { index, type, name: names[index], lucky: luckyPool() };
+        if (type === 'FIXED_EVENT' || type === 'UNLUCKY_EVENT') return { index, type, name: names[index], lucky: luckyPool(type === 'UNLUCKY_EVENT') };
         return { index, type, name: names[index] };
     });
 }

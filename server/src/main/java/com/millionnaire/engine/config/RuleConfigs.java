@@ -15,13 +15,14 @@ public final class RuleConfigs {
     public static final String BOARD_50 = "classic-50";
 
     /** 布局与美术设计稿 design/ui/board-v6（客户端 BoardNames.ts 的 DESIGN_30/50）逐格一致。
-     * 记号：S 起点，L/M/H 普通地产（* = 指定拍卖地），E 抽卡事件，F 固定事件，T 车站，B 银行，J 监狱，R 休息，G 游戏区。
-     * 2026-10-08（用户）：事件格拆成抽卡事件与固定事件两种，30 格 3 抽卡 + 2 固定，50 格 5 抽卡 + 4 固定（格子位置不变）。 */
+     * 记号：S 起点，L/M/H 普通地产（* = 指定拍卖地），E 抽卡事件，F 幸运，U 不幸，T 车站，B 银行，J 监狱，R 休息，G 游戏区。
+     * 2026-10-08（用户）：事件格拆成抽卡事件与幸运 / 不幸两种，30 格 3 抽卡 + 1 幸运 + 1 不幸，
+     * 50 格 5 抽卡 + 2 幸运 + 2 不幸（格子位置不变，幸运与不幸交替）。 */
     public static final String LAYOUT_30 =
-            "S L E M T H L J M F L T H* M* B G L* E M T H L R M F L T M H E";
+            "S L E M T H L J M F L T H* M* B G L* E M T H L R M U L T M H E";
     public static final String LAYOUT_50 =
-            "S M E L T H B L M* F H J M E L* T H L F M H* T M E L G H L F T "
-            + "M* B H E M L* R H F L T M H E G M L T L M";
+            "S M E L T H B L M* F H J M E L* T H L U M H* T M E L G H L F T "
+            + "M* B H E M L* R H U L T M H E G M L T L M";
 
     /** 幸运格奖池（用户 2026-10-08：只放好事，两张地图共用，等概率）。 */
     public static final List<FixedEvent> LUCKY = List.of(
@@ -29,6 +30,16 @@ public final class RuleConfigs {
             new FixedEvent(EventKind.BUILD, 0, "免费加盖", 25),
             new FixedEvent(EventKind.TO_STATION, 0, "搭乘快车", 25),
             new FixedEvent(EventKind.TO_START, 0, "回到起点", 25));
+
+    /** 不幸格奖池（用户 2026-10-08：只放坏事，两张地图共用，等概率；MOVE 为后退 1～3 格）。 */
+    public static final List<FixedEvent> UNLUCKY = List.of(
+            new FixedEvent(EventKind.CASH_FINE, 200, "随地吐痰", 25, true),
+            new FixedEvent(EventKind.DOWNGRADE, 0, "房屋失修", 25, true),
+            new FixedEvent(EventKind.MOVE, 0, "迷路倒退", 25, true),
+            new FixedEvent(EventKind.JAIL, 0, "违规入狱", 25, true));
+
+    /** 幸运 + 不幸奖池（按此顺序；管理后台按这个列表编辑权重与金额）。 */
+    public static final List<FixedEvent> LUCKY_AND_UNLUCKY = java.util.stream.Stream.concat(LUCKY.stream(), UNLUCKY.stream()).toList();
 
     private RuleConfigs() {
     }
@@ -52,7 +63,7 @@ public final class RuleConfigs {
     }
 
     /**
-     * @param eventsV2 2026-10-08 的事件规则：抽卡事件加入加盖 / 降级 / 去车站 / 回起点，幸运格从 LUCKY 奖池抽取。
+     * @param eventsV2 2026-10-08 的事件规则：抽卡事件加入加盖 / 降级 / 去车站 / 回起点，幸运 / 不幸格从 LUCKY / UNLUCKY 奖池抽取。
      *                 关闭时新事件权重为 0、没有固定事件（旧测试夹具与旧对局行为不变）。
      */
     public static RuleConfig v1(String layout30, String layout50, boolean production, boolean eventsV2) {
@@ -85,8 +96,8 @@ public final class RuleConfigs {
 
         return new RuleConfig(
                 RULE_VERSION,
-                List.of(board(BOARD_30, 2, 4, layout30, eventsV2 ? LUCKY : List.of()),
-                        board(BOARD_50, 2, 8, layout50, eventsV2 ? LUCKY : List.of())),
+                List.of(board(BOARD_30, 2, 4, layout30, eventsV2 ? LUCKY_AND_UNLUCKY : List.of()),
+                        board(BOARD_50, 2, 8, layout50, eventsV2 ? LUCKY_AND_UNLUCKY : List.of())),
                 List.of(
                         new TierPricing(Tier.LOW, 500, 300, List.of(100L, 250L, 450L, 700L), Ratio.percent(80)),
                         new TierPricing(Tier.MID, 1000, 600, List.of(200L, 500L, 900L, 1400L), Ratio.percent(70)),
@@ -131,7 +142,10 @@ public final class RuleConfigs {
         for (int i = 0; i < tokens.length; i++) {
             tiles.add(tile(i, tokens[i]));
         }
-        return new BoardTemplate(id, minPlayers, maxPlayers, tiles, fixed);
+        boolean lucky = tiles.stream().anyMatch(t -> t.type() == TileType.FIXED_EVENT);
+        boolean unlucky = tiles.stream().anyMatch(t -> t.type() == TileType.UNLUCKY_EVENT);
+        List<FixedEvent> pools = fixed.stream().filter(f -> f.unlucky() ? unlucky : lucky).toList();
+        return new BoardTemplate(id, minPlayers, maxPlayers, tiles, pools);
     }
 
     private static Tile tile(int index, String token) {
@@ -144,6 +158,7 @@ public final class RuleConfigs {
             case "H" -> new Tile(index, TileType.PROPERTY, Tier.HIGH, designated);
             case "E" -> new Tile(index, TileType.EVENT, null, designated);
             case "F" -> new Tile(index, TileType.FIXED_EVENT, null, designated);
+            case "U" -> new Tile(index, TileType.UNLUCKY_EVENT, null, designated);
             case "T" -> new Tile(index, TileType.STATION, null, designated);
             case "B" -> new Tile(index, TileType.BANK, null, designated);
             case "J" -> new Tile(index, TileType.JAIL, null, designated);

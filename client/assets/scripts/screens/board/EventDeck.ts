@@ -11,8 +11,16 @@ import { art } from '../../ui/Art';
 export const CARD_BACK = { blue: '#1E7FC4', blueDark: '#155E96', blueLight: '#3AA0E0', gold: '#F2C24B', goldDark: '#C9962A', cream: '#FFF1C2' };
 /** 幸运卡（用户 2026-10-08）：与事件卡同款，蓝色改红（素材 design/screens/assets-lucky-v1）。 */
 const LUCKY_BACK = { blue: '#C8222A', blueDark: '#8E1218' };
+/** 不幸卡（用户 2026-10-08）：同款卡背改紫黑色。 */
+const UNLUCKY_BACK = { blue: '#4B2470', blueDark: '#2C1245' };
 
-export type DeckKind = 'event' | 'lucky';
+export type DeckKind = 'event' | 'lucky' | 'unlucky';
+
+const DECK_ART: Record<DeckKind, { back: string; fan: string; label: string }> = {
+    event: { back: 'event_card_back', fan: 'event_card_fan', label: '事件卡' },
+    lucky: { back: 'lucky_card_back', fan: 'lucky_card_fan', label: '幸运卡' },
+    unlucky: { back: 'unlucky_card_back', fan: 'unlucky_card_fan', label: '不幸卡' },
+};
 
 /** 创建锚点居中的节点（旋转/缩放以中心为轴）。 */
 export function centerNode(parent: Node, name: string, cx: number, cy: number, w: number, h: number): Node {
@@ -25,8 +33,8 @@ export function centerNode(parent: Node, name: string, cx: number, cy: number, w
 export function drawCardBack(n: Node, w: number, h: number, withMark = true, kind: DeckKind = 'event'): void {
     const g = gfx(n);
     g.clear();
-    if (art(n, kind === 'lucky' ? 'lucky_card_back' : 'event_card_back', -w / 2, -h / 2, w, h, 'stretch')) return;
-    const face = kind === 'lucky' ? LUCKY_BACK : CARD_BACK;
+    if (art(n, DECK_ART[kind].back, -w / 2, -h / 2, w, h, 'stretch')) return;
+    const face = kind === 'lucky' ? LUCKY_BACK : kind === 'unlucky' ? UNLUCKY_BACK : CARD_BACK;
     const r = w * 0.1;
     g.fillColor = col('#00000033');
     g.roundRect(-w / 2 + 2, -h / 2 - 5, w, h, r);
@@ -57,12 +65,12 @@ export function drawCardBack(n: Node, w: number, h: number, withMark = true, kin
  * 事件牌堆。(x,y,w,h) 为世界坐标（左上角，y 向下）里的占位框；mode='fan' 为默认三张扇形，'single' 为抽卡状态的单张小卡。
  */
 /** @param aspect 父节点显示时的纵横拉伸比（棋盘世界纵向有拉伸），美术图按它抵消、保持原比例 */
-/** @param kind 'lucky' 为右上角的红色幸运卡牌堆（标签"幸运卡"） */
+/** @param kind 'lucky' 为右上角的红色幸运卡牌堆，'unlucky' 为左下角的紫色不幸卡牌堆 */
 export function drawEventDeck(parent: Node, x: number, y: number, w: number, h: number, mode: 'fan' | 'single', aspect = 1,
     kind: DeckKind = 'event'): Node {
-    const root = mk(parent, kind === 'lucky' ? 'LuckyDeck' : 'EventDeck', x, y, w, h);
-    const label = kind === 'lucky' ? '幸运卡' : '事件卡';
-    if (mode === 'fan' && art(root, kind === 'lucky' ? 'lucky_card_fan' : 'event_card_fan', 0, 0, w, h - 20, 'contain', false, { aspect })) {
+    const root = mk(parent, kind === 'event' ? 'EventDeck' : kind === 'lucky' ? 'LuckyDeck' : 'UnluckyDeck', x, y, w, h);
+    const label = DECK_ART[kind].label;
+    if (mode === 'fan' && art(root, DECK_ART[kind].fan, 0, 0, w, h - 20, 'contain', false, { aspect })) {
         // 设计稿 01：扇形牌堆下方的木牌"事件卡"
         const pw = 104;
         const ph = 30;

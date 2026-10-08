@@ -199,9 +199,9 @@ public class GameConfigs {
     private GameSettings parse(String payload) {
         try {
             GameSettings s = json.readValue(payload, GameSettings.class);
-            // 早于幸运奖池的版本没有 lucky：按内置默认补上（引擎换算时同样按默认处理，规则哈希不变）
-            return s.lucky() != null ? s : new GameSettings(s.tiers(), s.station(), s.fees(), s.eventCash(),
-                    s.eventWeights(), s.cardWeights(), s.tileNames(), SettingsMapper.defaultLucky());
+            // 旧版本没有奖池或只有幸运奖池：按内置默认补齐（引擎换算时同样补齐，规则哈希不变）
+            return new GameSettings(s.tiers(), s.station(), s.fees(), s.eventCash(), s.eventWeights(), s.cardWeights(),
+                    s.tileNames(), SettingsMapper.mergeLucky(s.lucky()));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("bad game_config payload", e);
         }

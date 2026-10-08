@@ -110,15 +110,16 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         new Button(p, '结束办理', 44, 1156, 302, 86, 'disabled', close, 32);
         const confirm = new Button(p, redeem ? '确认赎回' : '确认抵押', 364, 1156, 312, 86, redeem ? 'secondary' : 'primary', () => {}, 32);
         confirm.setEnabled(false, '银行办理结算尚未接入服务端');
-    } else if (tile.type === 'FIXED_EVENT') {
-        // 用户 2026-10-08：幸运格踩到即从红色幸运卡里随机抽一张，自动生效（全是好事）；详情页列出奖池
+    } else if (tile.type === 'FIXED_EVENT' || tile.type === 'UNLUCKY_EVENT') {
+        // 用户 2026-10-08：幸运格 / 不幸格踩到即从红色幸运卡 / 紫色不幸卡里随机抽一张，自动生效；详情页列出奖池
+        const unlucky = tile.type === 'UNLUCKY_EVENT';
         const panel = informationPanel(p, 'info_rent_panel', 32, 300, 656, 440);
         caption(panel, tile.name, 40, 30, 576, 62, 44);
-        chip(panel, 40, 112, '幸运', '#FFE3D6', '#C2461C', 24, 38);
+        chip(panel, 40, 112, unlucky ? '不幸' : '幸运', unlucky ? '#ECE0F5' : '#FFE3D6', unlucky ? '#5B2A86' : '#C2461C', 24, 38);
         caption(panel, '踩到自动抽一张', 156, 114, 300, 40, 24);
         const body = informationPanel(panel, 'info_summary_panel', 20, 180, 616, 220);
         const pool = tile.lucky ?? [];
-        caption(body, pool.length ? pool.map(luckyEffectText).join('\n') : '踩到即随机抽一张幸运卡', 24, 14, 568, 192, 26);
+        caption(body, pool.length ? pool.map(luckyEffectText).join('\n') : '踩到即随机抽一张' + (unlucky ? '不幸卡' : '幸运卡'), 24, 14, 568, 192, 26);
         new Button(p, '知道了', 204, 800, 312, 86, 'primary', close, 32);
     } else if (tile.type === 'JAIL') {
         // Screen21 has large illustrated operation cards, not small gray capsules.

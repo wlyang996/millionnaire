@@ -1109,7 +1109,7 @@ final class TurnModule {
             boolean drawnMove = second.plannedDistance() >= config.economy().eventMoveMinSteps()
                     && second.plannedDistance() <= config.economy().eventMoveMaxSteps();
             boolean jump = second.kind() == MoveKind.EVENT_FORWARD && second.plannedDistance() >= 1 && second.plannedDistance() < size;
-            LobbyModule.expect(c.eventDrawn() && (from == TileType.EVENT || from == TileType.FIXED_EVENT)
+            LobbyModule.expect(c.eventDrawn() && (from == TileType.EVENT || from == TileType.FIXED_EVENT || from == TileType.UNLUCKY_EVENT)
                     && (second.kind() == MoveKind.EVENT_FORWARD || second.kind() == MoveKind.EVENT_BACKWARD)
                     && (drawnMove || jump), "event movement segment invalid");
             LobbyModule.expect(c.plans().getLast().landingId() >= 1 && c.plans().getLast().landingId() < t.lastLandingId()

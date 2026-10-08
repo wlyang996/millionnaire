@@ -202,11 +202,14 @@ public final class ConfigValidator {
             if (jails != 1) {
                 fail(p + " must have exactly one JAIL");
             }
-            // 幸运格奖池：棋盘有幸运格时必须非空，没有时必须为空；每项权重为正；奖励 / 罚款金额须在事件金额区间内，其余为 0；去车站需要棋盘上有车站
-            long fixedTiles = b.count(TileType.FIXED_EVENT);
-            if ((fixedTiles > 0) != !b.fixedEvents().isEmpty()) {
-                fail(p + " lucky pool must be non-empty exactly when the board has FIXED_EVENT tiles (" + fixedTiles + "), got "
-                        + b.fixedEvents().size());
+            // 幸运 / 不幸格奖池：棋盘有对应格子时必须非空，没有时必须为空；每项权重为正；奖励 / 罚款金额须在事件金额区间内，其余为 0；
+            // 去车站需要棋盘上有车站；位移（后退）只能放在不幸奖池
+            for (TileType poolType : List.of(TileType.FIXED_EVENT, TileType.UNLUCKY_EVENT)) {
+                long poolTiles = b.count(poolType);
+                if ((poolTiles > 0) != !b.pool(poolType).isEmpty()) {
+                    fail(p + " " + poolType + " pool must be non-empty exactly when the board has such tiles (" + poolTiles
+                            + "), got " + b.pool(poolType).size());
+                }
             }
             long luckyTotal = 0;
             for (FixedEvent f : b.fixedEvents()) {
@@ -219,8 +222,8 @@ public final class ConfigValidator {
                 }
                 luckyTotal += Math.max(0, f.weight());
                 boolean cash = f.kind() == EventKind.CASH_REWARD || f.kind() == EventKind.CASH_FINE;
-                if (f.kind() == EventKind.MOVE) {
-                    fail(p + " fixed event cannot be MOVE (direction / distance are drawn)");
+                if (f.kind() == EventKind.MOVE && !f.unlucky()) {
+                    fail(p + " lucky event cannot be MOVE (only the unlucky pool moves back)");
                 }
                 if (cash ? f.amount() < eco.eventCashMin() || f.amount() > eco.eventCashMax()
                         || (f.amount() - eco.eventCashMin()) % eco.eventCashStep() != 0 : f.amount() != 0) {

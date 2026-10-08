@@ -362,7 +362,7 @@ export class MockStore {
         this.emit();
     }
 
-    /** 走到幸运格（演示）：不等点击，从奖池按权重随机抽一张红色幸运卡直接翻开。 */
+    /** 走到幸运 / 不幸格（演示）：不等点击，从奖池按权重随机抽一张红色幸运卡 / 紫色不幸卡直接翻开。 */
     eventFixed(actor: string, tileIndex: number): void {
         const pool = this.game.tiles[tileIndex]?.lucky ?? [];
         const p = this.player(actor);
@@ -378,7 +378,9 @@ export class MockStore {
             const target = st[Math.floor(Math.random() * st.length)].index;
             steps = (((target - tileIndex) % n) + n) % n;
         }
-        const result: EventResult = { kind: f.kind as EventResult['kind'], amount: f.amount, card: null, steps, label: f.label, lucky: true };
+        if (f.kind === 'MOVE') steps = -(1 + Math.floor(Math.random() * 3));
+        const unlucky = this.game.tiles[tileIndex]?.type === 'UNLUCKY_EVENT';
+        const result: EventResult = { kind: f.kind as EventResult['kind'], amount: f.amount, card: null, steps, label: f.label, lucky: !unlucky, unlucky };
         this.eventDraw = { phase: 'FLIPPING', actor, since: Date.now(), result, settled: this.eventDraw.settled };
         this.emit();
     }

@@ -85,6 +85,15 @@ final class EventModule {
         };
     }
 
+    /** 幸运 / 不幸格的位移：不幸奖池的 MOVE 固定后退、格数按事件位移区间抽（不抽方向）；其余同抽卡事件。 */
+    static Motion fixedMotion(RuleConfig c, BoardTemplate board, FixedEvent f, int tile, Drawer drawer) {
+        if (f.kind() == EventKind.MOVE) {
+            int bound = c.economy().eventMoveMaxSteps() - c.economy().eventMoveMinSteps() + 1;
+            return new Motion(MoveKind.EVENT_BACKWARD, c.economy().eventMoveMinSteps() + drawer.draw(DrawPoint.EVENT_MOVE_DISTANCE, bound));
+        }
+        return motion(c, board, f.kind(), tile, drawer);
+    }
+
     /** 加盖 / 降级的候选：自己的未抵押、未锁定普通地产（加盖要未满级，降级要有等级），按格子顺序。 */
     static List<Integer> propertyTargets(RuleConfig c, BoardTemplate board, GameState g, String player, boolean build) {
         List<Integer> out = new ArrayList<>();
@@ -135,9 +144,10 @@ final class EventModule {
         switch (l.currentTask()) {
             case FIXED_EVENT -> {
                 var board = LobbyModule.board(ctx.config(), g.settings());
-                int pick = board.luckyIndex(ctx.draw(DrawPoint.LUCKY_EVENT, board.luckyWeight()));
-                var f = board.fixedEvents().get(pick);
-                Motion m = motion(ctx.config(), board, f.kind(), l.tile(), ctx::draw);
+                var pool = board.pool(board.tiles().get(l.tile()).type());
+                int pick = BoardTemplate.pick(pool, ctx.draw(DrawPoint.LUCKY_EVENT, BoardTemplate.weight(pool)));
+                var f = pool.get(pick);
+                Motion m = fixedMotion(ctx.config(), board, f, l.tile(), ctx::draw);
                 ctx.emit(new GameEvent.FixedEventTriggered(player, l.landingId(), l.cursor(), f.kind(), f.amount(), m.kind(), m.distance(), pick));
                 EconomyModule.resumeLanding(ctx, 0);
             }
@@ -230,10 +240,11 @@ final class EventModule {
                 LobbyModule.check(source(g, e.playerId(), e.landingId(), e.cursor(), LandingStep.FIXED_EVENT)
                         && l.event() == null && t.chain() != null && !t.chain().eventDrawn(), "fixed event source mismatch");
                 var board = LobbyModule.board(c, g.settings());
-                int pick = board.luckyIndex(draws.take(DrawPoint.LUCKY_EVENT, board.luckyWeight()));
-                var f = board.fixedEvents().get(pick);
+                var pool = board.pool(board.tiles().get(l.tile()).type());
+                int pick = BoardTemplate.pick(pool, draws.take(DrawPoint.LUCKY_EVENT, BoardTemplate.weight(pool)));
+                var f = pool.get(pick);
                 LobbyModule.check(e.pick() == pick && e.kind() == f.kind() && e.amount() == f.amount(), "lucky event does not match draw");
-                Motion m = motion(c, board, f.kind(), l.tile(), draws::take);
+                Motion m = fixedMotion(c, board, f, l.tile(), draws::take);
                 LobbyModule.check(e.moveKind() == m.kind() && e.distance() == m.distance(), "fixed event motion does not match draw");
                 var result = new EventResolution(f.kind(), f.amount(), m.kind(), m.distance(), -1, false);
                 var after = g.withTurn(t.withChain(t.chain().drewEvent()));

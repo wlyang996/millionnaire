@@ -62,10 +62,10 @@ export function runSelfCheck(): CheckResult {
 
     // ---- 棋盘模板（requirements 第 3 节；2026-10-08 事件格拆成抽卡事件 + 固定事件）----
     const c30 = countTypes(buildBoard(30));
-    eq('30格数量', [c30.START, c30.PROPERTY, c30.EVENT, c30.FIXED_EVENT, c30.BANK, c30.JAIL, c30.REST, c30.GAME_ZONE, c30.STATION], [1, 16, 3, 2, 1, 1, 1, 1, 4]);
+    eq('30格数量', [c30.START, c30.PROPERTY, c30.EVENT, c30.FIXED_EVENT, c30.UNLUCKY_EVENT, c30.BANK, c30.JAIL, c30.REST, c30.GAME_ZONE, c30.STATION], [1, 16, 3, 1, 1, 1, 1, 1, 1, 4]);
     eq('30格价位', [c30.LOW, c30.MID, c30.HIGH, c30.AUCTION_LOT], [6, 6, 4, 3]);
     const c50 = countTypes(buildBoard(50));
-    eq('50格数量', [c50.START, c50.PROPERTY, c50.EVENT, c50.FIXED_EVENT, c50.BANK, c50.JAIL, c50.REST, c50.GAME_ZONE, c50.STATION], [1, 28, 5, 4, 2, 1, 1, 2, 6]);
+    eq('50格数量', [c50.START, c50.PROPERTY, c50.EVENT, c50.FIXED_EVENT, c50.UNLUCKY_EVENT, c50.BANK, c50.JAIL, c50.REST, c50.GAME_ZONE, c50.STATION], [1, 28, 5, 2, 2, 2, 1, 1, 2, 6]);
     eq('50格价位', [c50.LOW, c50.MID, c50.HIGH, c50.AUCTION_LOT], [10, 10, 8, 5]);
     for (const size of [30, 50] as const) {
         const g = gridFor(size);

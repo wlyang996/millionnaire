@@ -26,7 +26,7 @@ export function tilesFor(boardId: string, boards: BoardTemplate[] | null): Board
     const names = boardNames(size);
     return tpl.tiles.map((t): BoardTile => {
         const tile: BoardTile = { index: t.index, type: t.type, name: names[t.index] ?? String(t.index) };
-        if (t.type === 'FIXED_EVENT') tile.lucky = luckyPool();
+        if (t.type === 'FIXED_EVENT' || t.type === 'UNLUCKY_EVENT') tile.lucky = luckyPool(t.type === 'UNLUCKY_EVENT');
         if (t.type === 'PROPERTY' && t.tier) {
             tile.tier = t.tier;
             tile.auctionLot = t.auctionDesignated;

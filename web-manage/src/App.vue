@@ -15,7 +15,7 @@ const CARD_LABEL = {
   QUERY: '查询', FORCED_PURCHASE: '强制购房', DEMOLISH: '拆楼', CLEAR_LAND: '清地',
 }
 const TILE_LABEL = {
-  START: '起点', STATION: '车站', EVENT: '事件', FIXED_EVENT: '固定事件', BANK: '银行', JAIL: '监狱', REST: '休息', GAME_ZONE: '小游戏',
+  START: '起点', STATION: '车站', EVENT: '事件', FIXED_EVENT: '幸运', UNLUCKY_EVENT: '不幸', BANK: '银行', JAIL: '监狱', REST: '休息', GAME_ZONE: '小游戏',
 }
 const BOARD_LABEL = { 'classic-30': '30 格地图', 'classic-50': '50 格地图' }
 
@@ -34,7 +34,9 @@ const history = ref([])
 const dirty = computed(() => form.value && JSON.stringify(form.value) !== saved.value)
 const eventTotal = computed(() => sum(form.value?.eventWeights))
 const cardTotal = computed(() => sum(form.value?.cardWeights))
-const luckyTotal = computed(() => (form.value?.lucky || []).reduce((a, l) => a + (Number(l.weight) || 0), 0))
+function poolTotal(unlucky) {
+  return (form.value?.lucky || []).filter((l) => !!l.unlucky === unlucky).reduce((a, l) => a + (Number(l.weight) || 0), 0)
+}
 const cashChoices = computed(() => {
   const c = form.value?.eventCash
   if (!c || c.step <= 0 || c.max < c.min) return []
@@ -294,19 +296,20 @@ onMounted(() => {
             <span class="muted">{{ ((form.cardWeights[k] || 0) / 10).toFixed(1) }}%</span>
           </div>
         </div>
-        <h3>幸运格（踩到自动抽一张）<el-tag size="small">合计 {{ luckyTotal }}</el-tag></h3>
-        <p class="muted">只放好事，两张地图共用。按权重抽取（概率 = 本项 ÷ 合计），填 0 表示不出现。</p>
-        <el-form label-width="140px" class="narrow">
-          <el-form-item v-for="l in form.lucky" :key="l.kind" :label="l.label">
-            <el-input-number v-model="l.weight" :min="0" :max="100" />
-            <span class="hint">{{ luckyTotal ? Math.round((l.weight || 0) * 1000 / luckyTotal) / 10 : 0 }}%</span>
-            <template v-if="l.kind === 'CASH_REWARD'">
-              <span class="hint">奖励金额</span>
-              <el-input-number v-model="l.amount" :min="1" :step="50" style="margin-left: 8px" />
-            </template>
-          </el-form-item>
-        </el-form>
-        <p class="muted">"好人好事"的金额须在「金额与固定费用」里事件现金的范围内、并符合步长。</p>
+        <template v-for="grp in [{ unlucky: false, title: '幸运格（全是好事）' }, { unlucky: true, title: '不幸格（全是坏事）' }]" :key="grp.title">
+          <h3>{{ grp.title }} · 踩到自动抽一张<el-tag size="small">合计 {{ poolTotal(grp.unlucky) }}</el-tag></h3>
+          <el-form label-width="140px" class="narrow">
+            <el-form-item v-for="l in (form.lucky || []).filter((x) => !!x.unlucky === grp.unlucky)" :key="l.kind + grp.unlucky" :label="l.label">
+              <el-input-number v-model="l.weight" :min="0" :max="100" />
+              <span class="hint">{{ poolTotal(grp.unlucky) ? Math.round((l.weight || 0) * 1000 / poolTotal(grp.unlucky)) / 10 : 0 }}%</span>
+              <template v-if="l.kind === 'CASH_REWARD' || l.kind === 'CASH_FINE'">
+                <span class="hint">{{ l.kind === 'CASH_REWARD' ? '奖励' : '罚款' }}金额</span>
+                <el-input-number v-model="l.amount" :min="1" :step="50" style="margin-left: 8px" />
+              </template>
+            </el-form-item>
+          </el-form>
+        </template>
+        <p class="muted">两张地图共用。按权重抽取（概率 = 本项 ÷ 本组合计），填 0 表示不出现。奖励 / 罚款金额须在「金额与固定费用」里事件现金的范围内、并符合步长。"迷路倒退"后退 1～3 格。</p>
       </el-tab-pane>
 
       <el-tab-pane label="金额与固定费用" name="money">

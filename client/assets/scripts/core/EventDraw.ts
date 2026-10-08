@@ -31,6 +31,8 @@ export interface EventResult {
     label?: string;
     /** 幸运格抽到的（红色幸运卡，自动翻开） */
     lucky?: boolean;
+    /** 不幸格抽到的（紫色不幸卡，自动翻开） */
+    unlucky?: boolean;
 }
 
 /** 奖励 / 罚款的事件描述（用户 2026-10-08：不能只写加减，要有缘由）。按种子挑一条，所有客户端相同。 */
@@ -60,6 +62,8 @@ export function luckyEffectText(f: { kind: string; amount: number; label: string
         case 'DOWNGRADE': return f.label + '：自己随机一处房产降一级';
         case 'TO_STATION': return f.label + '：前进到随机一个车站';
         case 'TO_START': return f.label + '：前进回到起点，领起点奖励';
+        case 'MOVE': return f.label + '：后退 1～3 格';
+        case 'JAIL': return f.label + '：直接进监狱';
         default: return f.label;
     }
 }
@@ -70,6 +74,14 @@ export const LUCKY_POOL = [
     { kind: 'BUILD', amount: 0, label: '免费加盖', weight: 25 },
     { kind: 'TO_STATION', amount: 0, label: '搭乘快车', weight: 25 },
     { kind: 'TO_START', amount: 0, label: '回到起点', weight: 25 },
+];
+
+/** 内置不幸奖池（与服务端 RuleConfigs.UNLUCKY 一致；MOVE 为后退 1～3 格）。 */
+export const UNLUCKY_POOL = [
+    { kind: 'CASH_FINE', amount: 200, label: '随地吐痰', weight: 25, unlucky: true },
+    { kind: 'DOWNGRADE', amount: 0, label: '房屋失修', weight: 25, unlucky: true },
+    { kind: 'MOVE', amount: 0, label: '迷路倒退', weight: 25, unlucky: true },
+    { kind: 'JAIL', amount: 0, label: '违规入狱', weight: 25, unlucky: true },
 ];
 
 export interface EventDrawState {

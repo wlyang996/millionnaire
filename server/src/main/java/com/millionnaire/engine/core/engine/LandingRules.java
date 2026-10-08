@@ -93,7 +93,8 @@ final class LandingRules {
                 (c, g, l) -> MinigameModule.resting(g, l), List.of(new Outcome(LandingResult.PLAYED, List.of()))));
 
     static boolean fixedEventTile(RuleConfig c, GameState g, LandingState l) {
-        return LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type() == com.millionnaire.engine.config.TileType.FIXED_EVENT;
+        var type = LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type();
+        return type == com.millionnaire.engine.config.TileType.FIXED_EVENT || type == com.millionnaire.engine.config.TileType.UNLUCKY_EVENT;
     }
 
     static boolean eventTile(RuleConfig c, GameState g, LandingState l) {
