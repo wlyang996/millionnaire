@@ -94,6 +94,9 @@ export interface SGame {
     orderDraws: { playerId: string; draws: number[] }[];
     board: { boardId: string; ownables: SOwnable[]; roadblocks?: { id: number; tile: number; owner: string }[] };
     turnNo: number;
+    /** 当前轮数与租金倍率（百分比） */
+    round?: number;
+    rentPercent?: number;
     currentPlayer: string | null;
     stage: string;
     globalEndsAt: number;

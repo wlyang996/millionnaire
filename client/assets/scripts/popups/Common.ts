@@ -1,7 +1,7 @@
 /** 弹窗共用部件：金币数字、地产头图、租金表、信息行。 */
 import { Node } from 'cc';
 import { BoardTile, PropertyState, Tier } from '../core/Models';
-import { emergencyRatioLabel, landPrice, TIERS } from '../core/Rules';
+import { emergencyRatioLabel, inflateRent, landPrice, TIERS } from '../core/Rules';
 import { Theme, textWidth } from '../core/Theme';
 import { drawCardIcon, drawCoin } from '../ui/Icons';
 import { fillCircle, fillPoly, fillRR, gfx, mk, strokeRR, text } from '../ui/Kit';
@@ -73,7 +73,7 @@ export function rentTable(parent: Node, x: number, y: number, w: number, tier: T
     for (let i = 0; i < 4; i++) {
         if (highlight.indexOf(i) >= 0) fillRR(gfx(n), i * cw + 6, 6, cw - 12, 84, 12, Theme.c.yellow + '55');
         text(n, names[i], i * cw, 8, cw, 36, Theme.font.sm, Theme.c.inkSoft);
-        text(n, String(t.rent[i]), i * cw, 44, cw, 44, Theme.font.lg, Theme.c.ink, { bold: true });
+        text(n, String(inflateRent(t.rent[i])), i * cw, 44, cw, 44, Theme.font.lg, Theme.c.ink, { bold: true });
     }
 }
 

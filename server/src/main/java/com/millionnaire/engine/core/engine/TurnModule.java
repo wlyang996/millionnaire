@@ -337,6 +337,16 @@ final class TurnModule {
         openStage(ctx, p.inJail() ? TurnStage.JAIL_DECISION : TurnStage.PRE_ROLL, leadMs, rollMs(ctx), null);
     }
 
+    private static int indexOf(GameState g, String playerId) {
+        List<PlayerState> ps = g.players();
+        for (int i = 0; i < ps.size(); i++) {
+            if (ps.get(i).playerId().equals(playerId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /** 按行动顺序取下一位存活玩家（破产者跳过）。 */
     static Optional<String> nextAlive(GameState g) {
         List<PlayerState> ps = g.players();
@@ -827,7 +837,9 @@ final class TurnModule {
                 check(e.turnNo() == t.turnNo() + 1 && t.stage() == TurnStage.NONE && k.equals(TurnTrack.NONE)
                         && nextAlive(g).map(e.playerId()::equals).orElse(false), "turn sequence broken");
                 // 每个自己的回合开始恢复一次主动用卡机会
-                yield g.withTurn(t.next(e.turnNo(), e.playerId()).withTrack(TurnTrack.NONE.safePoint(1)))
+                // 行动顺序绕回（下一位不在当前玩家之后）记新一轮；第一个回合是第 1 轮
+                long round = t.currentPlayer() == null || indexOf(g, e.playerId()) <= indexOf(g, t.currentPlayer()) ? t.round() + 1 : t.round();
+                yield g.withTurn(t.next(e.turnNo(), e.playerId(), round).withTrack(TurnTrack.NONE.safePoint(1)))
                         .withCards(g.cards().turnStarted(e.playerId()));
             }
             case TurnStageEntered e -> {

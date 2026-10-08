@@ -420,7 +420,8 @@ final class GameModule {
                 : g.player(viewerId).map(PlayerState::hand).orElse(List.of());
         return new GameView(g.gameNo(), g.phase(), players, g.orderDraws(), g.board(), g.turn().turnNo(),
                 g.turn().currentPlayer(), g.turn().stage(), g.clock().endsAt(), windows, publicLanding(g), publicDebt(g), mine,
-                MinigameModule.view(g), CardModule.view(g), AuctionModule.view(g), TradeModule.view(g));
+                MinigameModule.view(g), CardModule.view(g), AuctionModule.view(g), TradeModule.view(g),
+                g.turn().round(), EconomyModule.rentPercent(g));
     }
 
     /** E6：当前落点的公开部分（步骤与决策是否仍待做）。 */

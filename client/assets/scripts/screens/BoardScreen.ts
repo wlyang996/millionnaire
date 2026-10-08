@@ -455,7 +455,12 @@ export class BoardScreen extends Screen {
             const sec = st.matchRemainingSec();
             const state = timed ? matchClockState(sec) : 'normal';
             const color = state === 'normal' ? Theme.c.clockNormal : Theme.c.clockRed;
-            setText(this.clockLabel, timed ? '剩余 ' + formatMMSS(sec * 1000) : '破产模式', color);
+            // 破产模式：显示轮数与租金倍率（租金随轮数上涨）
+            const g = st.session.game;
+            const rp = g?.rentPercent ?? 100;
+            const bankrupt = timed ? '' : g && g.round ? '第' + g.round + '轮' + (rp > 100 ? '·租×' + rp / 100 : '') : '破产模式';
+            this.clockLabel.fontSize = timed || rp <= 100 ? 26 : 19;
+            setText(this.clockLabel, timed ? '剩余 ' + formatMMSS(sec * 1000) : bankrupt, color);
             if (this.clockState !== state) {
                 this.clockState = state;
                 const g = gfx(this.clockIcon);

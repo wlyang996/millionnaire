@@ -8,7 +8,7 @@ import type { MockStore } from '../core/MockStore';
 import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { applyServerNames } from '../core/BoardNames';
-import { applyServerRules, BAIL_COST, luckyPool } from '../core/Rules';
+import { applyServerRules, BAIL_COST, luckyPool, rentPercent, setRentPercent } from '../core/Rules';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
 import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
@@ -290,6 +290,10 @@ export class OnlineSession {
         s.roomId = u.roomCode; // 界面上的"房间号"是六位房间号
         if (s.game) s.game.chat = this.chat;
         this.store.session = s;
+        // 破产模式租金随轮数上涨：倍率变大时全员提示一次；租金显示统一按当前倍率
+        const rp = s.game?.rentPercent ?? 100;
+        if (s.game && this.hadGame && rp > rentPercent()) this.onToast?.('物价上涨！第 ' + s.game.round + ' 轮起租金 ×' + rp / 100);
+        setRentPercent(rp);
         this.trackCards(u, s);
         const hasGame = !!s.game;
         if (hasGame && !this.hadGame) {

@@ -116,6 +116,10 @@ export interface GameView {
     orderDraws: OrderDraw[];
     boardId: string;
     turnNo: number;
+    /** 当前轮数（行动顺序绕回一圈记一轮；演示为 0） */
+    round?: number;
+    /** 当前租金倍率（百分比；破产模式随轮数上涨） */
+    rentPercent?: number;
     currentPlayer: string;
     stage: TurnStage;
     globalEndsAt: number;

@@ -106,6 +106,8 @@ function adaptGame(g: SGame, boards: BoardTemplate[] | null, lastDice: number, n
         orderDraws: g.orderDraws.map((d) => ({ playerId: d.playerId, value: d.draws[d.draws.length - 1] ?? 0 })),
         boardId: g.board.boardId,
         turnNo: g.turnNo,
+        round: g.round ?? 0,
+        rentPercent: g.rentPercent ?? 100,
         currentPlayer: g.currentPlayer ?? '',
         stage: (g.stage as GameView['stage']) ?? 'NONE',
         globalEndsAt: g.globalEndsAt,

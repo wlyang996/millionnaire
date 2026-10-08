@@ -14,7 +14,7 @@ import { Clock, Countdown } from './Clock';
 import { MockStore } from './MockStore';
 import {
     auctionParams, checkNickname, clampTradePrice, debtShortfall, emergencyMortgage, maxPlayers, netWorth,
-    groupCards, rankStandings, rentOf, standardValue, stationRent, toothCount, tradeRange, TIERS, STATION,
+    groupCards, rankStandings, rentOf, setRentPercent, standardValue, stationRent, toothCount, tradeRange, TIERS, STATION,
 } from './Rules';
 import { textWidth } from './Theme';
 
@@ -51,6 +51,11 @@ export function runSelfCheck(): CheckResult {
     eq('升级费', [TIERS.LOW.upgrade, TIERS.MID.upgrade, TIERS.HIGH.upgrade], [300, 600, 900]);
     eq('rentOf 越界夹取', [rentOf('MID', -1), rentOf('MID', 9)], [200, 1400]);
     eq('车站租金', [stationRent(1), stationRent(3)], [200, 600]);
+    setRentPercent(140);
+    eq('租金倍率 ×1.4（地产 / 车站）', [rentOf('LOW', 1), stationRent(2)], [350, 560]);
+    setRentPercent(130);
+    eq('租金倍率向下取整到 10', rentOf('LOW', 0), 130);
+    setRentPercent(100);
     eq('标准价值', [standardValue(false, 'LOW', 0), standardValue(false, 'LOW', 300), standardValue(false, 'HIGH', 1800), standardValue(true, undefined, 0)], [500, 650, 2400, 1000]);
     eq('应急抵押可得', [emergencyMortgage(false, 'LOW'), emergencyMortgage(false, 'MID'), emergencyMortgage(false, 'HIGH'), emergencyMortgage(true, undefined)], [400, 700, 900, 700]);
     eq('拍卖参数(1000)', auctionParams(1000), { start: 500, cap: 2500, minRaise: 100 });

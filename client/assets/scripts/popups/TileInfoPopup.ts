@@ -1,6 +1,6 @@
 /** Screen18: property identity, prices and four flat rent rows with live values. */
 import { Node } from 'cc';
-import { landPrice, TIERS } from '../core/Rules';
+import { inflateRent, landPrice, TIERS } from '../core/Rules';
 import { art } from '../ui/Art';
 import { ctx } from '../ui/Ctx';
 import { gfx, mk, text } from '../ui/Kit';
@@ -53,7 +53,7 @@ export class TileInfoPopup extends InformationPage {
         const rentPanel = informationCard(p, 32, 846, w - 64, 290, '#FFF8E3', 30);
         drawHouse(gfx(mk(rentPanel, 'RentHome', 26, 14, 44, 44)), 22, 22, 40, '#D84128', '#FFF1CF');
         text(rentPanel, '租金表', 84, 10, 300, 50, 30, INK, { bold: true, align: 'l' });
-        TIERS[tile.tier ?? 'LOW'].rent.forEach((rent, i) => {
+        TIERS[tile.tier ?? 'LOW'].rent.map((r) => inflateRent(r)).forEach((rent, i) => {
             const current = i === level;
             const row = informationCard(rentPanel, 26, 66 + i * 52, w - 116, 48,
                 current ? '#EFF8E9' : '#FFFCF4', 16, false);

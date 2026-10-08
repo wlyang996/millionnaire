@@ -89,13 +89,29 @@ export function landPrice(isStation: boolean, tier: Tier | undefined): number {
     return isStation ? STATION.price : TIERS[tier ?? 'LOW'].price;
 }
 
-export function rentOf(tier: Tier, level: number): number {
-    return TIERS[tier].rent[Math.max(0, Math.min(MAX_LEVEL, level))];
+/**
+ * 当前租金倍率（百分比）。破产模式下租金随轮数上涨（2026-10-08）：前 10 轮原价，之后每 5 轮 +20%，封顶 ×3；
+ * 联机以服务端视图的 rentPercent 为准，由 OnlineSession 写入；演示 / 限时模式为 100。
+ */
+let rentPercentNow = 100;
+export function setRentPercent(p: number): void {
+    rentPercentNow = p > 0 ? p : 100;
+}
+export function rentPercent(): number {
+    return rentPercentNow;
+}
+/** 基础租金乘当前倍率，向下取整到 10（与服务端 RentInflation.apply 一致）。 */
+export function inflateRent(base: number): number {
+    return rentPercentNow === 100 ? base : Math.floor((base * rentPercentNow) / 100 / 10) * 10;
 }
 
-/** 车站租金 = 所有者持有未抵押车站数 × 200 */
+export function rentOf(tier: Tier, level: number): number {
+    return inflateRent(TIERS[tier].rent[Math.max(0, Math.min(MAX_LEVEL, level))]);
+}
+
+/** 车站租金 = 所有者持有未抵押车站数 × 200（乘当前租金倍率） */
 export function stationRent(unmortgagedStations: number): number {
-    return unmortgagedStations * STATION.rentEach;
+    return inflateRent(unmortgagedStations * STATION.rentEach);
 }
 
 /** 应急抵押可得金额（按土地原价 × 比例，非银行 100%） */

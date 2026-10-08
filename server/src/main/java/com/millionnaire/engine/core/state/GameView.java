@@ -14,7 +14,17 @@ import java.util.List;
 public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                        BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                        List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
-                       PublicMinigame minigame, PublicCards cards, PublicAuction auction, PublicTrade trade) {
+                       PublicMinigame minigame, PublicCards cards, PublicAuction auction, PublicTrade trade,
+                       long round, int rentPercent) {
+    /** round：当前轮数；rentPercent：当前租金倍率（百分比，破产模式随轮数上涨）。 */
+    public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
+                    BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
+                    List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
+                    PublicMinigame minigame, PublicCards cards, PublicAuction auction, PublicTrade trade) {
+        this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt, myHand,
+                minigame, cards, auction, trade, 0, 100);
+    }
+
     public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                     BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                     List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
