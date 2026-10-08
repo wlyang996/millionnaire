@@ -80,6 +80,38 @@ class ConfigBindingTest {
     }
 
     @Test
+    void roomChoicesAreEditable() {
+        GameSettings d = SettingsMapper.defaults();
+        assertThat(d.room().rollSecondsOptions()).containsExactly(15, 30, 45, 60);
+        var room = new GameSettings.RoomSetting(List.of(10000L, 1000L), 1000, List.of(20, 10), 20,
+                List.of(20, 10), 10, "BANKRUPTCY", 90);
+        GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), room);
+        assertThat(SettingsMapper.validate(edited)).isEmpty();
+        assertThat(SettingsMapper.normalized(edited).room().rollSecondsOptions()).containsExactly(10, 20);
+        var rc = SettingsMapper.toRuleConfig(SettingsMapper.normalized(edited));
+        assertThat(rc.timing().rollSecondsOptions()).containsExactly(10, 20);
+        assertThat(rc.timing().bankruptcyModeCapMinutes()).isEqualTo(90);
+        var defaults = com.millionnaire.engine.core.state.RoomSettings.defaults(rc);
+        assertThat(defaults.initialCash()).isEqualTo(1000);
+        assertThat(defaults.rollSeconds()).isEqualTo(10);
+        assertThat(defaults.endMode()).isEqualTo(com.millionnaire.engine.config.EndMode.BANKRUPTCY);
+
+        var bad = new GameSettings.RoomSetting(List.of(), 3000, List.of(30, 30), 45, List.of(1, 2, 3, 4, 5, 6), 1, "X", 5);
+        List<String> errors = SettingsMapper.validate(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
+                d.eventWeights(), d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), bad));
+        assertThat(errors).anyMatch(e -> e.contains("初始现金选项"));
+        assertThat(errors).anyMatch(e -> e.contains("重复"));
+        assertThat(errors).anyMatch(e -> e.contains("投骰时间选项"));
+        assertThat(errors).anyMatch(e -> e.contains("结束模式"));
+        assertThat(errors).anyMatch(e -> e.contains("破产模式最长"));
+        // 旧版本快照没有 room：按默认处理
+        GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+    }
+
+    @Test
     void handLimitIsEditable() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(d.handLimit()).isEqualTo(6);

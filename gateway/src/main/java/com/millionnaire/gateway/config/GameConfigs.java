@@ -202,7 +202,7 @@ public class GameConfigs {
             // 旧版本没有奖池或只有幸运奖池：按内置默认补齐（引擎换算时同样补齐，规则哈希不变）
             return new GameSettings(s.tiers(), s.station(), s.fees(), s.eventCash(), s.eventWeights(), s.cardWeights(),
                     s.tileNames(), SettingsMapper.mergeLucky(s.lucky()), SettingsMapper.rentRiseOf(s),
-                    SettingsMapper.handLimitOf(s));
+                    SettingsMapper.handLimitOf(s), SettingsMapper.roomOf(s));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("bad game_config payload", e);
         }

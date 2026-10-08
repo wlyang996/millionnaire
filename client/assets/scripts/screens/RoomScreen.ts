@@ -1,7 +1,7 @@
 /** 页面 3：好友房间（房号分享、8 个座位、房主设置、语音条/聊天片段、准备/开局）。 */
 import { Node } from 'cc';
 import { copyText, shareRoom } from '../net/Wx';
-import { boardSizeOf, INITIAL_CASH_OPTIONS, MAX_HAND, maxPlayers, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
+import { BANKRUPTCY_CAP_MINUTES, boardSizeOf, INITIAL_CASH_OPTIONS, MAX_HAND, maxPlayers, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
 import { EndMode, Member } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { ChatPopup } from '../popups/ChatPopup';
@@ -89,7 +89,7 @@ export class RoomScreen extends Screen {
         mk1('游戏时长', 3);
         const limited = s.settings.endMode === 'TIME_LIMIT';
         const dur = new Segmented(set, segX, 12 + rowH * 3, segW, 50,
-            TIME_LIMIT_OPTIONS.map((v) => ({ label: v + '分钟', value: v, disabled: !limited, note: '破产模式不限时长（最长 120 分钟）' })),
+            TIME_LIMIT_OPTIONS.map((v) => ({ label: v + '分钟', value: v, disabled: !limited, note: '破产模式不限时长（最长 ' + BANKRUPTCY_CAP_MINUTES + ' 分钟）' })),
             s.settings.timeLimitMinutes, (v) => st.setSetting({ timeLimitMinutes: v as number }));
         mk1('投骰时间', 4);
         const roll = new Segmented(set, segX, 12 + rowH * 4, segW, 50, ROLL_SECONDS_OPTIONS.map((v) => ({ label: v + '秒', value: v })),

@@ -35,4 +35,12 @@ public record TimingConfig(
         rollSecondsOptions = Immutable.list(rollSecondsOptions);
         timeLimitMinutesOptions = Immutable.list(timeLimitMinutesOptions);
     }
+
+    /** 换掉建房可选的投骰时间、限时档位与破产模式时长上限（管理后台可配），其余计时不变。 */
+    public TimingConfig withRoomChoices(List<Integer> rollSeconds, List<Integer> timeLimitMinutes, int bankruptcyCapMinutes) {
+        return new TimingConfig(rollSeconds, timeLimitMinutes, bankruptcyCapMinutes, decisionWindowMs, responseWindowMs,
+                discardWindowMs, tradeResponseMs, toothPickMs, auctionDurationMs, auctionExtendMs, auctionMaxMs, debtSegmentMs,
+                heartbeatMs, suspectAfterMs, offlineAfterMs, allOfflineCloseMs, downtimeBudgetMs, recoveryPrepMs, animDiceMs,
+                animPerStepMs, autoActDelayMs, endWhenAllAway);
+    }
 }

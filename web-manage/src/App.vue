@@ -44,6 +44,24 @@ const cashChoices = computed(() => {
   for (let v = c.min; v <= c.max && out.length < 50; v += c.step) out.push(v)
   return out
 })
+// 建房选项：逗号分隔的数字列表 ⇄ 数组（中文逗号、空格也认）
+function listText(key) {
+  return (form.value?.room?.[key] || []).join(', ')
+}
+function setList(key, text) {
+  form.value.room[key] = String(text).split(/[,，\s]+/).filter((x) => x !== '').map(Number)
+}
+// 输入时先存草稿，失焦 / 回车再换成数组（否则敲逗号会被立刻吃掉）
+const drafts = reactive({})
+function draft(key) {
+  return drafts[key] ?? listText(key)
+}
+function commit(key) {
+  if (drafts[key] === undefined) return
+  setList(key, drafts[key])
+  delete drafts[key]
+}
+
 // 租金上涨预览：列出倍率变化的轮次（与引擎 RentInflation.percent 一致）
 const rentSteps = computed(() => {
   const r = form.value?.rentRise
@@ -346,6 +364,23 @@ onMounted(() => {
           <el-form-item label="经过起点奖励"><el-input-number v-model="form.fees.startReward" :min="1" :step="50" /></el-form-item>
           <el-form-item label="小游戏获胜奖励"><el-input-number v-model="form.fees.miniGameWinReward" :min="1" :step="50" /></el-form-item>
           <el-form-item label="出狱费用"><el-input-number v-model="form.fees.bailCost" :min="1" :step="50" /></el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <el-tab-pane label="建房选项" name="room">
+        <el-form v-if="form.room" label-width="160px" class="narrow">
+          <p class="muted">房主建房时能选的项与默认值。每组 1～5 个，用逗号分隔，保存时按从小到大排列；默认值必须是其中一个。只影响发布之后新建的房间。</p>
+          <h3>初始现金</h3>
+          <el-form-item label="可选金额"><el-input :model-value="draft('initialCashOptions')" @update:model-value="(v) => (drafts['initialCashOptions'] = v)" @change="commit('initialCashOptions')" placeholder="如 2000, 3000, 5000" /></el-form-item>
+          <el-form-item label="默认"><el-select v-model="form.room.defaultInitialCash"><el-option v-for="v in form.room.initialCashOptions" :key="v" :label="v" :value="v" /></el-select></el-form-item>
+          <h3>结束模式</h3>
+          <el-form-item label="默认结束模式"><el-radio-group v-model="form.room.defaultEndMode"><el-radio value="TIME_LIMIT">限时</el-radio><el-radio value="BANKRUPTCY">破产</el-radio></el-radio-group></el-form-item>
+          <el-form-item label="限时可选（分钟）"><el-input :model-value="draft('timeLimitMinutesOptions')" @update:model-value="(v) => (drafts['timeLimitMinutesOptions'] = v)" @change="commit('timeLimitMinutesOptions')" placeholder="如 15, 30, 60（5～240）" /></el-form-item>
+          <el-form-item label="限时默认"><el-select v-model="form.room.defaultTimeLimitMinutes"><el-option v-for="v in form.room.timeLimitMinutesOptions" :key="v" :label="v + ' 分钟'" :value="v" /></el-select></el-form-item>
+          <el-form-item label="破产模式最长（分钟）"><el-input-number v-model="form.room.bankruptcyCapMinutes" :min="10" :max="600" :step="10" /><span class="hint">到时按净资产排名结束</span></el-form-item>
+          <h3>投骰时间</h3>
+          <el-form-item label="可选（秒）"><el-input :model-value="draft('rollSecondsOptions')" @update:model-value="(v) => (drafts['rollSecondsOptions'] = v)" @change="commit('rollSecondsOptions')" placeholder="如 15, 30, 45, 60（5～120）" /></el-form-item>
+          <el-form-item label="默认"><el-select v-model="form.room.defaultRollSeconds"><el-option v-for="v in form.room.rollSecondsOptions" :key="v" :label="v + ' 秒'" :value="v" /></el-select></el-form-item>
         </el-form>
       </el-tab-pane>
 

@@ -20,6 +20,8 @@ import java.util.Map;
  * @param rentRise     破产模式租金随轮数上涨：前 freeRounds 轮原价，之后每 everyRounds 轮倍率 +stepPercent%，
  *                     封顶 capPercent%（stepPercent = 0 关闭）。没有此项（null）按内置默认处理。
  * @param handLimit    每人最多持有的道具张数（超出时弃牌）；房间"开局道具"的可选张数也以此为上限。没有此项（null）按内置默认处理。
+ * @param room         建房可选项：初始现金、限时时长、投骰时间各自的选项与默认值，默认结束模式，破产模式最长时长（分钟）。
+ *                     没有此项（null）按内置默认处理。
  */
 public record GameSettings(
         List<TierSetting> tiers,
@@ -31,12 +33,20 @@ public record GameSettings(
         Map<String, List<String>> tileNames,
         List<LuckySetting> lucky,
         RentRise rentRise,
-        Integer handLimit) {
+        Integer handLimit,
+        RoomSetting room) {
+
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
+                        Integer handLimit) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, null);
+    }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise) {
-        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, null);
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, null, null);
     }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
@@ -50,6 +60,12 @@ public record GameSettings(
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames) {
         this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, null, null);
+    }
+
+    public record RoomSetting(List<Long> initialCashOptions, long defaultInitialCash,
+                              List<Integer> timeLimitMinutesOptions, int defaultTimeLimitMinutes,
+                              List<Integer> rollSecondsOptions, int defaultRollSeconds,
+                              String defaultEndMode, int bankruptcyCapMinutes) {
     }
 
     public record RentRise(int freeRounds, int everyRounds, int stepPercent, int capPercent) {

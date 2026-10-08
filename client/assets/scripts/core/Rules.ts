@@ -44,6 +44,10 @@ export interface ServerRules {
     station: { price: number; rentPerStation: number };
     fees: { startReward: number; miniGameWinReward: number; bailCost: number };
     handLimit?: number;
+    room?: {
+        initialCashOptions: number[]; timeLimitMinutesOptions: number[]; rollSecondsOptions: number[];
+        bankruptcyCapMinutes: number;
+    };
 }
 
 /** 用房间绑定的参数版本覆盖价格、租金与固定费用（就地修改，已引用 TIERS / STATION 的地方随之生效）。 */
@@ -61,11 +65,23 @@ export function applyServerRules(r: ServerRules): void {
     MINIGAME_REWARD = r.fees.miniGameWinReward;
     BAIL_COST = r.fees.bailCost;
     if (r.handLimit && r.handLimit > 0) MAX_HAND = r.handLimit;
+    if (r.room) {
+        replaceAll(INITIAL_CASH_OPTIONS, r.room.initialCashOptions);
+        replaceAll(TIME_LIMIT_OPTIONS, r.room.timeLimitMinutesOptions);
+        replaceAll(ROLL_SECONDS_OPTIONS, r.room.rollSecondsOptions);
+        if (r.room.bankruptcyCapMinutes > 0) BANKRUPTCY_CAP_MINUTES = r.room.bankruptcyCapMinutes;
+    }
     if (r.lucky && r.lucky.length) luckyOverride = r.lucky.map((f) => ({ ...f }));
 }
+function replaceAll(target: number[], values: number[] | undefined): void {
+    if (values && values.length) target.splice(0, target.length, ...values);
+}
+// 建房选项：默认值与内置配置一致，联机按房间绑定的参数版本覆盖（后台「建房选项」）
 export const INITIAL_CASH_OPTIONS = [2000, 3000, 5000];
 export const TIME_LIMIT_OPTIONS = [15, 30, 60];
 export const ROLL_SECONDS_OPTIONS = [15, 30, 45, 60];
+/** 破产模式最长时长（分钟），到时按净资产排名结束 */
+export let BANKRUPTCY_CAP_MINUTES = 120;
 
 /** 弹窗/流程时长（秒） */
 export const SECONDS = {

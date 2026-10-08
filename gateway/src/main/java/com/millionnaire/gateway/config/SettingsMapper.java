@@ -19,6 +19,9 @@ import com.millionnaire.gateway.config.GameSettings.Fees;
 import com.millionnaire.engine.config.RentInflation;
 import com.millionnaire.gateway.config.GameSettings.LuckySetting;
 import com.millionnaire.gateway.config.GameSettings.RentRise;
+import com.millionnaire.gateway.config.GameSettings.RoomSetting;
+import com.millionnaire.engine.config.EndMode;
+import com.millionnaire.engine.config.RoomOptions;
 import com.millionnaire.gateway.config.GameSettings.StationSetting;
 import com.millionnaire.gateway.config.GameSettings.TierSetting;
 import java.io.IOException;
@@ -59,13 +62,28 @@ public final class SettingsMapper {
                 new StationSetting(BASE.station().price(), BASE.station().rentPerStation()),
                 new Fees(e.startReward(), e.miniGameWinReward(), e.bailCost()),
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
-                events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise(), e.handLimit());
+                events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise(), e.handLimit(),
+                defaultRoom());
     }
 
     /** 内置租金上涨参数（引擎默认）。 */
     public static RentRise defaultRentRise() {
         RentInflation r = BASE.rentInflation();
         return new RentRise(r.freeRounds(), r.everyRounds(), r.stepPercent(), r.capPercent());
+    }
+
+    /** 内置建房可选项（引擎默认）。 */
+    public static RoomSetting defaultRoom() {
+        RoomOptions r = BASE.room();
+        return new RoomSetting(List.copyOf(r.initialCashOptions()), r.defaultInitialCash(),
+                List.copyOf(BASE.timing().timeLimitMinutesOptions()), r.defaultTimeLimitMinutes(),
+                List.copyOf(BASE.timing().rollSecondsOptions()), r.defaultRollSeconds(),
+                r.defaultEndMode().name(), BASE.timing().bankruptcyModeCapMinutes());
+    }
+
+    /** 没有建房可选项（旧版本快照）时用内置默认。 */
+    public static RoomSetting roomOf(GameSettings s) {
+        return s.room() == null ? defaultRoom() : s.room();
     }
 
     /** 没有道具上限（旧版本快照）时用内置默认。 */
@@ -185,9 +203,46 @@ public final class SettingsMapper {
         names(errors, s.tileNames());
         lucky(errors, s.lucky() == null ? defaultLucky() : s.lucky());
         rentRise(errors, rentRiseOf(s));
+        room(errors, roomOf(s));
         int hand = handLimitOf(s);
         if (hand < BASE.economy().initialHandSize() || hand > MAX_HAND_LIMIT) {
             errors.add("道具上限必须在 " + BASE.economy().initialHandSize() + "～" + MAX_HAND_LIMIT + " 张之间");
+        }
+    }
+
+    /** 每组选项最多几个：建房页一行放得下的数量。 */
+    static final int MAX_ROOM_CHOICES = 5;
+
+    private static void room(List<String> errors, RoomSetting r) {
+        choices(errors, "初始现金", r.initialCashOptions(), r.defaultInitialCash(), 1, MAX_PRICE, "");
+        choices(errors, "限时时长", r.timeLimitMinutesOptions(), r.defaultTimeLimitMinutes(), 5, 240, " 分钟");
+        choices(errors, "投骰时间", r.rollSecondsOptions(), r.defaultRollSeconds(), 5, 120, " 秒");
+        if (!"TIME_LIMIT".equals(r.defaultEndMode()) && !"BANKRUPTCY".equals(r.defaultEndMode())) {
+            errors.add("默认结束模式只能是限时或破产");
+        }
+        if (r.bankruptcyCapMinutes() < 10 || r.bankruptcyCapMinutes() > 600) {
+            errors.add("破产模式最长时长必须在 10～600 分钟之间");
+        }
+    }
+
+    private static <T extends Number> void choices(List<String> errors, String label, List<T> options, long dflt,
+                                                   long min, long max, String unit) {
+        if (options == null || options.isEmpty() || options.size() > MAX_ROOM_CHOICES) {
+            errors.add(label + "选项需要 1～" + MAX_ROOM_CHOICES + " 个");
+            return;
+        }
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        for (T o : options) {
+            if (o == null || o.longValue() < min || o.longValue() > max) {
+                errors.add(label + "选项必须在 " + min + "～" + max + unit + " 之间");
+                return;
+            }
+            if (!seen.add(o.longValue())) {
+                errors.add(label + "选项有重复：" + o + unit);
+            }
+        }
+        if (!seen.contains(dflt)) {
+            errors.add(label + "默认值必须是其中一个选项");
         }
     }
 
@@ -345,7 +400,15 @@ public final class SettingsMapper {
             lucky.add(new LuckySetting(b.kind(), b.label(), cash ? g.amount() : 0, g.weight(), b.unlucky()));
         }
         return new GameSettings(List.copyOf(tiers), s.station(), s.fees(), s.eventCash(), events, cards, names,
-                List.copyOf(lucky), rentRiseOf(s), handLimitOf(s));
+                List.copyOf(lucky), rentRiseOf(s), handLimitOf(s), sortedRoom(roomOf(s)));
+    }
+
+    /** 选项按从小到大保存（建房页按这个顺序显示）。 */
+    private static RoomSetting sortedRoom(RoomSetting r) {
+        return new RoomSetting(r.initialCashOptions().stream().sorted().toList(), r.defaultInitialCash(),
+                r.timeLimitMinutesOptions().stream().sorted().toList(), r.defaultTimeLimitMinutes(),
+                r.rollSecondsOptions().stream().sorted().toList(), r.defaultRollSeconds(),
+                r.defaultEndMode(), r.bankruptcyCapMinutes());
     }
 
     /** 调用前须先通过 {@link #validate} 的结构检查。 */
@@ -390,8 +453,13 @@ public final class SettingsMapper {
                     pool.stream().filter(f -> f.unlucky() ? hasUnlucky : hasLucky).toList()));
         }
         RentRise rr = rentRiseOf(s);
+        RoomSetting rs = sortedRoom(roomOf(s));
+        RoomOptions base = BASE.room();
+        RoomOptions room = new RoomOptions(base.minPlayersToStart(), rs.initialCashOptions(), base.defaultBoardId(),
+                rs.defaultInitialCash(), EndMode.valueOf(rs.defaultEndMode()), rs.defaultTimeLimitMinutes(), rs.defaultRollSeconds());
+        var timing = BASE.timing().withRoomChoices(rs.rollSecondsOptions(), rs.timeLimitMinutesOptions(), rs.bankruptcyCapMinutes());
         return new RuleConfig(BASE.ruleVersion(), boards, tiers, st, economy, BASE.ratios(), cards, events,
-                BASE.timing(), BASE.room(), new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()));
+                timing, room, new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()));
     }
 
     private static Map<String, List<String>> loadDefaultNames() {
