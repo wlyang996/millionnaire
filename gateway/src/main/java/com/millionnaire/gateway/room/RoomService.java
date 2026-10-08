@@ -255,6 +255,16 @@ public class RoomService {
         records.submit(draft);
     }
 
+    /** 局结束：提交本局公开事件日志（异步落库）。 */
+    void gameLogged(GameRecords.LogDraft draft) {
+        records.submitLog(draft);
+    }
+
+    /** 一条聊天（异步落库）。 */
+    void chatted(GameRecords.ChatDraft draft) {
+        records.submitChat(draft);
+    }
+
     long now() {
         return clock.millis();
     }

@@ -1,6 +1,9 @@
 package com.millionnaire.gateway.record;
 
 import com.millionnaire.engine.EngineVersion;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -11,14 +14,17 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPOutputStream;
 import java.util.function.Supplier;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -26,17 +32,25 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * 战绩（表 game_record + game_record_player，见 V1__lean_baseline.sql 第 3 节）。
+ * 对局数据落库（见 V1__lean_baseline.sql）：战绩（第 3 节 game_record + game_record_player）、对局公开事件日志（第 4 节 game_log）、
+ * 文字聊天（第 5 节 chat_message）。
  * <ul>
- *   <li>局结束时由房间提交一份草稿，在单独的写线程里落库（不占房间锁）；同一 (room_id, game_no) 只写一次；</li>
- *   <li>表头与全部座位明细在同一事务里写入；</li>
- *   <li>未启用 db 配置时只在内存里保留每人最近 {@value #RECENT} 局（本地开发、测试）。</li>
+ *   <li>房间只提交草稿，在单独的写线程里落库（不占房间锁）；同一主键只写一次（重复提交忽略）；</li>
+ *   <li>战绩表头与全部座位明细在同一事务里写入；</li>
+ *   <li>写库失败（数据库暂时不可用等）按 {@link #RETRY_DELAYS_MS} 退避重试，约 10 分钟后放弃并记错误日志；
+ *       约束冲突（如发送者已注销）不重试。重试队列只在内存里，进程退出前最多等 {@value #SHUTDOWN_WAIT_S} 秒把手头的写完；</li>
+ *   <li>未启用 db 配置时：战绩在内存里保留每人最近 {@value #RECENT} 局；事件日志与聊天不保存（本地开发、测试）。</li>
  * </ul>
  */
 @Component
 public class GameRecords {
     private static final Logger log = LoggerFactory.getLogger(GameRecords.class);
     public static final int RECENT = 20;
+    /** 写库失败后的重试间隔（毫秒）：第 1～5 次重试。 */
+    static final long[] RETRY_DELAYS_MS = {1_000, 5_000, 30_000, 120_000, 600_000};
+    static final int SHUTDOWN_WAIT_S = 10;
+    /** game_log 解压后上限（与表约束 ck_game_log_len 一致）。 */
+    public static final int LOG_MAX_PLAIN = 8 * 1024 * 1024;
 
     /** 一局的草稿：座位按开局顺序。 */
     public record Draft(long roomId, long gameNo, String reason, String endMode, Integer timeLimitMinutes, String boardId,
@@ -47,6 +61,16 @@ public class GameRecords {
     public record Seat(int seatNo, long userId, Integer rank, Long netWorth, Long cash, String life) {
     }
 
+    /**
+     * 一局的公开事件日志：events 为引擎 {@code Engine.encodeEvents} 的规范文本（带格式信封），落库时 gzip（codec GZIP_EVLOG1）。
+     */
+    public record LogDraft(long roomId, long gameNo, String configHash, String events, int eventCount, long endedAt) {
+    }
+
+    /** 一条聊天：msgNo 为房间内从 1 递增的序号。 */
+    public record ChatDraft(long roomId, int msgNo, long senderUserId, String content, long createdAt) {
+    }
+
     /** "我的最近 20 局"的一行。 */
     public record Row(long gameNo, String endMode, Integer timeLimitMinutes, String boardId, int playerCount,
                       long startedAt, long endedAt, String endReason, Integer rank, Long netWorth, Long cash, String life) {
@@ -55,7 +79,7 @@ public class GameRecords {
     private final Supplier<JdbcTemplate> jdbc;
     private final Supplier<TransactionTemplate> tx;
     private final Clock clock;
-    private final ExecutorService writer = Executors.newSingleThreadExecutor(r -> {
+    private final ScheduledExecutorService writer = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "game-records");
         t.setDaemon(true);
         return t;
@@ -86,17 +110,102 @@ public class GameRecords {
     @PreDestroy
     void shutdown() {
         writer.shutdown();
+        try {
+            if (!writer.awaitTermination(SHUTDOWN_WAIT_S, TimeUnit.SECONDS)) {
+                log.warn("game data writer did not finish within {}s; pending writes are lost", SHUTDOWN_WAIT_S);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
-    /** 提交一局草稿（异步落库；失败只记日志，不影响房间）。 */
+    /** 提交一局战绩草稿（异步落库，失败重试；不影响房间）。 */
     public void submit(Draft d) {
-        writer.execute(() -> {
+        enqueue("game record room " + d.roomId() + " game " + d.gameNo(), () -> save(d), 0);
+    }
+
+    /** 提交一局公开事件日志（异步落库，失败重试）。未启用 db 配置时丢弃。 */
+    public void submitLog(LogDraft d) {
+        enqueue("game log room " + d.roomId() + " game " + d.gameNo(), () -> saveLog(d), 0);
+    }
+
+    /** 提交一条聊天（异步落库，失败重试）。未启用 db 配置时丢弃。 */
+    public void submitChat(ChatDraft d) {
+        enqueue("chat room " + d.roomId() + " #" + d.msgNo(), () -> saveChat(d), 0);
+    }
+
+    private void enqueue(String what, Runnable job, int attempt) {
+        Runnable run = () -> {
             try {
-                save(d);
+                job.run();
+            } catch (DataIntegrityViolationException e) {
+                log.warn("cannot save {} (constraint, not retried): {}", what, e.getMostSpecificCause().getMessage());
             } catch (RuntimeException e) {
-                log.error("cannot save game record room {} game {}", d.roomId(), d.gameNo(), e);
+                if (attempt < RETRY_DELAYS_MS.length && !writer.isShutdown()) {
+                    log.warn("cannot save {} (attempt {}), retrying in {} ms: {}", what, attempt + 1,
+                            RETRY_DELAYS_MS[attempt], e.getMessage());
+                    enqueue(what, job, attempt + 1);
+                } else {
+                    log.error("gave up saving {} after {} attempts", what, attempt + 1, e);
+                }
             }
-        });
+        };
+        try {
+            if (attempt == 0) {
+                writer.execute(run);
+            } else {
+                writer.schedule(run, RETRY_DELAYS_MS[attempt - 1], TimeUnit.MILLISECONDS);
+            }
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            log.error("writer stopped; {} is lost", what);
+        }
+    }
+
+    /** 同步保存事件日志（写线程与测试用）。同一 (room_id, game_no) 只写一次；超过上限的不写。 */
+    void saveLog(LogDraft d) {
+        JdbcTemplate t = jdbc.get();
+        if (t == null) {
+            return;
+        }
+        byte[] plain = d.events().getBytes(StandardCharsets.UTF_8);
+        if (plain.length > LOG_MAX_PLAIN) {
+            log.warn("game log room {} game {} too large ({} bytes), not saved", d.roomId(), d.gameNo(), plain.length);
+            return;
+        }
+        try {
+            t.update("INSERT INTO game_log (room_id, game_no, outcome, content_kind, codec, engine_version, config_hash,"
+                            + " event_count, plain_len, plain_sha256, payload, ended_at, created_at)"
+                            + " VALUES (?, ?, 'FINISHED', 'PUBLIC_EVENTS', 'GZIP_EVLOG1', ?, ?, ?, ?, ?, ?, ?, ?)",
+                    d.roomId(), d.gameNo(), EngineVersion.VALUE, d.configHash(), d.eventCount(), plain.length,
+                    sha256(plain), gzip(plain), d.endedAt(), clock.millis());
+        } catch (DuplicateKeyException e) {
+            log.info("game log room {} game {} already saved", d.roomId(), d.gameNo());
+        }
+    }
+
+    /** 同步保存一条聊天（写线程与测试用）。内容安全检测尚未接入，记为 UNCHECKED。 */
+    void saveChat(ChatDraft d) {
+        JdbcTemplate t = jdbc.get();
+        if (t == null) {
+            return;
+        }
+        try {
+            t.update("INSERT INTO chat_message (room_id, msg_no, sender_user_id, content, sec_status, hold_until,"
+                            + " sender_live, created_at) VALUES (?, ?, ?, ?, 'UNCHECKED', NULL, 1, ?)",
+                    d.roomId(), d.msgNo(), d.senderUserId(), d.content(), d.createdAt());
+        } catch (DuplicateKeyException e) {
+            log.info("chat room {} #{} already saved", d.roomId(), d.msgNo());
+        }
+    }
+
+    private static byte[] gzip(byte[] plain) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream(Math.max(64, plain.length / 4));
+        try (GZIPOutputStream z = new GZIPOutputStream(out)) {
+            z.write(plain);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return out.toByteArray();
     }
 
     /** 同步保存（测试与写线程用）。 */
@@ -187,8 +296,12 @@ public class GameRecords {
     }
 
     private static byte[] sha256(String s) {
+        return sha256(s.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static byte[] sha256(byte[] bytes) {
         try {
-            return MessageDigest.getInstance("SHA-256").digest(s.getBytes(StandardCharsets.UTF_8));
+            return MessageDigest.getInstance("SHA-256").digest(bytes);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }

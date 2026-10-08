@@ -33,6 +33,8 @@ import com.millionnaire.engine.core.state.Standing;
 import com.millionnaire.gateway.record.GameRecords;
 import com.millionnaire.engine.core.event.GameEvent.JailRolled;
 import com.millionnaire.engine.core.event.KernelEvent;
+import com.millionnaire.engine.core.event.PublicEvent;
+import com.millionnaire.engine.core.event.GameEvent.GameStarted;
 import com.millionnaire.engine.core.state.ConnState;
 import com.millionnaire.engine.core.state.ControlMode;
 import com.millionnaire.engine.core.state.EngineState;
@@ -106,6 +108,13 @@ public final class LiveRoom {
     };
     /** 最近的聊天（只在内存，不进引擎、不落库）。 */
     private final Deque<ObjectNode> chat = new ArrayDeque<>();
+    /** 已发出的聊天条数（chat_message.msg_no 从 1 递增）。 */
+    private int chatNo;
+    /** 本局到目前为止的公开事件（GameStarted 起收集，GameEnded 时落库）；不在对局中为 null。 */
+    private List<Event> gameLog;
+    /** 单局收集上限（条）：超过后本局不再写日志，避免异常长局占内存。 */
+    private static final int GAME_LOG_MAX_EVENTS = 200_000;
+    private boolean gameLogOverflow;
     private final Map<String, Long> lastChatAt = new HashMap<>();
     /** 挂机判定：每位手动玩家连续被系统代投的次数（亲手投骰即清零）。 */
     private final Map<String, Integer> missedRolls = new HashMap<>();
@@ -259,6 +268,12 @@ public final class LiveRoom {
         for (String p : members(runner.committed())) {
             service.outbox().send(p, json);
         }
+        chatNo++;
+        try {
+            service.chatted(new GameRecords.ChatDraft(roomId, chatNo, Long.parseLong(playerId), text, now));
+        } catch (NumberFormatException e) {
+            // 非数字的玩家 ID（不在用户表里）不入库
+        }
     }
 
     /** 最近聊天的完整列表（连接、重连时补发）。 */
@@ -340,6 +355,7 @@ public final class LiveRoom {
             }
         }
         recordIfEnded(before, r.events(), at);
+        collectLog(r.events(), at);
         markAway(missedRolls(r.events(), after), at);
         tendBots(at);
         return r;
@@ -402,6 +418,38 @@ public final class LiveRoom {
     /** 是否为本房间的测试机器人。 */
     public synchronized boolean isBot(String playerId) {
         return bots.contains(playerId);
+    }
+
+    /** 收集本局公开事件；GameEnded 时把整局编码后交给外层落库（game_log）。 */
+    private void collectLog(List<Event> events, long at) {
+        for (Event e : events) {
+            if (e instanceof GameStarted) {
+                gameLog = new ArrayList<>();
+                gameLogOverflow = false;
+            }
+            if (gameLog == null || !(e instanceof PublicEvent)) {
+                continue;
+            }
+            if (gameLog.size() >= GAME_LOG_MAX_EVENTS) {
+                if (!gameLogOverflow) {
+                    log.warn("room {}: game log exceeds {} events, not saved", code(), GAME_LOG_MAX_EVENTS);
+                }
+                gameLogOverflow = true;
+            } else {
+                gameLog.add(e);
+            }
+            if (e instanceof GameEnded ended) {
+                if (!gameLogOverflow) {
+                    try {
+                        service.gameLogged(new GameRecords.LogDraft(roomId, ended.gameNo(), engine.configHash(),
+                                engine.encodeEvents(gameLog), gameLog.size(), at));
+                    } catch (RuntimeException ex) {
+                        log.error("room {}: cannot encode game log", code(), ex);
+                    }
+                }
+                gameLog = null;
+            }
+        }
     }
 
     /**
