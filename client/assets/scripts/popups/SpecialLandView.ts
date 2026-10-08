@@ -102,7 +102,7 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
             art(row, 'info_cash', 344, 6, 30, 30); caption(row, String(i * STATION.rentEach), 390, 0, 194, 42, 26);
         }
         list.setContentHeight(total * 44);
-        caption(panel, '租金 = 未抵押车站数 × 200；车站不可升级', 24, 248, 608, 38, 22);
+        caption(panel, '租金 = 未抵押车站数 × ' + STATION.rentEach + '；车站不可升级', 24, 248, 608, 38, 22);
         caption(panel, prop?.mortgaged ? '抵押本金 ' + prop.mortgagePaid + ' · 抵押期间不收租' : '当前租金 ' + count * STATION.rentEach, 24, 286, 608, 38, 22);
         redeemOrClose(p, index, 44, 1156, 632, close);
     } else if (tile.type === 'BANK') {

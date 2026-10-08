@@ -47,6 +47,7 @@ export class TeethScreen extends Screen {
     private sending = false;
 
     onShow(): void {
+        this.reward = MINIGAME_REWARD; // 联机按房间参数版本（后台可改），每次进入重新取
         this.inited = false;
     }
 
