@@ -92,20 +92,21 @@ class SessionDomainTest {
     }
 
     @Test
-    void settingsChangeResetsReadyAndRespectsCapacity() {
+    void settingsChangeKeepsReadyAndRespectsCapacity() {
         join("a", "b", "c", "d");
         send(new SetReady("b", true));
         send(new SetReady("c", true));
         RoomSettings big = new RoomSettings(RuleConfigs.BOARD_50, 5000, EndMode.BANKRUPTCY, 30, 30);
         send(new ChangeSettings("a", big));
-        assertTrue(room().members().stream().noneMatch(Member::ready));
+        // 用户 2026-10-08：改设置不取消准备
+        assertEquals(java.util.List.of(false, true, true, false), room().members().stream().map(Member::ready).toList());
         join("e");
         RoomSettings small = new RoomSettings(RuleConfigs.BOARD_30, 2000, EndMode.TIME_LIMIT, 15, 15);
         assertEquals(RejectionCode.CAPACITY_EXCEEDED, send(new ChangeSettings("a", small)).rejection());
         RoomSettings invalid = new RoomSettings(RuleConfigs.BOARD_50, 2500, EndMode.TIME_LIMIT, 15, 15);
         assertEquals(RejectionCode.INVALID_SETTINGS, send(new ChangeSettings("a", invalid)).rejection());
         assertEquals(RejectionCode.UNCHANGED, send(new ChangeSettings("a", big)).rejection());
-        assertEquals(RejectionCode.UNCHANGED, send(new SetReady("b", false)).rejection());
+        assertEquals(RejectionCode.UNCHANGED, send(new SetReady("b", true)).rejection());
     }
 
     @Test

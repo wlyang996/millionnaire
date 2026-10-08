@@ -289,14 +289,13 @@ export class MockStore {
         this.emit();
     }
 
-    /** 修改设置：全员需重新准备（房主视为已准备）。 */
+    /** 修改设置（用户 2026-10-08：已准备的成员保持准备）。 */
     setSetting(patch: Partial<RoomSettings>): void {
         if (this.online) {
             void this.online.settings({ ...this.session.settings, ...patch });
             return;
         }
         this.session.settings = { ...this.session.settings, ...patch };
-        for (const m of this.session.members) m.ready = m.playerId === this.session.hostId;
         if (patch.boardId) {
             this.scenario = { ...this.scenario, boardSize: boardSizeOf(patch.boardId) };
         }

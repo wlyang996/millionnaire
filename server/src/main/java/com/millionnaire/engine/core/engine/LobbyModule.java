@@ -78,7 +78,8 @@ final class LobbyModule {
                 yield new RoomState(s.status(), s.hostId(), s.members().stream()
                         .map(m -> m.playerId().equals(x.playerId()) ? m.withReady(x.ready()) : m).toList(), s.settings());
             }
-            case SettingsChanged x -> new RoomState(s.status(), s.hostId(), unready(s), x.settings());
+            // 用户 2026-10-08：房主改设置不取消成员的准备（已准备的保持准备）
+            case SettingsChanged x -> new RoomState(s.status(), s.hostId(), s.members(), x.settings());
             case RoomClosed x -> {
                 check(s.members().isEmpty() && s.hostId() == null, "closing room must be empty");
                 yield new RoomState(RoomStatus.CLOSED, null, s.members(), s.settings());

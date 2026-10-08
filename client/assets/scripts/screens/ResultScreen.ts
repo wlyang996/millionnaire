@@ -77,13 +77,22 @@ export class ResultScreen extends Screen {
         });
         list.setContentHeight(res.standings.length * rowH);
 
-        // 再来一局 + 说明 + 房间号
-        primaryButton(this.root, '回原房间再来一局', 40, 1026, 640, 96, () => {
-            for (const m of s.members) m.ready = false;
+        // 再来一局（用户 2026-10-08）：一键回原房间并自动准备；下方显示已有几人准备
+        const meReady = !!s.members.find((m) => m.playerId === st.myId)?.ready;
+        primaryButton(this.root, meReady ? '已准备，回房间等待开局' : '再来一局', 40, 1018, 470, 96, () => {
+            if (!st.online) for (const m of s.members) m.ready = m.playerId === st.myId;
+            if (!meReady) st.setReady(st.myId, true);
             ctx.screens.go('room');
         }, Theme.font.lg);
-        text(this.root, '房间号和设置保留，全员重新准备', 0, 1130, Theme.W, 36, 22, '#00000088', { bold: true });
-        text(this.root, '房间号和设置保留，全员重新准备', 0, 1128, Theme.W, 36, 22, Theme.c.white, { bold: true });
+        const back = mk(this.root, 'BackToRoom', 526, 1018, 154, 96);
+        fillRR(gfx(back), 0, 0, 154, 96, 30, '#FFFFFFDD');
+        text(back, '只回房间', 0, 0, 154, 96, 24, Theme.c.navy, { bold: true });
+        onTap(back, () => ctx.screens.go('room'));
+        const readyN = s.members.filter((m) => m.ready).length;
+        const hint = st.online && readyN > 0 ? '已有 ' + readyN + '/' + s.members.length + ' 人准备再来一局，房间号和设置保留'
+            : '房间号和设置保留，点「再来一局」自动准备';
+        text(this.root, hint, 0, 1124, Theme.W, 36, 22, '#00000088', { bold: true });
+        text(this.root, hint, 0, 1122, Theme.W, 36, 22, Theme.c.white, { bold: true });
         const room = roundedPanel(this.root, 190, 1178, 340, 56, { fill: '#FFFFFFEE', r: 28, shadow: 0 });
         text(room, '房间号：' + s.roomId, 0, 0, 276, 56, 24, Theme.c.navy, { bold: true });
         drawCopy(gfx(room), 300, 28, 28, Theme.c.navy);
