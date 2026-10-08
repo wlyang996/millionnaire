@@ -35,7 +35,7 @@ export class SelfMenuPopup extends Popup {
         fillPoly(gfx(mk(p, 'Tail', 0, 0, W, H + 16)), [[44, H - 1], [76, H - 1], [60, H + 14]], Theme.c.panelFill);
         this.item(p, 0, '主动托管', '系统代为投骰、买地和升级', Theme.c.navy, () => this.host());
         fillRR(gfx(mk(p, 'Sep', 20, 8 + ROW_H, W - 40, 2)), 0, 0, W - 40, 2, 1, Theme.c.panelLine);
-        this.item(p, 1, '快速动画：' + (fastAnim() ? '开' : '关'), '骰子、走棋、翻牌动画加快一倍', Theme.c.navy, () => {
+        this.item(p, 1, '快速动画：' + (fastAnim() ? '开' : '关'), '走棋、翻牌等动画加快', Theme.c.navy, () => {
             const on = toggleFastAnim();
             Toast.show(on ? '已开启快速动画' : '已恢复正常速度');
             this.close();
