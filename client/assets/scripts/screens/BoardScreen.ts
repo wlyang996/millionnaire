@@ -40,6 +40,7 @@ import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
 import { CASH_DELTA_MS, CashChange, CashChangeNode, drawPlayerBar, tickCashDelta } from './board/PlayerBar';
 import { BAIL_COST } from '../core/Rules';
+import { boardHooks } from './board/BoardHooks';
 
 /** 停在休息区时自动展示休息区页面的时长 */
 const REST_SHOW_MS = 3000;
@@ -90,6 +91,7 @@ export class BoardScreen extends Screen {
     }
 
     onShow(): void {
+        boardHooks.jailRoll = () => this.startRoll();
         this.lastCurrent = '';
     }
 

@@ -5,6 +5,8 @@
 import { Theme } from '../../core/Theme';
 import { AssetsPopup } from '../../popups/AssetsPopup';
 import { ChatPopup } from '../../popups/ChatPopup';
+import { ConfirmPopup } from '../../popups/ConfirmPopup';
+import { describe } from '../../net/OnlineSession';
 import { SelfMenuPopup } from '../../popups/SelfMenuPopup';
 import { IconButton, primaryButton, secondaryButton } from '../../ui/Buttons';
 import { ctx } from '../../ui/Ctx';
@@ -37,7 +39,7 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
         const input = roundedPanel(footer, 88, 8, 420, 66, { r: 33, fill: '#FFFFFF22', shadow: 0 });
         text(input, '点击输入聊天内容…', 18, 0, 320, 66, Theme.font.sm, Theme.c.white, { align: 'l' });
         onTap(input, () => ctx.popups.open(new ChatPopup()));
-        secondaryButton(footer, '返回大厅', 520, 6, 150, 70, () => ctx.screens.go('lobby'), Theme.font.md);
+        secondaryButton(footer, '返回大厅', 520, 6, 150, 70, leaveSpectating, Theme.font.md);
         return;
     } else {
         drawHandBar(root, 40, 1102, 660, 90, st.game.myHand, st.isMyTurn());
@@ -71,6 +73,22 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
     new IconButton(row, mic + 97, 8, 66, '', () => ctx.popups.open(new ChatPopup()), '#FFFFFF22', Theme.c.white,
         (g, s) => drawChat(g, s / 2, s / 2, s * 0.62, Theme.c.white));
     if (spectator) {
-        primaryButton(row, '返回大厅', 520, 6, 150, 70, () => ctx.screens.go('lobby'), Theme.font.md);
+        primaryButton(row, '返回大厅', 520, 6, 150, 70, leaveSpectating, Theme.font.md);
     }
+}
+
+/** 破产观战"返回大厅"：联机时真正离开房间（离开后不能再回到本局观战），确认后回大厅。 */
+function leaveSpectating(): void {
+    const st = ctx.store;
+    if (!st.online) {
+        ctx.screens.go('lobby');
+        return;
+    }
+    ctx.popups.open(new ConfirmPopup({
+        title: '离开观战', message: '离开后将退出房间，不能再回到本局观战。确定返回大厅吗？', confirmText: '离开',
+        onConfirm: () => void st.online!.leave().then((r) => {
+            if (r.ok) ctx.screens.go('lobby');
+            else Toast.show(describe(r.code));
+        }),
+    }));
 }

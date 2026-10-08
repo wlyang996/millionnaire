@@ -11,6 +11,31 @@ import { luckyEffectText } from '../core/EventDraw';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar, chip } from '../ui/Widgets';
 import { informationCard, informationClose, informationPanel, redeemOrClose, shopKey } from './InformationPage';
+import { boardHooks } from '../screens/board/BoardHooks';
+
+/**
+ * 银行办理窗口：联机为我停在这块银行格、服务端开着的银行窗口（返回窗口号）；演示为我的回合且我站在这块银行格（-1）。
+ * 不能办理时返回 null，详情页只做查看。
+ */
+function bankWindow(index: number): number | null {
+    const st = ctx.store;
+    if (st.online) {
+        const w = st.online.myWindow('TURN');
+        const l = st.game.landing;
+        return w && st.online.isOpen(w) && st.game.stage === 'LANDING' && l && l.step === 'BANK' && l.tile === index ? w.windowId : null;
+    }
+    return st.isMyTurn() && st.me().position === index ? -1 : null;
+}
+
+/** 出狱判定窗口：联机为服务端开着的出狱判定（返回窗口号）；演示为我的回合且被关押（-1）。不能办理时返回 null。 */
+function jailWindow(): number | null {
+    const st = ctx.store;
+    if (st.online) {
+        const w = st.online.myWindow('TURN');
+        return w && st.online.isOpen(w) && st.game.stage === 'JAIL_DECISION' ? w.windowId : null;
+    }
+    return st.isMyTurn() && st.me().inJail ? -1 : null;
+}
 
 export interface SpecialLandState { bankMode: 'mortgage' | 'redeem'; selected: number | null }
 
@@ -107,9 +132,37 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         const amount = selected ? redeem ? selected.p.mortgagePaid : landPrice(selected.tile.type === 'STATION', selected.tile.tier) : 0;
         caption(panel, redeem ? '银行赎回 · 手续费 0' : '选中 ' + (selected ? 1 : 0) + ' 处 · 可获 ' + amount, 24, 422, 608, 46, 28);
         caption(panel, '原价100%抵押，抵押期间不收租。', 24, 484, 608, 38, 23);
-        new Button(p, '结束办理', 44, 1156, 302, 86, 'disabled', close, 32);
-        const confirm = new Button(p, redeem ? '确认赎回' : '确认抵押', 364, 1156, 312, 86, redeem ? 'secondary' : 'primary', () => {}, 32);
-        confirm.setEnabled(false, '银行办理结算尚未接入服务端');
+        // 停在这块银行格、银行窗口开着时可办理（与银行办理弹窗发同样的命令）；否则只做查看
+        const win = bankWindow(index);
+        new Button(p, win === null ? '返回棋盘' : '结束办理', 44, 1156, 302, 86, 'disabled', () => {
+            close();
+            if (win !== null && win >= 0) void st.online?.act('FinishBank', { windowId: win });
+        }, 32);
+        const confirm = new Button(p, redeem ? '确认赎回' : '确认抵押', 364, 1156, 312, 86, redeem ? 'secondary' : 'primary', () => {
+            if (!selected || win === null) return;
+            if (win >= 0 && st.online) {
+                void st.online.act(redeem ? 'Redeem' : 'BankMortgage', { windowId: win, tile: selected.tile.index }).then(() => {
+                    state.selected = null;
+                    redraw();
+                });
+                return;
+            }
+            if (redeem) {
+                if (!st.spend(amount)) return;
+                selected.p.mortgaged = false;
+                selected.p.mortgagePaid = 0;
+            } else {
+                selected.p.mortgaged = true;
+                selected.p.mortgagePaid = amount;
+                me.cash += amount;
+            }
+            state.selected = null;
+            st.emit();
+            redraw();
+        }, 32);
+        if (win === null) confirm.setEnabled(false, '停在银行时才能办理');
+        else if (!selected) confirm.setEnabled(false, '先选择一处房产');
+        else if (redeem && me.cash < amount) confirm.setEnabled(false, '现金不足 ' + amount);
     } else if (tile.type === 'FIXED_EVENT' || tile.type === 'UNLUCKY_EVENT') {
         // 用户 2026-10-08：幸运格 / 不幸格踩到即从红色幸运卡 / 紫色不幸卡里随机抽一张，自动生效；详情页列出奖池
         const unlucky = tile.type === 'UNLUCKY_EVENT';
@@ -147,9 +200,41 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
                 const count = informationCard(card, 34, 140, 132, 36, '#E2F6C8', 18, false);
                 text(count, cards + '张', 8, 0, 116, 36, 25, '#245B24', { bold: true });
             }
-            onTap(card, () => Toast.show(me.inJail ? '出狱结算尚未接入服务端' : '当前未被关押；路过监狱不关押'));
+            onTap(card, () => jailAction(i, cards, close));
         });
         const note = informationCard(panel, 26, 560, 624, 48, '#F4EDDF', 22, false);
         text(note, '出狱后再投骰移动。', 12, 2, 600, 44, 26, '#101A50', { bold: true });
+    }
+}
+
+/** 监狱详情页的三张操作卡：出狱判定窗口开着时直接办理（与出狱判定页相同），否则说明原因。 */
+function jailAction(i: number, cards: number, close: () => void): void {
+    const st = ctx.store;
+    const me = st.me();
+    if (!me.inJail) return Toast.show('当前未被关押；路过监狱不关押');
+    const win = jailWindow();
+    if (win === null) return Toast.show('轮到你的回合时才能办理出狱');
+    if (i === 0) {
+        close();
+        boardHooks.jailRoll?.();
+    } else if (i === 1) {
+        if (me.cash < BAIL_COST) return Toast.show('现金不足 ' + BAIL_COST);
+        close();
+        if (win >= 0) void st.online?.act('PayBail', { windowId: win });
+        else if (st.spend(BAIL_COST)) {
+            me.inJail = false;
+            st.emit();
+        }
+    } else {
+        if (cards <= 0) return Toast.show('没有出狱卡');
+        if (st.online && st.game.cards?.chanceUsed.includes(st.myId)) return Toast.show('本回合已经用过道具了');
+        close();
+        if (win >= 0) void st.online?.act('UseCard', { windowId: win, card: 'JAIL_RELEASE', target: null, steps: 0 });
+        else {
+            const k = st.game.myHand.findIndex((c) => c.type === 'JAIL_RELEASE');
+            if (k >= 0) st.game.myHand.splice(k, 1);
+            me.inJail = false;
+            st.emit();
+        }
     }
 }
