@@ -298,6 +298,30 @@ export interface HistoryEntry {
     endedAt?: number;
 }
 
+/** 个人数据（GET /api/me/stats；全部已记录对局的汇总） */
+export interface PlayerStats {
+    games: number;
+    /** 有名次的局（中止局没有名次） */
+    finished: number;
+    wins: number;
+    top3: number;
+    /** 破产或认输出局 */
+    bankrupt: number;
+    avgRank: number | null;
+    bestNetWorth: number | null;
+}
+
+/** 由战绩行算个人数据（演示模式与服务端读失败时用）。 */
+export function statsFromHistory(rows: HistoryEntry[]): PlayerStats {
+    const ranked = rows.filter((r) => r.rank > 0);
+    return {
+        games: rows.length, finished: ranked.length,
+        wins: ranked.filter((r) => r.rank === 1).length, top3: ranked.filter((r) => r.rank <= 3).length, bankrupt: 0,
+        avgRank: ranked.length ? Math.round((ranked.reduce((a, r) => a + r.rank, 0) / ranked.length) * 100) / 100 : null,
+        bestNetWorth: rows.length ? Math.max(...rows.map((r) => r.finalAssets)) : null,
+    };
+}
+
 /** 本机资料 */
 export interface Profile {
     nickname: string;

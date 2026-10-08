@@ -120,6 +120,9 @@ public final class LiveRoom {
     private final Map<String, Integer> missedRolls = new HashMap<>();
     /** 测试机器人（房主在测试环境添加）：在房间里自动准备，开局后转为托管，由引擎的自动动作代打。 */
     private final Set<String> bots = new LinkedHashSet<>();
+    /** 观战者（非成员）：收推送、不能操作。 */
+    private final Set<String> watchers = new LinkedHashSet<>();
+    static final int MAX_WATCHERS = 50;
     private boolean tendingBots;
     /** 全员确认掉线（且无人托管）开始的时刻；有人在线或托管则清零。 */
     private long allOfflineSince = Long.MIN_VALUE;
@@ -268,6 +271,9 @@ public final class LiveRoom {
         for (String p : members(runner.committed())) {
             service.outbox().send(p, json);
         }
+        for (String p : watchers) {
+            service.outbox().send(p, json); // 观战者只看不说
+        }
         chatNo++;
         try {
             service.chatted(new GameRecords.ChatDraft(roomId, chatNo, Long.parseLong(playerId), text, now));
@@ -282,6 +288,24 @@ public final class LiveRoom {
         ArrayNode lines = m.putArray("lines");
         chat.forEach(lines::add);
         return service.wire().write(m);
+    }
+
+    synchronized void watch(String playerId) {
+        if (closed) {
+            throw new ClientException("ROOM_CLOSED", "room is closed");
+        }
+        if (!watchers.contains(playerId) && watchers.size() >= MAX_WATCHERS) {
+            throw new ClientException("WATCHERS_FULL", "too many spectators in this room");
+        }
+        watchers.add(playerId);
+    }
+
+    synchronized void unwatch(String playerId) {
+        watchers.remove(playerId);
+    }
+
+    public synchronized int watcherCount() {
+        return watchers.size();
     }
 
     public synchronized SessionView view(String playerId) {
@@ -343,6 +367,7 @@ public final class LiveRoom {
             // 离开或被踢的人也收到这一步（含自己的 PlayerLeft），之后不再推送
             Set<String> audience = new LinkedHashSet<>(membersBefore);
             audience.addAll(membersAfter);
+            audience.addAll(watchers); // 观战者按非玩家视角投影
             Map<String, Integer> avatars = service.avatarsOf(audience);
             for (String p : audience) {
                 try {
@@ -654,7 +679,10 @@ public final class LiveRoom {
         }
         closed = true;
         cancelWake();
-        service.closed(this, reason, notify);
+        Set<String> all = new LinkedHashSet<>(notify);
+        all.addAll(watchers);
+        watchers.clear();
+        service.closed(this, reason, all);
     }
 
     private static RoomState lobby(EngineState s) {

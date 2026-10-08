@@ -8,7 +8,7 @@ import { Countdown, formatMMSS } from '../core/Clock';
 import { EVENT_IDLE, eventViewMode } from '../core/EventDraw';
 import { matchClockOpacity, matchClockState } from '../core/MatchClock';
 import { GameView, PlayerView } from '../core/Models';
-import { Theme } from '../core/Theme';
+import { animMs, Theme } from '../core/Theme';
 import { TileInfoPopup } from '../popups/TileInfoPopup';
 import { AssetsPopup } from '../popups/AssetsPopup';
 import { GameLogPopup } from '../popups/GameLogPopup';
@@ -40,7 +40,7 @@ import { TradePopup } from '../popups/TradePopup';
 import { EventOverlay } from './board/EventOverlay';
 import { JailOverlay } from './board/JailOverlay';
 import { handleLanding } from './board/Landing';
-import { CASH_DELTA_MS, CashChange, CashChangeNode, drawPlayerBar, tickCashDelta } from './board/PlayerBar';
+import { CASH_DELTA_MS, CashChange, CashChangeNode, drawPlayerBar, liveRanks, tickCashDelta } from './board/PlayerBar';
 import { BAIL_COST, MAX_HAND } from '../core/Rules';
 import { currentStep, drawGuide } from './board/Guide';
 import { boardHooks } from './board/BoardHooks';
@@ -120,7 +120,10 @@ export class BoardScreen extends Screen {
         this.backdrop('sky');
         // 页眉：返回 + 药丸（房间号 | 时钟图标 + 剩余时间）；本局倒计时按剩余时间变红/闪烁，房间号不变色
         // 设计稿 01 页眉：返回（x 88–148）+ 房间号 / 本局剩余时间药丸（x 155–530，y 12–62）
-        new IconButton(this.root, 88, 7, 60, '', () => ctx.screens.go('lobby'), Theme.c.ivory, Theme.c.ink, (g, s) => drawBack(g, s / 2, s / 2, s * 0.6, Theme.c.navy));
+        new IconButton(this.root, 88, 7, 60, '', () => {
+            if (st.isWatcher()) void st.online!.unwatch(); // 观战者返回即退出观战
+            ctx.screens.go('lobby');
+        }, Theme.c.ivory, Theme.c.ink, (g, s) => drawBack(g, s / 2, s / 2, s * 0.6, Theme.c.navy));
         const hd = mk(this.root, 'Header', 155, 12, 375, 50);
         fillRR(gfx(hd), 0, 0, 375, 50, 25, '#FFFFFFE6');
         text(hd, '房间 ' + st.session.roomId, 18, 0, 170, 50, 26, Theme.c.navy, { bold: true, align: 'l' });
@@ -135,7 +138,9 @@ export class BoardScreen extends Screen {
         this.cashChangeNodes = [];
         drawPlayerBar(this.root, 44, 74, game.players, game.currentPlayer, this.myId,
             ev.phase !== 'IDLE' && ev.actor !== this.myId ? ev.actor : null,
-            id => ctx.popups.open(new AssetsPopup(id)), this.cashChanges, this.cashChangeNodes);
+            id => ctx.popups.open(new AssetsPopup(id)), this.cashChanges, this.cashChangeNodes,
+            // 名次按页面上显示的现金算（走棋动画期间现金暂不变，名次也随之稍后更新）
+            liveRanks(game.players, (id) => st.netWorthOf(id) - (st.player(id)?.cash ?? 0) + (game.players.find((p) => p.playerId === id)?.cash ?? 0)));
 
         // 棋盘视口
         this.view = new BoardView(this.root, 0, VP_Y, Theme.W, VP_H, this.cam);
@@ -247,7 +252,8 @@ export class BoardScreen extends Screen {
             avatar(sp, 12, 10, 76, cur.avatar, cur.nickname);
             text(sp, cur.nickname + '的回合', 98, 0, 232, 96, 34, Theme.c.navy, { bold: true, align: 'l' });
             const status = roundedPanel(this.root, cx - 150, 562, 300, 56, { fill: '#2D3B4AEE', r: 28 });
-            text(status, '已' + (st.me().life === 'SURRENDERED' ? '认输' : '破产') + ' · 观战中', 0, 0, 300, 56, Theme.font.md, Theme.c.white, { bold: true });
+            text(status, st.isWatcher() ? '观战中 · 房间 ' + st.session.roomId : '已' + (st.me().life === 'SURRENDERED' ? '认输' : '破产') + ' · 观战中',
+                0, 0, 300, 56, Theme.font.md, Theme.c.white, { bold: true });
             this.dice = new DiceView(this.root, cx - 54, 640);
             this.dice.setValue(game.lastDice);
             return;
@@ -384,7 +390,7 @@ export class BoardScreen extends Screen {
         if (ctx.store.tile(tileIndex).type !== 'REST' || ctx.popups.has('tile')) return;
         const page = new TileInfoPopup(tileIndex);
         ctx.popups.open(page);
-        setTimeout(() => page.close(), REST_SHOW_MS);
+        setTimeout(() => page.close(), animMs(REST_SHOW_MS));
     }
 
     // ---------- 事件卡抽卡 ----------
@@ -460,10 +466,10 @@ export class BoardScreen extends Screen {
 
     /** 棋盘右侧的小胶囊按钮（半透明白底、深蓝字）。 */
     private sideButton(label: string, y: number, fn: () => void): void {
-        const b = mk(this.root, 'Side:' + label, Theme.W - 200, y, 86, 46);
-        fillRR(gfx(b), 0, 3, 86, 46, 23, '#00000022');
-        fillRR(gfx(b), 0, 0, 86, 46, 23, '#FFFFFFE6');
-        text(b, label, 0, 0, 86, 46, 22, Theme.c.navy, { bold: true });
+        const b = mk(this.root, 'Side:' + label, Theme.W - 188, y, 84, 46);
+        fillRR(gfx(b), 0, 3, 84, 46, 23, '#00000022');
+        fillRR(gfx(b), 0, 0, 84, 46, 23, '#FFFFFFE6');
+        text(b, label, 0, 0, 84, 46, 22, Theme.c.navy, { bold: true });
         onTap(b, fn);
     }
 

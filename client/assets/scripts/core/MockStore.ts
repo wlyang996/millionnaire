@@ -6,12 +6,12 @@ import { buildBoard } from './BoardLayout';
 import { Clock } from './Clock';
 import { remainingSecFromMs } from './MatchClock';
 import { advanceEvent, clickCard, closeResult, EVENT_IDLE, EventDrawState, EventResult, triggerEvent } from './EventDraw';
-import { Theme } from './Theme';
+import { animMs, Theme } from './Theme';
 import type { OnlineSession } from '../net/OnlineSession';
 import type { LogLine } from '../net/GameLog';
 import {
     AuctionView, BoardTile, Card, CardType, ChatLine, ConnState, ControlMode, DebtView, GameResult, GameView,
-    HistoryEntry, Member, FlowResult, MinigameOutcome, PendingRequest, PlayerView, Profile, PropertyState, QueryResult, RoomSettings, SessionView,
+    HistoryEntry, Member, PlayerStats, FlowResult, MinigameOutcome, PendingRequest, PlayerView, Profile, PropertyState, QueryResult, RoomSettings, SessionView,
 } from './Models';
 import {
     auctionParams, boardSizeOf, emergencyMortgage, landPrice, maxPlayers, netWorth, rankStandings, standardValue, START_BONUS,
@@ -56,6 +56,8 @@ export class MockStore {
     scenario: Scenario = { players: 8, boardSize: 50, turn: 'me', spectator: false, conn: 'mixed', host: true, handCount: 6 };
     session!: SessionView;
     history: HistoryEntry[] = [];
+    /** 个人数据（联机由服务端汇总全部对局；演示由 history 计算） */
+    stats: PlayerStats | null = null;
     auction!: AuctionView;
     debt!: DebtView;
     /** 房间里 3 名成员的语音/聊天片段 */
@@ -221,7 +223,16 @@ export class MockStore {
     }
 
     me(): PlayerView {
-        return this.game.players.find((p) => p.playerId === this.myId) as PlayerView;
+        // 观战者不是玩家：给一个不在玩家列表里的占位（已出局状态），各处按"观战"处理
+        return this.game.players.find((p) => p.playerId === this.myId) ?? {
+            playerId: this.myId, nickname: this.profile.nickname, avatar: this.profile.avatar, position: 0, cash: 0, handCount: 0,
+            life: 'BANKRUPT', inJail: false, jailFailures: 0, control: 'MANUAL', conn: 'ONLINE', frozen: 0,
+        };
+    }
+
+    /** 是否以观战者身份（非玩家）在看对局。 */
+    isWatcher(): boolean {
+        return !!this.online && !!this.online.watching;
     }
 
     player(id: string): PlayerView | undefined {
@@ -414,7 +425,7 @@ export class MockStore {
             if (e.phase === 'FLIPPING' && e.result && now - e.since >= Theme.anim.eventFlipMs) {
                 this.eventDraw = { ...e, phase: 'RESULT', since: now };
                 this.emit();
-            } else if (e.phase === 'RESULT' && now - e.since >= (isCash(e.result) ? EVENT_CASH_SHOW_MS : EVENT_RESULT_SHOW_MS)) {
+            } else if (e.phase === 'RESULT' && now - e.since >= animMs(isCash(e.result) ? EVENT_CASH_SHOW_MS : EVENT_RESULT_SHOW_MS)) {
                 this.eventDraw = { ...EVENT_IDLE, settled: e.settled };
                 this.emit();
             }

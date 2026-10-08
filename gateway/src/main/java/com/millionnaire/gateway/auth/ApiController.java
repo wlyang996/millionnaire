@@ -148,6 +148,16 @@ public class ApiController {
         return ResponseEntity.ok(records.recent(user.get().id()));
     }
 
+    /** 我的数据（全部已记录对局的汇总）：{games, finished, wins, top3, bankrupt, avgRank, bestNetWorth}。 */
+    @GetMapping("/me/stats")
+    public ResponseEntity<?> stats(@RequestHeader(value = "Authorization", required = false) String auth) {
+        Optional<User> user = user(auth);
+        if (user.isEmpty()) {
+            return error(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED");
+        }
+        return ResponseEntity.ok(records.stats(user.get().id()));
+    }
+
     /** 当前房间的快照（与 WebSocket 的 UPDATE 消息同形，events 为空）。 */
     @GetMapping("/room")
     public ResponseEntity<?> room(@RequestHeader(value = "Authorization", required = false) String auth) {

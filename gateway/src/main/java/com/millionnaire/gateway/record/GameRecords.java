@@ -76,6 +76,14 @@ public class GameRecords {
                       long startedAt, long endedAt, String endReason, Integer rank, Long netWorth, Long cash, String life) {
     }
 
+    /**
+     * 个人数据（用户 2026-10-08）：全部已记录对局的汇总。finished 为有名次的局（中止局不计名次）；wins 为第 1 名（含并列）；
+     * top3 为前三名；bankrupt 为破产或认输出局；avgRank 与 bestNetWorth 没有完成的对局时为 null。
+     * 未启用数据库时只按内存里的最近 {@value #RECENT} 局统计。
+     */
+    public record Stats(int games, int finished, int wins, int top3, int bankrupt, Double avgRank, Long bestNetWorth) {
+    }
+
     private final Supplier<JdbcTemplate> jdbc;
     private final Supplier<TransactionTemplate> tx;
     private final Clock clock;
@@ -253,6 +261,51 @@ public class GameRecords {
         } catch (DuplicateKeyException e) {
             log.info("game record room {} game {} already saved", d.roomId(), d.gameNo());
         }
+    }
+
+    public Stats stats(long userId) {
+        JdbcTemplate t = jdbc.get();
+        if (t == null) {
+            return statsOf(recent(userId));
+        }
+        return t.queryForObject("SELECT COUNT(*),"
+                        + " SUM(CASE WHEN finish_rank IS NOT NULL THEN 1 ELSE 0 END),"
+                        + " SUM(CASE WHEN finish_rank = 1 THEN 1 ELSE 0 END),"
+                        + " SUM(CASE WHEN finish_rank <= 3 THEN 1 ELSE 0 END),"
+                        + " SUM(CASE WHEN life_state IN ('BANKRUPT', 'SURRENDERED') THEN 1 ELSE 0 END),"
+                        + " AVG(finish_rank * 1.0), MAX(final_net_worth)"
+                        + " FROM game_record_player WHERE user_id = ? AND user_live = 1",
+                (rs, i) -> {
+                    Number avg = (Number) rs.getObject(6);
+                    Number best = (Number) rs.getObject(7);
+                    return new Stats(rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getInt(4), rs.getInt(5),
+                            avg == null ? null : Math.round(avg.doubleValue() * 100) / 100.0, best == null ? null : best.longValue());
+                }, userId);
+    }
+
+    static Stats statsOf(List<Row> rows) {
+        int finished = 0;
+        int wins = 0;
+        int top3 = 0;
+        int out = 0;
+        long rankSum = 0;
+        Long best = null;
+        for (Row r : rows) {
+            if (r.rank() != null) {
+                finished++;
+                rankSum += r.rank();
+                wins += r.rank() == 1 ? 1 : 0;
+                top3 += r.rank() <= 3 ? 1 : 0;
+            }
+            if ("BANKRUPT".equals(r.life()) || "SURRENDERED".equals(r.life())) {
+                out++;
+            }
+            if (r.netWorth() != null && (best == null || r.netWorth() > best)) {
+                best = r.netWorth();
+            }
+        }
+        Double avg = finished == 0 ? null : Math.round(rankSum * 100.0 / finished) / 100.0;
+        return new Stats(rows.size(), finished, wins, top3, out, avg, best);
     }
 
     /** 某人最近 {@value #RECENT} 局，新的在前。 */

@@ -26,6 +26,7 @@ import { PopupManager } from './ui/PopupManager';
 import { ScreenManager } from './ui/ScreenManager';
 import { Toast } from './ui/Toast';
 import { onlineEnabled } from './net/Config';
+import { loadPrefs } from './ui/Prefs';
 import { emptySession, OnlineSession } from './net/OnlineSession';
 
 export class App {
@@ -74,6 +75,7 @@ export class App {
                 store.emit();
             });
         }
+        loadPrefs(); // 本机偏好（快速动画）
         ctx.store = store;
         ctx.clock = store.clock;
         ctx.root = root;

@@ -8,6 +8,7 @@
  */
 import { requestJson } from './Http';
 import { BoardTemplate, ClientConfig, GameArgs, GameCommandName, HelloMsg, ResultMsg, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
+import type { PlayerStats } from '../core/Models';
 
 export type LinkState = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
 
@@ -121,6 +122,13 @@ export class GameClient {
         return r.body;
     }
 
+    /** 我的数据（全部已记录对局的汇总）。 */
+    async stats(): Promise<PlayerStats> {
+        const r = await requestJson<PlayerStats>('GET', this.baseUrl + '/api/me/stats', undefined, this.token ?? undefined);
+        if (r.status !== 200 || !r.body) throw new Error('cannot load stats');
+        return r.body;
+    }
+
     connect(): void {
         if (!this.token) throw new Error('login first');
         this.wantOpen = true;
@@ -149,6 +157,15 @@ export class GameClient {
 
     joinRoom(roomCode: string): Promise<ResultMsg> {
         return this.request('JOIN_ROOM', { roomCode });
+    }
+
+    /** 观战进行中的对局（不在任何房间里时）。 */
+    watchRoom(roomCode: string): Promise<ResultMsg> {
+        return this.request('WATCH_ROOM', { roomCode });
+    }
+
+    unwatchRoom(): Promise<ResultMsg> {
+        return this.request('UNWATCH_ROOM');
     }
 
     leaveRoom(): Promise<ResultMsg> {

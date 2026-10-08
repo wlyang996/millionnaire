@@ -5,7 +5,7 @@
  * 联机时打开即向服务端读取（数据库里的真实战绩）；演示模式用本地演示数据（没有日期）。
  */
 import { Node } from 'cc';
-import { HistoryEntry } from '../core/Models';
+import { HistoryEntry, statsFromHistory } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { art, informationCharacterKey } from '../ui/Art';
 import { drawCoin } from '../ui/Icons';
@@ -56,12 +56,27 @@ export class HistoryPopup extends Popup {
         const st = ctx.store;
         const me = st.online && st.session.game ? st.player(st.myId) : undefined;
         art(p, informationCharacterKey(me ? me.avatar : st.profile.avatar), 24, 76, 150, 170);
-        const sign = mk(p, 'Sign', 170, 132, w - 200, 86);
+        const sign = mk(p, 'Sign', 170, 84, w - 200, 66);
         const sg = gfx(sign);
-        fillRR(sg, 0, 6, w - 200, 80, 18, '#7A4E25');
-        fillRR(sg, 0, 0, w - 200, 80, 18, '#C98F4E');
-        strokeRR(sg, 4, 4, w - 208, 72, 14, '#E8B977', 3);
-        text(sign, '最近 20 局 · 仅本人', 0, 0, w - 200, 80, 36, '#4A2A0E', { bold: true });
+        fillRR(sg, 0, 6, w - 200, 60, 18, '#7A4E25');
+        fillRR(sg, 0, 0, w - 200, 60, 18, '#C98F4E');
+        strokeRR(sg, 4, 4, w - 208, 52, 14, '#E8B977', 3);
+        text(sign, '最近 20 局 · 仅本人', 0, 0, w - 200, 60, 30, '#4A2A0E', { bold: true });
+        // 个人数据（用户 2026-10-08）：全部对局的汇总
+        const stats = this.state === 'ready' ? (st.online ? st.stats : statsFromHistory(st.history)) : null;
+        const box = mk(p, 'Stats', 170, 160, w - 200, 84);
+        fillRR(gfx(box), 0, 0, w - 200, 84, 16, '#FFFFFFEE');
+        const cells: [string, string][] = [
+            ['总场次', stats ? String(stats.games) : '—'],
+            ['胜率', stats && stats.finished ? Math.round((stats.wins * 100) / stats.finished) + '%' : '—'],
+            ['平均名次', stats && stats.avgRank !== null ? String(stats.avgRank) : '—'],
+            ['最高净资产', stats && stats.bestNetWorth !== null ? String(stats.bestNetWorth) : '—'],
+        ];
+        const cw = (w - 200) / cells.length;
+        cells.forEach(([label, value], i) => {
+            text(box, value, i * cw, 6, cw, 44, 30, Theme.c.navy, { bold: true });
+            text(box, label, i * cw, 50, cw, 28, 18, Theme.c.noteGray);
+        });
 
         const head = mk(p, 'Head', 20, 252, w - 40, 60);
         fillRR(gfx(head), 0, 0, w - 40, 60, 16, Theme.c.boxBeige);

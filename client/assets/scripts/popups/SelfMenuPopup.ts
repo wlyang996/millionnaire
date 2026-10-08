@@ -1,10 +1,12 @@
 /**
  * 点击底栏自己头像弹出的小菜单（用户 2026-10-07 要求：头像不再打开详情，详情只在顶部玩家条查看；认输移到这里）。
- * 两项：主动托管（系统代为投骰，现金够就买 / 升级；全屏"托管中"遮罩里点"取消托管"恢复）、认输（二次确认）。
+ * 三项：主动托管（系统代为投骰，现金够就买 / 升级；全屏"托管中"遮罩里点"取消托管"恢复）、快速动画开关（本机偏好）、认输（二次确认）。
  * 菜单贴在头像上方，点菜单外任意处关闭。
  */
 import { Node } from 'cc';
-import { Theme } from '../core/Theme';
+import { fastAnim, Theme } from '../core/Theme';
+import { toggleFastAnim } from '../ui/Prefs';
+import { Toast } from '../ui/Toast';
 import { ctx } from '../ui/Ctx';
 import { fillPoly, fillRR, gfx, mk, onTap, place, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
@@ -12,7 +14,7 @@ import { surrenderConfirm } from './ConfirmPopup';
 
 const W = 300;
 const ROW_H = 84;
-const H = ROW_H * 2 + 16;
+const H = ROW_H * 3 + 16;
 
 export class SelfMenuPopup extends Popup {
     constructor() {
@@ -33,7 +35,13 @@ export class SelfMenuPopup extends Popup {
         fillPoly(gfx(mk(p, 'Tail', 0, 0, W, H + 16)), [[44, H - 1], [76, H - 1], [60, H + 14]], Theme.c.panelFill);
         this.item(p, 0, '主动托管', '系统代为投骰、买地和升级', Theme.c.navy, () => this.host());
         fillRR(gfx(mk(p, 'Sep', 20, 8 + ROW_H, W - 40, 2)), 0, 0, W - 40, 2, 1, Theme.c.panelLine);
-        this.item(p, 1, '认输', '现金与资产由系统回收', Theme.c.payRed, () => this.surrender());
+        this.item(p, 1, '快速动画：' + (fastAnim() ? '开' : '关'), '骰子、走棋、翻牌动画加快一倍', Theme.c.navy, () => {
+            const on = toggleFastAnim();
+            Toast.show(on ? '已开启快速动画' : '已恢复正常速度');
+            this.close();
+        });
+        fillRR(gfx(mk(p, 'Sep2', 20, 8 + ROW_H * 2, W - 40, 2)), 0, 0, W - 40, 2, 1, Theme.c.panelLine);
+        this.item(p, 2, '认输', '现金与资产由系统回收', Theme.c.payRed, () => this.surrender());
     }
 
     private item(p: Node, i: number, label: string, note: string, color: string, fn: () => void): void {

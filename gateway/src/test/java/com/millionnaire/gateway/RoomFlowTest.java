@@ -281,6 +281,13 @@ class RoomFlowTest {
             assertThat(history[0].get("life")).isEqualTo("SURRENDERED");
             assertThat(history[0].get("rank")).isEqualTo(2);
             assertThat(history[0].get("endMode")).isEqualTo("TIME_LIMIT");
+            // 个人数据：1 局、有名次、第 2 名（前三）、认输出局
+            @SuppressWarnings("unchecked")
+            Map<String, Object> stats = http.exchange("/api/me/stats", org.springframework.http.HttpMethod.GET,
+                    new org.springframework.http.HttpEntity<>(bearer((String) a.get("token"))), Map.class).getBody();
+            assertThat(stats).containsEntry("games", 1).containsEntry("finished", 1).containsEntry("wins", 0)
+                    .containsEntry("top3", 1).containsEntry("bankrupt", 1).containsEntry("avgRank", 2.0);
+            assertThat(http.getForEntity("/api/me/stats", Map.class).getStatusCode().value()).isEqualTo(401);
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM game_record_player p JOIN game_record r ON r.record_id = p.record_id"
                     + " WHERE r.room_id = (SELECT room_id FROM room WHERE room_code = ? AND status = 'OPEN')", Integer.class,
                     Integer.parseInt(code))).isEqualTo(2);

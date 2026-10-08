@@ -4,10 +4,12 @@
  * 状态（谁、何时开始）由 BoardScreen 保存，页面重建后按时间戳续播。
  */
 import { Node } from 'cc';
-import { Theme } from '../../core/Theme';
+import { animMs, Theme } from '../../core/Theme';
 import { art } from '../../ui/Art';
 import { fillRR, gfx, line, mk, place, setOpacity, text } from '../../ui/Kit';
 
+/** 当前动画倍速（快速动画为 2）。 */
+const speed = (): number => 1000 / animMs(1000);
 export const JAIL_SHOW_MS = 2600;
 
 const POP_MS = 380;
@@ -56,11 +58,11 @@ export class JailOverlay {
     }
 
     get done(): boolean {
-        return Date.now() - this.start >= JAIL_SHOW_MS;
+        return (Date.now() - this.start) * speed() >= JAIL_SHOW_MS;
     }
 
     tick(now: number): void {
-        const t = now - this.start;
+        const t = (now - this.start) * speed(); // 快速动画：时间轴整体加速
         // 弹出：0.6 → 1.06 → 1
         const p = Math.min(1, t / POP_MS);
         const pop = p < 0.75 ? 0.6 + 0.46 * (p / 0.75) : 1.06 - 0.06 * ((p - 0.75) / 0.25);

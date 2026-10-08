@@ -77,6 +77,17 @@ export class ResultScreen extends Screen {
         });
         list.setContentHeight(res.standings.length * rowH);
 
+        if (st.isWatcher()) {
+            // 观战者：留在本页等房间开下一局（开局时自动进入观战），或返回大厅
+            primaryButton(this.root, '返回大厅', 40, 1018, 640, 96, () => {
+                void st.online!.unwatch();
+                ctx.screens.go('lobby');
+            }, Theme.font.lg);
+            const note = '观战中：留在本页，房间开下一局时会自动进入观战';
+            text(this.root, note, 0, 1124, Theme.W, 36, 22, '#00000088', { bold: true });
+            text(this.root, note, 0, 1122, Theme.W, 36, 22, Theme.c.white, { bold: true });
+            return;
+        }
         // 再来一局（用户 2026-10-08）：一键回原房间并自动准备；下方显示已有几人准备
         const meReady = !!s.members.find((m) => m.playerId === st.myId)?.ready;
         primaryButton(this.root, meReady ? '已准备，回房间等待开局' : '再来一局', 40, 1018, 470, 96, () => {

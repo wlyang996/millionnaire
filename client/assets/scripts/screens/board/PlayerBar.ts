@@ -15,6 +15,19 @@ export interface StatusBadge { text: string; bg: string; fg: string }
 export interface CashChange { amount: number; until: number }
 export interface CashChangeNode { node: Node; badge: Node | null; until: number; x: number; y: number }
 
+const RANK_COLORS = ['#F5C542', '#D5DCE4', '#E2A26A'];
+
+/**
+ * 存活玩家按净资产排名（并列同名次，如 1、1、3）；破产 / 认输者不排。netWorth 由调用方给（现金 + 资产价值）。
+ */
+export function liveRanks(players: PlayerView[], netWorth: (id: string) => number): Map<string, number> {
+    const alive = players.filter((p) => p.life === 'ALIVE').map((p) => ({ id: p.playerId, v: netWorth(p.playerId) }));
+    alive.sort((a, b) => b.v - a.v);
+    const out = new Map<string, number>();
+    alive.forEach((a, i) => out.set(a.id, i > 0 && a.v === alive[i - 1].v ? out.get(alive[i - 1].id)! : i + 1));
+    return out;
+}
+
 /** 现金变化浮动标签的总时长与上飘距离。 */
 export const CASH_DELTA_MS = 2600;
 const CASH_DELTA_RISE = 26;
@@ -62,7 +75,8 @@ export function connBadge(conn: ConnState, control: ControlMode): StatusBadge | 
 }
 
 export function drawPlayerBar(parent: Node, x: number, y: number, players: PlayerView[], currentId: string, myId: string, drawingId: string | null = null,
-    onPlayerTap?: (id: string) => void, changes: Map<string, CashChange> = new Map(), changeNodes: CashChangeNode[] = []): Node {
+    onPlayerTap?: (id: string) => void, changes: Map<string, CashChange> = new Map(), changeNodes: CashChangeNode[] = [],
+    ranks: Map<string, number> = new Map()): Node {
     const cw = 152;
     const ch = 68;
     const gapX = 9;
@@ -89,7 +103,14 @@ export function drawPlayerBar(parent: Node, x: number, y: number, players: Playe
             text(badge, '我', 0, 0, 24, 24, 14, Theme.c.white, { bold: true });
         }
         const ink = dead ? Theme.c.inkFaint : Theme.c.navy;
-        text(cell, p.nickname, 66, 6, cw - 70, 26, 20, ink, { bold: true, align: 'l' });
+        // 实时名次（用户 2026-10-08）：按净资产，右上角小圆标，前三名金银铜
+        const rank = ranks.get(p.playerId);
+        if (rank && !dead) {
+            const rb = mk(cell, 'Rank', cw - 27, 5, 24, 24);
+            fillCircle(gfx(rb), 12, 12, 12, RANK_COLORS[rank - 1] ?? '#C9D1DA');
+            text(rb, String(rank), 0, 0, 24, 24, 15, rank <= 3 ? '#5A3A00' : Theme.c.navy, { bold: true });
+        }
+        text(cell, p.nickname, 66, 6, cw - (rank && !dead ? 96 : 70), 26, 20, ink, { bold: true, align: 'l' });
         const b = statusBadge(p) ?? (p.playerId === drawingId ? { text: '抽卡中', bg: '#FFF1C9', fg: '#7A5A00' } : null);
         if (b) {
             // 设计稿 06（连接状态）：状态胶囊占据现金那一行；"已掉线·自动投骰"分两行

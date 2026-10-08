@@ -45,6 +45,8 @@ public class RoomService {
     private final EngineState nicknameProbe;
     private final Map<Integer, LiveRoom> byCode = new ConcurrentHashMap<>();
     private final Map<String, LiveRoom> byPlayer = new ConcurrentHashMap<>();
+    /** 观战者 → 正在观看的房间（观战者不是成员；同时只看一个房间，不在任何房间里才能观战）。 */
+    private final Map<String, LiveRoom> watching = new ConcurrentHashMap<>();
     /** 玩家所选头像（序号 0～7）；没选的不在表里，客户端按玩家 ID 取默认头像。只用于显示，不进引擎状态。 */
     private final Map<String, Integer> avatars = new ConcurrentHashMap<>();
     private final ScheduledExecutorService timers;
@@ -145,6 +147,7 @@ public class RoomService {
     public synchronized Created create(User user, String requestId, RoomSettings settings) {
         rememberAvatar(user);
         String pid = user.playerId();
+        unwatch(pid); // 自己开房就不再观战
         LiveRoom current = byPlayer.get(pid);
         if (current != null) {
             if (current.createdBy(pid, requestId)) {
@@ -188,7 +191,49 @@ public class RoomService {
         if (current != null && current != room) {
             throw new ClientException("ALREADY_IN_ROOM", "leave room " + current.code() + " first");
         }
-        return room.submitClient(pid, requestId, new Join(pid, user.nickname()));
+        LiveRoom.Reply r = room.submitClient(pid, requestId, new Join(pid, user.nickname()));
+        if (r.ok()) {
+            unwatch(pid); // 加入了房间就不再观战
+        }
+        return r;
+    }
+
+    /**
+     * 观战（用户 2026-10-08）：不在任何房间里的人凭房间号观看进行中的对局，只看不操作（不能聊天、不能用卡）。
+     * 观战者收到与玩家相同的推送（按非玩家视角投影，看不到任何人的手牌内容）；对局结束后继续观看这个房间的下一局，直到退出观战。
+     */
+    public synchronized LiveRoom watch(User user, int code) {
+        rememberAvatar(user);
+        String pid = user.playerId();
+        LiveRoom room = byCode.get(code);
+        if (room == null) {
+            throw new ClientException("ROOM_NOT_FOUND", "no open room with this code");
+        }
+        if (byPlayer.containsKey(pid)) {
+            throw new ClientException("ALREADY_IN_ROOM", "leave your room before watching another");
+        }
+        if (room.gameNo().isEmpty()) {
+            throw new ClientException("NOT_IN_GAME", "this room has not started a game; join it instead");
+        }
+        LiveRoom previous = watching.get(pid);
+        if (previous != null && previous != room) {
+            previous.unwatch(pid);
+        }
+        room.watch(pid);
+        watching.put(pid, room);
+        return room;
+    }
+
+    /** 退出观战（没在观战时什么也不做）。 */
+    public void unwatch(String playerId) {
+        LiveRoom room = watching.remove(playerId);
+        if (room != null) {
+            room.unwatch(playerId);
+        }
+    }
+
+    public Optional<LiveRoom> watchingOf(String playerId) {
+        return Optional.ofNullable(watching.get(playerId));
     }
 
     /** 房主给自己的房间加一个测试机器人（机器人是一个新建的测试用户）。 */
@@ -230,6 +275,7 @@ public class RoomService {
     void closed(LiveRoom room, String reason, Set<String> notify) {
         byCode.remove(room.codeNumber(), room);
         byPlayer.values().removeIf(r -> r == room);
+        watching.values().removeIf(r -> r == room);
         try {
             store.close(room.roomId(), room.codeNumber(), reason);
         } catch (RuntimeException e) {

@@ -88,6 +88,28 @@ export const Theme = {
     popupRing: { size: 124, inset: 16 },
 };
 
+/**
+ * 快速动画（用户 2026-10-08，玩家自己在头像菜单里开关，存在本机）：骰子、跳格、翻牌、结果停留、入狱等动画时长减半。
+ * 只影响本机画面；服务端按自己的节奏推进，动画快了只是等待更短。
+ */
+const BASE_ANIM = { ...Theme.anim };
+const SCALED: (keyof typeof BASE_ANIM)[] = ['diceMs', 'hopMs', 'diceReadyMs', 'eventResultHoldMs', 'eventFlipMs', 'eventOtherHoldMs'];
+let animSpeed = 1;
+
+export function setFastAnim(on: boolean): void {
+    animSpeed = on ? 2 : 1;
+    for (const k of SCALED) (Theme.anim as Record<string, number>)[k] = Math.round(BASE_ANIM[k] / animSpeed);
+}
+
+export function fastAnim(): boolean {
+    return animSpeed > 1;
+}
+
+/** 按当前动画速度缩放的时长（毫秒）。 */
+export function animMs(base: number): number {
+    return Math.round(base / animSpeed);
+}
+
 /** 大致估算文字宽度（CJK 按 1 个字号宽，ASCII/数字按 0.56），用于 Chip 等自适应宽度。 */
 export function textWidth(str: string, size: number): number {
     let w = 0;

@@ -25,7 +25,7 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
     if (spectator) {
         const b = roundedPanel(root, 12, 1052, 696, 140, { r: 26, fill: '#1F4E8CD9' });
         const chat = st.game.chat.slice(-2);
-        if (!chat.length) text(b, '已进入观战，和好友聊聊吧', 0, 0, 696, 140, Theme.font.md, Theme.c.white);
+        if (!chat.length) text(b, st.isWatcher() ? '观战中：只能看，不能操作和发言' : '已进入观战，和好友聊聊吧', 0, 0, 696, 140, Theme.font.md, Theme.c.white);
         chat.forEach((c, i) => {
             const player = st.game.players.find((p) => p.nickname === c.from);
             avatar(b, 14, 10 + i * 64, 48, player?.avatar ?? 0, c.from);
@@ -37,7 +37,7 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
         new IconButton(footer, 10, 8, 66, '', () => Toast.show('语音尚未开放'), '#FFFFFF22', Theme.c.white,
             (g, s) => drawMic(g, s / 2, s / 2, s * 0.6, Theme.c.white));
         const input = roundedPanel(footer, 88, 8, 420, 66, { r: 33, fill: '#FFFFFF22', shadow: 0 });
-        text(input, '点击输入聊天内容…', 18, 0, 320, 66, Theme.font.sm, Theme.c.white, { align: 'l' });
+        text(input, st.isWatcher() ? '查看聊天（观战者不能发言）' : '点击输入聊天内容…', 18, 0, 400, 66, Theme.font.sm, Theme.c.white, { align: 'l' });
         onTap(input, () => ctx.popups.open(new ChatPopup()));
         secondaryButton(footer, '返回大厅', 520, 6, 150, 70, leaveSpectating, Theme.font.md);
         return;
@@ -80,6 +80,11 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
 /** 破产观战"返回大厅"：联机时真正离开房间（离开后不能再回到本局观战），确认后回大厅。 */
 function leaveSpectating(): void {
     const st = ctx.store;
+    if (st.isWatcher()) {
+        void st.online!.unwatch();
+        ctx.screens.go('lobby');
+        return;
+    }
     if (!st.online) {
         ctx.screens.go('lobby');
         return;

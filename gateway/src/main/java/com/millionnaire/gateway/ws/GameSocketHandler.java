@@ -145,6 +145,18 @@ public class GameSocketHandler extends TextWebSocketHandler {
                 roomCode = room.code();
                 reply = rooms.addBot(user, requestId, users.create(botName(room)));
             }
+            case "WATCH_ROOM" -> {
+                LiveRoom target = rooms.watch(user, roomCode(msg));
+                sockets.sendTo(session, wire.write(result(requestId, "ACCEPTED", null, target.code())));
+                sockets.sendTo(session, target.snapshot(pid));
+                sockets.sendTo(session, target.chatMessage());
+                return;
+            }
+            case "UNWATCH_ROOM" -> {
+                rooms.unwatch(pid);
+                sockets.sendTo(session, wire.write(result(requestId, "ACCEPTED", null, null)));
+                return;
+            }
             case "JOIN_ROOM" -> {
                 int code = roomCode(msg);
                 LiveRoom target = rooms.byCode(code).orElse(null);
@@ -221,10 +233,15 @@ public class GameSocketHandler extends TextWebSocketHandler {
             }
         }
         Optional<LiveRoom> room = rooms.roomOf(user.playerId());
+        Optional<LiveRoom> watched = room.isPresent() ? Optional.empty() : rooms.watchingOf(user.playerId());
         ObjectNode hello = wire.object().put("type", "HELLO").put("userId", user.playerId())
                 .put("nickname", user.nickname()).put("serverTime", clock.millis());
         hello.put("roomCode", room.map(LiveRoom::code).orElse(null));
+        hello.put("watching", watched.map(LiveRoom::code).orElse(null));
         sockets.sendTo(session, wire.write(hello));
+        if (room.isEmpty()) {
+            room = watched; // 观战者重连：补发所看房间的快照
+        }
         room.ifPresent(r -> {
             sockets.sendTo(session, r.snapshot(user.playerId()));
             sockets.sendTo(session, r.chatMessage());
@@ -232,7 +249,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
     }
 
     private void sync(WebSocketSession session, User user) {
-        Optional<LiveRoom> room = rooms.roomOf(user.playerId());
+        Optional<LiveRoom> room = rooms.roomOf(user.playerId()).or(() -> rooms.watchingOf(user.playerId()));
         if (room.isPresent()) {
             sockets.sendTo(session, room.get().snapshot(user.playerId()));
             sockets.sendTo(session, room.get().chatMessage());

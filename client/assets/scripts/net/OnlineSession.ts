@@ -34,7 +34,7 @@ export type Route = 'lobby' | 'room' | 'board' | 'spectator' | 'result';
 /** 常见错误码的中文说明（未列出的显示原码）。 */
 const MESSAGES: Record<string, string> = {
     ROOM_NOT_FOUND: '房间不存在或已关闭', ROOM_FULL: '房间已满', ALREADY_IN_ROOM: '你已在其他房间，请先离开',
-    GAME_IN_PROGRESS: '对局已开始', NOT_HOST: '只有房主可以操作', NOT_ALL_READY: '需全员准备后才能开局',
+    GAME_IN_PROGRESS: '对局已开始，可以选择观战', NOT_IN_GAME: '房间还没开局，可以直接加入', WATCHERS_FULL: '观战人数已满', NOT_HOST: '只有房主可以操作', NOT_ALL_READY: '需全员准备后才能开局',
     NOT_ENOUGH_PLAYERS: '至少 2 人才能开局', CAPACITY_EXCEEDED: '人数超过该地图上限', INVALID_SETTINGS: '设置不合法',
     UNCHANGED: '设置没有变化', INVALID_NICKNAME: '昵称不合法', NOT_YOUR_TURN: '还没轮到你', NOT_YOUR_WINDOW: '还没轮到你',
     WINDOW_NOT_OPEN: '请稍等动画结束', WRONG_STAGE: '当前不能这样操作', INSUFFICIENT_CASH: '现金不足',
@@ -71,6 +71,8 @@ export class OnlineSession {
     chat: ChatLine[] = [];
     /** 已套用的参数版本（地名、价格），-1 = 未套用（用内置默认）；以及正在拉取的版本。 */
     private configId = -1;
+    /** 正在观战的房间号（不是成员）；null = 没在观战 */
+    watching: string | null = null;
     private configLoading = -1;
     private lastUpdate: UpdateMsg | null = null;
 
@@ -82,10 +84,14 @@ export class OnlineSession {
             this.store.emit();
         };
         this.client.onNotice = (m) => {
-            if (m.type === 'HELLO' && !m.roomCode) this.leaveLocally();
+            if (m.type === 'HELLO' && !m.roomCode && !m.watching) {
+                this.watching = null;
+                this.leaveLocally();
+            } else if (m.type === 'HELLO') this.watching = m.roomCode ? null : typeof m.watching === 'string' ? m.watching : null;
             else if (m.type === 'CHAT') this.receiveChat(m.lines);
             else if (m.type === 'ROOM_CLOSED') {
                 this.onToast?.('房间已关闭');
+                this.watching = null;
                 this.leaveLocally();
                 this.onRoute?.('lobby');
             } else if (m.type === 'REPLACED') this.onToast?.('账号在别处登录，本连接已断开');
@@ -141,6 +147,20 @@ export class OnlineSession {
         return this.client.joinRoom(code); // 由加入弹窗自己显示错误
     }
 
+    /** 观战：房间号对应的对局正在进行时，只看不操作；快照随后推来，对局开始的推送会把页面切到棋盘。 */
+    async watch(code: string): Promise<ResultMsg> {
+        const r = await this.client.watchRoom(code);
+        if (r.ok) this.watching = code;
+        return r;
+    }
+
+    /** 退出观战回大厅。 */
+    async unwatch(): Promise<void> {
+        this.watching = null;
+        this.leaveLocally();
+        await this.client.unwatchRoom();
+    }
+
     async leave(): Promise<ResultMsg> {
         const r = this.check(await this.client.leaveRoom());
         if (r.ok) this.leaveLocally();
@@ -166,7 +186,8 @@ export class OnlineSession {
     /** 从服务端读取我的最近 20 局，写入 store.history（失败时保留空列表并返回 false）。 */
     async loadHistory(): Promise<boolean> {
         try {
-            const rows = await this.client.history();
+            const [rows, stats] = await Promise.all([this.client.history(), this.client.stats().catch(() => null)]);
+            this.store.stats = stats;
             this.store.history = rows.map((r) => ({
                 mode: r.endMode === 'TIME_LIMIT' ? '限时模式' : '破产模式',
                 players: r.playerCount,
@@ -178,6 +199,7 @@ export class OnlineSession {
             return true;
         } catch {
             this.store.history = [];
+            this.store.stats = null;
             return false;
         }
     }

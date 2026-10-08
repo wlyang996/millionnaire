@@ -184,6 +184,8 @@ export interface HelloMsg {
     nickname: string;
     serverTime: number;
     roomCode: string | null;
+    /** 正在观战的房间号（不是成员时） */
+    watching?: string | null;
 }
 
 /** GET /api/me/history 的一行（我的最近 20 局，新的在前）。rank 等为 null 表示中止局。 */
