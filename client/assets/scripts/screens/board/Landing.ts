@@ -1,7 +1,7 @@
 /** 落点处理（演示）：按落点格弹出买地/升级/租金响应/欠款/事件/虎口拔牙；不弹文字提示（扣钱、路过等都不提示）。 */
 import { Card } from '../../core/Models';
-import { rentOf, stationRent } from '../../core/Rules';
 import { BankPopup } from '../../popups/BankPopup';
+import { rentAt } from '../../popups/CardUse';
 import { BuyPopup } from '../../popups/BuyPopup';
 import { beginDebt } from '../../popups/DebtPopup';
 import { RentPopup } from '../../popups/RentPopup';
@@ -19,8 +19,7 @@ export function handleLanding(i: number): void {
             if (t.type === 'PROPERTY' && !prop.mortgaged) ctx.popups.open(new UpgradePopup(i));
         } else if (!prop.mortgaged) {
             const owner = st.player(prop.owner);
-            const stations = st.assetsOf(prop.owner).filter((a) => a.tile.type === 'STATION' && !a.p.mortgaged).length;
-            const amount = t.type === 'STATION' ? stationRent(stations) : rentOf(t.tier ?? 'LOW', prop.level);
+            const amount = rentAt(i); // 含同组加成与租金倍率
             const hasCard = st.game.myHand.some((c: Card) => c.type === 'RENT_WAIVER');
             if (hasCard) ctx.popups.open(new RentPopup(i, owner ? owner.nickname : '对手', amount));
             else if (me.cash >= amount) st.spend(amount);

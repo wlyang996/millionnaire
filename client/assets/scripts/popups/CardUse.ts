@@ -6,7 +6,8 @@
  */
 import { EventTouch, Node } from 'cc';
 import { BoardTile, CARD_NAMES, CardType, PlayerView, PropertyState } from '../core/Models';
-import { MAX_LEVEL, rentOf, standardValue, stationRent, TIERS } from '../core/Rules';
+import { inflateRent, MAX_LEVEL, rentOf, standardValue, stationRent, TIERS } from '../core/Rules';
+import { applySet, setComplete } from '../core/SetBonus';
 import { textWidth, Theme } from '../core/Theme';
 import { art, CARD_ART } from '../ui/Art';
 import { primaryButton, softButton } from '../ui/Buttons';
@@ -53,7 +54,8 @@ export function rentAt(index: number): number {
     if (tile.type === 'STATION') {
         return stationRent(st.assetsOf(prop.owner).filter((a) => a.tile.type === 'STATION' && !a.p.mortgaged).length);
     }
-    return rentOf(tile.tier ?? 'LOW', prop.level);
+    const base = TIERS[tile.tier ?? 'LOW'].rent[Math.max(0, Math.min(3, prop.level))];
+    return inflateRent(setComplete(st.game, index) ? applySet(base) : base);
 }
 
 /** 此刻能否使用这张卡（不能时给出原因，按钮置灰并提示）。 */

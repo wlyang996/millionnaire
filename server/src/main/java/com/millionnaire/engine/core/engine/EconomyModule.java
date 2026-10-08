@@ -128,10 +128,28 @@ final class EconomyModule {
                 .filter(o -> board.tiles().get(o.tile()).type() == TileType.STATION && !o.mortgaged()).count();
     }
 
+    /** 同组地产全部归 o 的所有者且都未抵押（同组加成生效）。 */
+    static boolean setComplete(RuleConfig config, BoardTemplate board, GameState g, OwnableState o) {
+        var members = config.setBonus().members(board.id(), o.tile());
+        if (members.isEmpty() || o.owner() == null) {
+            return false;
+        }
+        for (int t : members) {
+            var m = g.board().ownable(t).orElse(null);
+            if (m == null || !o.owner().equals(m.owner()) || m.mortgaged()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     static long rent(RuleConfig config, BoardTemplate board, GameState g, OwnableState o) {
         Tile tile = board.tiles().get(o.tile());
         Pricing p = new Pricing(config);
         long base = tile.type() == TileType.STATION ? p.stationRent(countedStations(board, g, o.owner())) : p.rent(tile.tier(), o.level());
+        if (tile.type() == TileType.PROPERTY && setComplete(config, board, g, o)) {
+            base = com.millionnaire.engine.config.RentInflation.apply(base, config.setBonus().rentPercent());
+        }
         return com.millionnaire.engine.config.RentInflation.apply(base, g.turn().rentPercent());
     }
 

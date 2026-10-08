@@ -80,6 +80,32 @@ class ConfigBindingTest {
     }
 
     @Test
+    void setBonusIsEditable() {
+        GameSettings d = SettingsMapper.defaults();
+        assertThat(d.sets().rentPercent()).isEqualTo(150);
+        List<Integer> g30 = new ArrayList<>(d.sets().groups().get("classic-30"));
+        g30.set(5, 1); // 第 5 格（高价）并入第 1 组：1、3、5 一组
+        Map<String, List<Integer>> groups = new TreeMap<>(d.sets().groups());
+        groups.put("classic-30", g30);
+        GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(),
+                new GameSettings.SetSetting(200, groups));
+        // 第 6 格原来和第 5 格一组，现在落单
+        assertThat(SettingsMapper.validate(edited)).anyMatch(e -> e.contains("只有 1 块地"));
+        g30.set(6, 0);
+        assertThat(SettingsMapper.validate(edited)).isEmpty();
+        var rc = SettingsMapper.toRuleConfig(edited);
+        assertThat(rc.setBonus().members("classic-30", 5)).containsExactly(1, 3, 5);
+        assertThat(rc.setBonus().rentPercent()).isEqualTo(200);
+        g30.set(4, 2); // 车站
+        assertThat(SettingsMapper.validate(edited)).anyMatch(e -> e.contains("不是普通地产"));
+        // 旧版本快照没有 sets：按默认处理
+        GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+    }
+
+    @Test
     void roomChoicesAreEditable() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(d.room().rollSecondsOptions()).containsExactly(15, 30, 45, 60);

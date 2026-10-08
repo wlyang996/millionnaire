@@ -9,6 +9,7 @@ import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType }
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { applyServerNames } from '../core/BoardNames';
 import { applyServerRules, BAIL_COST, luckyPool, rentPercent, setRentPercent } from '../core/Rules';
+import { applyServerSets } from '../core/SetBonus';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
 import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
@@ -207,6 +208,7 @@ export class OnlineSession {
         this.client.clientConfig(configId).then((c) => {
             if (this.configLoading !== configId) return;
             applyServerRules(c);
+            applyServerSets(c.sets);
             applyServerNames(c.tileNames);
             this.configId = configId;
             this.configLoading = -1;

@@ -62,6 +62,15 @@ function commit(key) {
   delete drafts[key]
 }
 
+// 同组地产：某格同组的其他地名
+function groupMates(index) {
+  const g = form.value?.sets?.groups?.[boardId.value]
+  if (!g || !g[index]) return '不分组'
+  const names = form.value.tileNames[boardId.value]
+  const mates = g.map((v, i) => (v === g[index] && i !== index ? names[i] : null)).filter((x) => x)
+  return mates.length ? '同组：' + mates.join('、') : '同组只有这一块（至少 2 块）'
+}
+
 // 租金上涨预览：列出倍率变化的轮次（与引擎 RentInflation.percent 一致）
 const rentSteps = computed(() => {
   const r = form.value?.rentRise
@@ -280,6 +289,24 @@ onMounted(() => {
             <span class="idx">{{ t.index }}</span>
             <span class="type">{{ tileType(t.tile) }}</span>
             <el-input v-model="form.tileNames[boardId][t.index]" maxlength="8" />
+          </div>
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="同组地产" name="sets">
+        <el-form v-if="form.sets" label-width="160px" class="narrow">
+          <p class="muted">同一组的普通地产全部归同一个人、且都没有抵押时，组内每块地的租金按倍率上涨（填 100% 即关闭）。组号填 0 表示不分组；同一组号的地就是一组，每组至少 2 块。车站与功能格不能分组。</p>
+          <el-form-item label="集齐后租金倍率（%）"><el-input-number v-model="form.sets.rentPercent" :min="100" :max="500" :step="10" /></el-form-item>
+        </el-form>
+        <el-radio-group v-model="boardId" class="gap">
+          <el-radio-button v-for="(_, id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button>
+        </el-radio-group>
+        <div v-if="form.sets && form.sets.groups[boardId]" class="names">
+          <div v-for="t in tiles.filter((x) => x.tile && x.tile.type === 'PROPERTY')" :key="'g' + boardId + t.index" class="name-row">
+            <span class="idx">{{ t.index }}</span>
+            <span class="type">{{ form.tileNames[boardId][t.index] }}</span>
+            <el-input-number v-model="form.sets.groups[boardId][t.index]" :min="0" :max="99" size="small" />
+            <span class="muted">{{ groupMates(t.index) }}</span>
           </div>
         </div>
       </el-tab-pane>

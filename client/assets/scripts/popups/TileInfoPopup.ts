@@ -1,6 +1,7 @@
 /** Screen18: property identity, prices and four flat rent rows with live values. */
 import { Node } from 'cc';
 import { inflateRent, landPrice, TIERS } from '../core/Rules';
+import { applySet, groupMembers, setBonusPercent, setComplete } from '../core/SetBonus';
 import { art } from '../ui/Art';
 import { ctx } from '../ui/Ctx';
 import { gfx, mk, text } from '../ui/Kit';
@@ -53,7 +54,15 @@ export class TileInfoPopup extends InformationPage {
         const rentPanel = informationCard(p, 32, 846, w - 64, 290, '#FFF8E3', 30);
         drawHouse(gfx(mk(rentPanel, 'RentHome', 26, 14, 44, 44)), 22, 22, 40, '#D84128', '#FFF1CF');
         text(rentPanel, '租金表', 84, 10, 300, 50, 30, INK, { bold: true, align: 'l' });
-        TIERS[tile.tier ?? 'LOW'].rent.map((r) => inflateRent(r)).forEach((rent, i) => {
+        // 同组地产：标出同组的地；整组归同一人且未抵押时租金表按加成后显示
+        const mates = groupMembers(st.game, this.tileIndex).filter((i) => i !== this.tileIndex);
+        const complete = setComplete(st.game, this.tileIndex);
+        if (mates.length) {
+            const note = (complete ? '已集齐同组 · 租金 ×' : '同组：' + mates.map((i) => st.tile(i).name).join('、') + ' · 集齐后租金 ×')
+                + setBonusPercent() / 100;
+            text(rentPanel, note, 250, 10, w - 330, 50, 20, complete ? '#277240' : '#8A6A3A', { bold: complete, align: 'r' });
+        }
+        TIERS[tile.tier ?? 'LOW'].rent.map((r) => inflateRent(complete ? applySet(r) : r)).forEach((rent, i) => {
             const current = i === level;
             const row = informationCard(rentPanel, 26, 66 + i * 52, w - 116, 48,
                 current ? '#EFF8E9' : '#FFFCF4', 16, false);

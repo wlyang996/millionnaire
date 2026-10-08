@@ -22,6 +22,8 @@ import java.util.Map;
  * @param handLimit    每人最多持有的道具张数（超出时弃牌）；房间"开局道具"的可选张数也以此为上限。没有此项（null）按内置默认处理。
  * @param room         建房可选项：初始现金、限时时长、投骰时间各自的选项与默认值，默认结束模式，破产模式最长时长（分钟）。
  *                     没有此项（null）按内置默认处理。
+ * @param sets         同组地产加成：倍率（%，100 = 关闭）与地图 ID → 逐格组号（0 = 不分组，只给普通地产编组，每组至少 2 块）。
+ *                     没有此项（null）按内置默认处理。
  */
 public record GameSettings(
         List<TierSetting> tiers,
@@ -34,19 +36,27 @@ public record GameSettings(
         List<LuckySetting> lucky,
         RentRise rentRise,
         Integer handLimit,
-        RoomSetting room) {
+        RoomSetting room,
+        SetSetting sets) {
+
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
+                        Integer handLimit, RoomSetting room) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, room, null);
+    }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
                         Integer handLimit) {
-        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, null);
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, null, null);
     }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise) {
-        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, null, null);
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, null, null, null);
     }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
@@ -60,6 +70,9 @@ public record GameSettings(
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames) {
         this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, null, null);
+    }
+
+    public record SetSetting(int rentPercent, Map<String, List<Integer>> groups) {
     }
 
     public record RoomSetting(List<Long> initialCashOptions, long defaultInitialCash,

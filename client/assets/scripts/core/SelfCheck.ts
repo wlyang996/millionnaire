@@ -10,6 +10,7 @@ import {
 } from './EventDraw';
 import { axisCell, boardAxis, eventDeckRect } from './BoardLayout';
 import { buildBoard, countTypes, gridCell, gridFor, ringLength } from './BoardLayout';
+import { defaultGroups } from './SetBonus';
 import { Clock, Countdown } from './Clock';
 import { MockStore } from './MockStore';
 import {
@@ -67,6 +68,10 @@ export function runSelfCheck(): CheckResult {
 
     // ---- 棋盘模板（requirements 第 3 节；2026-10-08 事件格拆成抽卡事件 + 固定事件）----
     const c30 = countTypes(buildBoard(30));
+    // 同组地产默认分组（与服务端 SetBonus.bySides 一致）：30 格 8 组、50 格 14 组，每组 2～3 块且只含普通地产
+    const g30 = defaultGroups(buildBoard(30));
+    eq('30格同组', [[1, 3], [5, 6], [27, 28]].map(([a, b]) => g30[a] === g30[b] && g30[a] > 0), [true, true, true]);
+    eq('同组数', [new Set(g30.filter((x) => x > 0)).size, new Set(defaultGroups(buildBoard(50)).filter((x) => x > 0)).size], [8, 14]);
     eq('30格数量', [c30.START, c30.PROPERTY, c30.EVENT, c30.FIXED_EVENT, c30.UNLUCKY_EVENT, c30.BANK, c30.JAIL, c30.REST, c30.GAME_ZONE, c30.STATION], [1, 16, 3, 1, 1, 1, 1, 1, 1, 4]);
     eq('30格价位', [c30.LOW, c30.MID, c30.HIGH, c30.AUCTION_LOT], [6, 6, 4, 3]);
     const c50 = countTypes(buildBoard(50));

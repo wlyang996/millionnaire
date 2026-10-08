@@ -13,6 +13,7 @@ import { drawHouse, drawPips } from '../../ui/Icons';
 import { col, fillCircle, fillPoly, fillRR, gfx, line, mk, place, setOpacity, strokeRR, text } from '../../ui/Kit';
 import { avatar } from '../../ui/Widgets';
 import { drawEventDeck } from './EventDeck';
+import { groupColor, groupOf } from '../../core/SetBonus';
 import { art, artRatio, characterKey } from '../../ui/Art';
 
 export interface CamState { scale: number; vx: number; vy: number; follow: boolean; boardId: string }
@@ -361,6 +362,9 @@ export class BoardView {
         fillRR(gg, m, m, bw, bh - 3, r, baseColor);
         const fh = bh - band;
         fillRR(gg, m, m, bw, fh, r, face);
+        // 同组地产：格面顶部一条组色细条（同色即同组，集齐后租金上涨）
+        const grp = isProp ? groupOf(game, tile.index) : 0;
+        if (grp) fillRR(gg, m + r * 0.6, m + 1, bw - r * 1.2, Math.max(3, Math.round(fh * 0.07)), 2, groupColor(grp));
         if (this.highlight === tile.index) {
             fillRR(gg, m - 1, m - 1, bw + 2, bh + 2, r + 1, '#FFD64655');
             strokeRR(gg, m, m, bw, fh, r, Theme.c.yellow, 3);

@@ -44,6 +44,8 @@ export interface ServerRules {
     station: { price: number; rentPerStation: number };
     fees: { startReward: number; miniGameWinReward: number; bailCost: number };
     handLimit?: number;
+    /** 同组地产加成（由 SetBonus.applyServerSets 使用） */
+    sets?: { rentPercent: number; groups: Record<string, number[]> };
     room?: {
         initialCashOptions: number[]; timeLimitMinutesOptions: number[]; rollSecondsOptions: number[];
         bankruptcyCapMinutes: number;

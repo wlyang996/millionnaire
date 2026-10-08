@@ -94,10 +94,16 @@ public final class RuleConfigs {
         events.put(EventKind.TO_STATION, eventsV2 ? 5 : 0);
         events.put(EventKind.TO_START, eventsV2 ? 4 : 0);
 
+        BoardTemplate b30 = board(BOARD_30, 2, 4, layout30, eventsV2 ? LUCKY_AND_UNLUCKY : List.of());
+        BoardTemplate b50 = board(BOARD_50, 2, 8, layout50, eventsV2 ? LUCKY_AND_UNLUCKY : List.of());
+        // 同组地产加成（2026-10-08）随新事件规则一起启用；旧测试夹具没有加成
+        Map<String, List<Integer>> groups = new TreeMap<>();
+        groups.put(BOARD_30, SetBonus.bySides(b30, 8, 9));
+        groups.put(BOARD_50, SetBonus.bySides(b50, 12, 15));
+        SetBonus sets = eventsV2 ? new SetBonus(SetBonus.DEFAULT_RENT_PERCENT, groups) : SetBonus.NONE;
         return new RuleConfig(
                 RULE_VERSION,
-                List.of(board(BOARD_30, 2, 4, layout30, eventsV2 ? LUCKY_AND_UNLUCKY : List.of()),
-                        board(BOARD_50, 2, 8, layout50, eventsV2 ? LUCKY_AND_UNLUCKY : List.of())),
+                List.of(b30, b50),
                 List.of(
                         new TierPricing(Tier.LOW, 500, 300, List.of(100L, 250L, 450L, 700L), Ratio.percent(80)),
                         new TierPricing(Tier.MID, 1000, 600, List.of(200L, 500L, 900L, 1400L), Ratio.percent(70)),
@@ -128,7 +134,8 @@ public final class RuleConfigs {
                         1_500, 250, 1_000,      // 动画与自动动作延时：占位值，待确认
                         production),
                 // 默认地图、默认初始现金、默认结束模式尚未裁定，此处为占位（见 m0-report 待确认）
-                new RoomOptions(2, List.of(2000L, 3000L, 5000L), BOARD_30, 3000, EndMode.TIME_LIMIT, 30, 15));
+                new RoomOptions(2, List.of(2000L, 3000L, 5000L), BOARD_30, 3000, EndMode.TIME_LIMIT, 30, 15),
+                RentInflation.DEFAULT, sets);
     }
 
     /** 由紧凑记号生成棋盘。 */

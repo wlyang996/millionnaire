@@ -71,6 +71,7 @@ public final class ConfigValidator {
         if (blank(c.ruleVersion())) {
             fail("ruleVersion missing");
         }
+        checkSets(c);
         RentInflation ri = c.rentInflation();
         if (ri.freeRounds() < 0 || ri.freeRounds() > 1000 || ri.everyRounds() < 1 || ri.everyRounds() > 100
                 || ri.stepPercent() < 0 || ri.stepPercent() > 100 || ri.capPercent() < 100 || ri.capPercent() > 1000) {
@@ -413,6 +414,45 @@ public final class ConfigValidator {
             fail("timing must satisfy heartbeat < suspect < offline");
         }
         return errors.size() == before;
+    }
+
+    /** 同组加成：倍率 100～500%；组号逐格对应地图、只给普通地产编组，每组至少 2 块。 */
+    private void checkSets(RuleConfig c) {
+        SetBonus s = c.setBonus();
+        if (s.rentPercent() < 100 || s.rentPercent() > 500) {
+            fail("setBonus.rentPercent must be in 100..500");
+        }
+        if (c.boards() == null) {
+            return;
+        }
+        s.groups().forEach((id, groups) -> {
+            BoardTemplate b = c.boards().stream().filter(x -> x.id().equals(id)).findFirst().orElse(null);
+            if (b == null) {
+                fail("setBonus.groups: unknown board " + id);
+                return;
+            }
+            if (groups.size() != b.size()) {
+                fail("setBonus.groups." + id + " must list every tile");
+                return;
+            }
+            java.util.Map<Integer, Integer> sizes = new java.util.TreeMap<>();
+            for (int i = 0; i < groups.size(); i++) {
+                Integer g = groups.get(i);
+                if (g == null || g < 0) {
+                    fail("setBonus.groups." + id + "[" + i + "] must be >= 0");
+                } else if (g > 0) {
+                    if (b.tiles().get(i).type() != TileType.PROPERTY) {
+                        fail("setBonus.groups." + id + "[" + i + "] is not an ordinary property");
+                    }
+                    sizes.merge(g, 1, Integer::sum);
+                }
+            }
+            sizes.forEach((g, n) -> {
+                if (n < 2) {
+                    fail("setBonus.groups." + id + " group " + g + " needs at least 2 properties");
+                }
+            });
+        });
     }
 
     private void checkRoom(RuleConfig c) {

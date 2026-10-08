@@ -20,6 +20,8 @@ import com.millionnaire.engine.config.RentInflation;
 import com.millionnaire.gateway.config.GameSettings.LuckySetting;
 import com.millionnaire.gateway.config.GameSettings.RentRise;
 import com.millionnaire.gateway.config.GameSettings.RoomSetting;
+import com.millionnaire.gateway.config.GameSettings.SetSetting;
+import com.millionnaire.engine.config.SetBonus;
 import com.millionnaire.engine.config.EndMode;
 import com.millionnaire.engine.config.RoomOptions;
 import com.millionnaire.gateway.config.GameSettings.StationSetting;
@@ -63,13 +65,23 @@ public final class SettingsMapper {
                 new Fees(e.startReward(), e.miniGameWinReward(), e.bailCost()),
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
                 events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise(), e.handLimit(),
-                defaultRoom());
+                defaultRoom(), defaultSets());
     }
 
     /** 内置租金上涨参数（引擎默认）。 */
     public static RentRise defaultRentRise() {
         RentInflation r = BASE.rentInflation();
         return new RentRise(r.freeRounds(), r.everyRounds(), r.stepPercent(), r.capPercent());
+    }
+
+    /** 内置同组加成（引擎默认：每条边上的普通地产两两一组，×150%）。 */
+    public static SetSetting defaultSets() {
+        SetBonus b = BASE.setBonus();
+        return new SetSetting(b.rentPercent(), new TreeMap<>(b.groups()));
+    }
+
+    public static SetSetting setsOf(GameSettings s) {
+        return s.sets() == null ? defaultSets() : s.sets();
     }
 
     /** 内置建房可选项（引擎默认）。 */
@@ -204,9 +216,49 @@ public final class SettingsMapper {
         lucky(errors, s.lucky() == null ? defaultLucky() : s.lucky());
         rentRise(errors, rentRiseOf(s));
         room(errors, roomOf(s));
+        sets(errors, setsOf(s));
         int hand = handLimitOf(s);
         if (hand < BASE.economy().initialHandSize() || hand > MAX_HAND_LIMIT) {
             errors.add("道具上限必须在 " + BASE.economy().initialHandSize() + "～" + MAX_HAND_LIMIT + " 张之间");
+        }
+    }
+
+    private static void sets(List<String> errors, SetSetting s) {
+        if (s.rentPercent() < 100 || s.rentPercent() > 500) {
+            errors.add("同组加成倍率必须在 100%～500% 之间（100% 表示不加成）");
+        }
+        if (s.groups() == null) {
+            errors.add("同组分组为空");
+            return;
+        }
+        for (BoardTemplate b : BASE.boards()) {
+            List<Integer> g = s.groups().get(b.id());
+            if (g == null || g.size() != b.size()) {
+                errors.add("地图 " + b.id() + " 的分组必须逐格填写（共 " + b.size() + " 格）");
+                continue;
+            }
+            Map<Integer, Integer> sizes = new TreeMap<>();
+            for (int i = 0; i < g.size(); i++) {
+                Integer v = g.get(i);
+                if (v == null || v < 0 || v > 99) {
+                    errors.add("地图 " + b.id() + " 第 " + i + " 格组号必须在 0～99 之间");
+                } else if (v > 0) {
+                    if (b.tiles().get(i).type() != TileType.PROPERTY) {
+                        errors.add("地图 " + b.id() + " 第 " + i + " 格不是普通地产，不能分组");
+                    }
+                    sizes.merge(v, 1, Integer::sum);
+                }
+            }
+            sizes.forEach((id, n) -> {
+                if (n < 2) {
+                    errors.add("地图 " + b.id() + " 第 " + id + " 组只有 1 块地，每组至少 2 块");
+                }
+            });
+        }
+        for (String id : s.groups().keySet()) {
+            if (BASE.board(id).isEmpty()) {
+                errors.add("分组里有未知的地图：" + id);
+            }
         }
     }
 
@@ -400,7 +452,8 @@ public final class SettingsMapper {
             lucky.add(new LuckySetting(b.kind(), b.label(), cash ? g.amount() : 0, g.weight(), b.unlucky()));
         }
         return new GameSettings(List.copyOf(tiers), s.station(), s.fees(), s.eventCash(), events, cards, names,
-                List.copyOf(lucky), rentRiseOf(s), handLimitOf(s), sortedRoom(roomOf(s)));
+                List.copyOf(lucky), rentRiseOf(s), handLimitOf(s), sortedRoom(roomOf(s)),
+                new SetSetting(setsOf(s).rentPercent(), new TreeMap<>(setsOf(s).groups())));
     }
 
     /** 选项按从小到大保存（建房页按这个顺序显示）。 */
@@ -459,7 +512,9 @@ public final class SettingsMapper {
                 rs.defaultInitialCash(), EndMode.valueOf(rs.defaultEndMode()), rs.defaultTimeLimitMinutes(), rs.defaultRollSeconds());
         var timing = BASE.timing().withRoomChoices(rs.rollSecondsOptions(), rs.timeLimitMinutesOptions(), rs.bankruptcyCapMinutes());
         return new RuleConfig(BASE.ruleVersion(), boards, tiers, st, economy, BASE.ratios(), cards, events,
-                timing, room, new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()));
+                timing, room,
+                new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()),
+                new SetBonus(setsOf(s).rentPercent(), setsOf(s).groups()));
     }
 
     private static Map<String, List<String>> loadDefaultNames() {
