@@ -4,6 +4,7 @@ import { copyText, shareRoom } from '../net/Wx';
 import { boardSizeOf, INITIAL_CASH_OPTIONS, maxPlayers, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
 import { EndMode, Member } from '../core/Models';
 import { Theme } from '../core/Theme';
+import { ChatPopup } from '../popups/ChatPopup';
 import { ConfirmPopup } from '../popups/ConfirmPopup';
 import { Button, IconButton, primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -118,7 +119,7 @@ export class RoomScreen extends Screen {
         const bub = mk(voice, 'Bubble', 460, 10, 200, 56);
         fillRR(gfx(bub), 0, 0, 200, 56, 28, Theme.c.ivoryDark);
         text(bub, last ? last.text : '说点什么…', 14, 0, 172, 56, Theme.font.xs, Theme.c.ink, { align: 'l' });
-        onTap(bub, () => Toast.show('聊天输入（演示）'));
+        onTap(bub, () => ctx.popups.open(new ChatPopup()));
         void drawChat;
 
         // 底部按钮

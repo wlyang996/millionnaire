@@ -9,6 +9,7 @@ import { ctx } from '../ui/Ctx';
 import { drawClock, drawCoin, drawCopy } from '../ui/Icons';
 import { col, fillCircle, fillRR, gfx, line, mk, onTap, text } from '../ui/Kit';
 import { Toast } from '../ui/Toast';
+import { copyText } from '../net/Wx';
 import { Screen } from '../ui/Screen';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar, roundedPanel } from '../ui/Widgets';
@@ -86,7 +87,7 @@ export class ResultScreen extends Screen {
         const room = roundedPanel(this.root, 190, 1178, 340, 56, { fill: '#FFFFFFEE', r: 28, shadow: 0 });
         text(room, '房间号：' + s.roomId, 0, 0, 276, 56, 24, Theme.c.navy, { bold: true });
         drawCopy(gfx(room), 300, 28, 28, Theme.c.navy);
-        onTap(room, () => Toast.show('房间号已复制：' + s.roomId));
+        onTap(room, () => void copyText(s.roomId).then((ok) => Toast.show(ok ? '房间号已复制：' + s.roomId : '复制失败，房间号：' + s.roomId)));
     }
 }
 
