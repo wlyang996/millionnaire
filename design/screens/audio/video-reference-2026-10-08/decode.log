@@ -1,0 +1,38 @@
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'F:\media\wechat\chat\xwechat_files\wxid_iwogyqkdsea322_9047\msg\video\2026-10\b3c1f59cd3bb3e2c7de348ff2e0e5e77.mp4':
+  Metadata:
+    major_brand     : mp42
+    minor_version   : 1
+    compatible_brands: isommp41mp42
+    creation_time   : 2026-10-07T23:09:29.000000Z
+    copyright       : 
+    copyright-eng   : 
+  Duration: 00:00:08.97, start: 0.000000, bitrate: 966 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 592x1280, 912 kb/s, 30 fps, 30 tbr, 600 tbn (default)
+      Metadata:
+        creation_time   : 2026-10-07T23:09:29.000000Z
+        handler_name    : Core Media Video
+        vendor_id       : [0][0][0][0]
+  Stream #0:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, mono, fltp, 48 kb/s (default)
+      Metadata:
+        creation_time   : 2026-10-07T23:09:29.000000Z
+        handler_name    : Core Media Audio
+        vendor_id       : [0][0][0][0]
+Stream mapping:
+  Stream #0:1 -> #0:0 (aac (native) -> pcm_s16le (native))
+Press [q] to stop, [?] for help
+Output #0, wav, to 'F:\work\millionnaire\design\screens\audio\video-reference-2026-10-08\reference-full.wav':
+  Metadata:
+    major_brand     : mp42
+    minor_version   : 1
+    compatible_brands: isommp41mp42
+    copyright-eng   : 
+    ICOP            : 
+    ISFT            : Lavf61.7.100
+  Stream #0:0(und): Audio: pcm_s16le ([1][0][0][0] / 0x0001), 44100 Hz, mono, s16, 705 kb/s (default)
+      Metadata:
+        creation_time   : 2026-10-07T23:09:29.000000Z
+        handler_name    : Core Media Audio
+        vendor_id       : [0][0][0][0]
+        encoder         : Lavc61.19.100 pcm_s16le
+[out#0/wav @ 0000023f5cf406c0] video:0KiB audio:772KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.009868%
+size=     772KiB time=00:00:08.96 bitrate= 705.7kbits/s speed=1.49e+03x    

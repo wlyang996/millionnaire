@@ -1,0 +1,44 @@
+[
+  {
+    "file": "骰子投掷-视频参考片段-v1.wav",
+    "start_seconds": 1.28,
+    "end_seconds": 2.7,
+    "duration_seconds": 1.42,
+    "sample_rate": 44100,
+    "channels": 1,
+    "sample_bits": 16,
+    "edge_fade_ms": 2,
+    "peak_dbfs": 0.0,
+    "sha256": "601a344673a4998d6766de4161287475099fd7a53a0a5b715d3fc348495a1885",
+    "note": "Dice animation; includes initial action sound and mixed background",
+    "status": "reference cut; not adopted or integrated"
+  },
+  {
+    "file": "人物移动-连续逐格-视频参考片段-v1.wav",
+    "start_seconds": 2.76,
+    "end_seconds": 4.43,
+    "duration_seconds": 1.67,
+    "sample_rate": 44100,
+    "channels": 1,
+    "sample_bits": 16,
+    "edge_fade_ms": 2,
+    "peak_dbfs": 0.0,
+    "sha256": "6c316e2f50e3dc3ac9d58887bf5679899ed8ab7dc92bdc7f2a6ad2bb9ed2f206",
+    "note": "Six movement contacts; original mixed background retained",
+    "status": "reference cut; not adopted or integrated"
+  },
+  {
+    "file": "人物移动-单格-视频参考片段-v1.wav",
+    "start_seconds": 3.12,
+    "end_seconds": 3.32,
+    "duration_seconds": 0.2,
+    "sample_rate": 44100,
+    "channels": 1,
+    "sample_bits": 16,
+    "edge_fade_ms": 2,
+    "peak_dbfs": -2.48,
+    "sha256": "69d961b0e1e2f5c8a7483bd13f1fb1ad527af0ff113a3eeab511fa214f92a203",
+    "note": "One movement contact; not a separated clean master",
+    "status": "reference cut; not adopted or integrated"
+  }
+]

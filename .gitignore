@@ -2,3 +2,11 @@
 .discuss/
 /server/target/
 /gateway/target/
+
+# Local audio decoding tools and temporary frame analysis
+/tmp/audio-tools/
+/tmp/audio-reference-analysis/
+
+# Mini-game upload private keys (never commit)
+/client/tools/package-private-keys/
+__pycache__/
