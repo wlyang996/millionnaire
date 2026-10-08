@@ -8,6 +8,14 @@
 - 新脚本要同时能在 MySQL 5.7（云托管）和 H2（MySQL 模式，测试用）上执行；表选项用 `${table_options}` 占位符。提交前在 `gateway/` 跑 `mvn test`（`DbProfileTest`、`RoomFlowTest` 会在 H2 上执行全部迁移）。
 - 万一已执行的脚本被误改：用 git 恢复成原内容，不要在数据库上执行 `flyway repair` 掩盖差异。
 
+## 玩法参数一律可配置
+
+- 新增或调整玩法里的数值与开关（价格、租金、概率、金额、轮数、倍率、时长等），都要能在管理后台（`/admin`）配置，不写死在代码里：
+  - 引擎：参数放进 `RuleConfig`（含默认值，`RuleConfigs.defaultV1()`），`ConfigValidator` 校验范围；
+  - 网关：`GameSettings` 加对应项（旧快照缺项按默认补齐），`SettingsMapper` 负责默认值、中文校验与换算；客户端需要显示的放进 `/api/configs/{id}/client`；
+  - 管理页：`web-manage/src/App.vue` 加编辑项与说明，`npm run build` 后把 `gateway/src/main/resources/static/admin` 一起提交；
+  - 客户端显示的数值以服务端下发为准，不另写一份常量。
+
 ## 分支与部署
 
 - `prod` 是云托管部署分支，推送可能触发后台和 web 服务自动发布；发布会解散进行中的对局。

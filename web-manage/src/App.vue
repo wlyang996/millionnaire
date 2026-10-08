@@ -44,6 +44,18 @@ const cashChoices = computed(() => {
   for (let v = c.min; v <= c.max && out.length < 50; v += c.step) out.push(v)
   return out
 })
+// 租金上涨预览：列出倍率变化的轮次（与引擎 RentInflation.percent 一致）
+const rentSteps = computed(() => {
+  const r = form.value?.rentRise
+  if (!r || r.stepPercent <= 0 || r.everyRounds < 1 || r.capPercent < 100) return []
+  const out = []
+  for (let k = 1; out.length < 12; k++) {
+    const pct = Math.min(r.capPercent, 100 + k * r.stepPercent)
+    out.push({ from: r.freeRounds + (k - 1) * r.everyRounds + 1, pct })
+    if (pct >= r.capPercent) break
+  }
+  return out
+})
 const tiles = computed(() => {
   const b = boards.value.find((x) => x.id === boardId.value)
   const names = form.value?.tileNames?.[boardId.value] || []
@@ -327,6 +339,20 @@ onMounted(() => {
           <el-form-item label="经过起点奖励"><el-input-number v-model="form.fees.startReward" :min="1" :step="50" /></el-form-item>
           <el-form-item label="小游戏获胜奖励"><el-input-number v-model="form.fees.miniGameWinReward" :min="1" :step="50" /></el-form-item>
           <el-form-item label="出狱费用"><el-input-number v-model="form.fees.bailCost" :min="1" :step="50" /></el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <el-tab-pane label="租金上涨" name="rentRise">
+        <el-form v-if="form.rentRise" label-width="160px" class="narrow">
+          <p class="muted">只在破产模式生效，防止对局拖太久：所有存活玩家各走一次算一轮，前几轮按原价，之后每隔几轮租金倍率上涨一次，到封顶为止。地产和车站租金都涨，按基础租金乘倍率、向下取整到 10；买地、升级、抵押价与起点奖励不变。</p>
+          <el-form-item label="原价轮数"><el-input-number v-model="form.rentRise.freeRounds" :min="0" :max="1000" /><span class="hint">轮内不涨价</span></el-form-item>
+          <el-form-item label="上涨间隔（轮）"><el-input-number v-model="form.rentRise.everyRounds" :min="1" :max="100" /></el-form-item>
+          <el-form-item label="每次涨幅（%）"><el-input-number v-model="form.rentRise.stepPercent" :min="0" :max="100" :step="5" /><span class="hint">0 表示不上涨</span></el-form-item>
+          <el-form-item label="封顶倍率（%）"><el-input-number v-model="form.rentRise.capPercent" :min="100" :max="1000" :step="50" /></el-form-item>
+          <el-form-item label="效果预览">
+            <span v-if="rentSteps.length" class="muted">第 1～{{ form.rentRise.freeRounds }} 轮原价；{{ rentSteps.map((s) => '第 ' + s.from + ' 轮起 ×' + s.pct / 100).join('，') }}{{ rentSteps.length >= 12 ? '…' : '' }}</span>
+            <span v-else class="muted">租金不上涨</span>
+          </el-form-item>
         </el-form>
       </el-tab-pane>
 

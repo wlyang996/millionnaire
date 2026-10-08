@@ -17,6 +17,8 @@ import java.util.Map;
  * @param lucky        幸运 / 不幸格奖池（两张地图共用；unlucky=true 为不幸）：每项的权重与金额（只有奖励 / 罚款有金额）；
  *                     种类与卡名不开放修改。
  *                     早于 2026-10-08 发布的版本没有此项（null），按内置默认处理。
+ * @param rentRise     破产模式租金随轮数上涨：前 freeRounds 轮原价，之后每 everyRounds 轮倍率 +stepPercent%，
+ *                     封顶 capPercent%（stepPercent = 0 关闭）。没有此项（null）按内置默认处理。
  */
 public record GameSettings(
         List<TierSetting> tiers,
@@ -26,13 +28,23 @@ public record GameSettings(
         Map<String, Integer> eventWeights,
         Map<String, Integer> cardWeights,
         Map<String, List<String>> tileNames,
-        List<LuckySetting> lucky) {
+        List<LuckySetting> lucky,
+        RentRise rentRise) {
+
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames, List<LuckySetting> lucky) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, null);
+    }
 
     /** 旧版本快照（没有幸运奖池）的兼容构造。 */
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames) {
-        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, null);
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, null, null);
+    }
+
+    public record RentRise(int freeRounds, int everyRounds, int stepPercent, int capPercent) {
     }
 
     public record LuckySetting(String kind, String label, long amount, int weight, boolean unlucky) {

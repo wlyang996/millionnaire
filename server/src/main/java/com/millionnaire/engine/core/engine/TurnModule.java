@@ -839,7 +839,8 @@ final class TurnModule {
                 // 每个自己的回合开始恢复一次主动用卡机会
                 // 行动顺序绕回（下一位不在当前玩家之后）记新一轮；第一个回合是第 1 轮
                 long round = t.currentPlayer() == null || indexOf(g, e.playerId()) <= indexOf(g, t.currentPlayer()) ? t.round() + 1 : t.round();
-                yield g.withTurn(t.next(e.turnNo(), e.playerId(), round).withTrack(TurnTrack.NONE.safePoint(1)))
+                int rentPercent = rules.rentInflation().percent(g.settings().endMode(), round);
+                yield g.withTurn(t.next(e.turnNo(), e.playerId(), round, rentPercent).withTrack(TurnTrack.NONE.safePoint(1)))
                         .withCards(g.cards().turnStarted(e.playerId()));
             }
             case TurnStageEntered e -> {

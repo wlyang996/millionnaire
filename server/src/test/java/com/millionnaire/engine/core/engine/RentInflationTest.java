@@ -18,17 +18,22 @@ class RentInflationTest {
 
     @Test
     void percentSchedule() {
-        assertEquals(100, RentInflation.percent(EndMode.BANKRUPTCY, 1));
-        assertEquals(100, RentInflation.percent(EndMode.BANKRUPTCY, 10));
-        assertEquals(120, RentInflation.percent(EndMode.BANKRUPTCY, 11));
-        assertEquals(120, RentInflation.percent(EndMode.BANKRUPTCY, 15));
-        assertEquals(140, RentInflation.percent(EndMode.BANKRUPTCY, 16));
-        assertEquals(280, RentInflation.percent(EndMode.BANKRUPTCY, 55));
-        assertEquals(300, RentInflation.percent(EndMode.BANKRUPTCY, 56));
-        assertEquals(300, RentInflation.percent(EndMode.BANKRUPTCY, 500));
-        assertEquals(100, RentInflation.percent(EndMode.TIME_LIMIT, 500));
+        assertEquals(100, RentInflation.DEFAULT.percent(EndMode.BANKRUPTCY, 1));
+        assertEquals(100, RentInflation.DEFAULT.percent(EndMode.BANKRUPTCY, 10));
+        assertEquals(120, RentInflation.DEFAULT.percent(EndMode.BANKRUPTCY, 11));
+        assertEquals(120, RentInflation.DEFAULT.percent(EndMode.BANKRUPTCY, 15));
+        assertEquals(140, RentInflation.DEFAULT.percent(EndMode.BANKRUPTCY, 16));
+        assertEquals(280, RentInflation.DEFAULT.percent(EndMode.BANKRUPTCY, 55));
+        assertEquals(300, RentInflation.DEFAULT.percent(EndMode.BANKRUPTCY, 56));
+        assertEquals(300, RentInflation.DEFAULT.percent(EndMode.BANKRUPTCY, 500));
+        assertEquals(100, RentInflation.DEFAULT.percent(EndMode.TIME_LIMIT, 500));
         assertEquals(350, RentInflation.apply(250, 140));
         assertEquals(130, RentInflation.apply(100, 130), "floored to a multiple of 10");
+        var custom = new RentInflation(4, 2, 50, 250);
+        assertEquals(100, custom.percent(EndMode.BANKRUPTCY, 4));
+        assertEquals(150, custom.percent(EndMode.BANKRUPTCY, 5));
+        assertEquals(250, custom.percent(EndMode.BANKRUPTCY, 9));
+        assertEquals(100, new RentInflation(4, 2, 0, 300).percent(EndMode.BANKRUPTCY, 99), "step 0 turns it off");
     }
 
     private static Table table(EndMode mode) {
@@ -48,6 +53,7 @@ class RentInflationTest {
     void roundAdvancesWhenTheOrderWrapsAround() {
         var t = table(EndMode.BANKRUPTCY);
         assertEquals(1, t.game().turn().round());
+        assertEquals(100, t.game().turn().rentPercent());
         turn(t);
         assertEquals("p2", t.current());
         assertEquals(1, t.game().turn().round());
@@ -67,9 +73,10 @@ class RentInflationTest {
             var o = g.board().ownable(tile).orElseThrow().owned("p2");
             g = g.withBoard(g.board().with(o));
             assertEquals(100, EconomyModule.rent(RULES, board, g, o));
-            GameState late = g.withTurn(g.turn().next(g.turn().turnNo(), g.turn().currentPlayer(), 16));
-            assertEquals(mode == EndMode.BANKRUPTCY ? 140 : 100, EconomyModule.rent(RULES, board, late, o));
-            assertEquals(mode == EndMode.BANKRUPTCY ? 140 : 100, EconomyModule.rentPercent(late));
+            int pct = RULES.rentInflation().percent(mode, 16);
+            assertEquals(mode == EndMode.BANKRUPTCY ? 140 : 100, pct);
+            GameState late = g.withTurn(g.turn().next(g.turn().turnNo(), g.turn().currentPlayer(), 16, pct));
+            assertEquals(pct == 140 ? 140 : 100, EconomyModule.rent(RULES, board, late, o));
         }
     }
 }

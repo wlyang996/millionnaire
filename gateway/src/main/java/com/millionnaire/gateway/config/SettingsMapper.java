@@ -16,7 +16,9 @@ import com.millionnaire.engine.config.TileType;
 import com.millionnaire.engine.config.TierPricing;
 import com.millionnaire.gateway.config.GameSettings.EventCash;
 import com.millionnaire.gateway.config.GameSettings.Fees;
+import com.millionnaire.engine.config.RentInflation;
 import com.millionnaire.gateway.config.GameSettings.LuckySetting;
+import com.millionnaire.gateway.config.GameSettings.RentRise;
 import com.millionnaire.gateway.config.GameSettings.StationSetting;
 import com.millionnaire.gateway.config.GameSettings.TierSetting;
 import java.io.IOException;
@@ -55,7 +57,18 @@ public final class SettingsMapper {
                 new StationSetting(BASE.station().price(), BASE.station().rentPerStation()),
                 new Fees(e.startReward(), e.miniGameWinReward(), e.bailCost()),
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
-                events, cards, DEFAULT_NAMES, defaultLucky());
+                events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise());
+    }
+
+    /** 内置租金上涨参数（引擎默认）。 */
+    public static RentRise defaultRentRise() {
+        RentInflation r = BASE.rentInflation();
+        return new RentRise(r.freeRounds(), r.everyRounds(), r.stepPercent(), r.capPercent());
+    }
+
+    /** 没有租金上涨参数（旧版本快照）时用内置默认。 */
+    public static RentRise rentRiseOf(GameSettings s) {
+        return s.rentRise() == null ? defaultRentRise() : s.rentRise();
     }
 
     /** 内置幸运 / 不幸奖池（两张地图共用，取引擎正式配置）。 */
@@ -164,6 +177,22 @@ public final class SettingsMapper {
         weights(errors, "道具概率", s.cardWeights(), CardType.values(), 1000);
         names(errors, s.tileNames());
         lucky(errors, s.lucky() == null ? defaultLucky() : s.lucky());
+        rentRise(errors, rentRiseOf(s));
+    }
+
+    private static void rentRise(List<String> errors, RentRise r) {
+        if (r.freeRounds() < 0 || r.freeRounds() > 1000) {
+            errors.add("租金上涨：原价轮数必须在 0～1000 之间");
+        }
+        if (r.everyRounds() < 1 || r.everyRounds() > 100) {
+            errors.add("租金上涨：上涨间隔必须在 1～100 轮之间");
+        }
+        if (r.stepPercent() < 0 || r.stepPercent() > 100) {
+            errors.add("租金上涨：每次涨幅必须在 0～100% 之间（0 表示不上涨）");
+        }
+        if (r.capPercent() < 100 || r.capPercent() > 1000) {
+            errors.add("租金上涨：封顶倍率必须在 100%～1000% 之间");
+        }
     }
 
     /** 幸运 / 不幸奖池：种类与默认一致（不增删、不换序），权重 0～100 且每个奖池合计大于 0，奖励 / 罚款金额与事件金额同样上限。 */
@@ -305,7 +334,7 @@ public final class SettingsMapper {
             lucky.add(new LuckySetting(b.kind(), b.label(), cash ? g.amount() : 0, g.weight(), b.unlucky()));
         }
         return new GameSettings(List.copyOf(tiers), s.station(), s.fees(), s.eventCash(), events, cards, names,
-                List.copyOf(lucky));
+                List.copyOf(lucky), rentRiseOf(s));
     }
 
     /** 调用前须先通过 {@link #validate} 的结构检查。 */
@@ -349,8 +378,9 @@ public final class SettingsMapper {
             boards.add(new BoardTemplate(b.id(), b.minPlayers(), b.maxPlayers(), b.tiles(),
                     pool.stream().filter(f -> f.unlucky() ? hasUnlucky : hasLucky).toList()));
         }
+        RentRise rr = rentRiseOf(s);
         return new RuleConfig(BASE.ruleVersion(), boards, tiers, st, economy, BASE.ratios(), cards, events,
-                BASE.timing(), BASE.room());
+                BASE.timing(), BASE.room(), new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()));
     }
 
     private static Map<String, List<String>> loadDefaultNames() {

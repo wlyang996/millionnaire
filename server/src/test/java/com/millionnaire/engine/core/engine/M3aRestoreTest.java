@@ -53,7 +53,7 @@ class M3aRestoreTest {
         Table t = M3aTest.realDebt();
         debt(t, d -> new DebtState(d.debtId(), d.debtor(), d.creditor(), d.amount(), d.cause(), d.segment(), d.continued(), d.windowId(), d.source(), DebtPath.DIRECT_BANKRUPTCY), "debt invalid");
         debt(t, d -> new DebtState(d.debtId() + 1, d.debtor(), d.creditor(), d.amount(), d.cause(), d.segment(), d.continued(), d.windowId(), d.source(), d.path()), "debt invalid");
-        rejected(t, g -> { var a = g.turn(); return g.withTurn(new TurnState(a.turnNo(), a.currentPlayer(), a.stage(), a.windowId(), a.startRewardGiven(), a.autoTaskId(), a.continuation(), a.notBefore(), a.landing(), a.lastLandingId(), a.track(), a.chain(), a.lastChainId(), a.lastDebtId() - 1, a.round())); }, "debt invalid");
+        rejected(t, g -> { var a = g.turn(); return g.withTurn(new TurnState(a.turnNo(), a.currentPlayer(), a.stage(), a.windowId(), a.startRewardGiven(), a.autoTaskId(), a.continuation(), a.notBefore(), a.landing(), a.lastLandingId(), a.track(), a.chain(), a.lastChainId(), a.lastDebtId() - 1, a.round(), a.rentPercent())); }, "debt invalid");
     }
     @Test void everyDebtSourceFieldIsCheckedOnRestore() {
         Table t = M3aTest.realDebt();

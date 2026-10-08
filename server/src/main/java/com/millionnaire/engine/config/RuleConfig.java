@@ -20,9 +20,18 @@ public record RuleConfig(
         Map<CardType, Integer> cardWeights,
         Map<EventKind, Integer> eventWeights,
         TimingConfig timing,
-        RoomOptions room) {
+        RoomOptions room,
+        RentInflation rentInflation) {
+
+    /** 不指定租金上涨参数时用默认值 {@link RentInflation#DEFAULT}。 */
+    public RuleConfig(String ruleVersion, List<BoardTemplate> boards, List<TierPricing> tiers, StationPricing station,
+                      EconomyConfig economy, RatioConfig ratios, Map<CardType, Integer> cardWeights,
+                      Map<EventKind, Integer> eventWeights, TimingConfig timing, RoomOptions room) {
+        this(ruleVersion, boards, tiers, station, economy, ratios, cardWeights, eventWeights, timing, room, RentInflation.DEFAULT);
+    }
 
     public RuleConfig {
+        rentInflation = rentInflation == null ? RentInflation.DEFAULT : rentInflation;
         boards = Immutable.list(boards);
         tiers = Immutable.list(tiers);
         cardWeights = Immutable.sortedMap(cardWeights);

@@ -80,6 +80,25 @@ class ConfigBindingTest {
     }
 
     @Test
+    void rentRiseIsEditable() {
+        GameSettings d = SettingsMapper.defaults();
+        assertThat(d.rentRise()).isEqualTo(new GameSettings.RentRise(10, 5, 20, 300));
+        GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), new GameSettings.RentRise(6, 3, 50, 400));
+        assertThat(SettingsMapper.validate(edited)).isEmpty();
+        var ri = SettingsMapper.toRuleConfig(edited).rentInflation();
+        assertThat(ri.percent(com.millionnaire.engine.config.EndMode.BANKRUPTCY, 7)).isEqualTo(150);
+        assertThat(ri.percent(com.millionnaire.engine.config.EndMode.BANKRUPTCY, 100)).isEqualTo(400);
+        GameSettings bad = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), new GameSettings.RentRise(-1, 0, 120, 50));
+        assertThat(SettingsMapper.validate(bad)).hasSize(4);
+        // 旧版本快照没有 rentRise：按默认处理，规则与默认一致
+        GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+    }
+
+    @Test
     void newRoomsUseThePublishedVersionOldRoomsKeepTheirs() throws Exception {
         Clock clock = Clock.systemUTC();
         List<String> sent = new java.util.concurrent.CopyOnWriteArrayList<>();

@@ -34,6 +34,7 @@ public class ClientConfigController {
             out.put("eventCash", s.eventCash());
             out.put("tileNames", s.tileNames());
             out.put("lucky", s.lucky() == null ? SettingsMapper.defaultLucky() : s.lucky());
+            out.put("rentRise", SettingsMapper.rentRiseOf(s));
             // 版本 0（内置默认）随后台升级会变，不缓存；已发布版本内容不变，缓存一天
             CacheControl cache = id == GameConfigs.DEFAULT_ID ? CacheControl.noCache()
                     : CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic();

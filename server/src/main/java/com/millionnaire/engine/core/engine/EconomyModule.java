@@ -128,16 +128,11 @@ final class EconomyModule {
                 .filter(o -> board.tiles().get(o.tile()).type() == TileType.STATION && !o.mortgaged()).count();
     }
 
-    /** 当前租金倍率（百分比，见 {@link com.millionnaire.engine.config.RentInflation}）。 */
-    static int rentPercent(GameState g) {
-        return com.millionnaire.engine.config.RentInflation.percent(g.settings().endMode(), g.turn().round());
-    }
-
     static long rent(RuleConfig config, BoardTemplate board, GameState g, OwnableState o) {
         Tile tile = board.tiles().get(o.tile());
         Pricing p = new Pricing(config);
         long base = tile.type() == TileType.STATION ? p.stationRent(countedStations(board, g, o.owner())) : p.rent(tile.tier(), o.level());
-        return com.millionnaire.engine.config.RentInflation.apply(base, rentPercent(g));
+        return com.millionnaire.engine.config.RentInflation.apply(base, g.turn().rentPercent());
     }
 
     // ================================================================ 落点推进器

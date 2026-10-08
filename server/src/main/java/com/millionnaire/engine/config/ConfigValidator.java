@@ -71,6 +71,11 @@ public final class ConfigValidator {
         if (blank(c.ruleVersion())) {
             fail("ruleVersion missing");
         }
+        RentInflation ri = c.rentInflation();
+        if (ri.freeRounds() < 0 || ri.freeRounds() > 1000 || ri.everyRounds() < 1 || ri.everyRounds() > 100
+                || ri.stepPercent() < 0 || ri.stepPercent() > 100 || ri.capPercent() < 100 || ri.capPercent() > 1000) {
+            fail("rentInflation out of range (freeRounds 0..1000, everyRounds 1..100, stepPercent 0..100, capPercent 100..1000)");
+        }
         EconomyConfig eco = c.economy();
         boolean ecoOk = present(eco, "economy") && checkEconomy(eco);
         RatioConfig ratios = c.ratios();
