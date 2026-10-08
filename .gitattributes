@@ -1,2 +1,4 @@
 *.bat text eol=crlf
 *.ps1 text eol=crlf
+# 引擎 golden 快照按字节比对：固定 LF，避免 Windows 的 autocrlf 改写后测试失败
+server/src/test/resources/golden/** text eol=lf
