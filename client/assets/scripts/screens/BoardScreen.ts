@@ -47,6 +47,8 @@ import { boardHooks } from './board/BoardHooks';
 
 /** 停在休息区时自动展示休息区页面的时长 */
 const REST_SHOW_MS = 3000;
+/** 加盖 / 降级后高亮那块地的时长 */
+const FLASH_MS = 3000;
 
 /** 设计稿 01：棋盘区 y≈262–1095（视口 256–1098），手牌栏 1102–1192，页脚 1198–1280。 */
 const VP_Y = 256;
@@ -145,7 +147,8 @@ export class BoardScreen extends Screen {
         // 棋盘视口
         this.view = new BoardView(this.root, 0, VP_Y, Theme.W, VP_H, this.cam);
         const evActor = ev.actor ? st.player(ev.actor) : undefined;
-        this.view.render(game, this.myId, st.me().nickname, 'fan', evMode === 'MY_DRAW' && evActor ? evActor.position : null);
+        const flash = this.flash && this.flash.until > Date.now() ? this.flash.tile : null;
+        this.view.render(game, this.myId, st.me().nickname, 'fan', flash ?? (evMode === 'MY_DRAW' && evActor ? evActor.position : null));
         this.cam = this.view.cam;
         this.view.onTileTap = (i) => {
             // Screen22 keeps event interaction on the board; inspecting a tile must not draw an event.
@@ -464,6 +467,20 @@ export class BoardScreen extends Screen {
         for (const change of this.cashChangeNodes) tickCashDelta(change, now);
     }
 
+    /** 高亮某格一段时间（加盖 / 降级等提示用），镜头对准它，到时自动取消。 */
+    private flash: { tile: number; until: number } | null = null;
+    private flashTile(tile: number): void {
+        this.flash = { tile, until: Date.now() + FLASH_MS };
+        this.view?.focusTile(tile);
+        this.refresh();
+        setTimeout(() => {
+            if (this.flash && this.flash.until <= Date.now()) {
+                this.flash = null;
+                this.refresh();
+            }
+        }, FLASH_MS + 50);
+    }
+
     /** 棋盘右侧的小胶囊按钮（半透明白底、深蓝字）。 */
     private sideButton(label: string, y: number, fn: () => void): void {
         const b = mk(this.root, 'Side:' + label, Theme.W - 188, y, 84, 46);
@@ -660,6 +677,7 @@ export class BoardScreen extends Screen {
                 if (this.dice) this.dice.play(cue.value, () => undefined);
             } else if (cue.kind === 'notice') {
                 Toast.show(cue.text);
+                if (cue.tile !== undefined) this.flashTile(cue.tile); // 加盖 / 降级：棋盘对准并高亮那块地
             } else if (cue.kind === 'jail') {
                 // 入狱全屏动画只给本人看；别人入狱只提示一句（用户 2026-10-08）
                 if (cue.playerId !== this.myId) {

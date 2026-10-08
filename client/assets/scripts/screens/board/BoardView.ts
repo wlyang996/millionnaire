@@ -366,8 +366,9 @@ export class BoardView {
         const grp = isProp ? groupOf(game, tile.index) : 0;
         if (grp) fillRR(gg, m + r * 0.6, m + 1, bw - r * 1.2, Math.max(3, Math.round(fh * 0.07)), 2, groupColor(grp));
         if (this.highlight === tile.index) {
-            fillRR(gg, m - 1, m - 1, bw + 2, bh + 2, r + 1, '#FFD64655');
-            strokeRR(gg, m, m, bw, fh, r, Theme.c.yellow, 3);
+            // 高亮（抽卡所在格 / 加盖降级的地）：浅黄底 + 粗金色边框，缩小后也看得清
+            fillRR(gg, m - 1, m - 1, bw + 2, bh + 2, r + 1, '#FFD64688');
+            strokeRR(gg, m + 1, m + 1, bw - 2, bh - 2, r, '#FFB000', Math.max(4, Math.round(cw * 0.07)));
         }
         if (tile.auctionLot) fillCircle(gg, m + bw - 8, m + 8, 5, Theme.c.red);
         // 下部地名、上部图标

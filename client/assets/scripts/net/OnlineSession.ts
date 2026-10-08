@@ -22,7 +22,7 @@ export type Cue =
     | { kind: 'move'; playerId: string; from: number; steps: number }
     | { kind: 'jail'; playerId: string }
     /** 一句提示，排在前面的动画（如狱中判定骰）播完后再显示。 */
-    | { kind: 'notice'; playerId: string; text: string }
+    | { kind: 'notice'; playerId: string; text: string; tile?: number }
     /** 事件卡：waiting = 落到事件格等待抽卡；否则为翻牌结果。排在走棋提示之后，人物落地后才显示。 */
     | { kind: 'event'; playerId: string; actor: string; waiting: boolean; result: EventResult | null };
 
@@ -320,7 +320,7 @@ export class OnlineSession {
                 const up = this.lastEventKind !== 'DOWNGRADE';
                 const text = ti < 0 ? who + (up ? '没有可以加盖的房产' : '没有可以降级的房产')
                     : who + '的' + (g0?.tiles[ti]?.name ?? '') + (up ? '免费加盖到 ' : '降到 ') + Number(d.level) + ' 级';
-                this.cues.push({ kind: 'notice', playerId: pid, text });
+                this.cues.push({ kind: 'notice', playerId: pid, text, tile: ti >= 0 ? ti : undefined });
             } else if (e.kind === 'PlayerJailed') {
                 this.cues.push({ kind: 'jail', playerId: String(d.playerId) });
             }
@@ -399,6 +399,10 @@ export class OnlineSession {
                 }
             } else if (e.kind === 'EventCardReceived' && result) {
                 result.card = String(d.card) as CardType;
+            } else if (e.kind === 'EventPropertyChanged' && result) {
+                // 加盖 / 降级落到哪块地：直接写在卡面上
+                const ti = Number(d.tile);
+                result.target = ti < 0 ? null : { tile: ti, name: this.store.session.game?.tiles[ti]?.name ?? '', level: Number(d.level) };
             }
         }
         if (result && actor) {

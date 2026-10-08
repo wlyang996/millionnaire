@@ -121,7 +121,11 @@ export class EventOverlay {
                 : r.kind === 'CARD' ? [{ t: '获得' + (r.card ? CARD_NAMES[r.card] : '道具') + '×1', size: 18, color: navy }]
                     : r.kind === 'MOVE' ? [{ t: r.steps > 0 ? '前进' : '后退', size: 20, color: navy }, { t: String(Math.abs(r.steps)), size: 24, color: red }, { t: '格', size: 20, color: navy }]
                         : r.kind === 'JAIL' ? [{ t: '前往监狱', size: 20, color: navy }]
-                            : [{ t: ({ BUILD: '免费加盖一级', DOWNGRADE: '房屋降一级', TO_STATION: '前往车站', TO_START: '回到起点' } as Record<string, string>)[r.kind] ?? '', size: 18, color: navy }];
+                            : (r.kind === 'BUILD' || r.kind === 'DOWNGRADE') && r.target !== undefined
+                                // 加盖 / 降级：写出是哪块地、变成几级（没有合适的房产也说明）
+                                ? (r.target ? [{ t: r.target.name, size: 20, color: red }, { t: (r.kind === 'BUILD' ? '升到' : '降到') + r.target.level + '级', size: 16, color: navy }]
+                                    : [{ t: r.kind === 'BUILD' ? '没有可加盖的房产' : '没有可降级的房产', size: 15, color: navy }])
+                                : [{ t: ({ BUILD: '免费加盖一级', DOWNGRADE: '房屋降一级', TO_STATION: '前往车站', TO_START: '回到起点' } as Record<string, string>)[r.kind] ?? '', size: 18, color: navy }];
         const story = eventStory(r);
         if (story) {
             // 奖励 / 罚款：缘由（两行以内）+ 金额，例如"随地吐痰，被罚款 -200"

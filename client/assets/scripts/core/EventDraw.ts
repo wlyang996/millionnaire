@@ -29,6 +29,8 @@ export interface EventResult {
     seed?: number;
     /** 幸运卡的名字（如"好人好事"），有则作为描述文案；抽卡事件为空 */
     label?: string;
+    /** 加盖 / 降级落到的地产（名称与新等级）；null = 没有可变的房产；undefined = 不是这类事件或尚未知道 */
+    target?: { tile: number; name: string; level: number } | null;
     /** 幸运格抽到的（红色幸运卡，自动翻开） */
     lucky?: boolean;
     /** 不幸格抽到的（紫色不幸卡，自动翻开） */
