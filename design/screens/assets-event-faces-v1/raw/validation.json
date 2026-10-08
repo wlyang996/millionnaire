@@ -1,0 +1,141 @@
+{
+  "date": "2026-10-08",
+  "size": [
+    369,
+    473
+  ],
+  "sprites": [
+    {
+      "name": "event_build",
+      "file": "png/event_build.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixels": 18245,
+      "template_alpha_matches": true,
+      "blank_description_matches": true,
+      "atlas_crop": [
+        135,
+        107,
+        471,
+        401
+      ]
+    },
+    {
+      "name": "event_downgrade",
+      "file": "png/event_downgrade.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixels": 18245,
+      "template_alpha_matches": true,
+      "blank_description_matches": true,
+      "atlas_crop": [
+        555,
+        107,
+        891,
+        401
+      ]
+    },
+    {
+      "name": "event_station",
+      "file": "png/event_station.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixels": 18245,
+      "template_alpha_matches": true,
+      "blank_description_matches": true,
+      "atlas_crop": [
+        135,
+        615,
+        471,
+        911
+      ]
+    },
+    {
+      "name": "event_start",
+      "file": "png/event_start.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixels": 18245,
+      "template_alpha_matches": true,
+      "blank_description_matches": true,
+      "atlas_crop": [
+        555,
+        615,
+        891,
+        911
+      ]
+    },
+    {
+      "name": "lucky_face",
+      "file": "png/lucky_face.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixels": 18245,
+      "template_alpha_matches": true,
+      "blank_description_matches": true,
+      "atlas_crop": [
+        135,
+        1122,
+        471,
+        1418
+      ]
+    },
+    {
+      "name": "unlucky_face",
+      "file": "png/unlucky_face.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixels": 18245,
+      "template_alpha_matches": true,
+      "blank_description_matches": true,
+      "atlas_crop": [
+        555,
+        1122,
+        891,
+        1418
+      ]
+    }
+  ]
+}

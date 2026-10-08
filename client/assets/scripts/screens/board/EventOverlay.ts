@@ -105,9 +105,10 @@ export class EventOverlay {
         g.fill();
         const r = state.result;
         if (!r) return;
-        const key = {
+        // 幸运 / 不幸卡用专门的红 / 紫题头卡面（插画为四叶草 / 乌云），其余按结果类别（design/screens/assets-event-faces-v1）
+        const key = r.lucky ? 'lucky_face' : r.unlucky ? 'unlucky_face' : {
             CASH_REWARD: 'event_reward', CASH_FINE: 'event_fine', CARD: 'event_tool', MOVE: 'event_move', JAIL: 'event_jail',
-            BUILD: 'event_tool', DOWNGRADE: 'event_fine', TO_STATION: 'event_move', TO_START: 'event_move',
+            BUILD: 'event_build', DOWNGRADE: 'event_downgrade', TO_STATION: 'event_station', TO_START: 'event_start',
         }[r.kind];
         if (art(n, key, -CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 'stretch')) g.clear();
         const f = FACE[r.kind];

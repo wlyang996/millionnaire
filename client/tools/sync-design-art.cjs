@@ -35,6 +35,11 @@ if (fs.existsSync(path.join(luckySource, 'sprites.json'))) {
     const lucky = JSON.parse(fs.readFileSync(path.join(luckySource, 'sprites.json'), 'utf8')).sprites;
     for (const s of lucky) copy(path.join(luckySource, s.file), 'lucky/' + path.basename(s.file), s.name);
 }
+const facesSource = path.join(root, 'design/screens/assets-event-faces-v1');
+if (fs.existsSync(path.join(facesSource, 'sprites.json'))) {
+    const faces = JSON.parse(fs.readFileSync(path.join(facesSource, 'sprites.json'), 'utf8')).sprites;
+    for (const s of faces) copy(path.join(facesSource, s.file), 'event_faces/' + path.basename(s.file), s.name);
+}
 const jailCloseup = path.join(root, 'design/screens/assets-alignment-v1/scene_jail_closeup.png');
 if (fs.existsSync(jailCloseup)) copy(jailCloseup, 'alignment/scene_jail_closeup.png', 'scene_jail_closeup');
 const catalog = '/** Runtime copies of design/screens; event_art takes precedence for shared card backs. */\n'

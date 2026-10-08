@@ -196,5 +196,11 @@ export const ART_PATHS: Record<string, string> = {
     'lucky_card_fan': 'art/lucky/lucky_card_fan',
     'unlucky_card_back': 'art/lucky/unlucky_card_back',
     'unlucky_card_fan': 'art/lucky/unlucky_card_fan',
+    'event_build': 'art/event_faces/event_build',
+    'event_downgrade': 'art/event_faces/event_downgrade',
+    'event_station': 'art/event_faces/event_station',
+    'event_start': 'art/event_faces/event_start',
+    'lucky_face': 'art/event_faces/lucky_face',
+    'unlucky_face': 'art/event_faces/unlucky_face',
     'scene_jail_closeup': 'art/alignment/scene_jail_closeup',
 };

@@ -1,0 +1,28 @@
+{
+  "sprites": [
+    {
+      "name": "event_build",
+      "file": "png/event_build.png"
+    },
+    {
+      "name": "event_downgrade",
+      "file": "png/event_downgrade.png"
+    },
+    {
+      "name": "event_station",
+      "file": "png/event_station.png"
+    },
+    {
+      "name": "event_start",
+      "file": "png/event_start.png"
+    },
+    {
+      "name": "lucky_face",
+      "file": "png/lucky_face.png"
+    },
+    {
+      "name": "unlucky_face",
+      "file": "png/unlucky_face.png"
+    }
+  ]
+}
