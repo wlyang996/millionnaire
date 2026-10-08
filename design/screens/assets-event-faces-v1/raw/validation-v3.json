@@ -1,0 +1,209 @@
+{
+  "date": "2026-10-08",
+  "version": 3,
+  "generation": "built-in image_gen",
+  "method": "fresh high-resolution art, downsampled once; unchanged shell",
+  "bounds_method": "color foreground proxy, not a precise semantic silhouette",
+  "sprites": [
+    {
+      "name": "event_build",
+      "file": "png\\event_build.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "generated_size": [
+        1380,
+        1140
+      ],
+      "v2_color_foreground_bounds": [
+        40,
+        47,
+        289,
+        259
+      ],
+      "v3_color_foreground_bounds": [
+        14,
+        17,
+        313,
+        255
+      ],
+      "foreground_width_fraction": 0.931,
+      "foreground_height_fraction": 0.898,
+      "shell_matches_v2": true,
+      "shell_matches_reward_template": true,
+      "alpha_matches_template": true,
+      "transparent_pixels": 18245,
+      "blank_description_unchanged": true,
+      "sha256": "00eac8ca4e920b6d828bba4197f0723ed8f64887b887ad63ade57bc636f46258"
+    },
+    {
+      "name": "event_downgrade",
+      "file": "png\\event_downgrade.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "generated_size": [
+        1380,
+        1140
+      ],
+      "v2_color_foreground_bounds": [
+        38,
+        67,
+        280,
+        257
+      ],
+      "v3_color_foreground_bounds": [
+        13,
+        25,
+        312,
+        257
+      ],
+      "foreground_width_fraction": 0.931,
+      "foreground_height_fraction": 0.875,
+      "shell_matches_v2": true,
+      "shell_matches_reward_template": true,
+      "alpha_matches_template": true,
+      "transparent_pixels": 18245,
+      "blank_description_unchanged": true,
+      "sha256": "2dba4ecd264bc84638f08e43545fbc33aa2dacc6cdc96644156ff382318077a5"
+    },
+    {
+      "name": "event_station",
+      "file": "png\\event_station.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "generated_size": [
+        1380,
+        1140
+      ],
+      "v2_color_foreground_bounds": [
+        28,
+        71,
+        290,
+        255
+      ],
+      "v3_color_foreground_bounds": [
+        4,
+        37,
+        317,
+        259
+      ],
+      "foreground_width_fraction": 0.975,
+      "foreground_height_fraction": 0.838,
+      "shell_matches_v2": true,
+      "shell_matches_reward_template": true,
+      "alpha_matches_template": true,
+      "transparent_pixels": 18245,
+      "blank_description_unchanged": true,
+      "sha256": "6ea4aa082773af6e0d4253ee76dfb51584b632e84bad61097758a94080bf1345"
+    },
+    {
+      "name": "event_start",
+      "file": "png\\event_start.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "generated_size": [
+        1380,
+        1140
+      ],
+      "v2_color_foreground_bounds": [
+        25,
+        58,
+        291,
+        258
+      ],
+      "v3_color_foreground_bounds": [
+        6,
+        20,
+        316,
+        254
+      ],
+      "foreground_width_fraction": 0.966,
+      "foreground_height_fraction": 0.883,
+      "shell_matches_v2": true,
+      "shell_matches_reward_template": true,
+      "alpha_matches_template": true,
+      "transparent_pixels": 18245,
+      "blank_description_unchanged": true,
+      "sha256": "d1f7902d06cf82c4fb3ea6eacd22570ade8776efafd24cfbaed464a65a13568a"
+    },
+    {
+      "name": "lucky_face",
+      "file": "png\\lucky_face.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "generated_size": [
+        1380,
+        1140
+      ],
+      "v2_color_foreground_bounds": [
+        34,
+        61,
+        289,
+        255
+      ],
+      "v3_color_foreground_bounds": [
+        17,
+        28,
+        305,
+        258
+      ],
+      "foreground_width_fraction": 0.897,
+      "foreground_height_fraction": 0.868,
+      "shell_matches_v2": true,
+      "shell_matches_reward_template": true,
+      "alpha_matches_template": true,
+      "transparent_pixels": 18245,
+      "blank_description_unchanged": true,
+      "sha256": "013c06a93adb7272b6c6b90e146acb9deb97fc167765246c11388f3ebfb39b14"
+    },
+    {
+      "name": "unlucky_face",
+      "file": "png\\unlucky_face.png",
+      "mode": "RGBA",
+      "size": [
+        369,
+        473
+      ],
+      "generated_size": [
+        1380,
+        1140
+      ],
+      "v2_color_foreground_bounds": [
+        38,
+        51,
+        282,
+        260
+      ],
+      "v3_color_foreground_bounds": [
+        23,
+        22,
+        298,
+        259
+      ],
+      "foreground_width_fraction": 0.857,
+      "foreground_height_fraction": 0.894,
+      "shell_matches_v2": true,
+      "shell_matches_reward_template": true,
+      "alpha_matches_template": true,
+      "transparent_pixels": 18245,
+      "blank_description_unchanged": true,
+      "sha256": "576d9bcfcd08c0e85458200302abb8d22d842d16bf8a3119bbd3f5203442d3cf"
+    }
+  ],
+  "design_copy_and_layout_outside_six_windows_unchanged": true,
+  "design_sha256": "20da919f1c98d61edc7ef8ec0a1bb77deb5bee77a8662795fe2ab2969aa01773"
+}

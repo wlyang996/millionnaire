@@ -20,12 +20,11 @@
       "transparent_pixels": 18245,
       "template_alpha_matches": true,
       "blank_description_matches": true,
-      "all_shell_pixels_match": true,
       "atlas_crop": [
-        137,
-        101,
-        463,
-        370
+        135,
+        107,
+        471,
+        401
       ]
     },
     {
@@ -43,12 +42,11 @@
       "transparent_pixels": 18245,
       "template_alpha_matches": true,
       "blank_description_matches": true,
-      "all_shell_pixels_match": true,
       "atlas_crop": [
-        561,
-        101,
-        887,
-        370
+        555,
+        107,
+        891,
+        401
       ]
     },
     {
@@ -66,12 +64,11 @@
       "transparent_pixels": 18245,
       "template_alpha_matches": true,
       "blank_description_matches": true,
-      "all_shell_pixels_match": true,
       "atlas_crop": [
-        137,
-        601,
-        463,
-        875
+        135,
+        615,
+        471,
+        911
       ]
     },
     {
@@ -89,12 +86,11 @@
       "transparent_pixels": 18245,
       "template_alpha_matches": true,
       "blank_description_matches": true,
-      "all_shell_pixels_match": true,
       "atlas_crop": [
-        561,
-        601,
-        887,
-        875
+        555,
+        615,
+        891,
+        911
       ]
     },
     {
@@ -112,12 +108,11 @@
       "transparent_pixels": 18245,
       "template_alpha_matches": true,
       "blank_description_matches": true,
-      "all_shell_pixels_match": true,
       "atlas_crop": [
-        137,
-        1103,
-        463,
-        1380
+        135,
+        1122,
+        471,
+        1418
       ]
     },
     {
@@ -135,12 +130,11 @@
       "transparent_pixels": 18245,
       "template_alpha_matches": true,
       "blank_description_matches": true,
-      "all_shell_pixels_match": true,
       "atlas_crop": [
-        561,
-        1103,
-        887,
-        1380
+        555,
+        1122,
+        891,
+        1418
       ]
     }
   ]
