@@ -23,7 +23,8 @@ export const STATION = { price: 1000, rentEach: 200, mortgageRatio: 0.7 };
 // 下面三项与 TIERS / STATION 的价格、租金可由后台发布的参数覆盖（applyServerRules），默认值与内置配置一致
 export let START_BONUS = 1000;
 export const MAX_LEVEL = 3;
-export const MAX_HAND = 6;
+/** 每人最多持有的道具张数（后台可配，联机按房间参数覆盖） */
+export let MAX_HAND = 6;
 export let MINIGAME_REWARD = 500;
 export let BAIL_COST = 500;
 
@@ -42,6 +43,7 @@ export interface ServerRules {
     tiers: { tier: Tier; basePrice: number; upgradeCost: number; rents: number[] }[];
     station: { price: number; rentPerStation: number };
     fees: { startReward: number; miniGameWinReward: number; bailCost: number };
+    handLimit?: number;
 }
 
 /** 用房间绑定的参数版本覆盖价格、租金与固定费用（就地修改，已引用 TIERS / STATION 的地方随之生效）。 */
@@ -58,6 +60,7 @@ export function applyServerRules(r: ServerRules): void {
     START_BONUS = r.fees.startReward;
     MINIGAME_REWARD = r.fees.miniGameWinReward;
     BAIL_COST = r.fees.bailCost;
+    if (r.handLimit && r.handLimit > 0) MAX_HAND = r.handLimit;
     if (r.lucky && r.lucky.length) luckyOverride = r.lucky.map((f) => ({ ...f }));
 }
 export const INITIAL_CASH_OPTIONS = [2000, 3000, 5000];

@@ -80,6 +80,25 @@ class ConfigBindingTest {
     }
 
     @Test
+    void handLimitIsEditable() {
+        GameSettings d = SettingsMapper.defaults();
+        assertThat(d.handLimit()).isEqualTo(6);
+        GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), 8);
+        assertThat(SettingsMapper.validate(edited)).isEmpty();
+        assertThat(SettingsMapper.toRuleConfig(edited).economy().handLimit()).isEqualTo(8);
+        for (int bad : new int[] {1, 9}) {
+            assertThat(SettingsMapper.validate(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
+                    d.eventWeights(), d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), bad)))
+                    .anyMatch(e -> e.contains("道具上限"));
+        }
+        // 旧版本快照没有 handLimit：按默认处理
+        GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+    }
+
+    @Test
     void rentRiseIsEditable() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(d.rentRise()).isEqualTo(new GameSettings.RentRise(10, 5, 20, 300));

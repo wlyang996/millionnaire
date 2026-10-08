@@ -299,6 +299,13 @@ onMounted(() => {
             <span class="hint">%</span>
           </el-form-item>
         </el-form>
+        <h3>道具持有上限</h3>
+        <el-form label-width="140px" class="narrow">
+          <el-form-item label="每人最多持有">
+            <el-input-number v-model="form.handLimit" :min="2" :max="8" />
+            <span class="hint">张；超出时要弃一张。房间"开局道具"最多也只能选这么多（2～8）</span>
+          </el-form-item>
+        </el-form>
         <h3>抽到各种道具（合计 1000）<el-tag :type="cardTotal === 1000 ? 'success' : 'danger'" size="small">当前 {{ cardTotal }}</el-tag></h3>
         <p class="muted">事件格结果为"获得道具"时，按下列权重抽一张（千分比，120 = 12%）。</p>
         <div class="cards">

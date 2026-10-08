@@ -1,7 +1,7 @@
 /** 页面 3：好友房间（房号分享、8 个座位、房主设置、语音条/聊天片段、准备/开局）。 */
 import { Node } from 'cc';
 import { copyText, shareRoom } from '../net/Wx';
-import { boardSizeOf, INITIAL_CASH_OPTIONS, maxPlayers, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
+import { boardSizeOf, INITIAL_CASH_OPTIONS, MAX_HAND, maxPlayers, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
 import { EndMode, Member } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { ChatPopup } from '../popups/ChatPopup';
@@ -94,10 +94,10 @@ export class RoomScreen extends Screen {
         mk1('投骰时间', 4);
         const roll = new Segmented(set, segX, 12 + rowH * 4, segW, 50, ROLL_SECONDS_OPTIONS.map((v) => ({ label: v + '秒', value: v })),
             s.settings.rollSeconds, (v) => st.setSetting({ rollSeconds: v as number }), 8, Theme.font.sm);
-        // 开局道具（用户 2026-10-07）：默认不发；选 1～6 张则开局每人随机发这么多张（事件仍可获得道具）
+        // 开局道具（用户 2026-10-07）：默认不发；选 1～道具上限（后台可配，默认 6）张则开局每人随机发这么多张（事件仍可获得道具）
         mk1('开局道具', 5);
         const cards = new Segmented(set, segX, 12 + rowH * 5, segW, 50,
-            [{ label: '无', value: 0 }, ...[1, 2, 3, 4, 5, 6].map((v) => ({ label: String(v), value: v }))],
+            [{ label: '无', value: 0 }, ...Array.from({ length: MAX_HAND }, (_, i) => ({ label: String(i + 1), value: i + 1 }))],
             s.settings.initialCards, (v) => st.setSetting({ initialCards: v as number }), 6, Theme.font.sm);
         for (const sg of [map, cash, mode, dur, roll, cards]) {
             sg.locked = !isHost;

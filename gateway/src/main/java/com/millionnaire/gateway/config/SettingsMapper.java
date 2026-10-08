@@ -35,6 +35,8 @@ public final class SettingsMapper {
     /** 管理后台的业务上限：防止误输入（多打几个 0）做出离谱的经济系统。引擎自身的上限更宽。 */
     static final long MAX_PRICE = 1_000_000;
     static final int MAX_NAME_LENGTH = 8;
+    /** 道具上限的业务范围：弃牌界面一屏最多摆 9 张（上限 + 新抽的 1 张）。 */
+    static final int MAX_HAND_LIMIT = 8;
 
     private static final RuleConfig BASE = RuleConfigs.defaultV1();
     private static final Map<String, List<String>> DEFAULT_NAMES = loadDefaultNames();
@@ -57,13 +59,18 @@ public final class SettingsMapper {
                 new StationSetting(BASE.station().price(), BASE.station().rentPerStation()),
                 new Fees(e.startReward(), e.miniGameWinReward(), e.bailCost()),
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
-                events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise());
+                events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise(), e.handLimit());
     }
 
     /** 内置租金上涨参数（引擎默认）。 */
     public static RentRise defaultRentRise() {
         RentInflation r = BASE.rentInflation();
         return new RentRise(r.freeRounds(), r.everyRounds(), r.stepPercent(), r.capPercent());
+    }
+
+    /** 没有道具上限（旧版本快照）时用内置默认。 */
+    public static int handLimitOf(GameSettings s) {
+        return s.handLimit() == null ? BASE.economy().handLimit() : s.handLimit();
     }
 
     /** 没有租金上涨参数（旧版本快照）时用内置默认。 */
@@ -178,6 +185,10 @@ public final class SettingsMapper {
         names(errors, s.tileNames());
         lucky(errors, s.lucky() == null ? defaultLucky() : s.lucky());
         rentRise(errors, rentRiseOf(s));
+        int hand = handLimitOf(s);
+        if (hand < BASE.economy().initialHandSize() || hand > MAX_HAND_LIMIT) {
+            errors.add("道具上限必须在 " + BASE.economy().initialHandSize() + "～" + MAX_HAND_LIMIT + " 张之间");
+        }
     }
 
     private static void rentRise(List<String> errors, RentRise r) {
@@ -334,7 +345,7 @@ public final class SettingsMapper {
             lucky.add(new LuckySetting(b.kind(), b.label(), cash ? g.amount() : 0, g.weight(), b.unlucky()));
         }
         return new GameSettings(List.copyOf(tiers), s.station(), s.fees(), s.eventCash(), events, cards, names,
-                List.copyOf(lucky), rentRiseOf(s));
+                List.copyOf(lucky), rentRiseOf(s), handLimitOf(s));
     }
 
     /** 调用前须先通过 {@link #validate} 的结构检查。 */
@@ -354,7 +365,7 @@ public final class SettingsMapper {
         EconomyConfig e = BASE.economy();
         EconomyConfig economy = new EconomyConfig(s.fees().startReward(), s.fees().miniGameWinReward(),
                 s.fees().bailCost(), s.eventCash().min(), s.eventCash().max(), s.eventCash().step(),
-                e.eventMoveMinSteps(), e.eventMoveMaxSteps(), e.dieFaces(), e.maxLevel(), e.handLimit(),
+                e.eventMoveMinSteps(), e.eventMoveMaxSteps(), e.dieFaces(), e.maxLevel(), handLimitOf(s),
                 e.initialHandSize(), e.orderNumberMax(), e.offerUnaffordablePurchase(), e.upgradeAfterPurchase(),
                 e.cardsEnabled());
         Map<CardType, Integer> cards = new TreeMap<>();

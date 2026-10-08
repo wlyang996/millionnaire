@@ -19,6 +19,7 @@ import java.util.Map;
  *                     早于 2026-10-08 发布的版本没有此项（null），按内置默认处理。
  * @param rentRise     破产模式租金随轮数上涨：前 freeRounds 轮原价，之后每 everyRounds 轮倍率 +stepPercent%，
  *                     封顶 capPercent%（stepPercent = 0 关闭）。没有此项（null）按内置默认处理。
+ * @param handLimit    每人最多持有的道具张数（超出时弃牌）；房间"开局道具"的可选张数也以此为上限。没有此项（null）按内置默认处理。
  */
 public record GameSettings(
         List<TierSetting> tiers,
@@ -29,7 +30,14 @@ public record GameSettings(
         Map<String, Integer> cardWeights,
         Map<String, List<String>> tileNames,
         List<LuckySetting> lucky,
-        RentRise rentRise) {
+        RentRise rentRise,
+        Integer handLimit) {
+
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, null);
+    }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
