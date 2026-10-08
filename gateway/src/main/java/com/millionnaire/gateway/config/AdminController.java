@@ -36,6 +36,7 @@ public class AdminController {
     static final long LOCK_MS = 5 * 60 * 1000L;
 
     private final GameConfigs configs;
+    private final com.millionnaire.gateway.record.Dashboard dashboard;
     private final Clock clock;
     private final byte[] password;
     private final SecureRandom random = new SecureRandom();
@@ -43,9 +44,10 @@ public class AdminController {
     private int failures;
     private long lockedUntil;
 
-    public AdminController(GameConfigs configs, Clock clock,
+    public AdminController(GameConfigs configs, com.millionnaire.gateway.record.Dashboard dashboard, Clock clock,
                            @Value("${millionnaire.admin.password:}") String password) {
         this.configs = configs;
+        this.dashboard = dashboard;
         this.clock = clock;
         this.password = password == null ? new byte[0] : password.getBytes(StandardCharsets.UTF_8);
     }
@@ -117,6 +119,14 @@ public class AdminController {
         }
         return ResponseEntity.ok(summary(configs.publish(body.settings(), body.note(), "admin",
                 body.expectedActiveId(), null), false));
+    }
+
+    /** 运营数据看板：最近 days 天（北京时间，1～90，默认 14）。 */
+    @GetMapping("/dashboard")
+    public ResponseEntity<?> dashboard(@RequestHeader(value = "Authorization", required = false) String auth,
+                                       @org.springframework.web.bind.annotation.RequestParam(value = "days", defaultValue = "14") int days) {
+        check(auth);
+        return ResponseEntity.ok(dashboard.build(days));
     }
 
     @GetMapping("/config/history")

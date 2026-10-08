@@ -49,6 +49,11 @@ export interface ServerRules {
     fees: { startReward: number; miniGameWinReward: number; bailCost: number };
     handLimit?: number;
     rentRise?: RentRiseRule;
+    /** 操作时限（秒）与动画留时（毫秒），后台「操作时限」 */
+    timing?: {
+        decisionSeconds: number; responseSeconds: number; discardSeconds: number; tradeSeconds: number; toothSeconds: number;
+        auctionSeconds: number; auctionExtendSeconds: number; auctionMaxSeconds: number; debtSegmentSeconds: number;
+    };
     /** 同组地产加成（由 SetBonus.applyServerSets 使用） */
     sets?: { rentPercent: number; groups: Record<string, number[]> };
     room?: {
@@ -73,6 +78,15 @@ export function applyServerRules(r: ServerRules): void {
     BAIL_COST = r.fees.bailCost;
     if (r.handLimit && r.handLimit > 0) MAX_HAND = r.handLimit;
     if (r.rentRise) RENT_RISE = { ...r.rentRise };
+    if (r.timing) {
+        // 弹窗倒计时的默认值（联机时实际截止以服务端窗口为准）
+        const t = r.timing;
+        Object.assign(SECONDS, {
+            buy: t.decisionSeconds, upgrade: t.decisionSeconds, rent: t.responseSeconds, trade: t.tradeSeconds,
+            auction: t.auctionSeconds, auctionMax: t.auctionMaxSeconds, auctionTail: t.auctionExtendSeconds,
+            debt1: t.debtSegmentSeconds, debtTotal: t.debtSegmentSeconds * 2, discard: t.discardSeconds, tooth: t.toothSeconds,
+        });
+    }
     if (r.room) {
         replaceAll(INITIAL_CASH_OPTIONS, r.room.initialCashOptions);
         replaceAll(TIME_LIMIT_OPTIONS, r.room.timeLimitMinutesOptions);

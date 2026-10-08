@@ -22,6 +22,13 @@ public class ClientConfigController {
         this.configs = configs;
     }
 
+    /** 大厅公告（当前生效版本里的公告；关闭时 enabled=false），无需登录、不缓存。 */
+    @GetMapping("/api/announcement")
+    public ResponseEntity<GameSettings.Announcement> announcement() {
+        GameSettings.Announcement a = SettingsMapper.announcementOf(configs.current().settings());
+        return ResponseEntity.ok().cacheControl(CacheControl.noCache()).body(a);
+    }
+
     @GetMapping("/api/configs/{id}/client")
     public ResponseEntity<Map<String, Object>> client(@PathVariable("id") long id) {
         return configs.load(id).map(p -> {
@@ -38,6 +45,7 @@ public class ClientConfigController {
             out.put("handLimit", SettingsMapper.handLimitOf(s));
             out.put("room", SettingsMapper.roomOf(s));
             out.put("sets", SettingsMapper.setsOf(s));
+            out.put("timing", SettingsMapper.timingOf(s));
             // 版本 0（内置默认）随后台升级会变，不缓存；已发布版本内容不变，缓存一天
             CacheControl cache = id == GameConfigs.DEFAULT_ID ? CacheControl.noCache()
                     : CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic();

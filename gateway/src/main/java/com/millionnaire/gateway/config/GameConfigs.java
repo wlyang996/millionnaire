@@ -203,7 +203,7 @@ public class GameConfigs {
             return new GameSettings(s.tiers(), s.station(), s.fees(), s.eventCash(), s.eventWeights(), s.cardWeights(),
                     s.tileNames(), SettingsMapper.mergeLucky(s.lucky()), SettingsMapper.rentRiseOf(s),
                     SettingsMapper.handLimitOf(s), SettingsMapper.roomOf(s),
-                    SettingsMapper.setsOf(s));
+                    SettingsMapper.setsOf(s), SettingsMapper.timingOf(s), s.announcement());
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("bad game_config payload", e);
         }

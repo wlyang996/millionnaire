@@ -42,6 +42,7 @@ export class LobbyScreen extends Screen {
             text(this.root, '好友桌游', 0, 160, Theme.W, 120, 88, '#A4723C', { bold: true });
         }
         art(this.root, 'lobby_friends', 50, 360, 620, 304);
+        this.drawAnnouncement();
 
         // 主按钮
         const create = primaryButton(this.root, '创建房间', 48, 668, 624, 112, () => {
@@ -100,6 +101,27 @@ export class LobbyScreen extends Screen {
         return !!art(parent, 'board_town', 0, 0, size?.width ?? 500, size?.height ?? 270, 'stretch');
     }
 
+
+    /** 大厅公告（后台「公告」配置，用户 2026-10-08）：品牌标志处的白色卡片，点 × 关掉后本次打开不再显示同一条。 */
+    private drawAnnouncement(): void {
+        const st = ctx.store;
+        void st.online?.loadAnnouncement();
+        const a = st.announcement;
+        if (!a || st.announcementDismissed === a.title + '\n' + a.text) return;
+        const card = mk(this.root, 'Announcement', 40, 104, 640, 196);
+        const g = gfx(card);
+        fillRR(g, 0, 4, 640, 192, 24, Theme.c.shadow);
+        fillRR(g, 0, 0, 640, 192, 24, '#FFFDF5F5');
+        fillRR(g, 0, 0, 10, 192, 5, Theme.c.orange);
+        text(card, a.title || '公告', 28, 12, 520, 44, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
+        text(card, a.text, 28, 58, 584, 124, 24, Theme.c.inkSoft, { align: 'l', wrap: true, lineHeight: 31 });
+        const close = mk(card, 'Close', 576, 6, 56, 56);
+        text(close, '×', 0, 0, 56, 56, 40, Theme.c.inkSoft);
+        onTap(close, () => {
+            st.announcementDismissed = a.title + '\n' + a.text;
+            this.rebuild();
+        }, false);
+    }
 
     /** 从分享卡片 / ?room= 进来：登录进大厅后自动加入那个房间（连接还没建好时稍后重试，最多 3 次）。 */
     private joinFromShare(attempt = 0): void {

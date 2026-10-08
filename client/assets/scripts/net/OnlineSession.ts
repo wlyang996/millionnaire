@@ -71,6 +71,7 @@ export class OnlineSession {
     chat: ChatLine[] = [];
     /** 已套用的参数版本（地名、价格），-1 = 未套用（用内置默认）；以及正在拉取的版本。 */
     private configId = -1;
+    private announcementAt = 0;
     /** 正在观战的房间号（不是成员）；null = 没在观战 */
     watching: string | null = null;
     private configLoading = -1;
@@ -181,6 +182,23 @@ export class OnlineSession {
 
     async addBot(): Promise<ResultMsg> {
         return this.check(await this.client.addBot());
+    }
+
+    /** 读取大厅公告（最多每分钟一次），有变化时刷新页面；失败时保持原样。 */
+    async loadAnnouncement(): Promise<void> {
+        const now = Date.now();
+        if (now - this.announcementAt < 60_000) return;
+        this.announcementAt = now;
+        try {
+            const a = await this.client.announcement();
+            const next = a.enabled && a.text ? { title: a.title, text: a.text } : null;
+            if (JSON.stringify(next) !== JSON.stringify(this.store.announcement)) {
+                this.store.announcement = next;
+                this.store.emit();
+            }
+        } catch {
+            // 读不到就不显示
+        }
     }
 
     /** 从服务端读取我的最近 20 局，写入 store.history（失败时保留空列表并返回 false）。 */

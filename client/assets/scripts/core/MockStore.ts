@@ -56,6 +56,9 @@ export class MockStore {
     scenario: Scenario = { players: 8, boardSize: 50, turn: 'me', spectator: false, conn: 'mixed', host: true, handCount: 6 };
     session!: SessionView;
     history: HistoryEntry[] = [];
+    /** 大厅公告（后台配置；null = 不显示）与本次打开已关掉的公告内容 */
+    announcement: { title: string; text: string } | null = null;
+    announcementDismissed = '';
     /** 个人数据（联机由服务端汇总全部对局；演示由 history 计算） */
     stats: PlayerStats | null = null;
     auction!: AuctionView;

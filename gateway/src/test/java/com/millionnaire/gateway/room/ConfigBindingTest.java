@@ -80,6 +80,38 @@ class ConfigBindingTest {
     }
 
     @Test
+    void timingAndAnnouncementAreEditable() {
+        GameSettings d = SettingsMapper.defaults();
+        assertThat(d.timing().decisionSeconds()).isEqualTo(15);
+        var t = new GameSettings.TimingSetting(20, 12, 15, 15, 8, 30, 3, 60, 40, 1200, 200, 800);
+        var notice = new GameSettings.Announcement(true, "周末活动", "周末起点奖励翻倍！");
+        GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets(), t, notice);
+        assertThat(SettingsMapper.validate(edited)).isEmpty();
+        var timing = SettingsMapper.toRuleConfig(edited).timing();
+        assertThat(timing.decisionWindowMs()).isEqualTo(20_000);
+        assertThat(timing.auctionMaxMs()).isEqualTo(60_000);
+        assertThat(timing.animPerStepMs()).isEqualTo(200);
+        assertThat(timing.heartbeatMs()).isEqualTo(RuleConfigs.defaultV1().timing().heartbeatMs());
+        // 公告不影响规则
+        assertThat(SettingsMapper.toRuleConfig(edited).contentHash()).isEqualTo(SettingsMapper.toRuleConfig(
+                new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(), d.cardWeights(),
+                        d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets(), t, null)).contentHash());
+
+        var bad = new GameSettings.TimingSetting(2, 12, 15, 15, 8, 30, 3, 20, 40, 1200, 200, 800);
+        List<String> errors = SettingsMapper.validate(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
+                d.eventWeights(), d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets(),
+                bad, new GameSettings.Announcement(true, "", "")));
+        assertThat(errors).anyMatch(e -> e.contains("选择时限"));
+        assertThat(errors).anyMatch(e -> e.contains("拍卖最长时长不能小于"));
+        assertThat(errors).anyMatch(e -> e.contains("公告时内容不能为空"));
+        // 旧版本快照没有 timing：按默认处理
+        assertThat(SettingsMapper.toRuleConfig(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
+                d.eventWeights(), d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets()))
+                .contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+    }
+
+    @Test
     void setBonusIsEditable() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(d.sets().rentPercent()).isEqualTo(150);

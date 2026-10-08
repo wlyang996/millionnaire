@@ -122,6 +122,13 @@ export class GameClient {
         return r.body;
     }
 
+    /** 大厅公告（当前生效的后台参数里的公告），无需登录。 */
+    async announcement(): Promise<{ enabled: boolean; title: string; text: string }> {
+        const r = await requestJson<{ enabled: boolean; title: string; text: string }>('GET', this.baseUrl + '/api/announcement');
+        if (r.status !== 200 || !r.body) throw new Error('cannot load announcement');
+        return r.body;
+    }
+
     /** 我的数据（全部已记录对局的汇总）。 */
     async stats(): Promise<PlayerStats> {
         const r = await requestJson<PlayerStats>('GET', this.baseUrl + '/api/me/stats', undefined, this.token ?? undefined);

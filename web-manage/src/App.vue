@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { call, setToken, token } from './api.js'
 
@@ -132,13 +132,64 @@ function logout() {
   loggedIn.value = false
 }
 
+// 旧版本没有公告：补一个关闭的公告，免得编辑区判为"有修改"
+function fill(s) {
+  if (s && !s.announcement) s.announcement = { enabled: false, title: '', text: '' }
+  return s
+}
+
+// 操作时限的编辑项：[字段, 名称, 最小, 最大, 单位, 说明]
+const TIMING_FIELDS = [
+  ['decisionSeconds', '买地 / 升级等选择', 5, 120, '秒', '买地、升级、银行等弹窗的倒计时，超时视为放弃'],
+  ['responseSeconds', '免租等响应卡询问', 5, 60, '秒', '被收租或被攻击时询问是否用卡'],
+  ['discardSeconds', '弃牌', 5, 60, '秒', '手牌超过上限时选择弃哪张，超时放弃新卡'],
+  ['tradeSeconds', '交易回应', 5, 60, '秒', '买家决定是否接受交易'],
+  ['toothSeconds', '拔牙每次选择', 3, 60, '秒', '虎口拔牙轮到时的选择时间，超时随机代选'],
+  ['auctionSeconds', '拍卖时长', 5, 120, '秒', ''],
+  ['auctionExtendSeconds', '拍卖末尾出价顺延', 1, 30, '秒', '最后几秒有人出价，剩余时间恢复到这么多'],
+  ['auctionMaxSeconds', '拍卖最长', 5, 300, '秒', '含顺延，不能小于拍卖时长'],
+  ['debtSegmentSeconds', '欠款每段', 10, 120, '秒', '现金不足时应急抵押的时间，共两段'],
+  ['animDiceMs', '投骰动画留时', 0, 5000, '毫秒', '投骰后等这么久再开下一步（给动画）'],
+  ['animPerStepMs', '每走一格留时', 0, 2000, '毫秒', ''],
+  ['autoActDelayMs', '托管代操作等待', 1, 10000, '毫秒', '托管 / 掉线时系统代为操作前的等待'],
+]
+
+// 数据看板
+const dashDays = ref(14)
+const dash = ref(null)
+const dashLoading = ref(false)
+const EVENT_NAMES = { ...EVENT_LABEL }
+const REASON_LABEL = { TIME_UP: '时间到', NO_PLAYERS: '无人可继续', LAST_SURVIVOR: '只剩一人', ALL_ELIMINATED: '全部出局', ALL_AWAY: '全员挂机' }
+const MODE_LABEL = { TIME_LIMIT: '限时', BANKRUPTCY: '破产' }
+async function loadDash() {
+  dashLoading.value = true
+  try {
+    dash.value = await call('GET', '/admin-api/v1/dashboard?days=' + dashDays.value)
+  } catch (e) {
+    fail(e)
+  } finally {
+    dashLoading.value = false
+  }
+}
+watch(tab, (t) => { if (t === 'dashboard' && !dash.value) loadDash() })
+const dashMax = computed(() => Math.max(1, ...((dash.value?.daily || []).map((d) => d.games))))
+// 分布表：{键: 次数} → [{name, n, pct}]，按次数从多到少
+function dist(m, names) {
+  const rows = Object.entries(m || {}).map(([k, n]) => ({ name: (names && names[k]) || k, n }))
+  const total = rows.reduce((a, r) => a + r.n, 0) || 1
+  return rows.sort((a, b) => b.n - a.n).map((r) => ({ ...r, pct: Math.round((r.n * 1000) / total) / 10 }))
+}
+const MISC_LABEL = [['rentPaid', '收租次数'], ['rentAmount', '租金总额'], ['propertiesBought', '买地次数'], ['upgrades', '升级次数'],
+  ['auctionsSold', '拍卖成交'], ['auctionsPassed', '拍卖流拍'], ['tradesDone', '交易成交'], ['minigames', '虎口拔牙'],
+  ['jailed', '入狱次数'], ['bankrupt', '破产出局'], ['surrendered', '认输出局']]
+
 async function load() {
   loading.value = true
   try {
     if (!boards.value.length) boards.value = await call('GET', '/api/boards')
     const a = await call('GET', '/admin-api/v1/config/active')
     active.value = a
-    form.value = a.settings
+    form.value = fill(a.settings)
     saved.value = JSON.stringify(a.settings)
     errors.value = []
     history.value = await call('GET', '/admin-api/v1/config/history')
@@ -159,7 +210,7 @@ async function discard() {
 async function useDefaults() {
   await ElMessageBox.confirm('把编辑区填成内置默认值（发布后才生效）？', '填入默认值', { type: 'warning' })
   try {
-    form.value = await call('GET', '/admin-api/v1/config/defaults')
+    form.value = fill(await call('GET', '/admin-api/v1/config/defaults'))
     errors.value = []
   } catch (e) {
     fail(e)
@@ -228,7 +279,7 @@ async function rollback(row) {
 async function view(row) {
   try {
     const r = await call('GET', '/admin-api/v1/config/' + row.configId)
-    form.value = r.settings
+    form.value = fill(r.settings)
     errors.value = []
     tab.value = 'prices'
     ElMessage.info('编辑区已载入版本 #' + row.configId + ' 的内容（未发布）')
@@ -425,6 +476,86 @@ onMounted(() => {
         </el-form>
       </el-tab-pane>
 
+      <el-tab-pane label="操作时限" name="timing">
+        <el-form v-if="form.timing" label-width="170px" class="narrow">
+          <p class="muted">各类弹窗的倒计时与动画留时。投骰时间在「建房选项」里配置。只影响发布之后新建的房间。</p>
+          <el-form-item v-for="f in TIMING_FIELDS" :key="f[0]" :label="f[1]">
+            <el-input-number v-model="form.timing[f[0]]" :min="f[2]" :max="f[3]" :step="f[4] === '秒' ? 1 : 50" />
+            <span class="hint">{{ f[4] }}{{ f[5] ? ' · ' + f[5] : '' }}</span>
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <el-tab-pane label="公告" name="announcement">
+        <el-form v-if="form.announcement" label-width="120px" class="narrow">
+          <p class="muted">发布后，大厅顶部显示这条公告（玩家可以关掉，本次打开不再显示）。用于维护通知、活动说明等。</p>
+          <el-form-item label="显示公告"><el-switch v-model="form.announcement.enabled" /></el-form-item>
+          <el-form-item label="标题"><el-input v-model="form.announcement.title" maxlength="20" show-word-limit placeholder="如：周末活动" /></el-form-item>
+          <el-form-item label="内容"><el-input v-model="form.announcement.text" type="textarea" :rows="4" maxlength="200" show-word-limit placeholder="如：本周末经过起点奖励翻倍！" /></el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <el-tab-pane label="数据看板" name="dashboard">
+        <div class="dash-bar">
+          <el-radio-group v-model="dashDays" @change="loadDash">
+            <el-radio-button :value="7">近 7 天</el-radio-button>
+            <el-radio-button :value="14">近 14 天</el-radio-button>
+            <el-radio-button :value="30">近 30 天</el-radio-button>
+          </el-radio-group>
+          <el-button :loading="dashLoading" @click="loadDash">刷新</el-button>
+          <span v-if="dash" class="muted">{{ dash.from }} ～ {{ dash.to }}（北京时间）</span>
+        </div>
+        <p v-if="dash && !dash.dbEnabled" class="danger">后台没有连接数据库，没有可统计的数据。</p>
+        <template v-if="dash && dash.dbEnabled">
+          <div class="tiles">
+            <div class="tile"><div class="tile-v">{{ dash.totals.games }}</div><div class="tile-k">对局数</div></div>
+            <div class="tile"><div class="tile-v">{{ dash.totals.players }}</div><div class="tile-k">参与玩家</div></div>
+            <div class="tile"><div class="tile-v">{{ dash.totals.newUsers }}</div><div class="tile-k">新用户</div></div>
+            <div class="tile"><div class="tile-v">{{ dash.totals.avgMinutes ?? '—' }}</div><div class="tile-k">平均时长（分钟）</div></div>
+            <div class="tile"><div class="tile-v">{{ dash.totals.avgPlayers ?? '—' }}</div><div class="tile-k">平均人数</div></div>
+          </div>
+          <h3>每天对局数</h3>
+          <div class="chart" role="img" :aria-label="'每天对局数，最多 ' + dashMax + ' 局'">
+            <div v-for="d in dash.daily" :key="d.date" class="col" :title="d.date + '：' + d.games + ' 局，' + d.players + ' 人参与，新用户 ' + d.newUsers + (d.avgMinutes != null ? '，平均 ' + d.avgMinutes + ' 分钟' : '')">
+              <div class="col-v">{{ d.games || '' }}</div>
+              <div class="col-bar" :style="{ height: (d.games / dashMax) * 140 + 'px' }"></div>
+              <div class="col-k">{{ d.date.slice(5) }}</div>
+            </div>
+          </div>
+          <el-table :data="dash.daily" border size="small" class="gap" max-height="320">
+            <el-table-column prop="date" label="日期" width="120" />
+            <el-table-column prop="games" label="对局数" />
+            <el-table-column prop="players" label="参与玩家" />
+            <el-table-column prop="newUsers" label="新用户" />
+            <el-table-column label="平均时长（分钟）"><template #default="{ row }">{{ row.avgMinutes ?? '—' }}</template></el-table-column>
+          </el-table>
+          <div class="dists">
+            <div v-for="blk in [
+              { t: '结束方式', rows: dist(dash.endModes, MODE_LABEL) },
+              { t: '结束原因', rows: dist(dash.reasons, REASON_LABEL) },
+              { t: '地图', rows: dist(dash.boards, BOARD_LABEL) },
+              { t: '人数', rows: dist(dash.playerCounts) },
+              { t: '抽卡事件结果', rows: dist(dash.events.drawnEvents, EVENT_NAMES) },
+              { t: '幸运 / 不幸格结果', rows: dist(dash.events.luckyEvents, EVENT_NAMES) },
+              { t: '道具使用', rows: dist(dash.events.cardsUsed, CARD_LABEL) },
+            ]" :key="blk.t" class="dist">
+              <h3>{{ blk.t }}</h3>
+              <p v-if="!blk.rows.length" class="muted">暂无数据</p>
+              <div v-for="r in blk.rows" :key="r.name" class="dist-row" :title="r.name + '：' + r.n + ' 次（' + r.pct + '%）'">
+                <span class="dist-k">{{ r.name }}</span>
+                <span class="dist-track"><span class="dist-fill" :style="{ width: r.pct + '%' }"></span></span>
+                <span class="dist-v">{{ r.n }}</span>
+              </div>
+            </div>
+            <div class="dist">
+              <h3>其他次数</h3>
+              <div v-for="m in MISC_LABEL" :key="m[0]" class="dist-row"><span class="dist-k">{{ m[1] }}</span><span class="dist-v">{{ dash.events[m[0]] }}</span></div>
+              <p class="muted">事件类统计来自最近 {{ dash.events.logsScanned }} 局的对局日志（最多 500 局）。</p>
+            </div>
+          </div>
+        </template>
+      </el-tab-pane>
+
       <el-tab-pane label="发布记录" name="history">
         <el-table :data="history" border>
           <el-table-column label="版本" width="110">
@@ -476,4 +607,21 @@ h3 { font-size: 15px; margin: 18px 0 10px; display: flex; gap: 8px; align-items:
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px 16px; max-width: 900px; }
 .card-row { display: flex; align-items: center; gap: 8px; }
 .card-row > span:first-child { width: 64px; }
+.dash-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.tile { background: #f5f7fa; border-radius: 8px; padding: 12px 16px; }
+.tile-v { font-size: 26px; font-weight: 600; color: #303133; }
+.tile-k { font-size: 13px; color: #909399; margin-top: 4px; }
+.chart { display: flex; align-items: flex-end; gap: 2px; height: 190px; overflow-x: auto; border-bottom: 1px solid #dcdfe6; margin-bottom: 12px; }
+.col { flex: 1 0 22px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; cursor: default; }
+.col:hover .col-bar { background: #337ecc; }
+.col-v { font-size: 11px; color: #606266; min-height: 14px; }
+.col-bar { width: 70%; max-width: 28px; background: #409eff; border-radius: 4px 4px 0 0; min-height: 0; }
+.col-k { font-size: 11px; color: #909399; padding: 4px 0; white-space: nowrap; }
+.dists { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0 24px; }
+.dist-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; }
+.dist-k { width: 96px; color: #606266; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dist-track { flex: 1; height: 10px; background: #f0f2f5; border-radius: 5px; overflow: hidden; }
+.dist-fill { display: block; height: 100%; background: #409eff; border-radius: 5px; }
+.dist-v { width: 56px; text-align: right; color: #303133; }
 </style>

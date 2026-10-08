@@ -65,13 +65,34 @@ public final class SettingsMapper {
                 new Fees(e.startReward(), e.miniGameWinReward(), e.bailCost()),
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
                 events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise(), e.handLimit(),
-                defaultRoom(), defaultSets());
+                defaultRoom(), defaultSets(), defaultTiming(), null);
     }
 
     /** 内置租金上涨参数（引擎默认）。 */
     public static RentRise defaultRentRise() {
         RentInflation r = BASE.rentInflation();
         return new RentRise(r.freeRounds(), r.everyRounds(), r.stepPercent(), r.capPercent());
+    }
+
+    /** 内置操作时限（引擎默认）。 */
+    public static GameSettings.TimingSetting defaultTiming() {
+        var t = BASE.timing();
+        return new GameSettings.TimingSetting(sec(t.decisionWindowMs()), sec(t.responseWindowMs()), sec(t.discardWindowMs()),
+                sec(t.tradeResponseMs()), sec(t.toothPickMs()), sec(t.auctionDurationMs()), sec(t.auctionExtendMs()),
+                sec(t.auctionMaxMs()), sec(t.debtSegmentMs()), (int) t.animDiceMs(), (int) t.animPerStepMs(), (int) t.autoActDelayMs());
+    }
+
+    private static int sec(long ms) {
+        return (int) (ms / 1000);
+    }
+
+    public static GameSettings.TimingSetting timingOf(GameSettings s) {
+        return s.timing() == null ? defaultTiming() : s.timing();
+    }
+
+    /** 公告：没配置时为关闭。 */
+    public static GameSettings.Announcement announcementOf(GameSettings s) {
+        return s.announcement() == null ? new GameSettings.Announcement(false, "", "") : s.announcement();
     }
 
     /** 内置同组加成（引擎默认：每条边上的普通地产两两一组，×150%）。 */
@@ -217,9 +238,52 @@ public final class SettingsMapper {
         rentRise(errors, rentRiseOf(s));
         room(errors, roomOf(s));
         sets(errors, setsOf(s));
+        timing(errors, timingOf(s));
+        announcement(errors, announcementOf(s));
         int hand = handLimitOf(s);
         if (hand < BASE.economy().initialHandSize() || hand > MAX_HAND_LIMIT) {
             errors.add("道具上限必须在 " + BASE.economy().initialHandSize() + "～" + MAX_HAND_LIMIT + " 张之间");
+        }
+    }
+
+    private static void timing(List<String> errors, GameSettings.TimingSetting t) {
+        range(errors, "买地 / 升级等选择时限", t.decisionSeconds(), 5, 120, "秒");
+        range(errors, "免租等响应卡询问时限", t.responseSeconds(), 5, 60, "秒");
+        range(errors, "弃牌时限", t.discardSeconds(), 5, 60, "秒");
+        range(errors, "交易回应时限", t.tradeSeconds(), 5, 60, "秒");
+        range(errors, "拔牙选择时限", t.toothSeconds(), 3, 60, "秒");
+        range(errors, "拍卖时长", t.auctionSeconds(), 5, 120, "秒");
+        range(errors, "拍卖末尾出价顺延", t.auctionExtendSeconds(), 1, 30, "秒");
+        range(errors, "拍卖最长时长", t.auctionMaxSeconds(), 5, 300, "秒");
+        if (t.auctionMaxSeconds() < t.auctionSeconds()) {
+            errors.add("拍卖最长时长不能小于拍卖时长");
+        }
+        range(errors, "欠款每段时限", t.debtSegmentSeconds(), 10, 120, "秒");
+        range(errors, "投骰动画时间", t.animDiceMs(), 0, 5000, "毫秒");
+        range(errors, "每格移动动画时间", t.animPerStepMs(), 0, 2000, "毫秒");
+        range(errors, "托管代操作等待", t.autoActDelayMs(), 1, 10000, "毫秒");
+    }
+
+    private static void range(List<String> errors, String label, int v, int min, int max, String unit) {
+        if (v < min || v > max) {
+            errors.add(label + "必须在 " + min + "～" + max + " " + unit + "之间");
+        }
+    }
+
+    private static void announcement(List<String> errors, GameSettings.Announcement a) {
+        String title = a.title() == null ? "" : a.title().strip();
+        String text = a.text() == null ? "" : a.text().strip();
+        if (title.codePointCount(0, title.length()) > 20) {
+            errors.add("公告标题最多 20 个字");
+        }
+        if (text.codePointCount(0, text.length()) > 200) {
+            errors.add("公告内容最多 200 个字");
+        }
+        if (a.enabled() && text.isEmpty()) {
+            errors.add("开启公告时内容不能为空");
+        }
+        if ((title + text).codePoints().anyMatch(cp -> cp == '<' || cp == '>' || (Character.isISOControl(cp) && cp != '\n'))) {
+            errors.add("公告含不允许的字符");
         }
     }
 
@@ -453,7 +517,10 @@ public final class SettingsMapper {
         }
         return new GameSettings(List.copyOf(tiers), s.station(), s.fees(), s.eventCash(), events, cards, names,
                 List.copyOf(lucky), rentRiseOf(s), handLimitOf(s), sortedRoom(roomOf(s)),
-                new SetSetting(setsOf(s).rentPercent(), new TreeMap<>(setsOf(s).groups())));
+                new SetSetting(setsOf(s).rentPercent(), new TreeMap<>(setsOf(s).groups())), timingOf(s),
+                new GameSettings.Announcement(announcementOf(s).enabled(),
+                        announcementOf(s).title() == null ? "" : announcementOf(s).title().strip(),
+                        announcementOf(s).text() == null ? "" : announcementOf(s).text().strip()));
     }
 
     /** 选项按从小到大保存（建房页按这个顺序显示）。 */
@@ -510,7 +577,12 @@ public final class SettingsMapper {
         RoomOptions base = BASE.room();
         RoomOptions room = new RoomOptions(base.minPlayersToStart(), rs.initialCashOptions(), base.defaultBoardId(),
                 rs.defaultInitialCash(), EndMode.valueOf(rs.defaultEndMode()), rs.defaultTimeLimitMinutes(), rs.defaultRollSeconds());
-        var timing = BASE.timing().withRoomChoices(rs.rollSecondsOptions(), rs.timeLimitMinutesOptions(), rs.bankruptcyCapMinutes());
+        GameSettings.TimingSetting ts = timingOf(s);
+        var timing = BASE.timing().withRoomChoices(rs.rollSecondsOptions(), rs.timeLimitMinutesOptions(), rs.bankruptcyCapMinutes())
+                .withWindows(ts.decisionSeconds() * 1000L, ts.responseSeconds() * 1000L, ts.discardSeconds() * 1000L,
+                        ts.tradeSeconds() * 1000L, ts.toothSeconds() * 1000L, ts.auctionSeconds() * 1000L,
+                        ts.auctionExtendSeconds() * 1000L, ts.auctionMaxSeconds() * 1000L, ts.debtSegmentSeconds() * 1000L,
+                        ts.animDiceMs(), ts.animPerStepMs(), ts.autoActDelayMs());
         return new RuleConfig(BASE.ruleVersion(), boards, tiers, st, economy, BASE.ratios(), cards, events,
                 timing, room,
                 new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()),

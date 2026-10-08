@@ -24,6 +24,8 @@ import java.util.Map;
  *                     没有此项（null）按内置默认处理。
  * @param sets         同组地产加成：倍率（%，100 = 关闭）与地图 ID → 逐格组号（0 = 不分组，只给普通地产编组，每组至少 2 块）。
  *                     没有此项（null）按内置默认处理。
+ * @param timing       操作时限（秒）与动画缓冲（毫秒）。没有此项（null）按内置默认处理。
+ * @param announcement 大厅公告（开关、标题、内容），随发布生效。没有此项（null）为不显示。
  */
 public record GameSettings(
         List<TierSetting> tiers,
@@ -37,26 +39,35 @@ public record GameSettings(
         RentRise rentRise,
         Integer handLimit,
         RoomSetting room,
-        SetSetting sets) {
+        SetSetting sets,
+        TimingSetting timing,
+        Announcement announcement) {
+
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
+                        Integer handLimit, RoomSetting room, SetSetting sets) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, room, sets, null, null);
+    }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
                         Integer handLimit, RoomSetting room) {
-        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, room, null);
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, room, null, null, null);
     }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
                         Integer handLimit) {
-        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, null, null);
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, null, null, null, null);
     }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise) {
-        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, null, null, null);
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, null, null, null, null, null);
     }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
@@ -70,6 +81,20 @@ public record GameSettings(
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
                         Map<String, List<String>> tileNames) {
         this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, null, null);
+    }
+
+    /**
+     * 操作时限：decision 买地 / 升级 / 银行等选择，response 免租等响应卡询问，discard 弃牌，trade 交易回应，tooth 拔牙每次选择，
+     * auction 拍卖时长 / 最后几秒出价顺延 / 最长，debtSegment 欠款每段（共两段）；单位秒。
+     * animDiceMs / animPerStepMs 为投骰与每走一格留给动画的时间，autoActDelayMs 为托管、掉线时系统代为操作前的等待；单位毫秒。
+     */
+    public record TimingSetting(int decisionSeconds, int responseSeconds, int discardSeconds, int tradeSeconds,
+                                int toothSeconds, int auctionSeconds, int auctionExtendSeconds, int auctionMaxSeconds,
+                                int debtSegmentSeconds, int animDiceMs, int animPerStepMs, int autoActDelayMs) {
+    }
+
+    /** 大厅公告：enabled 关闭时不显示；title 最多 20 字，text 最多 200 字。 */
+    public record Announcement(boolean enabled, String title, String text) {
     }
 
     public record SetSetting(int rentPercent, Map<String, List<Integer>> groups) {

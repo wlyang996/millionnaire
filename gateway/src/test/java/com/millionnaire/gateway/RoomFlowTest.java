@@ -33,6 +33,8 @@ class RoomFlowTest {
     TestRestTemplate http;
     @Autowired
     JdbcTemplate jdbc;
+    @Autowired
+    com.millionnaire.gateway.record.Dashboard dashboard;
 
     /**
      * H2 2.x 的 MySQL 模式下 LENGTH(VARBINARY) 按 UTF-8 解码后的字符数计算，随机字节常不等于 16；
@@ -288,6 +290,20 @@ class RoomFlowTest {
             assertThat(stats).containsEntry("games", 1).containsEntry("finished", 1).containsEntry("wins", 0)
                     .containsEntry("top3", 1).containsEntry("bankrupt", 1).containsEntry("avgRank", 2.0);
             assertThat(http.getForEntity("/api/me/stats", Map.class).getStatusCode().value()).isEqualTo(401);
+            // 数据看板：今天 1 局、2 人参与，事件日志也被扫描到
+            for (int i = 0; i < 50 && jdbc.queryForObject("SELECT COUNT(*) FROM game_log", Integer.class) == 0; i++) {
+                Thread.sleep(100); // 对局日志异步落库
+            }
+            Map<String, Object> board = dashboard.build(7);
+            assertThat(board).containsEntry("dbEnabled", true);
+            Map<?, ?> totals = (Map<?, ?>) board.get("totals");
+            assertThat(totals.get("games")).isEqualTo(1L);
+            assertThat(totals.get("players")).isEqualTo(2);
+            assertThat((java.util.List<?>) board.get("daily")).hasSize(7);
+            assertThat(((Map<?, ?>) board.get("events")).get("logsScanned"))
+                    .isEqualTo(jdbc.queryForObject("SELECT COUNT(*) FROM game_log", Integer.class));
+            // 公告：默认关闭
+            assertThat(http.getForEntity("/api/announcement", Map.class).getBody().get("enabled")).isEqualTo(false);
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM game_record_player p JOIN game_record r ON r.record_id = p.record_id"
                     + " WHERE r.room_id = (SELECT room_id FROM room WHERE room_code = ? AND status = 'OPEN')", Integer.class,
                     Integer.parseInt(code))).isEqualTo(2);

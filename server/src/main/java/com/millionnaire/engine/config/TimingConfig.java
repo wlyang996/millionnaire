@@ -36,6 +36,16 @@ public record TimingConfig(
         timeLimitMinutesOptions = Immutable.list(timeLimitMinutesOptions);
     }
 
+    /** 换掉各操作窗口时长与动画缓冲（管理后台「操作时限」可配，2026-10-08），心跳与掉线判定等不变。 */
+    public TimingConfig withWindows(long decision, long response, long discard, long tradeResponse, long toothPick,
+                                    long auctionDuration, long auctionExtend, long auctionMax, long debtSegment,
+                                    long animDice, long animPerStep, long autoActDelay) {
+        return new TimingConfig(rollSecondsOptions, timeLimitMinutesOptions, bankruptcyModeCapMinutes, decision, response,
+                discard, tradeResponse, toothPick, auctionDuration, auctionExtend, auctionMax, debtSegment,
+                heartbeatMs, suspectAfterMs, offlineAfterMs, allOfflineCloseMs, downtimeBudgetMs, recoveryPrepMs, animDice,
+                animPerStep, autoActDelay, endWhenAllAway);
+    }
+
     /** 换掉建房可选的投骰时间、限时档位与破产模式时长上限（管理后台可配），其余计时不变。 */
     public TimingConfig withRoomChoices(List<Integer> rollSeconds, List<Integer> timeLimitMinutes, int bankruptcyCapMinutes) {
         return new TimingConfig(rollSeconds, timeLimitMinutes, bankruptcyCapMinutes, decisionWindowMs, responseWindowMs,
