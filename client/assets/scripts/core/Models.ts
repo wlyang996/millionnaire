@@ -209,6 +209,17 @@ export interface FlowResult {
     until: number;
 }
 
+/** [联机] 起点三选一的结果：选了第几张（0～2）、现金或道具；道具种类只有本人知道。seq 每次递增。 */
+export interface StartPickResult {
+    playerId: string;
+    index: number;
+    cash: boolean;
+    amount: number;
+    card: CardType | null;
+    auto: boolean;
+    seq: number;
+}
+
 export interface QueryResult {
     target: string;
     cards: CardType[];

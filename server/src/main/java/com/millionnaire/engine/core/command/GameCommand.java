@@ -11,6 +11,8 @@ import com.millionnaire.engine.core.state.ControlMode;
  * 已成立的债务路径与原窗口截止不因恢复控制而改变。
  */
 public sealed interface GameCommand extends Command {
+    /** 起点三选一：点第 index 张（0～2）。 */
+    record PickStartCard(String actor, long windowId, int index) implements GameCommand { }
     record DrawEventCard(String actor, long windowId) implements GameCommand { }
     /** Select an index in the seven-card hand; duplicates remain separately selectable. */
     record DiscardCard(String actor, long windowId, int index) implements GameCommand { }

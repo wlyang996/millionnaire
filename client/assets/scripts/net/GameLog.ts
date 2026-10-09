@@ -60,6 +60,12 @@ export function describeEvent(e: SEvent, n: LogNames): { text: string; header?: 
             const amt = d.kind === 'CASH_REWARD' || d.kind === 'CASH_FINE' ? ' ' + money(d.amount) : '';
             return { text: who(d.playerId) + '踩到特殊格：' + label + amt, who: [String(d.playerId)] };
         }
+        case 'StartPickDrawn':
+            return {
+                text: who(d.playerId) + '在起点三选一' + (d.auto ? '（自动）' : '') + '：'
+                    + (d.kind === 'CASH_REWARD' ? '现金 ' + money(d.amount) : '道具'),
+                who: [String(d.playerId)],
+            };
         case 'EventRewardPaid':
             return { text: who(d.playerId) + '获得事件奖励 ' + money(d.amount), who: [String(d.playerId)] };
         case 'FeePaid': {

@@ -46,6 +46,7 @@ public class ClientConfigController {
             out.put("room", SettingsMapper.roomOf(s));
             out.put("sets", SettingsMapper.setsOf(s));
             out.put("timing", SettingsMapper.timingOf(s));
+            out.put("startPick", SettingsMapper.startPickOf(s));
             // 版本 0（内置默认）随后台升级会变，不缓存；已发布版本内容不变，缓存一天
             CacheControl cache = id == GameConfigs.DEFAULT_ID ? CacheControl.noCache()
                     : CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic();

@@ -36,11 +36,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 class ReplayTest {
     /** 黄金值：锁定引擎行为 + 规范格式 + 随机协议。有意修改时同步更新，并提升 EngineVersion。 */
-    static final String GOLDEN_FINAL_HASH = "aa25c6c6d5555646fec0419c278e8c70a29eae8e2b87d5cd4d3201c164e956e0";
+    static final String GOLDEN_FINAL_HASH = "bdd31c7a50510f33c3e82b999bd56ff9a1351a2ac1cb52c2010a9d335493c2e6";
     /** 测试配置新增道具开关（EconomyConfig.cardsEnabled，测试配置关闭）后的配置哈希；之前为 15be5a0b…。 */
     /** 事件拆分（engine-0.13.0-m6c）给配置加了 0 权重的新事件种类与空的固定事件表，测试配置哈希因此变化，行为不变。 */
-    /** 租金上涨（rentInflation）与同组加成（setBonus）进入配置（2026-10-08），哈希变化；之前为 993156de… / fcdd7d92…。 */
-    static final String CONFIG_HASH = "10ea2d53fc204613b19492b40f1eda6303cabaa329f43ad7aa38b6885b02c4d6";
+    /** 租金上涨（rentInflation）、同组加成（setBonus）与起点三选一（startPick）进入配置（2026-10-08），哈希变化；之前为 993156de… / fcdd7d92… / 10ea2d53…。 */
+    static final String CONFIG_HASH = "0f6388f01812892fbdb49503ff041ebcbba7362ff79a6f27387dc85f52ba8f84";
     static final String PRE_CARDS_CONFIG_HASH = "15be5a0b1185660540974ce2b74ac25d73bfb205f06e368cdb3c79b0ed26b668";
     private static final String GOLDEN_SNAPSHOT_RESOURCE = "/golden/demo-final.snapshot";
 

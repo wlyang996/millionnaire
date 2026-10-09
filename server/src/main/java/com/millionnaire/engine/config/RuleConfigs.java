@@ -135,7 +135,7 @@ public final class RuleConfigs {
                         production),
                 // 默认地图、默认初始现金、默认结束模式尚未裁定，此处为占位（见 m0-report 待确认）
                 new RoomOptions(2, List.of(2000L, 3000L, 5000L), BOARD_30, 3000, EndMode.TIME_LIMIT, 30, 15),
-                RentInflation.DEFAULT, sets);
+                RentInflation.DEFAULT, sets, eventsV2 ? StartPick.DEFAULT : StartPick.NONE);
     }
 
     /** 由紧凑记号生成棋盘。 */

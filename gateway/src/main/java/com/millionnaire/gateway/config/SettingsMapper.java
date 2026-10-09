@@ -22,6 +22,7 @@ import com.millionnaire.gateway.config.GameSettings.RentRise;
 import com.millionnaire.gateway.config.GameSettings.RoomSetting;
 import com.millionnaire.gateway.config.GameSettings.SetSetting;
 import com.millionnaire.engine.config.SetBonus;
+import com.millionnaire.engine.config.StartPick;
 import com.millionnaire.engine.config.EndMode;
 import com.millionnaire.engine.config.RoomOptions;
 import com.millionnaire.gateway.config.GameSettings.StationSetting;
@@ -65,7 +66,7 @@ public final class SettingsMapper {
                 new Fees(e.startReward(), e.miniGameWinReward(), e.bailCost()),
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
                 events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise(), e.handLimit(),
-                defaultRoom(), defaultSets(), defaultTiming(), null);
+                defaultRoom(), defaultSets(), defaultTiming(), null, defaultStartPick());
     }
 
     /** 内置租金上涨参数（引擎默认）。 */
@@ -88,6 +89,16 @@ public final class SettingsMapper {
 
     public static GameSettings.TimingSetting timingOf(GameSettings s) {
         return s.timing() == null ? defaultTiming() : s.timing();
+    }
+
+    /** 内置起点三选一（引擎默认）。 */
+    public static GameSettings.StartPickSetting defaultStartPick() {
+        StartPick p = BASE.startPick();
+        return new GameSettings.StartPickSetting(p.cashWeight(), p.cardWeight(), p.cashMin(), p.cashMax(), p.cashStep());
+    }
+
+    public static GameSettings.StartPickSetting startPickOf(GameSettings s) {
+        return s.startPick() == null ? defaultStartPick() : s.startPick();
     }
 
     /** 公告：没配置时为关闭。 */
@@ -240,6 +251,7 @@ public final class SettingsMapper {
         sets(errors, setsOf(s));
         timing(errors, timingOf(s));
         announcement(errors, announcementOf(s));
+        startPick(errors, startPickOf(s));
         int hand = handLimitOf(s);
         if (hand < BASE.economy().initialHandSize() || hand > MAX_HAND_LIMIT) {
             errors.add("道具上限必须在 " + BASE.economy().initialHandSize() + "～" + MAX_HAND_LIMIT + " 张之间");
@@ -359,6 +371,19 @@ public final class SettingsMapper {
         }
         if (!seen.contains(dflt)) {
             errors.add(label + "默认值必须是其中一个选项");
+        }
+    }
+
+    private static void startPick(List<String> errors, GameSettings.StartPickSetting p) {
+        if (p.cashWeight() < 0 || p.cashWeight() > 1000 || p.cardWeight() < 0 || p.cardWeight() > 1000) {
+            errors.add("起点三选一：现金 / 道具权重必须在 0～1000 之间（都为 0 表示关闭）");
+        }
+        if (p.cashMin() <= 0 || p.cashMax() < p.cashMin() || p.cashMax() > 1_000_000) {
+            errors.add("起点三选一：现金最小值须大于 0，最大值不小于最小值且不超过 1000000");
+        } else if (p.cashStep() <= 0) {
+            errors.add("起点三选一：现金步长必须大于 0");
+        } else if ((p.cashMax() - p.cashMin()) % p.cashStep() != 0) {
+            errors.add("起点三选一：现金步长必须能整除（最大值 − 最小值）");
         }
     }
 
@@ -520,7 +545,8 @@ public final class SettingsMapper {
                 new SetSetting(setsOf(s).rentPercent(), new TreeMap<>(setsOf(s).groups())), timingOf(s),
                 new GameSettings.Announcement(announcementOf(s).enabled(),
                         announcementOf(s).title() == null ? "" : announcementOf(s).title().strip(),
-                        announcementOf(s).text() == null ? "" : announcementOf(s).text().strip()));
+                        announcementOf(s).text() == null ? "" : announcementOf(s).text().strip()),
+                startPickOf(s));
     }
 
     /** 选项按从小到大保存（建房页按这个顺序显示）。 */
@@ -578,6 +604,7 @@ public final class SettingsMapper {
         RoomOptions room = new RoomOptions(base.minPlayersToStart(), rs.initialCashOptions(), base.defaultBoardId(),
                 rs.defaultInitialCash(), EndMode.valueOf(rs.defaultEndMode()), rs.defaultTimeLimitMinutes(), rs.defaultRollSeconds());
         GameSettings.TimingSetting ts = timingOf(s);
+        GameSettings.StartPickSetting sp = startPickOf(s);
         var timing = BASE.timing().withRoomChoices(rs.rollSecondsOptions(), rs.timeLimitMinutesOptions(), rs.bankruptcyCapMinutes())
                 .withWindows(ts.decisionSeconds() * 1000L, ts.responseSeconds() * 1000L, ts.discardSeconds() * 1000L,
                         ts.tradeSeconds() * 1000L, ts.toothSeconds() * 1000L, ts.auctionSeconds() * 1000L,
@@ -586,7 +613,8 @@ public final class SettingsMapper {
         return new RuleConfig(BASE.ruleVersion(), boards, tiers, st, economy, BASE.ratios(), cards, events,
                 timing, room,
                 new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()),
-                new SetBonus(setsOf(s).rentPercent(), setsOf(s).groups()));
+                new SetBonus(setsOf(s).rentPercent(), setsOf(s).groups()),
+                new StartPick(sp.cashWeight(), sp.cardWeight(), sp.cashMin(), sp.cashMax(), sp.cashStep()));
     }
 
     private static Map<String, List<String>> loadDefaultNames() {

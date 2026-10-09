@@ -87,7 +87,9 @@ class EventsV2Test {
     @Test
     void aLuckyTileDrawsFromThePoolEachTime() {
         // 同一个幸运格（9 号）两次落点抽到不同结果：p1 先抽到"回到起点"[75,100)，p2 后抽到"免费加盖"[25,50)（无地，无事发生）
+        // 回到起点后还有起点三选一：抽到现金 200
         var t = table(Table.dice(DrawPoint.MOVE_DIE, 3, 3, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 80),
+                Table.steps(DrawPoint.START_PICK_KIND, 100, 0), Table.steps(DrawPoint.START_PICK_CASH, 9, 0),
                 Table.dice(DrawPoint.MOVE_DIE, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 30));
         turn(t);
         turn(t);
@@ -95,6 +97,8 @@ class EventsV2Test {
         t.rollOnly();
         assertEquals(0, t.position("p1"), "back to start");
         assertEquals(before + RULES.economy().startReward(), t.cash("p1"));
+        t.pass(); // 起点三选一
+        assertEquals(before + RULES.economy().startReward() + 200, t.cash("p1"));
         t.rollOnly();
         assertEquals(9, t.position("p2"));
         var fixed = t.log.stream().filter(GameEvent.FixedEventTriggered.class::isInstance).map(GameEvent.FixedEventTriggered.class::cast).toList();

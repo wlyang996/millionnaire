@@ -41,6 +41,10 @@ export function luckyPool(unlucky = false): PoolItem[] {
 export interface RentRiseRule { freeRounds: number; everyRounds: number; stepPercent: number; capPercent: number }
 export let RENT_RISE: RentRiseRule = { freeRounds: 10, everyRounds: 5, stepPercent: 20, capPercent: 300 };
 
+/** 停在起点的三选一：现金 / 道具权重与现金范围（规则页、弹窗说明用；结果以服务端为准）。 */
+export interface StartPickRule { cashWeight: number; cardWeight: number; cashMin: number; cashMax: number; cashStep: number }
+export let START_PICK: StartPickRule = { cashWeight: 60, cardWeight: 40, cashMin: 200, cashMax: 1000, cashStep: 100 };
+
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
 export interface ServerRules {
     lucky?: { kind: string; amount: number; label: string; weight: number; unlucky?: boolean }[];
@@ -56,6 +60,8 @@ export interface ServerRules {
     };
     /** 同组地产加成（由 SetBonus.applyServerSets 使用） */
     sets?: { rentPercent: number; groups: Record<string, number[]> };
+    /** 起点三选一（后台「起点三选一」；权重都为 0 表示关闭） */
+    startPick?: StartPickRule;
     room?: {
         initialCashOptions: number[]; timeLimitMinutesOptions: number[]; rollSecondsOptions: number[];
         bankruptcyCapMinutes: number;
@@ -78,6 +84,7 @@ export function applyServerRules(r: ServerRules): void {
     BAIL_COST = r.fees.bailCost;
     if (r.handLimit && r.handLimit > 0) MAX_HAND = r.handLimit;
     if (r.rentRise) RENT_RISE = { ...r.rentRise };
+    if (r.startPick) START_PICK = { ...r.startPick };
     if (r.timing) {
         // 弹窗倒计时的默认值（联机时实际截止以服务端窗口为准）
         const t = r.timing;

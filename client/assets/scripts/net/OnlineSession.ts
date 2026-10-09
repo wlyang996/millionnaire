@@ -5,7 +5,7 @@
  * - 对局开始 / 结束时请求跳页（board / result）。
  */
 import type { MockStore } from '../core/MockStore';
-import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType } from '../core/Models';
+import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType, StartPickResult } from '../core/Models';
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { applyServerNames } from '../core/BoardNames';
 import { applyServerRules, BAIL_COST, luckyPool, rentPercent, setRentPercent } from '../core/Rules';
@@ -344,6 +344,7 @@ export class OnlineSession {
         if (s.game && this.hadGame && rp > rentPercent()) this.onToast?.('物价上涨！第 ' + s.game.round + ' 轮起租金 ×' + rp / 100);
         setRentPercent(rp);
         this.trackCards(u, s);
+        this.trackStartPick(u, s);
         const hasGame = !!s.game;
         if (hasGame && !this.hadGame) {
             this.store.gameLog = []; // 新的一局（或重连进来）：记录从这里开始
@@ -416,6 +417,31 @@ export class OnlineSession {
             const cue: Cue = { kind: 'event', playerId: actor, actor, waiting: false, result };
             this.cues.splice(Math.min(Math.max(this.eventCueAt, 0), this.cues.length), 0, cue);
         }
+    }
+
+    /** 起点三选一（StartPickDrawn，道具种类见紧随其后只发给本人的 EventCardReceived）：本人手动选的由弹窗翻牌展示，其余给一句提示。 */
+    private trackStartPick(u: UpdateMsg, s: SessionView): void {
+        const g = s.game;
+        if (!g) return;
+        let r: StartPickResult | null = null;
+        for (const e of u.events) {
+            const d = e.data ?? {};
+            if (e.kind === 'StartPickDrawn') {
+                r = {
+                    playerId: String(d.playerId), index: Number(d.index ?? 0), cash: d.kind === 'CASH_REWARD',
+                    amount: Number(d.amount ?? 0), card: null, auto: !!d.auto, seq: (this.store.startPick?.seq ?? 0) + 1,
+                };
+                this.store.startPick = r;
+            } else if (e.kind === 'EventCardReceived' && r && String(d.recipient ?? r.playerId) === r.playerId) {
+                r.card = String(d.card) as CardType;
+            }
+        }
+        if (!r) return;
+        const mine = r.playerId === this.myId;
+        if (mine && !r.auto) return;
+        const who = mine ? '你' : g.players.find((p) => p.playerId === r!.playerId)?.nickname ?? '玩家';
+        const got = r.cash ? r.amount + ' 现金' : r.card ? '道具「' + (CARD_NAMES[r.card] ?? r.card) + '」' : '一张道具';
+        this.onToast?.(who + '在起点' + (r.auto ? '（自动）' : '') + '翻牌，获得' + got);
     }
 
     /** 道具事件：查询结果只给我（弹结果页）；其余用卡、抵挡、免租等给所有人一句提示。 */
@@ -546,6 +572,7 @@ export class OnlineSession {
         this.store.eventDraw = EVENT_IDLE;
         this.store.toothResult = null;
         this.store.queryResult = null;
+        this.store.startPick = null;
         this.store.myRequest = null;
         this.store.flowResult = null;
         this.cues.length = 0;

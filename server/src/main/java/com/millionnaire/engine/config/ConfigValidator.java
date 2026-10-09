@@ -72,6 +72,14 @@ public final class ConfigValidator {
             fail("ruleVersion missing");
         }
         checkSets(c);
+        StartPick sp = c.startPick();
+        if (sp.cashWeight() < 0 || sp.cardWeight() < 0 || sp.cashWeight() > 1000 || sp.cardWeight() > 1000) {
+            fail("startPick weights must be in 0..1000");
+        }
+        if (sp.cashStep() <= 0 || sp.cashMin() <= 0 || sp.cashMax() < sp.cashMin() || sp.cashMax() > 1_000_000
+                || (sp.cashMax() - sp.cashMin()) % sp.cashStep() != 0) {
+            fail("startPick cash range must be positive, max >= min, and (max - min) divisible by step");
+        }
         RentInflation ri = c.rentInflation();
         if (ri.freeRounds() < 0 || ri.freeRounds() > 1000 || ri.everyRounds() < 1 || ri.everyRounds() > 100
                 || ri.stepPercent() < 0 || ri.stepPercent() > 100 || ri.capPercent() < 100 || ri.capPercent() > 1000) {

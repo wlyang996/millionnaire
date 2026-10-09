@@ -29,6 +29,7 @@ import { UpgradePopup } from '../popups/UpgradePopup';
 import { BankPopup } from '../popups/BankPopup';
 import { beginDebt, DebtPopup } from '../popups/DebtPopup';
 import { DebtSecondPopup } from '../popups/DebtSecondPopup';
+import { StartPickPopup } from '../popups/StartPickPopup';
 import { DiscardPopup } from '../popups/DiscardPopup';
 import { JailPopup } from '../popups/JailPopup';
 import { RentPopup } from '../popups/RentPopup';
@@ -731,6 +732,7 @@ export class BoardScreen extends Screen {
             else if (landing.step === 'BANK') ctx.popups.open(new BankPopup(id));
             else if (landing.step === 'EVENT') this.openedFor = -1; // 事件格不弹窗：棋盘中央的卡牌由 eventDraw 驱动，点卡即抽
             else if (landing.step === 'DISCARD') ctx.popups.open(new DiscardPopup(id).withDeadline(w.deadline)); // 事件得卡超出上限
+            else if (landing.step === 'START_PICK') ctx.popups.open(new StartPickPopup(id).withDeadline(w.deadline)); // 停在起点三选一
             else if (landing.step === 'RESPONSE') {
                 // 免租响应（设计稿 04）：持有免租卡时才有这一步
                 const owner = st.player(st.prop(landing.tile)?.owner ?? '');

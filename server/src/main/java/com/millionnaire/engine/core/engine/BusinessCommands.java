@@ -28,6 +28,7 @@ final class BusinessCommands {
             case GameCommand.DeclareBankruptcy ignored -> Kind.BUSINESS;
             case GameCommand.Surrender ignored -> Kind.BUSINESS;
             case GameCommand.DrawEventCard ignored -> Kind.BUSINESS;
+            case GameCommand.PickStartCard ignored -> Kind.BUSINESS;
             case GameCommand.DiscardCard ignored -> Kind.BUSINESS;
             case GameCommand.PickTooth ignored -> Kind.BUSINESS;
             case GameCommand.UseCard ignored -> Kind.BUSINESS;

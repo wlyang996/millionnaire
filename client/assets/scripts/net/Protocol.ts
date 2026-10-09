@@ -216,7 +216,7 @@ export type GameCommandName =
     | 'RollDice' | 'PayBail' | 'DrawEventCard' | 'DiscardCard' | 'BuyProperty' | 'DeclinePurchase'
     | 'StartLandAuction' | 'UpgradeProperty' | 'SkipUpgrade' | 'BankMortgage' | 'Redeem' | 'EmergencyMortgage'
     | 'FinishBank' | 'ContinueDebt' | 'DeclareBankruptcy' | 'ResumeControl' | 'Surrender' | 'PickTooth'
-    | 'UseCard' | 'RespondCard' | 'RequestAuction' | 'Bid' | 'RequestTrade' | 'AnswerTrade';
+    | 'UseCard' | 'RespondCard' | 'RequestAuction' | 'Bid' | 'RequestTrade' | 'AnswerTrade' | 'PickStartCard';
 
 /** GAME 命令参数（数字、玩家 ID、卡种或是否使用）。 */
 export type GameArgs = Record<string, number | string | boolean | null>;

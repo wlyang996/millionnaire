@@ -4,7 +4,7 @@
  */
 import { Node } from 'cc';
 import {
-    BAIL_COST, BANKRUPTCY_CAP_MINUTES, MAX_HAND, MINIGAME_REWARD, RENT_RISE, START_BONUS, STATION, TIERS,
+    BAIL_COST, BANKRUPTCY_CAP_MINUTES, MAX_HAND, MINIGAME_REWARD, RENT_RISE, START_BONUS, START_PICK, STATION, TIERS,
 } from '../core/Rules';
 import { setBonusPercent } from '../core/SetBonus';
 import { Theme } from '../core/Theme';
@@ -48,8 +48,9 @@ export function ruleSections(): { title: string; lines: string[] }[] {
             lines: [
                 '轮到你时点骰子投骰（' + s.rollSeconds + ' 秒内不投会自动投），棋子按点数前进。',
                 '经过或停在起点获得 ' + START_BONUS + '。经过其他格子不触发效果，只处理停下的格子。',
+                startPick(),
                 '买地、升级等选择限时，超时视为放弃。',
-            ],
+            ].filter((x) => x),
         },
         {
             title: '地产与租金',
@@ -111,6 +112,14 @@ export function ruleSections(): { title: string; lines: string[] }[] {
             ],
         },
     ];
+}
+
+function startPick(): string {
+    const p = START_PICK;
+    if (p.cashWeight + p.cardWeight <= 0) return '';
+    const what = p.cardWeight <= 0 ? '现金 ' + p.cashMin + '～' + p.cashMax : p.cashWeight <= 0 ? '一张随机道具'
+        : '现金 ' + p.cashMin + '～' + p.cashMax + ' 或一张随机道具';
+    return '停在起点（走到或被事件送回）时，从三张牌里翻开一张，获得' + what + '。';
 }
 
 export class RulesPopup extends Popup {

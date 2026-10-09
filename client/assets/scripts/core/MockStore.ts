@@ -11,7 +11,7 @@ import type { OnlineSession } from '../net/OnlineSession';
 import type { LogLine } from '../net/GameLog';
 import {
     AuctionView, BoardTile, Card, CardType, ChatLine, ConnState, ControlMode, DebtView, GameResult, GameView,
-    HistoryEntry, Member, PlayerStats, FlowResult, MinigameOutcome, PendingRequest, PlayerView, Profile, PropertyState, QueryResult, RoomSettings, SessionView,
+    HistoryEntry, Member, PlayerStats, FlowResult, MinigameOutcome, PendingRequest, PlayerView, Profile, PropertyState, QueryResult, RoomSettings, StartPickResult, SessionView,
 } from './Models';
 import {
     auctionParams, boardSizeOf, emergencyMortgage, landPrice, maxPlayers, netWorth, rankStandings, standardValue, START_BONUS,
@@ -75,6 +75,8 @@ export class MockStore {
     toothResult: MinigameOutcome | null = null;
     /** [联机] 最近一次查询卡结果（只发给我；棋盘页弹出结果后标记已看） */
     queryResult: QueryResult | null = null;
+    /** [联机] 最近一次起点三选一的结果（三选一弹窗据此翻牌） */
+    startPick: StartPickResult | null = null;
     /** [联机] 我排队中的拍卖 / 交易申请（设计稿 29 排队横幅） */
     myRequest: PendingRequest | null = null;
     /** [联机] 最近一次拍卖 / 交易的结果提示（设计稿 29 结果卡） */

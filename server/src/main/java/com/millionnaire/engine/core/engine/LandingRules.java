@@ -57,6 +57,13 @@ final class LandingRules {
                 java.util.Arrays.stream(com.millionnaire.engine.config.EventKind.values()).map(kind ->
                     new Outcome(EventModule.drawnResult(kind), List.of(new Successor(EventModule.effect(kind),
                             (c, g, l) -> EventModule.hasKind(l, kind))))).toList()),
+        new Rule(LandingStep.START_PICK, Execution.WINDOW, StageTable.Point.START_PICK,
+                (c, g, l) -> startTile(c, g, l) && c.startPick().enabled() && l.event() == null,
+                (c, g, l) -> startTile(c, g, l) && c.startPick().enabled() && l.event() == null,
+                List.of(new Outcome(LandingResult.DRAW_REWARD, List.of(new Successor(LandingStep.REWARD,
+                                (c, g, l) -> EventModule.hasKind(l, com.millionnaire.engine.config.EventKind.CASH_REWARD)))),
+                        new Outcome(LandingResult.DRAW_CARD, List.of(new Successor(LandingStep.CARD,
+                                (c, g, l) -> EventModule.hasKind(l, com.millionnaire.engine.config.EventKind.CARD)))))),
         new Rule(LandingStep.FIXED_EVENT, Execution.EFFECT, null,
                 (c, g, l) -> fixedEventTile(c, g, l) && !g.turn().chain().eventDrawn(), (c, g, l) -> false,
                 java.util.Arrays.stream(com.millionnaire.engine.config.EventKind.values()).map(kind ->
@@ -95,6 +102,10 @@ final class LandingRules {
     static boolean fixedEventTile(RuleConfig c, GameState g, LandingState l) {
         var type = LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type();
         return type == com.millionnaire.engine.config.TileType.FIXED_EVENT || type == com.millionnaire.engine.config.TileType.UNLUCKY_EVENT;
+    }
+
+    static boolean startTile(RuleConfig c, GameState g, LandingState l) {
+        return LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type() == com.millionnaire.engine.config.TileType.START;
     }
 
     static boolean eventTile(RuleConfig c, GameState g, LandingState l) {

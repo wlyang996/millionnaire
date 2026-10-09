@@ -106,10 +106,17 @@ final class EventModule {
         return out;
     }
     static RejectionCode decide(DecisionContext<SessionState> ctx, GameCommand c) {
-        long window = c instanceof GameCommand.DrawEventCard d ? d.windowId() : ((GameCommand.DiscardCard) c).windowId();
+        long window = c instanceof GameCommand.DrawEventCard d ? d.windowId()
+                : c instanceof GameCommand.PickStartCard p ? p.windowId() : ((GameCommand.DiscardCard) c).windowId();
         RejectionCode why = TurnModule.checkTurnWindow(ctx, c.actor(), window);
         if (why != null) { return why; }
         if (!StageTable.rule(StageTable.turnPoint(ctx.state().game())).allows(c)) { return RejectionCode.WRONG_STAGE; }
+        if (c instanceof GameCommand.PickStartCard p) {
+            if (p.index() < 0 || p.index() >= StartPick.CHOICES) { return RejectionCode.INVALID_ARGUMENT; }
+            TurnModule.closeDecision(ctx);
+            pickStart(ctx, p.index(), false);
+            return null;
+        }
         if (c instanceof GameCommand.DiscardCard d) {
             var hand = ctx.state().game().player(c.actor()).orElseThrow().hand();
             if (d.index() < 0 || d.index() >= hand.size()) { return RejectionCode.INVALID_ARGUMENT; }
@@ -137,6 +144,18 @@ final class EventModule {
         ctx.emit(new GameEvent.EventDrawn(g.turn().currentPlayer(), l.landingId(), l.cursor(), kind, amount, m.kind(), m.distance(), auto));
         EconomyModule.resumeLanding(ctx, 0);
     }
+    /** 起点三选一：按配置比例抽现金或道具（现金再抽金额）；道具由后续的 CARD 效果按事件得道具的概率抽。 */
+    static void pickStart(DecisionContext<SessionState> ctx, int index, boolean auto) {
+        var sp = ctx.config().startPick();
+        var g = ctx.state().game();
+        var l = g.turn().landing();
+        boolean cash = ctx.draw(DrawPoint.START_PICK_KIND, sp.cashWeight() + sp.cardWeight()) < sp.cashWeight();
+        long amount = cash ? sp.cashMin() + (long) ctx.draw(DrawPoint.START_PICK_CASH, sp.cashBound()) * sp.cashStep() : 0;
+        ctx.emit(new GameEvent.StartPickDrawn(g.turn().currentPlayer(), l.landingId(), l.cursor(), index,
+                cash ? EventKind.CASH_REWARD : EventKind.CARD, amount, auto));
+        EconomyModule.resumeLanding(ctx, 0);
+    }
+
     static void performEffect(DecisionContext<SessionState> ctx) {
         var g = ctx.state().game();
         var l = g.turn().landing();
@@ -200,7 +219,7 @@ final class EventModule {
         EconomyModule.resumeLanding(ctx, 0);
     }
     static boolean handles(GameEvent e) {
-        return e instanceof GameEvent.EventDrawn || e instanceof GameEvent.FixedEventTriggered
+        return e instanceof GameEvent.EventDrawn || e instanceof GameEvent.FixedEventTriggered || e instanceof GameEvent.StartPickDrawn
                 || e instanceof GameEvent.EventPropertyChanged || e instanceof GameEvent.EventRewardPaid
                 || e instanceof GameEvent.FeeCharged || e instanceof GameEvent.FeePaid || e instanceof GameEvent.EventMoveCommitted
                 || e instanceof GameEvent.EventCardReceived || e instanceof GameEvent.EventCardDiscarded || e instanceof GameEvent.EventHandCount;
@@ -235,6 +254,18 @@ final class EventModule {
                 var result = new EventResolution(kind, amount, m.kind(), m.distance(), -1, false);
                 var after = g.withTurn(t.withChain(t.chain().drewEvent()));
                 yield after.withTurn(after.turn().withLanding(LandingRules.consume(c, after, l.withEvent(result), drawnResult(kind))));
+            }
+            case GameEvent.StartPickDrawn e -> {
+                LobbyModule.check(source(g, e.playerId(), e.landingId(), e.cursor(), LandingStep.START_PICK)
+                        && l.step() == LandingStep.START_PICK && l.decisionOpen() && l.event() == null
+                        && e.index() >= 0 && e.index() < StartPick.CHOICES, "start pick source mismatch");
+                var sp = c.startPick();
+                boolean cash = draws.take(DrawPoint.START_PICK_KIND, sp.cashWeight() + sp.cardWeight()) < sp.cashWeight();
+                long amount = cash ? sp.cashMin() + (long) draws.take(DrawPoint.START_PICK_CASH, sp.cashBound()) * sp.cashStep() : 0;
+                EventKind kind = cash ? EventKind.CASH_REWARD : EventKind.CARD;
+                LobbyModule.check(e.kind() == kind && e.amount() == amount, "start pick does not match draw");
+                var result = new EventResolution(kind, amount, null, 0, -1, false);
+                yield g.withTurn(t.withLanding(LandingRules.consume(c, g, l.withEvent(result), drawnResult(kind))));
             }
             case GameEvent.FixedEventTriggered e -> {
                 LobbyModule.check(source(g, e.playerId(), e.landingId(), e.cursor(), LandingStep.FIXED_EVENT)
@@ -335,8 +366,18 @@ final class EventModule {
     static boolean validResolution(RuleConfig c, LandingState l) {
         var r = l.event();
         if (r == null) { return !l.results().stream().anyMatch(x -> x.name().startsWith("DRAW_")); }
-        if (r.kind() == null || r.countPending() || !l.results().contains(drawnResult(r.kind()))
-                || l.tasks().getFirst() != LandingStep.EVENT && l.tasks().getFirst() != LandingStep.FIXED_EVENT) { return false; }
+        if (r.kind() == null || r.countPending() || !l.results().contains(drawnResult(r.kind()))) { return false; }
+        if (l.tasks().getFirst() == LandingStep.START_PICK) {
+            // 起点三选一：只有现金（配置区间内）或道具
+            var sp = c.startPick();
+            return r.moveKind() == null && r.distance() == 0 && (r.kind() == EventKind.CASH_REWARD
+                    ? r.amount() >= sp.cashMin() && r.amount() <= sp.cashMax() && (r.amount() - sp.cashMin()) % sp.cashStep() == 0
+                        && r.newCardIndex() == -1 && r.cardDraw() == -1
+                    : r.kind() == EventKind.CARD && r.amount() == 0
+                        && (r.newCardIndex() == -1 && r.cardDraw() == -1 || r.newCardIndex() == c.economy().handLimit()
+                            && r.cardDraw() >= 0 && r.cardDraw() < CardDeck.totalWeight(c)));
+        }
+        if (l.tasks().getFirst() != LandingStep.EVENT && l.tasks().getFirst() != LandingStep.FIXED_EVENT) { return false; }
         boolean monetary = r.kind() == EventKind.CASH_REWARD || r.kind() == EventKind.CASH_FINE;
         boolean moving = r.kind() == EventKind.MOVE;
         boolean jumping = r.kind() == EventKind.TO_STATION || r.kind() == EventKind.TO_START;

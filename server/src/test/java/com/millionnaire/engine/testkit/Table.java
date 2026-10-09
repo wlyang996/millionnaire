@@ -191,6 +191,7 @@ public final class Table {
             case UPGRADE -> new GameCommand.SkipUpgrade(current(), w.windowId());
             case BANK -> new GameCommand.FinishBank(current(), w.windowId());
             case EVENT -> new GameCommand.DrawEventCard(current(), w.windowId());
+            case START_PICK -> new GameCommand.PickStartCard(current(), w.windowId(), 0);
             case DISCARD -> new GameCommand.DiscardCard(current(), w.windowId(), landing.event().newCardIndex());
             case RESPONSE -> new GameCommand.RespondCard(current(), w.windowId(), false);
             default -> throw new IllegalStateException("no decision window for " + landing.step());

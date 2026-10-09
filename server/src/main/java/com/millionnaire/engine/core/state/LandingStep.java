@@ -31,6 +31,8 @@ public enum LandingStep {
     AUCTION,
     /** 固定事件格（2026-10-08）：停下立即按格子的固定效果生效，不抽卡。 */
     FIXED_EVENT,
+    /** 停在起点：三张背面卡选一张，得现金或道具（2026-10-08）。 */
+    START_PICK,
     /** 事件"免费加盖" / "房屋失修"：随机挑自己的一块地产升 / 降一级（没有合适的地就无事发生）。 */
     EVENT_BUILD, EVENT_DOWNGRADE;
 

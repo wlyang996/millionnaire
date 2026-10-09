@@ -112,6 +112,24 @@ class ConfigBindingTest {
     }
 
     @Test
+    void startPickIsEditable() {
+        GameSettings d = SettingsMapper.defaults();
+        assertThat(d.startPick().cashWeight()).isEqualTo(60);
+        var p = new GameSettings.StartPickSetting(0, 100, 300, 600, 100);
+        GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets(), d.timing(), null, p);
+        assertThat(SettingsMapper.validate(edited)).isEmpty();
+        var sp = SettingsMapper.toRuleConfig(edited).startPick();
+        assertThat(sp.cardWeight()).isEqualTo(100);
+        assertThat(sp.cashMax()).isEqualTo(600);
+        List<String> errors = SettingsMapper.validate(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
+                d.eventWeights(), d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets(),
+                d.timing(), null, new GameSettings.StartPickSetting(-1, 10, 300, 650, 100)));
+        assertThat(errors).anyMatch(e -> e.contains("权重"));
+        assertThat(errors).anyMatch(e -> e.contains("整除"));
+    }
+
+    @Test
     void setBonusIsEditable() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(d.sets().rentPercent()).isEqualTo(150);

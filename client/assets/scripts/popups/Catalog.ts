@@ -15,6 +15,7 @@ import { surrenderConfirm } from './ConfirmPopup';
 import { DebtPopup } from './DebtPopup';
 import { DebtSecondPopup } from './DebtSecondPopup';
 import { DiscardPopup } from './DiscardPopup';
+import { StartPickPopup } from './StartPickPopup';
 import { HistoryPopup } from './HistoryPopup';
 import { JoinRoomPopup } from './JoinRoomPopup';
 import { RentPopup } from './RentPopup';
@@ -67,6 +68,7 @@ export const POPUP_CATALOG: PopupEntry[] = [
     { id: 'jail', label: '监狱 出狱判定', make: () => new JailPopup(undefined, () => undefined) },
     { id: 'assets', label: '资产总览', make: () => new AssetsPopup() },
     { id: 'discard', label: '弃牌 15秒', make: () => new DiscardPopup() },
+    { id: 'start-pick', label: '起点三选一', make: () => new StartPickPopup() },
     { id: 'resync', label: '重连同步遮罩', make: () => new ResyncPopup() },
     { id: 'self-menu', label: '头像菜单(托管/认输)', make: () => new SelfMenuPopup() },
     { id: 'surrender', label: '二次确认(认输)', make: () => surrenderConfirm(() => ctx.store.surrender()) },

@@ -28,6 +28,10 @@ public enum DrawPoint {
     EVENT_TARGET("R7b"),
     /** R5b 幸运格从本棋盘奖池抽一项（加权，2026-10-08）。 */
     LUCKY_EVENT("R5b"),
+    /** R12a 起点三选一：现金还是道具（加权，2026-10-08）。 */
+    START_PICK_KIND("R12a"),
+    /** R12b 起点三选一的现金金额。 */
+    START_PICK_CASH("R12b"),
     /** R10 危险牙。 */
     DANGER_TOOTH("R10"),
     /** R11 代选牙。 */

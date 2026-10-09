@@ -144,6 +144,7 @@ final class TurnModule {
         GameState g = game(ctx);
         return switch (command) {
             case GameCommand.DrawEventCard c -> EventModule.decide(ctx, c);
+            case GameCommand.PickStartCard c -> EventModule.decide(ctx, c);
             case GameCommand.DiscardCard c -> EventModule.decide(ctx, c);
             case GameCommand.PickTooth c -> MinigameModule.decide(ctx, c);
             case GameCommand.UseCard c -> CardModule.decide(ctx, c);

@@ -132,6 +132,13 @@ function logout() {
   loggedIn.value = false
 }
 
+const startPickHint = computed(() => {
+  const p = form.value?.startPick
+  if (!p) return ''
+  const sum = p.cashWeight + p.cardWeight
+  return sum > 0 ? '每张牌 ' + Math.round((p.cashWeight * 100) / sum) + '% 现金、' + Math.round((p.cardWeight * 100) / sum) + '% 道具' : '已关闭'
+})
+
 // 旧版本没有公告：补一个关闭的公告，免得编辑区判为"有修改"
 function fill(s) {
   if (s && !s.announcement) s.announcement = { enabled: false, title: '', text: '' }
@@ -473,6 +480,17 @@ onMounted(() => {
             <span v-if="rentSteps.length" class="muted">第 1～{{ form.rentRise.freeRounds }} 轮原价；{{ rentSteps.map((s) => '第 ' + s.from + ' 轮起 ×' + s.pct / 100).join('，') }}{{ rentSteps.length >= 12 ? '…' : '' }}</span>
             <span v-else class="muted">租金不上涨</span>
           </el-form-item>
+        </el-form>
+      </el-tab-pane>
+
+      <el-tab-pane label="起点三选一" name="startPick">
+        <el-form v-if="form.startPick" label-width="160px" class="narrow">
+          <p class="muted">玩家停在起点（正常走到或被事件送回）时，从三张背面朝上的牌里选一张：每张牌按权重决定是现金还是道具，现金在范围内按步长随机，道具按「道具概率」抽取。两个权重都为 0 时关闭。经过起点不触发，只发起点奖励。</p>
+          <el-form-item label="现金权重"><el-input-number v-model="form.startPick.cashWeight" :min="0" :max="1000" /></el-form-item>
+          <el-form-item label="道具权重"><el-input-number v-model="form.startPick.cardWeight" :min="0" :max="1000" /><span class="hint">{{ startPickHint }}</span></el-form-item>
+          <el-form-item label="现金最小值"><el-input-number v-model="form.startPick.cashMin" :min="1" :max="1000000" :step="100" /></el-form-item>
+          <el-form-item label="现金最大值"><el-input-number v-model="form.startPick.cashMax" :min="1" :max="1000000" :step="100" /></el-form-item>
+          <el-form-item label="现金步长"><el-input-number v-model="form.startPick.cashStep" :min="1" :max="1000000" :step="50" /><span class="hint">须整除（最大值 − 最小值）</span></el-form-item>
         </el-form>
       </el-tab-pane>
 

@@ -40,6 +40,9 @@ public sealed interface GameEvent extends Event {
     /** 幸运格：pick 为本棋盘奖池（BoardTemplate.fixedEvents）里抽到的下标，由 LUCKY_EVENT 抽取。 */
     record FixedEventTriggered(String playerId, long landingId, int cursor, com.millionnaire.engine.config.EventKind kind,
                                long amount, MoveKind moveKind, int distance, int pick) implements GameEvent, PublicEvent { }
+    /** 起点三选一（2026-10-08）：index 为玩家点的那张（0～2，只用于界面），kind 为 CASH_REWARD 或 CARD，现金时 amount 为金额。 */
+    record StartPickDrawn(String playerId, long landingId, int cursor, int index, com.millionnaire.engine.config.EventKind kind,
+                          long amount, boolean auto) implements GameEvent, PublicEvent { }
     /** 事件加盖 / 降级：tile = -1 表示没有合适的地产（无事发生）；否则 level 为新等级。目标由 EVENT_TARGET 抽取。 */
     record EventPropertyChanged(String playerId, long landingId, int cursor, int tile, int level) implements GameEvent, PublicEvent { }
     /** Publicly disclose only that a card was obtained/discarded and the actual hand size. */

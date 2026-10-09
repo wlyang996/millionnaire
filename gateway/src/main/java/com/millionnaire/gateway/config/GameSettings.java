@@ -26,6 +26,7 @@ import java.util.Map;
  *                     没有此项（null）按内置默认处理。
  * @param timing       操作时限（秒）与动画缓冲（毫秒）。没有此项（null）按内置默认处理。
  * @param announcement 大厅公告（开关、标题、内容），随发布生效。没有此项（null）为不显示。
+ * @param startPick    停在起点（走到或事件送回）时的三选一：抽到现金 / 道具的权重与现金范围。没有此项（null）按内置默认处理。
  */
 public record GameSettings(
         List<TierSetting> tiers,
@@ -41,7 +42,16 @@ public record GameSettings(
         RoomSetting room,
         SetSetting sets,
         TimingSetting timing,
-        Announcement announcement) {
+        Announcement announcement,
+        StartPickSetting startPick) {
+
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
+                        Integer handLimit, RoomSetting room, SetSetting sets, TimingSetting timing, Announcement announcement) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, room, sets, timing,
+                announcement, null);
+    }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
@@ -95,6 +105,10 @@ public record GameSettings(
 
     /** 大厅公告：enabled 关闭时不显示；title 最多 20 字，text 最多 200 字。 */
     public record Announcement(boolean enabled, String title, String text) {
+    }
+
+    /** 起点三选一：每张牌按 cashWeight : cardWeight 决定是现金还是道具（都为 0 关闭）；现金在 cashMin～cashMax 间按步长等概率取值。 */
+    public record StartPickSetting(int cashWeight, int cardWeight, long cashMin, long cashMax, long cashStep) {
     }
 
     public record SetSetting(int rentPercent, Map<String, List<Integer>> groups) {

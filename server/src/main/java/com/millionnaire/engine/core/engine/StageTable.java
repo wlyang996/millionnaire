@@ -33,6 +33,8 @@ final class StageTable {
         WAIT,
         /** 债务覆盖窗口（两段）。 */
         DEBT, EVENT_DRAW, DISCARD,
+        /** 落点：起点三选一。 */
+        START_PICK,
         /** 落点：缴租前的免租响应（持有免租卡时）。 */
         RENT_RESPONSE
     }
@@ -52,6 +54,8 @@ final class StageTable {
     /** 超时或自动执行的动作。 */
     enum Action {
         ROLL, BUY_IF_AFFORDABLE, DECLINE, UPGRADE_IF_AFFORDABLE, SKIP, FINISH, NEXT_SEGMENT_OR_BANKRUPT, DRAW_EVENT, DISCARD_NEW,
+        /** 起点三选一：替玩家选第一张。 */
+        PICK_START,
         /** 使用响应卡（托管 / 掉线 / 暂离持卡者）。 */
         USE_RESPONSE,
         /** 不使用响应卡（手动玩家超时）。 */
@@ -91,6 +95,8 @@ final class StageTable {
                     Action.NEXT_SEGMENT_OR_BANKRUPT, Action.NEXT_SEGMENT_OR_BANKRUPT, false, true, List.of()),
             new Rule(Point.EVENT_DRAW, List.of(GameCommand.DrawEventCard.class), Duration.DECISION,
                     Action.DRAW_EVENT, Action.DRAW_EVENT, Action.DRAW_EVENT, false, true, List.of()),
+            new Rule(Point.START_PICK, List.of(GameCommand.PickStartCard.class), Duration.DECISION,
+                    Action.PICK_START, Action.PICK_START, Action.PICK_START, false, true, List.of()),
             new Rule(Point.DISCARD, List.of(GameCommand.DiscardCard.class), Duration.DISCARD,
                     Action.DISCARD_NEW, Action.DISCARD_NEW, Action.DISCARD_NEW, false, true, List.of()),
             // O4：只在持卡时弹出；手动超时不使用，托管 / 掉线 / 暂离自动使用
