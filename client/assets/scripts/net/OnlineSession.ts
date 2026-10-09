@@ -19,7 +19,7 @@ import { isWechat, wxLoginCode } from './Wx';
 
 export type Cue =
     | { kind: 'dice'; playerId: string; value: number }
-    | { kind: 'move'; playerId: string; from: number; steps: number }
+    | { kind: 'move'; playerId: string; from: number; steps: number; teleport?: boolean }
     | { kind: 'jail'; playerId: string }
     /** 一句提示，排在前面的动画（如狱中判定骰）播完后再显示。 */
     | { kind: 'notice'; playerId: string; text: string; tile?: number }
@@ -311,7 +311,9 @@ export class OnlineSession {
             } else if (e.kind === 'PlayerMoved' && Number(d.steps) > 0) {
                 // 事件后退：步数记为负，棋盘页逐格往回跳
                 const back = String(d.kind ?? '').indexOf('BACK') >= 0;
-                this.cues.push({ kind: 'move', playerId: String(d.playerId), from: Number(d.from), steps: (back ? -1 : 1) * Number(d.steps) });
+                // "回到起点"事件的前进：瞬移，不逐格走
+                const teleport = this.lastEventKind === 'TO_START' && String(d.kind) === 'EVENT_FORWARD' && Number(d.to) === 0;
+                this.cues.push({ kind: 'move', playerId: String(d.playerId), from: Number(d.from), steps: (back ? -1 : 1) * Number(d.steps), teleport });
             } else if (e.kind === 'EventDrawn' || e.kind === 'FixedEventTriggered') {
                 this.eventCueAt = this.cues.length;
                 this.lastEventKind = String(d.kind);

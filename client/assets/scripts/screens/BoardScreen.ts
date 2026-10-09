@@ -451,6 +451,7 @@ export class BoardScreen extends Screen {
         if (this.cashGame !== key) {
             this.cashGame = key;
             this.cashSnapshot.clear();
+            this.shownCash.clear();
             this.cashChanges.clear();
         }
         for (const p of game.players) {
@@ -578,12 +579,20 @@ export class BoardScreen extends Screen {
         const shown = new Map<string, number>();
         if (this.move) shown.set(this.move.id, (((this.move.from + (this.move.steps < 0 ? -1 : 1) * this.move.done) % n) + n) % n);
         for (const c of online.cues) if (c.kind === 'move' && !shown.has(c.playerId)) shown.set(c.playerId, c.from);
-        // 走棋动画播完前，现金停在动画开始前的数（经过起点的奖励、落点租金等等人物到了再显示，用户 2026-10-08）
-        for (const p of game.players) if (!shown.has(p.playerId)) this.shownCash.set(p.playerId, p.cash);
-        if (!shown.size) return game;
+        // 骰子、走棋、事件翻牌播完前，所有人的现金都停在动画开始前的数（用户 2026-10-08：走到别人的地上才扣钱、
+        // 对方也是那时才加钱；经过起点的奖励、事件奖励等同理）
+        const animating = shown.size > 0 || !!(this.dice && this.dice.playing)
+            || online.cues.some((c) => c.kind === 'dice' || c.kind === 'move')
+            || ctx.store.eventDraw.phase === 'FLIPPING' || ctx.store.eventDraw.phase === 'RESULT';
+        if (!animating) {
+            for (const p of game.players) this.shownCash.set(p.playerId, p.cash);
+            return game;
+        }
+        for (const p of game.players) if (!this.shownCash.has(p.playerId)) this.shownCash.set(p.playerId, p.cash);
         return {
-            ...game, players: game.players.map((p) => (shown.has(p.playerId)
-                ? { ...p, position: shown.get(p.playerId)!, cash: this.shownCash.get(p.playerId) ?? p.cash } : p)),
+            ...game, players: game.players.map((p) => ({
+                ...p, position: shown.has(p.playerId) ? shown.get(p.playerId)! : p.position, cash: this.shownCash.get(p.playerId) ?? p.cash,
+            })),
         };
     }
 
@@ -691,6 +700,13 @@ export class BoardScreen extends Screen {
                 st.eventDraw = cue.waiting
                     ? { phase: 'WAITING', actor: cue.actor, since: Date.now(), result: null, settled: st.eventDraw.settled }
                     : { phase: 'FLIPPING', actor: cue.actor, since: Date.now(), result: cue.result, settled: st.eventDraw.settled + 1 };
+                st.emit();
+            } else if (cue.teleport) {
+                // 回到起点：不逐格走，直接出现在终点（用户 2026-10-08）
+                const n = g.tiles.length;
+                const to = (((cue.from + cue.steps) % n) + n) % n;
+                this.view.pulse(to);
+                this.view.focusTile(to);
                 st.emit();
             } else this.startMove(cue.playerId, cue.steps, false, false, cue.from);
             return;
