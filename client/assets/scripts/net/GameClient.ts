@@ -118,7 +118,7 @@ export class GameClient {
     /** 我的最近 20 局（服务端从数据库读）。 */
     async history(): Promise<SHistoryRow[]> {
         const r = await requestJson<SHistoryRow[]>('GET', this.baseUrl + '/api/me/history', undefined, this.token ?? undefined);
-        if (r.status !== 200 || !Array.isArray(r.body)) throw new Error('cannot load history');
+        if (r.status !== 200 || !Array.isArray(r.body)) throw Object.assign(new Error('cannot load history'), { status: r.status });
         return r.body;
     }
 

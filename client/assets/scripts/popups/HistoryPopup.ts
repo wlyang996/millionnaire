@@ -86,7 +86,7 @@ export class HistoryPopup extends Popup {
         const hist = this.state === 'ready' ? ctx.store.history : [];
         hist.forEach((r, i) => this.row(list.content, r, i * ROW_H, w));
         list.setContentHeight(hist.length * ROW_H + 8);
-        const empty = this.state === 'loading' ? '加载中…' : this.state === 'failed' ? '战绩加载失败，请稍后再试'
+        const empty = this.state === 'loading' ? '加载中…' : this.state === 'failed' ? '战绩加载失败（' + (ctx.store.online?.historyError || '未知') + '），请稍后再试'
             : hist.length === 0 ? '还没有战绩，打完一局就会出现在这里' : '';
         if (empty) text(p, empty, 0, 420, w, 60, Theme.font.md, Theme.c.noteGray);
     }

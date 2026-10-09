@@ -205,6 +205,9 @@ export class OnlineSession {
         }
     }
 
+    /** 最近一次读取战绩失败的原因（显示在战绩页，便于排查） */
+    historyError = '';
+
     /** 从服务端读取我的最近 20 局，写入 store.history（失败时保留空列表并返回 false）。 */
     async loadHistory(): Promise<boolean> {
         try {
@@ -218,10 +221,15 @@ export class OnlineSession {
                 finalAssets: r.netWorth ?? r.cash ?? 0,
                 endedAt: r.endedAt,
             }));
+            this.historyError = '';
             return true;
-        } catch {
+        } catch (e) {
             this.store.history = [];
             this.store.stats = null;
+            const status = (e as { status?: number }).status;
+            // 后台重启后旧令牌失效：回登录页（否则一直显示"加载失败"）
+            if (status === 401) this.expired();
+            this.historyError = status ? '错误 ' + status : '网络不通';
             return false;
         }
     }
