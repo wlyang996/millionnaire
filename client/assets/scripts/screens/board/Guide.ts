@@ -22,7 +22,7 @@ export interface GuideStep {
 const STEPS: Record<string, GuideStep> = {
     board: {
         id: 'board', title: '欢迎来到大富翁小镇',
-        body: '顶部是玩家和现金，下方是你的手牌。右边「规则」随时查看玩法，「记录」可以看到每一步发生了什么。',
+        body: '顶部是玩家和现金，下方是你的手牌。点左下角自己的头像，可以查看「游戏规则」和「对局记录」。',
     },
     roll: { id: 'roll', title: '轮到你了', body: '点棋盘中间的骰子投骰，棋子按点数前进。停在无主地产可以买下，别人停下就要向你付租金。' },
     event: { id: 'event', title: '事件格', body: '点中间的卡片翻开事件：可能是奖励、罚款、道具、移动……看看运气吧！' },

@@ -159,9 +159,11 @@ export class BoardScreen extends Screen {
         const cur = st.player(game.currentPlayer);
         if (this.cam.follow && cur && !this.move) this.view.focusTile(cur.position, false);
 
-        // 棋盘内圈右侧（幸运卡堆下方、不压格子）：对局记录 / 规则（用户 2026-10-08）
-        this.sideButton('记录', VP_Y + 236, () => ctx.popups.open(new GameLogPopup()));
-        this.sideButton('规则', VP_Y + 292, () => ctx.popups.open(new RulesPopup()));
+        // 对局记录 / 规则在底栏头像菜单里（用户 2026-10-09）；观战没有头像菜单，仍放在棋盘内圈右侧
+        if (this.spectator) {
+            this.sideButton('记录', VP_Y + 236, () => ctx.popups.open(new GameLogPopup()));
+            this.sideButton('规则', VP_Y + 292, () => ctx.popups.open(new RulesPopup()));
+        }
 
         this.buildOverlays();
         // 设计稿 28 / 29：交易等待、排队申请、拍卖 / 交易结果横幅（玩家条下方，不拦截棋盘）
