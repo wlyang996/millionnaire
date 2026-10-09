@@ -251,8 +251,16 @@ final class EconomyModule {
     }
 
     static void finishLanding(DecisionContext<SessionState> ctx, long leadMs) {
+        var chain = game(ctx).turn().chain();
+        var last = chain.segments().getLast();
+        int remaining = ctx.config().startPick().enabled() ? MovementRules.remainingAtStart(last) : 0;
         completeLanding(ctx);
-        TurnModule.endTurn(ctx, leadMs);
+        if (remaining > 0) {
+            int size = LobbyModule.board(ctx.config(), game(ctx).settings()).size();
+            TurnModule.moveAndLand(ctx, MovementRules.segment(chain.segments().size() + 1, last.kind(), 0, remaining, size), leadMs);
+        } else {
+            TurnModule.endTurn(ctx, leadMs);
+        }
     }
 
     /** 续接 ResumeLanding：债务流程返回后，按落点的"下一项必须步骤"继续（M2 中租金结清后为无，落点结束）。 */
@@ -849,7 +857,16 @@ final class EconomyModule {
                         && k.pendingCharge() == 0 && (g.debt() == null || g.debt().source().landingId() != l.landingId()),
                         "landing finished before its required steps were done (next " + (l == null ? null : l.next())
                                 + ", decision open " + (l != null && l.decisionOpen()) + ")");
-                yield g.withTurn(t.withLanding(null));
+                var completed = t.withLanding(null);
+                var last = t.chain().segments().getLast();
+                int remaining = rules.startPick().enabled() ? MovementRules.remainingAtStart(last) : 0;
+                if (remaining > 0) {
+                    check(l.tile() == 0 && l.tasks().getFirst() == LandingStep.START_PICK,
+                            "start continuation requires a completed start pick");
+                    completed = completed.withChain(t.chain().authorize(new com.millionnaire.engine.core.state.MovePlan(
+                            last.kind(), remaining, l.landingId(), 0)));
+                }
+                yield g.withTurn(completed);
             }
             case LandingAborted e -> {
                 check(l != null && l.landingId() == e.landingId() && !g.player(t.currentPlayer()).orElseThrow().alive()

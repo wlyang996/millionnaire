@@ -1,7 +1,7 @@
 package com.millionnaire.engine.config;
 
 /**
- * 起点三选一（2026-10-08，管理后台可配）：停在起点（正常走到或被事件送到）时，面前三张背面卡选一张，
+ * 起点三选一（管理后台可配）：前进经过或停在起点时暂停，面前三张背面卡选一张，完成后继续剩余步数；
  * 按 cashWeight : cardWeight 的比例得到现金（cashMin～cashMax 按 cashStep 等概率）或一张随机道具（与事件得道具同概率）。
  * 两个权重都为 0 即关闭。
  */

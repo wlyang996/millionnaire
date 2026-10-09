@@ -555,6 +555,8 @@ export class BoardScreen extends Screen {
             return;
         }
         if (this.dice && this.dice.playing) return;
+        // 起点翻牌结果展示完、弹窗关闭后，才播放剩余步数的移动提示。
+        if (ctx.popups.has('start-pick')) return;
         // 回合结束：弹窗都关了再换人
         if (this.pendingEnd && ctx.popups.count === 0 && st.eventDraw.phase === 'IDLE' && ctx.screens.currentId === this.id) {
             this.pendingEnd = false;
@@ -638,6 +640,7 @@ export class BoardScreen extends Screen {
         }
         if (this.dice && this.dice.playing) return;
         // 我点了卡背、正在等服务端的抽卡结果：结果排在队首时立即取出翻牌（否则下面的"翻牌期间不播放"会把它一直挡住）
+        if (ctx.popups.has('start-pick')) return;
         const head = online.cues[0];
         if (head && head.kind === 'event' && !head.waiting && st.eventDraw.phase === 'FLIPPING' && !st.eventDraw.result) {
             online.cues.shift();

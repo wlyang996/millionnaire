@@ -26,7 +26,7 @@ import java.util.Map;
  *                     没有此项（null）按内置默认处理。
  * @param timing       操作时限（秒）与动画缓冲（毫秒）。没有此项（null）按内置默认处理。
  * @param announcement 大厅公告（开关、标题、内容），随发布生效。没有此项（null）为不显示。
- * @param startPick    停在起点（走到或事件送回）时的三选一：抽到现金 / 道具的权重与现金范围。没有此项（null）按内置默认处理。
+ * @param startPick    前进经过或停在起点时的三选一（抽完继续剩余步数）：现金 / 道具权重与现金范围。null按内置默认处理。
  */
 public record GameSettings(
         List<TierSetting> tiers,

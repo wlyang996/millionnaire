@@ -36,7 +36,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 class ReplayTest {
     /** 黄金值：锁定引擎行为 + 规范格式 + 随机协议。有意修改时同步更新，并提升 EngineVersion。 */
-    static final String GOLDEN_FINAL_HASH = "bdd31c7a50510f33c3e82b999bd56ff9a1351a2ac1cb52c2010a9d335493c2e6";
+    static final String GOLDEN_FINAL_HASH = "bea1e89b9e7e38da627cb3524db111780d658588fe1c97ef728f7fc48298bbad";
     /** 测试配置新增道具开关（EconomyConfig.cardsEnabled，测试配置关闭）后的配置哈希；之前为 15be5a0b…。 */
     /** 事件拆分（engine-0.13.0-m6c）给配置加了 0 权重的新事件种类与空的固定事件表，测试配置哈希因此变化，行为不变。 */
     /** 租金上涨（rentInflation）、同组加成（setBonus）与起点三选一（startPick）进入配置（2026-10-08），哈希变化；之前为 993156de… / fcdd7d92… / 10ea2d53…。 */
@@ -78,7 +78,7 @@ class ReplayTest {
     void m3bGoldenSnapshotDiffersFromM3aOnlyInItsVersionBytes() {
         byte[] previous = java.util.Base64.getDecoder().decode("bWlsbGlvbm5haXJlLWVuZ2luZS8xL3NuYXBzaG90Cnsicm9vbUlkIjoicm9vbS0xIiwiY29uZmlnSGFzaCI6ImY4NTI0YTYyODgwMjc4Y2EzZTNhMGU2ODM4MTQwZTkxNmYyOGNmMWIyNDk4MTExYzUzYTI5ZGRiMzhlZjcwOWQiLCJlbmdpbmVWZXJzaW9uIjoiZW5naW5lLTAuOC4xLW0zYSIsImRvbWFpbklkIjoiZGVtby10ZXN0Iiwicm5nUHJvdG9jb2wiOiJ4b3NoaXJvMjU2c3MtbGVtaXJlMzItdjEiLCJub3ciOjYwMDAwLCJsYXN0U2VxIjoyOCwibGFzdFJlY2VpdmVkQXQiOjYwMDAwLCJsYXN0SW5wdXREaWdlc3QiOiJmZDUwMTY5NWYxYmZkYzA2MjhjNDU4MzgzMDA3NDNiOTE5NmUxYWI3NWIyN2I3MmU3YzQ4YzgzMjJiZGM0NDY2IiwiZXZlbnRDb3VudCI6NjMsInRpbWVycyI6eyJ0YXNrcyI6W119LCJuZXh0VGFza0lkIjo3LCJybmciOnsiczAiOjcwMzI4NzIxODkzMjIyMzQ3NDYsInMxIjotNzQ1MDcxMzIzNTMxNTU3OTk3LCJzMiI6MjU5MDU3Nzg4MjY5OTg0NTE1OCwiczMiOjEyNjExNjM4MDU3NDQ5Mjg1NTl9LCJwZW5kaW5nRHJhd3MiOltdLCJkb21haW4iOnsiQHR5cGUiOiJEZW1vU3RhdGUiLCJob3N0SWQiOiJiIiwicGxheWVycyI6WyJiIl0sInJvdW5kIjpudWxsLCJuZXh0V2luZG93SWQiOjUsInJvbGxzIjpbMiw1XX19");
         // 配置后来新增了正式服策略开关（EconomyConfig.offerUnaffordablePurchase / upgradeAfterPurchase、TimingConfig.endWhenAllAway），配置哈希随之改变
-        byte[] normalized = engine.snapshot(full.state()).replace(CONFIG_HASH, PRE_CARDS_CONFIG_HASH).replace("engine-0.13.0-m6c", "engine-0.8.1-m3a")
+        byte[] normalized = engine.snapshot(full.state()).replace(CONFIG_HASH, PRE_CARDS_CONFIG_HASH).replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.8.1-m3a")
                 .replace("15be5a0b1185660540974ce2b74ac25d73bfb205f06e368cdb3c79b0ed26b668",
                         "f8524a62880278ca3e3a0e6838140e916f28cf1b2498111c53a29ddb38ef709d").getBytes(StandardCharsets.UTF_8);
         assertArrayEquals(previous, normalized);
@@ -102,7 +102,7 @@ class ReplayTest {
             assertNotNull(in); previous = in.readAllBytes();
         }
         assertEquals("2520dcd5a18d6bf8bcfb6b079390315ef9d3744a4434a617a70f074b5cc9415c", Canonical.sha256Hex(previous));
-        byte[] normalized = engine.snapshot(full.state()).replace(CONFIG_HASH, PRE_CARDS_CONFIG_HASH).replace("engine-0.13.0-m6c", "engine-0.9.1-m3b").getBytes(StandardCharsets.UTF_8);
+        byte[] normalized = engine.snapshot(full.state()).replace(CONFIG_HASH, PRE_CARDS_CONFIG_HASH).replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.9.1-m3b").getBytes(StandardCharsets.UTF_8);
         assertArrayEquals(previous, normalized);
     }
 
@@ -114,7 +114,7 @@ class ReplayTest {
             assertNotNull(in); previous = in.readAllBytes();
         }
         assertEquals("c3c2624903ce3d1e0d28231b1ec29519320da9d5e3c80b85afbdf7bc75118976", Canonical.sha256Hex(previous));
-        byte[] normalized = engine.snapshot(full.state()).replace(CONFIG_HASH, PRE_CARDS_CONFIG_HASH).replace("engine-0.13.0-m6c", "engine-0.10.0-m3c").getBytes(StandardCharsets.UTF_8);
+        byte[] normalized = engine.snapshot(full.state()).replace(CONFIG_HASH, PRE_CARDS_CONFIG_HASH).replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.10.0-m3c").getBytes(StandardCharsets.UTF_8);
         assertArrayEquals(previous, normalized);
     }
 

@@ -46,17 +46,36 @@ final class MovementRules {
 
     /** The board is authoritative. Include the endpoint, exclude the departure, stop at the first foreign object. */
     static MoveSegment resolve(MoveSegment plan, BoardState board, String player, int size) {
+        return resolve(plan, board, player, size, false);
+    }
+
+    static MoveSegment resolve(MoveSegment plan, BoardState board, String player, int size, boolean startPick) {
         if (plan.kind() == MoveKind.TO_JAIL) { return jailJump(plan.number(), plan.from(), plan.to(), size); }
         MoveSegment expected = segment(plan.number(), plan.kind(), plan.from(), plan.plannedDistance(), size);
         for (int i = 0; i < expected.walked().size(); i++) {
             var block = board.roadblock(expected.walked().get(i)).orElse(null);
             if (block != null && !block.owner().equals(player)) { return stopAt(expected, i + 1, size, block); }
+            if (startPick && expected.walked().get(i) == 0
+                    && (plan.kind() == MoveKind.DICE || plan.kind() == MoveKind.EVENT_FORWARD)) {
+                return stopAt(expected, i + 1, size);
+            }
         }
         return expected;
     }
 
     /** 几何及累积规则不限定玩法来源；来源授权由事件演化另行核对。 */
     static boolean valid(MoveChain chain, int size) {
+        return valid(chain, size, false);
+    }
+
+    /** 未走完的前进路径只允许在起点抽卡处暂停，路障强停不保留剩余步数。 */
+    static int remainingAtStart(MoveSegment segment) {
+        return segment != null && segment.to() == 0 && segment.stoppedBy() == null
+                && (segment.kind() == MoveKind.DICE || segment.kind() == MoveKind.EVENT_FORWARD)
+                ? segment.plannedDistance() - segment.distance() : 0;
+    }
+
+    static boolean valid(MoveChain chain, int size, boolean startPick) {
         if (chain.segments().isEmpty() || chain.plans().size() != chain.segments().size()) { return false; }
         int from = chain.origin();
         int walked = 0;
@@ -76,6 +95,10 @@ final class MovementRules {
                         || block.owner() == null || block.owner().equals(chain.playerId()) || block.tile() != actual.to()
                         || actual.distance() < 1 || block.id() < 1 || block.placedTurn() < 1 || block.placedTurn() > chain.turnNo()) { return false; }
                 expected = stopAt(expected, actual.distance(), size, block);
+            } else if (startPick && remainingAtStart(actual) > 0) {
+                int entered = expected.walked().indexOf(0) + 1;
+                if (entered < 1 || entered != actual.distance()) { return false; }
+                expected = stopAt(expected, entered, size);
             }
             if (!expected.equals(actual)) { return false; }
             walked = Math.addExact(walked, actual.walked().size());

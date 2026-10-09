@@ -485,7 +485,7 @@ onMounted(() => {
 
       <el-tab-pane label="起点三选一" name="startPick">
         <el-form v-if="form.startPick" label-width="160px" class="narrow">
-          <p class="muted">玩家停在起点（正常走到或被事件送回）时，从三张背面朝上的牌里选一张：每张牌按权重决定是现金还是道具，现金在范围内按步长随机，道具按「道具概率」抽取。两个权重都为 0 时关闭。经过起点不触发，只发起点奖励。</p>
+          <p class="muted">玩家前进经过或停在起点时，先在起点暂停，从三张背面朝上的牌里选一张，抽完再继续剩余步数。每张牌按权重决定是现金还是道具，现金在范围内按步长随机，道具按「道具概率」抽取。两个权重都为 0 时关闭；关闭时经过起点只发起点奖励。后退经过起点不抽卡。</p>
           <el-form-item label="现金权重"><el-input-number v-model="form.startPick.cashWeight" :min="0" :max="1000" /></el-form-item>
           <el-form-item label="道具权重"><el-input-number v-model="form.startPick.cardWeight" :min="0" :max="1000" /><span class="hint">{{ startPickHint }}</span></el-form-item>
           <el-form-item label="现金最小值"><el-input-number v-model="form.startPick.cashMin" :min="1" :max="1000000" :step="100" /></el-form-item>
