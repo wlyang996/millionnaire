@@ -1,12 +1,9 @@
 /**
  * 战绩详情（用户 2026-10-09）：在"我的战绩"里点一局打开。上面是本局概况（模式、地图、人数、时长、结束原因、初始现金），
- * 中间是全部玩家按名次的结算（净资产、现金、是否破产 / 认输，自己一行高亮），下面是本局的对局记录（按回合，与棋盘页「记录」同样的写法，
- * 只含公开事件，所以别人抽到的道具种类看不到）。数据来自 GET /api/me/games/{roomId}/{gameNo}。
+ * 下方是全部玩家的最终排名与结算。数据来自 GET /api/me/games/{roomId}/{gameNo}。
  */
 import { Node } from 'cc';
-import { boardNames } from '../core/BoardNames';
 import { Theme } from '../core/Theme';
-import { appendLog, LogLine } from '../net/GameLog';
 import { SGameDetail } from '../net/Protocol';
 import { defaultAvatar } from '../net/ViewAdapter';
 import { ctx } from '../ui/Ctx';
@@ -19,15 +16,12 @@ import { avatar } from '../ui/Widgets';
 const W = 680;
 const H = 1180;
 const PLAYER_H = 96;
-const HEADER_H = 46;
-const LOG_H = 62;
-/** 详情里最多列出的记录条数（太长的对局只留最后这些，免得节点过多卡顿） */
-const DETAIL_LIMIT = 800;
 
 const REASONS: Record<string, string> = {
     TIME_UP: '时间到，按净资产排名',
     LAST_SURVIVOR: '只剩一名玩家',
     ALL_ELIMINATED: '所有玩家都已出局',
+    ALL_AWAY: '全员挂机或托管',
     NO_PLAYERS: '玩家都离开了',
 };
 
@@ -112,31 +106,6 @@ export class GameDetailPopup extends Popup {
             y += 40;
         }
 
-        // 对局记录
-        y = this.section(c, '对局记录', y + 10, lw);
-        const log = this.lines(d);
-        if (!log) {
-            text(c, '这局没有保存对局记录', 0, y, lw, 50, Theme.font.sm, Theme.c.noteGray);
-            y += 60;
-        }
-        if (log && log.length >= DETAIL_LIMIT) {
-            text(c, '对局较长，只显示最后 ' + DETAIL_LIMIT + ' 条', 0, y, lw, 36, 20, Theme.c.noteGray);
-            y += 40;
-        }
-        for (const l of log ?? []) {
-            if (l.header) {
-                const n = mk(c, 'LogHeader', 0, y + 6, lw, HEADER_H - 10);
-                fillRR(gfx(n), 0, 0, lw, HEADER_H - 10, 12, Theme.c.blueSoft);
-                text(n, l.text, 16, 0, lw - 32, HEADER_H - 10, 22, Theme.c.blueDark, { bold: true, align: 'l' });
-                y += HEADER_H;
-                continue;
-            }
-            const n = mk(c, 'LogLine', 0, y, lw, LOG_H);
-            if (l.mine) fillRR(gfx(n), 0, 4, lw, LOG_H - 8, 10, '#FFF6DA');
-            text(n, l.text, 16, 2, lw - 32, LOG_H - 4, 22, l.mine ? Theme.c.ink : Theme.c.inkSoft,
-                { bold: !!l.mine, align: 'l', wrap: true, lineHeight: 28 });
-            y += LOG_H;
-        }
         list.setContentHeight(y + 16);
     }
 
@@ -145,17 +114,4 @@ export class GameDetailPopup extends Popup {
         return y + 54;
     }
 
-    /** 把本局事件翻成记录（按发生顺序；单局不截断）。 */
-    private lines(d: SGameDetail): LogLine[] | null {
-        if (!d.events) return null;
-        const me = d.players.find((p) => p.me)?.playerId ?? '';
-        const names = boardNames(d.boardId === 'classic-30' ? 30 : 50);
-        const out: LogLine[] = [];
-        appendLog(out, d.events, {
-            myId: me,
-            name: (id) => (String(id) === me ? '你' : d.players.find((p) => p.playerId === String(id))?.nickname ?? '玩家'),
-            tile: (i) => names[Number(i)] ?? '',
-        }, DETAIL_LIMIT);
-        return out;
-    }
 }

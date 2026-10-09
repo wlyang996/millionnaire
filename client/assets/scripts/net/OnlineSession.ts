@@ -332,8 +332,9 @@ export class OnlineSession {
             } else if (e.kind === 'PlayerMoved' && Number(d.steps) > 0) {
                 // 事件后退：步数记为负，棋盘页逐格往回跳
                 const back = String(d.kind ?? '').indexOf('BACK') >= 0;
-                // "回到起点"事件的前进：瞬移，不逐格走
-                const teleport = this.lastEventKind === 'TO_START' && String(d.kind) === 'EVENT_FORWARD' && Number(d.to) === 0;
+                // 回到起点与搭乘快车直接跳转，不逐格播放移动动画
+                const teleport = String(d.kind) === 'EVENT_FORWARD'
+                    && (this.lastEventKind === 'TO_STATION' || this.lastEventKind === 'TO_START' && Number(d.to) === 0);
                 this.cues.push({ kind: 'move', playerId: String(d.playerId), from: Number(d.from), steps: (back ? -1 : 1) * Number(d.steps), teleport });
             } else if (e.kind === 'EventDrawn' || e.kind === 'FixedEventTriggered') {
                 this.eventCueAt = this.cues.length;

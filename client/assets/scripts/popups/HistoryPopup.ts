@@ -116,7 +116,7 @@ export class HistoryPopup extends Popup {
         const cx = COLS[4][1] - 20 + 6;
         drawCoin(gfx(mk(n, 'Coin', cx, top + (midH - 30) / 2, 30, 30)), 15, 15, 15);
         text(n, String(r.finalAssets), cx + 36, top, COLS[4][2] - 50, midH, 28, Theme.c.navy, { bold: true, align: 'l' });
-        // 点一局看详情（全部玩家排名与对局记录）
+        // 点一局看详情（全部玩家最终排名与结算）
         if (r.roomId !== undefined && r.gameNo !== undefined) {
             const roomId = r.roomId;
             const gameNo = r.gameNo;

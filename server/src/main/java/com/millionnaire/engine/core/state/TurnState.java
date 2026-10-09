@@ -10,7 +10,19 @@ package com.millionnaire.engine.core.state;
 public record TurnState(long turnNo, String currentPlayer, TurnStage stage, long windowId, boolean startRewardGiven,
                         long autoTaskId, Continuation continuation, long notBefore, LandingState landing,
                         long lastLandingId, TurnTrack track, MoveChain chain, long lastChainId, long lastDebtId,
-                        long round, int rentPercent) {
+                        long round, int rentPercent, int allAwayTurns) {
+
+    public TurnState(long turnNo, String currentPlayer, TurnStage stage, long windowId, boolean startRewardGiven,
+                     long autoTaskId, Continuation continuation, long notBefore, LandingState landing, long lastLandingId,
+                     TurnTrack track, MoveChain chain, long lastChainId, long lastDebtId, long round, int rentPercent) {
+        this(turnNo, currentPlayer, stage, windowId, startRewardGiven, autoTaskId, continuation, notBefore, landing,
+                lastLandingId, track, chain, lastChainId, lastDebtId, round, rentPercent, 0);
+    }
+
+    public TurnState withAllAwayTurns(int value) {
+        return new TurnState(turnNo, currentPlayer, stage, windowId, startRewardGiven, autoTaskId, continuation, notBefore,
+                landing, lastLandingId, track, chain, lastChainId, lastDebtId, round, rentPercent, value);
+    }
 
     public static TurnState notStarted() {
         return new TurnState(0, null, TurnStage.NONE, 0, false, 0, null, 0, null, 0, TurnTrack.NONE, null, 0, 0, 0, 100);
@@ -19,48 +31,48 @@ public record TurnState(long turnNo, String currentPlayer, TurnStage stage, long
     /** 新回合（落点编号计数延续）。 */
     public TurnState next(long no, String player, long newRound, int newRentPercent) {
         return new TurnState(no, player, TurnStage.NONE, 0, false, 0, null, 0, null, lastLandingId, TurnTrack.NONE, null, lastChainId, lastDebtId,
-                newRound, newRentPercent);
+                newRound, newRentPercent, allAwayTurns);
     }
 
     /** 回合结束：回到 NONE，清空窗口、续接与落点。 */
     public TurnState ended() {
         return new TurnState(turnNo, currentPlayer, TurnStage.NONE, 0, startRewardGiven, 0, null, 0, null, lastLandingId,
-                TurnTrack.NONE, null, lastChainId, lastDebtId, round, rentPercent);
+                TurnTrack.NONE, null, lastChainId, lastDebtId, round, rentPercent, allAwayTurns);
     }
 
     public TurnState withStage(TurnStage value, long window, Continuation next, long earliest) {
         return new TurnState(turnNo, currentPlayer, value, window, startRewardGiven, autoTaskId, next, earliest, landing,
-                lastLandingId, track, chain, lastChainId, lastDebtId, round, rentPercent);
+                lastLandingId, track, chain, lastChainId, lastDebtId, round, rentPercent, allAwayTurns);
     }
 
     public TurnState withAutoTask(long value) {
         return new TurnState(turnNo, currentPlayer, stage, windowId, startRewardGiven, value, continuation, notBefore, landing,
-                lastLandingId, track, chain, lastChainId, lastDebtId, round, rentPercent);
+                lastLandingId, track, chain, lastChainId, lastDebtId, round, rentPercent, allAwayTurns);
     }
 
     public TurnState rewardGiven() {
         return new TurnState(turnNo, currentPlayer, stage, windowId, true, autoTaskId, continuation, notBefore, landing,
-                lastLandingId, track, chain, lastChainId, lastDebtId, round, rentPercent);
+                lastLandingId, track, chain, lastChainId, lastDebtId, round, rentPercent, allAwayTurns);
     }
 
     public TurnState withTrack(TurnTrack value) {
         return new TurnState(turnNo, currentPlayer, stage, windowId, startRewardGiven, autoTaskId, continuation, notBefore,
-                landing, lastLandingId, value, chain, lastChainId, lastDebtId, round, rentPercent);
+                landing, lastLandingId, value, chain, lastChainId, lastDebtId, round, rentPercent, allAwayTurns);
     }
 
     /** 设置或清除当前落点；新落点的编号成为"最后分配的落点编号"。 */
     public TurnState withLanding(LandingState value) {
         long last = value != null && value.landingId() > lastLandingId ? value.landingId() : lastLandingId;
         return new TurnState(turnNo, currentPlayer, stage, windowId, startRewardGiven, autoTaskId, continuation, notBefore,
-                value, last, track, chain, lastChainId, lastDebtId, round, rentPercent);
+                value, last, track, chain, lastChainId, lastDebtId, round, rentPercent, allAwayTurns);
     }
     public TurnState withChain(MoveChain value) {
         return new TurnState(turnNo, currentPlayer, stage, windowId, startRewardGiven, autoTaskId, continuation,
                 notBefore, landing, lastLandingId, track, value,
-                value == null ? lastChainId : Math.max(lastChainId, value.chainId()), lastDebtId, round, rentPercent);
+                value == null ? lastChainId : Math.max(lastChainId, value.chainId()), lastDebtId, round, rentPercent, allAwayTurns);
     }
     public TurnState debtAllocated(long id) {
         return new TurnState(turnNo, currentPlayer, stage, windowId, startRewardGiven, autoTaskId, continuation,
-                notBefore, landing, lastLandingId, track, chain, lastChainId, id, round, rentPercent);
+                notBefore, landing, lastLandingId, track, chain, lastChainId, id, round, rentPercent, allAwayTurns);
     }
 }

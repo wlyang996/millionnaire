@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 class SessionGoldenTest {
     private static final String CONFIG_HASH = "15be5a0b1185660540974ce2b74ac25d73bfb205f06e368cdb3c79b0ed26b668";
     /** 测试配置新增道具开关（cardsEnabled，测试配置关闭）后的配置哈希；换回 CONFIG_HASH 后历史黄金值不变。 */
-    private static final String CARDS_CONFIG_HASH = "0f6388f01812892fbdb49503ff041ebcbba7362ff79a6f27387dc85f52ba8f84"; // 租金上涨参数进入配置后（之前 993156de…，事件拆分）
+    private static final String CARDS_CONFIG_HASH = "ec3fd9bced99b3eaa260c4ccc444ef072400788aad173b09350cbb7326473183"; // 租金上涨参数进入配置后（之前 993156de…，事件拆分）
     private static final String PREVIOUS_CONFIG_HASH = "f8524a62880278ca3e3a0e6838140e916f28cf1b2498111c53a29ddb38ef709d";
 
     @Test void scriptedSessionDebtToFinalLogHasStableBytes() {

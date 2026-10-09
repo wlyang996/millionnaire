@@ -394,6 +394,7 @@ public final class ConfigValidator {
         options("timing.timeLimitMinutesOptions", t.timeLimitMinutesOptions(), 1440, 60_000);
         count("timing.bankruptcyModeCapMinutes", t.bankruptcyModeCapMinutes(), 1, 1440);
         derived("timing.bankruptcyModeCapMinutes in ms", () -> Math.multiplyExact((long) t.bankruptcyModeCapMinutes(), 60_000L));
+        count("timing.allAwayTurns", t.allAwayTurns(), 1, 100);
         duration("timing.decisionWindowMs", t.decisionWindowMs());
         duration("timing.responseWindowMs", t.responseWindowMs());
         duration("timing.discardWindowMs", t.discardWindowMs());

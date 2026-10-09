@@ -168,8 +168,7 @@ export class BoardScreen extends Screen {
         this.buildOverlays();
         // 设计稿 28 / 29：交易等待、排队申请、拍卖 / 交易结果横幅（玩家条下方，不拦截棋盘）
         this.banners = drawFlowBanners(this.root, 74 + (game.players.length > 4 ? 144 : 68) + 12);
-        drawBottom(this.root, this.spectator, this.cashChanges.get(this.myId), this.cashChangeNodes,
-            game.players.find((p) => p.playerId === this.myId)?.cash);
+        drawBottom(this.root, this.spectator);
         this.buildAwayOverlay();
         this.jailOv = this.jail ? new JailOverlay(this.root, this.jail.name, this.jail.start) : null;
         // 新手引导：按当时情形提示一次（有弹窗时先不提示，免得叠在一起）
@@ -708,7 +707,7 @@ export class BoardScreen extends Screen {
                     : { phase: 'FLIPPING', actor: cue.actor, since: Date.now(), result: cue.result, settled: st.eventDraw.settled + 1 };
                 st.emit();
             } else if (cue.teleport) {
-                // 回到起点：不逐格走，直接出现在终点（用户 2026-10-08）
+                // 回到起点 / 搭乘快车：直接出现在目标格
                 const n = g.tiles.length;
                 const to = (((cue.from + cue.steps) % n) + n) % n;
                 this.view.pulse(to);

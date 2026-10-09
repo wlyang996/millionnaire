@@ -292,6 +292,11 @@ final class TurnModule {
 
     // ================================================================ 回合推进
 
+    private static boolean allAway(GameState g) {
+        return g.players().stream().anyMatch(PlayerState::alive) && g.players().stream().filter(PlayerState::alive)
+                .allMatch(p -> p.control() != com.millionnaire.engine.core.state.ControlMode.MANUAL);
+    }
+
     private static void startNextTurn(DecisionContext<SessionState> ctx, long leadMs) {
         GameState g = game(ctx);
         if (g.phase() == GamePhase.DRAINING) {
@@ -303,10 +308,10 @@ final class TurnModule {
             finish(ctx, "NO_PLAYERS");
             return;
         }
-        // 存活玩家全部暂离（挂机）/ 托管：没人在玩，回合交界处直接结束对局（按当前净资产排名）。
+        // 全员连续暂离 / 托管达到配置的玩家回合数，在回合交界按净资产结算。
         // 只是掉线（控制仍是手动）的不算：全员掉线另有 120 秒重连保留（open-decisions #6）
-        if (ctx.config().timing().endWhenAllAway() && g.players().stream().filter(PlayerState::alive)
-                .allMatch(p -> p.control() != com.millionnaire.engine.core.state.ControlMode.MANUAL)) {
+        if (ctx.config().timing().endWhenAllAway() && allAway(g)
+                && g.turn().allAwayTurns() >= ctx.config().timing().allAwayTurns()) {
             finish(ctx, "ALL_AWAY");
             return;
         }
@@ -858,7 +863,7 @@ final class TurnModule {
             case TurnEnded e -> {
                 check(e.turnNo() == t.turnNo() && t.autoTaskId() == 0 && k.equals(TurnTrack.NONE) && t.landing() == null
                         && g.debt() == null && e.playerId().equals(t.currentPlayer()), "turn end mismatch");
-                yield g.withTurn(t.ended());
+                yield g.withTurn(t.ended().withAllAwayTurns(allAway(g) ? Math.addExact(t.allAwayTurns(), 1) : 0));
             }
             case DiceRolled e -> {
                 Draw d = draws.take(DrawPoint.MOVE_DIE);
@@ -979,7 +984,10 @@ final class TurnModule {
                 GameState released = g.withPlayer(p.jail(false, 0)).withTurn(t.withTrack(TurnTrack.NONE));
                 yield e.reason() == ReleaseReason.CARD ? released.withCards(g.cards().effect(null)) : released;
             }
-            case ControlChanged e -> g.withPlayer(g.player(e.playerId()).orElseThrow().control(e.mode()));
+            case ControlChanged e -> {
+                GameState changed = g.withPlayer(g.player(e.playerId()).orElseThrow().control(e.mode()));
+                yield allAway(changed) ? changed : changed.withTurn(t.withAllAwayTurns(0));
+            }
             case ConnectionChanged e -> {
                 PlayerState p = g.player(e.playerId()).orElseThrow();
                 check(e.observation() > p.connObservation() && legalTransition(p.conn(), e.conn()), "illegal connection change");
@@ -1054,6 +1062,7 @@ final class TurnModule {
         GameClock c = g.clock();
         LobbyModule.expect(c != null && c.endsAt() == Math.addExact(g.startedAt(), gameDurationMs(config, g)), "clock mismatch");
         TurnState t = g.turn();
+        LobbyModule.expect(t != null && t.allAwayTurns() >= 0 && t.allAwayTurns() <= t.turnNo(), "all-away turn count invalid");
         LobbyModule.expect(t != null && t.turnNo() >= 1 && t.currentPlayer() != null && t.stage() != TurnStage.NONE
                 && t.track().equals(TurnTrack.NONE), "a running game is always inside a turn stage between steps");
         if (g.phase() == GamePhase.RUNNING) {

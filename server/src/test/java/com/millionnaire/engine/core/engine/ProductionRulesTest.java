@@ -117,6 +117,58 @@ class ProductionRulesTest {
     }
 
     @Test
+    void allAwayWaitsConfiguredTurnsAndSurvivesRestore() {
+        for (int limit : new int[] {2, 3}) {
+            Table t = awayTable(limit);
+            long no = t.game().gameNo();
+            t.send(new GameCommand.SetControl(no, "p1", ControlMode.AWAY));
+            t.send(new GameCommand.SetControl(no, "p2", ControlMode.HOSTED));
+            for (int count = 1; count < limit; count++) {
+                completeTurn(t);
+                assertTrue(t.session().inGame());
+                assertEquals(count, t.game().turn().allAwayTurns());
+                t.state = t.engine.restore(t.engine.snapshot(t.state));
+                assertEquals(count, t.game().turn().allAwayTurns());
+            }
+            completeTurn(t);
+            assertFalse(t.session().inGame());
+        }
+    }
+
+    @Test
+    void resumingManualControlResetsAllAwayCounter() {
+        Table t = awayTable(3);
+        long no = t.game().gameNo();
+        t.send(new GameCommand.SetControl(no, "p1", ControlMode.AWAY));
+        t.send(new GameCommand.SetControl(no, "p2", ControlMode.HOSTED));
+        completeTurn(t);
+        assertEquals(1, t.game().turn().allAwayTurns());
+        t.send(new GameCommand.ResumeControl("p1", no));
+        assertEquals(0, t.game().turn().allAwayTurns());
+        t.send(new GameCommand.SetControl(no, "p1", ControlMode.AWAY));
+        completeTurn(t);
+        completeTurn(t);
+        assertTrue(t.session().inGame());
+        assertEquals(2, t.game().turn().allAwayTurns());
+        completeTurn(t);
+        assertFalse(t.session().inGame());
+    }
+
+    private static Table awayTable(int turns) {
+        RuleConfig c = PRODUCTION_RULES;
+        RuleConfig configured = new RuleConfig(c.ruleVersion(), c.boards(), c.tiers(), c.station(), c.economy(), c.ratios(),
+                c.cardWeights(), c.eventWeights(), c.timing().withAllAwayTurns(turns), c.room(), c.rentInflation(), c.setBonus(), c.startPick());
+        return new Table(configured, ScriptedRandom.withEventCards(script(order(90, 10), Table.deal(2),
+                dice(DrawPoint.MOVE_DIE, 1, 1, 1, 1, 1, 1, 1, 1))), 1).start(2);
+    }
+
+    private static void completeTurn(Table t) {
+        long turn = t.game().turn().turnNo();
+        for (int i = 0; i < 30 && t.session().inGame() && t.game().turn().turnNo() == turn; i++) drive(t, 1);
+        assertTrue(!t.session().inGame() || t.game().turn().turnNo() > turn, "must complete the player's turn");
+    }
+
+    @Test
     void merelyDisconnectedPlayersDoNotEndTheGame() {
         Table t = table(1, 1, 1, 1, 1, 1, 1, 1);
         long gameNo = t.game().gameNo();

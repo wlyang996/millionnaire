@@ -158,6 +158,7 @@ const TIMING_FIELDS = [
   ['debtSegmentSeconds', '欠款每段', 10, 120, '秒', '现金不足时应急抵押的时间，共两段'],
   ['animDiceMs', '投骰动画留时', 0, 5000, '毫秒', '投骰后等这么久再开下一步（给动画）'],
   ['animPerStepMs', '每走一格留时', 0, 2000, '毫秒', ''],
+  ['allAwayTurns', '全员挂机 / 托管结束', 1, 100, '回合', '全员连续挂机或托管达到该回合数后结束；每名玩家的一次行动算一回合，恢复手动操作后清零'],
   ['autoActDelayMs', '托管代操作等待', 1, 10000, '毫秒', '托管 / 掉线时系统代为操作前的等待'],
 ]
 
@@ -498,7 +499,7 @@ onMounted(() => {
         <el-form v-if="form.timing" label-width="170px" class="narrow">
           <p class="muted">各类弹窗的倒计时与动画留时。投骰时间在「建房选项」里配置。只影响发布之后新建的房间。</p>
           <el-form-item v-for="f in TIMING_FIELDS" :key="f[0]" :label="f[1]">
-            <el-input-number v-model="form.timing[f[0]]" :min="f[2]" :max="f[3]" :step="f[4] === '秒' ? 1 : 50" />
+            <el-input-number v-model="form.timing[f[0]]" :min="f[2]" :max="f[3]" :step="f[4] === '毫秒' ? 50 : 1" />
             <span class="hint">{{ f[4] }}{{ f[5] ? ' · ' + f[5] : '' }}</span>
           </el-form-item>
         </el-form>

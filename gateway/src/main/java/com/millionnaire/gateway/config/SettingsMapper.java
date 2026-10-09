@@ -80,7 +80,7 @@ public final class SettingsMapper {
         var t = BASE.timing();
         return new GameSettings.TimingSetting(sec(t.decisionWindowMs()), sec(t.responseWindowMs()), sec(t.discardWindowMs()),
                 sec(t.tradeResponseMs()), sec(t.toothPickMs()), sec(t.auctionDurationMs()), sec(t.auctionExtendMs()),
-                sec(t.auctionMaxMs()), sec(t.debtSegmentMs()), (int) t.animDiceMs(), (int) t.animPerStepMs(), (int) t.autoActDelayMs());
+                sec(t.auctionMaxMs()), sec(t.debtSegmentMs()), (int) t.animDiceMs(), (int) t.animPerStepMs(), (int) t.autoActDelayMs(), t.allAwayTurns());
     }
 
     private static int sec(long ms) {
@@ -88,7 +88,12 @@ public final class SettingsMapper {
     }
 
     public static GameSettings.TimingSetting timingOf(GameSettings s) {
-        return s.timing() == null ? defaultTiming() : s.timing();
+        if (s.timing() == null) return defaultTiming();
+        var t = s.timing();
+        return t.allAwayTurns() != null ? t : new GameSettings.TimingSetting(t.decisionSeconds(), t.responseSeconds(),
+                t.discardSeconds(), t.tradeSeconds(), t.toothSeconds(), t.auctionSeconds(), t.auctionExtendSeconds(),
+                t.auctionMaxSeconds(), t.debtSegmentSeconds(), t.animDiceMs(), t.animPerStepMs(), t.autoActDelayMs(),
+                BASE.timing().allAwayTurns());
     }
 
     /** 内置起点三选一（引擎默认）。 */
@@ -273,6 +278,7 @@ public final class SettingsMapper {
         range(errors, "欠款每段时限", t.debtSegmentSeconds(), 10, 120, "秒");
         range(errors, "投骰动画时间", t.animDiceMs(), 0, 5000, "毫秒");
         range(errors, "每格移动动画时间", t.animPerStepMs(), 0, 2000, "毫秒");
+        range(errors, "全员挂机 / 托管结束回合数", t.allAwayTurns(), 1, 100, "回合");
         range(errors, "托管代操作等待", t.autoActDelayMs(), 1, 10000, "毫秒");
     }
 
@@ -609,7 +615,7 @@ public final class SettingsMapper {
                 .withWindows(ts.decisionSeconds() * 1000L, ts.responseSeconds() * 1000L, ts.discardSeconds() * 1000L,
                         ts.tradeSeconds() * 1000L, ts.toothSeconds() * 1000L, ts.auctionSeconds() * 1000L,
                         ts.auctionExtendSeconds() * 1000L, ts.auctionMaxSeconds() * 1000L, ts.debtSegmentSeconds() * 1000L,
-                        ts.animDiceMs(), ts.animPerStepMs(), ts.autoActDelayMs());
+                        ts.animDiceMs(), ts.animPerStepMs(), ts.autoActDelayMs()).withAllAwayTurns(ts.allAwayTurns());
         return new RuleConfig(BASE.ruleVersion(), boards, tiers, st, economy, BASE.ratios(), cards, events,
                 timing, room,
                 new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()),

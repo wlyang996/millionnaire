@@ -83,7 +83,7 @@ class ConfigBindingTest {
     void timingAndAnnouncementAreEditable() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(d.timing().decisionSeconds()).isEqualTo(15);
-        var t = new GameSettings.TimingSetting(20, 12, 15, 15, 8, 30, 3, 60, 40, 1200, 200, 800);
+        var t = new GameSettings.TimingSetting(20, 12, 15, 15, 8, 30, 3, 60, 40, 1200, 200, 800, 3);
         var notice = new GameSettings.Announcement(true, "周末活动", "周末起点奖励翻倍！");
         GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets(), t, notice);
@@ -92,6 +92,9 @@ class ConfigBindingTest {
         assertThat(timing.decisionWindowMs()).isEqualTo(20_000);
         assertThat(timing.auctionMaxMs()).isEqualTo(60_000);
         assertThat(timing.animPerStepMs()).isEqualTo(200);
+        assertThat(timing.allAwayTurns()).isEqualTo(3);
+        assertThat(SettingsMapper.timingOf(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
+                d.eventWeights(), d.cardWeights(), d.tileNames())).allAwayTurns()).isEqualTo(1);
         assertThat(timing.heartbeatMs()).isEqualTo(RuleConfigs.defaultV1().timing().heartbeatMs());
         // 公告不影响规则
         assertThat(SettingsMapper.toRuleConfig(edited).contentHash()).isEqualTo(SettingsMapper.toRuleConfig(

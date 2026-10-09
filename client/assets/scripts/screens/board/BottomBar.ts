@@ -1,5 +1,5 @@
 /**
- * 棋盘页底部（设计稿 01）：手牌栏（y 1102–1192，观战时换成聊天条）+ 深蓝页脚（y 1198–1280：头像、"昵称 · 我"、金币现金、
+ * 棋盘页底部（设计稿 01）：手牌栏（y 1102–1192，观战时换成聊天条）+ 深蓝页脚（y 1198–1280：头像、"昵称 · 我"、
  * 描边"我的资产 ›"、语音、聊天；点自己头像弹出"主动托管 / 认输"菜单）。
  */
 import { Theme } from '../../core/Theme';
@@ -10,16 +10,14 @@ import { describe } from '../../net/OnlineSession';
 import { SelfMenuPopup } from '../../popups/SelfMenuPopup';
 import { IconButton, primaryButton, secondaryButton } from '../../ui/Buttons';
 import { ctx } from '../../ui/Ctx';
-import { drawChat, drawCoin, drawMic } from '../../ui/Icons';
+import { drawChat, drawMic } from '../../ui/Icons';
 import { fillRR, gfx, mk, onTap, strokeRR, text } from '../../ui/Kit';
 import { Toast } from '../../ui/Toast';
 import { avatar, roundedPanel } from '../../ui/Widgets';
 import { Node } from 'cc';
 import { drawHandBar } from './HandBar';
-import { CashChange, CashChangeNode, cashDelta } from './PlayerBar';
 
-/** @param cash 显示的现金（走棋动画期间沿用动画前的数）；不传时取我的实际现金。 */
-export function drawBottom(root: Node, spectator: boolean, change?: CashChange, changeNodes: CashChangeNode[] = [], cash?: number): void {
+export function drawBottom(root: Node, spectator: boolean): void {
     const st = ctx.store;
     const me = st.me();
     if (spectator) {
@@ -56,11 +54,8 @@ export function drawBottom(root: Node, spectator: boolean, change?: CashChange, 
         onTap(ownAvatar, () => ctx.popups.open(new SelfMenuPopup()));
         onTap(dot, () => ctx.popups.open(new SelfMenuPopup()));
     }
-    text(row, me.nickname + ' · 我', 98, 8, 150, 28, 20, Theme.c.white, { align: 'l' });
+    text(row, me.nickname + ' · 我', 98, 27, 150, 28, 20, Theme.c.white, { align: 'l' });
     if (!spectator) {
-        drawCoin(gfx(mk(row, 'Coin', 98, 42, 30, 30)), 15, 15, 14);
-        text(row, String(cash ?? me.cash), 134, 36, 112, 42, 30, Theme.c.white, { bold: true, align: 'l' });
-        if (change) cashDelta(row, 130, 22, change, changeNodes, 20); // 浮在现金正上方，向上飘出底栏
         const assets = mk(row, 'Btn:assets', 310, 15, 156, 52);
         fillRR(gfx(assets), 0, 0, 156, 52, 26, '#FFFFFF1A');
         strokeRR(gfx(assets), 0, 0, 156, 52, 26, '#FFFFFF99', 2);

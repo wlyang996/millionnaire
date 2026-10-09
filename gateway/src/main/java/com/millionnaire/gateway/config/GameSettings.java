@@ -100,7 +100,13 @@ public record GameSettings(
      */
     public record TimingSetting(int decisionSeconds, int responseSeconds, int discardSeconds, int tradeSeconds,
                                 int toothSeconds, int auctionSeconds, int auctionExtendSeconds, int auctionMaxSeconds,
-                                int debtSegmentSeconds, int animDiceMs, int animPerStepMs, int autoActDelayMs) {
+                                int debtSegmentSeconds, int animDiceMs, int animPerStepMs, int autoActDelayMs, Integer allAwayTurns) {
+        public TimingSetting(int decisionSeconds, int responseSeconds, int discardSeconds, int tradeSeconds,
+                             int toothSeconds, int auctionSeconds, int auctionExtendSeconds, int auctionMaxSeconds,
+                             int debtSegmentSeconds, int animDiceMs, int animPerStepMs, int autoActDelayMs) {
+            this(decisionSeconds, responseSeconds, discardSeconds, tradeSeconds, toothSeconds, auctionSeconds,
+                    auctionExtendSeconds, auctionMaxSeconds, debtSegmentSeconds, animDiceMs, animPerStepMs, autoActDelayMs, null);
+        }
     }
 
     /** 大厅公告：enabled 关闭时不显示；title 最多 20 字，text 最多 200 字。 */
