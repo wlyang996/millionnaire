@@ -131,7 +131,7 @@ public final class RuleConfigs {
                         20_000, 3_000, 40_000, 30_000,
                         5_000, 15_000, 30_000, 120_000,
                         600_000, 30_000,
-                        1_500, 250, 1_000,      // 动画与自动动作延时：占位值，待确认
+                        1_500, production ? 550 : 250, 1_000, // 正式普通模式每格 550ms；历史测试配置保留原留时
                         production, 1, production ? 3700 : 0, production ? 2300 : 0, production ? 1800 : 0, production ? 2600 : 0),
                 // 默认地图、默认初始现金、默认结束模式尚未裁定，此处为占位（见 m0-report 待确认）
                 new RoomOptions(2, List.of(2000L, 3000L, 5000L), BOARD_30, 3000, EndMode.TIME_LIMIT, 30, 15, true, false, 50),

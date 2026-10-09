@@ -24,6 +24,7 @@ class ConfigBindingTest {
     void defaultsReproduceTheEngineConfigExactly() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(SettingsMapper.validate(d)).isEmpty();
+        assertThat(d.timing().animPerStepMs()).isEqualTo(550);
         assertThat(SettingsMapper.toRuleConfig(d).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
         assertThat(d.tileNames().get("classic-30")).hasSize(30);
         assertThat(d.tileNames().get("classic-50")).hasSize(50);

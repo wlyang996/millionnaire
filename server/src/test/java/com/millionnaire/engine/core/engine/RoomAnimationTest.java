@@ -10,6 +10,21 @@ import com.millionnaire.engine.testkit.*;
 import org.junit.jupiter.api.Test;
 
 class RoomAnimationTest {
+    @Test void productionNormalModeKeepsTheOriginalMovementSpeedAndWaitsForEveryStep() {
+        var c = RuleConfigs.defaultV1();
+        var normal = RoomSettings.defaults(c);
+        assertFalse(normal.fastMode());
+        assertEquals(550, c.timing().animPerStepMs());
+        assertEquals(550, normal.animationMs(c, c.timing().animPerStepMs()));
+        assertEquals(275, normal.withFastMode(true).animationMs(c, c.timing().animPerStepMs()));
+        var t = new Table(c, new ScriptedRandom(Table.script(Table.order(90, 10), Table.deal(2),
+                Table.dice(DrawPoint.MOVE_DIE, 2))), 1).start(2);
+        t.rollOnly();
+        assertEquals(t.now + c.timing().animDiceMs() + 2 * 550, t.window().window().opensAt());
+        assertEquals(c.timing().decisionWindowMs(), t.window().window().deadline() - t.window().window().opensAt());
+        assertEquals(t.state, t.engine.rebuild(t.log));
+    }
+
     private Table lobby(boolean enabled, int percent) {
         var c = TestBoards.legacyV1(); var r = c.room();
         var config = new RuleConfig(c.ruleVersion(), c.boards(), c.tiers(), c.station(), c.economy(), c.ratios(),
