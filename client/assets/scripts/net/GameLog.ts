@@ -128,7 +128,7 @@ export function describeEvent(e: SEvent, n: LogNames): { text: string; header?: 
 }
 
 /** 把一批事件追加到记录（就地修改，超过上限丢最早的）。返回是否有新增。 */
-export function appendLog(log: LogLine[], events: SEvent[], n: LogNames): boolean {
+export function appendLog(log: LogLine[], events: SEvent[], n: LogNames, limit = LOG_LIMIT): boolean {
     let added = false;
     let seq = log.length ? log[log.length - 1].seq : 0;
     for (const e of events) {
@@ -137,6 +137,6 @@ export function appendLog(log: LogLine[], events: SEvent[], n: LogNames): boolea
         log.push({ seq: ++seq, text: r.text, header: r.header, mine: !!r.who && r.who.indexOf(n.myId) >= 0 });
         added = true;
     }
-    if (log.length > LOG_LIMIT) log.splice(0, log.length - LOG_LIMIT);
+    if (log.length > limit) log.splice(0, log.length - limit);
     return added;
 }

@@ -13,7 +13,7 @@ import { applyServerSets } from '../core/SetBonus';
 import { appendLog } from './GameLog';
 import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
-import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, UpdateMsg } from './Protocol';
+import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, SGameDetail, UpdateMsg } from './Protocol';
 import { adaptSession, lastDiceFrom } from './ViewAdapter';
 import { isWechat, wxLoginCode } from './Wx';
 
@@ -220,6 +220,8 @@ export class OnlineSession {
                 rank: r.rank ?? 0,
                 finalAssets: r.netWorth ?? r.cash ?? 0,
                 endedAt: r.endedAt,
+                roomId: r.roomId,
+                gameNo: r.gameNo,
             }));
             this.historyError = '';
             return true;
@@ -231,6 +233,17 @@ export class OnlineSession {
             if (status === 401) this.expired();
             this.historyError = status ? '错误 ' + status : '网络不通';
             return false;
+        }
+    }
+
+    /** 一局战绩的详情；登录失效时回登录页。失败返回原因文字。 */
+    async gameDetail(roomId: number, gameNo: number): Promise<SGameDetail | string> {
+        try {
+            return await this.client.gameDetail(roomId, gameNo);
+        } catch (e) {
+            const status = (e as { status?: number }).status;
+            if (status === 401) this.expired();
+            return status === 404 ? '找不到这局的记录' : status ? '错误 ' + status : '网络不通';
         }
     }
 

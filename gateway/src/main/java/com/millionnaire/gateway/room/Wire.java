@@ -83,7 +83,16 @@ public class Wire {
         n.put("version", version);
         n.put("serverTime", serverTime);
         n.put("configId", configId);
-        ArrayNode ev = n.putArray("events");
+        n.set("events", events(events));
+        n.set("view", json.valueToTree(view));
+        ObjectNode av = n.putObject("avatars");
+        avatars.forEach(av::put);
+        return write(n);
+    }
+
+    /** 事件列表（[{kind, data}]，与 UPDATE 消息里的 events 同形）。 */
+    public ArrayNode events(List<Event> events) {
+        ArrayNode ev = json.createArrayNode();
         for (Event e : events) {
             ObjectNode o = ev.addObject();
             o.put("kind", e.getClass().getSimpleName());
@@ -94,10 +103,7 @@ public class Wire {
                 o.putNull("data");
             }
         }
-        n.set("view", json.valueToTree(view));
-        ObjectNode av = n.putObject("avatars");
-        avatars.forEach(av::put);
-        return write(n);
+        return ev;
     }
 
     public String closed(String roomCode, String reason) {

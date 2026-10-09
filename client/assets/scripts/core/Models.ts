@@ -307,6 +307,9 @@ export interface HistoryEntry {
     finalAssets: number;
     /** 结束时间（epoch 毫秒）；演示数据没有 */
     endedAt?: number;
+    /** 联机：查详情用的房间 ID 与局号（演示数据没有） */
+    roomId?: number;
+    gameNo?: number;
 }
 
 /** 个人数据（GET /api/me/stats；全部已记录对局的汇总） */

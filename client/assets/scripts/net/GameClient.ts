@@ -7,7 +7,7 @@
  * - 时间：用每条 UPDATE / PONG 的 serverTime 估算与服务器的时钟偏差，倒计时用 serverNow()。
  */
 import { requestJson } from './Http';
-import { BoardTemplate, ClientConfig, GameArgs, GameCommandName, HelloMsg, ResultMsg, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
+import { BoardTemplate, ClientConfig, GameArgs, GameCommandName, HelloMsg, ResultMsg, SGameDetail, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
 import type { PlayerStats } from '../core/Models';
 
 export type LinkState = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
@@ -130,6 +130,13 @@ export class GameClient {
     }
 
     /** 我的数据（全部已记录对局的汇总）。 */
+    /** 一局战绩的详情（全部玩家名次与本局事件）。 */
+    async gameDetail(roomId: number, gameNo: number): Promise<SGameDetail> {
+        const r = await requestJson<SGameDetail>('GET', this.baseUrl + '/api/me/games/' + roomId + '/' + gameNo, undefined, this.token ?? undefined);
+        if (r.status !== 200 || !r.body) throw Object.assign(new Error('cannot load game'), { status: r.status });
+        return r.body;
+    }
+
     async stats(): Promise<PlayerStats> {
         const r = await requestJson<PlayerStats>('GET', this.baseUrl + '/api/me/stats', undefined, this.token ?? undefined);
         if (r.status !== 200 || !r.body) throw new Error('cannot load stats');

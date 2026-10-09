@@ -193,6 +193,16 @@ export interface SHistoryRow {
     gameNo: number; endMode: 'TIME_LIMIT' | 'BANKRUPTCY'; timeLimitMinutes: number | null; boardId: string;
     playerCount: number; startedAt: number; endedAt: number; endReason: string;
     rank: number | null; netWorth: number | null; cash: number | null; life: string;
+    /** 房间 ID（查详情用；旧服务端没有） */
+    roomId?: number;
+}
+
+/** 战绩详情（GET /api/me/games/{roomId}/{gameNo}）。players 按名次；events 与 UPDATE 消息的 events 同形，没存时为 null。 */
+export interface SGameDetail {
+    roomId: number; gameNo: number; endMode: 'TIME_LIMIT' | 'BANKRUPTCY'; timeLimitMinutes: number | null; boardId: string;
+    playerCount: number; startedAt: number; endedAt: number; endReason: string; initialCash: number;
+    players: { playerId: string; nickname: string; avatar: number; rank: number | null; netWorth: number | null; cash: number | null; life: string; me: boolean }[];
+    events: SEvent[] | null;
 }
 
 export interface BoardTemplateTile {

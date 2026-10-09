@@ -3,6 +3,7 @@ package com.millionnaire.gateway;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,9 @@ class RoomFlowTest {
         jdbc.execute("ALTER TABLE game_record DROP CONSTRAINT IF EXISTS ck_game_record_values");
         jdbc.execute("ALTER TABLE game_record ADD CONSTRAINT ck_game_record_values CHECK (game_no >= 1 AND player_count >= 1"
                 + " AND player_count <= 8 AND initial_cash >= 0 AND ended_at >= started_at AND OCTET_LENGTH(draft_sha256) = 32)");
+        jdbc.execute("ALTER TABLE game_log DROP CONSTRAINT IF EXISTS ck_game_log_len");
+        jdbc.execute("ALTER TABLE game_log ADD CONSTRAINT ck_game_log_len CHECK (event_count >= 0 AND plain_len >= 0"
+                + " AND plain_len <= 8388608 AND OCTET_LENGTH(plain_sha256) = 32 AND game_no >= 1)");
     }
 
     @SuppressWarnings("unchecked")
@@ -294,6 +298,19 @@ class RoomFlowTest {
             for (int i = 0; i < 50 && jdbc.queryForObject("SELECT COUNT(*) FROM game_log", Integer.class) == 0; i++) {
                 Thread.sleep(100); // 对局日志异步落库
             }
+            // 战绩详情：两名玩家按名次排列（机器人第 1、我第 2），带本局事件
+            @SuppressWarnings("unchecked")
+            Map<String, Object> detail = http.exchange("/api/me/games/" + history[0].get("roomId") + "/" + history[0].get("gameNo"),
+                    org.springframework.http.HttpMethod.GET,
+                    new org.springframework.http.HttpEntity<>(bearer((String) a.get("token"))), Map.class).getBody();
+            List<?> players = (List<?>) detail.get("players");
+            assertThat(players).hasSize(2);
+            assertThat(((Map<?, ?>) players.get(0)).get("rank")).isEqualTo(1);
+            assertThat(((Map<?, ?>) players.get(1)).get("me")).isEqualTo(true);
+            assertThat(detail.get("events").toString()).contains("GameStarted").contains("PlayerEliminated");
+            assertThat(http.exchange("/api/me/games/" + history[0].get("roomId") + "/99", org.springframework.http.HttpMethod.GET,
+                    new org.springframework.http.HttpEntity<>(bearer((String) a.get("token"))), Map.class).getStatusCode().value())
+                    .isEqualTo(404);
             Map<String, Object> board = dashboard.build(7);
             assertThat(board).containsEntry("dbEnabled", true);
             Map<?, ?> totals = (Map<?, ?>) board.get("totals");

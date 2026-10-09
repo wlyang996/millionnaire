@@ -1,11 +1,7 @@
 package com.millionnaire.gateway.record;
 
-import com.millionnaire.engine.config.RuleConfigs;
-import com.millionnaire.engine.core.engine.Engine;
-import com.millionnaire.engine.core.engine.SessionDomain;
 import com.millionnaire.engine.core.event.Event;
 import com.millionnaire.engine.core.event.GameEvent;
-import com.millionnaire.engine.core.state.SessionState;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -42,8 +38,6 @@ public class Dashboard {
 
     private final ObjectProvider<JdbcTemplate> jdbc;
     private final Clock clock;
-    /** 只用来解码事件日志（解码不校验配置版本）。 */
-    private volatile Engine<SessionState> decoder;
 
     public Dashboard(ObjectProvider<JdbcTemplate> jdbc, Clock clock) {
         this.jdbc = jdbc;
@@ -151,7 +145,7 @@ public class Dashboard {
             scanned[0]++;
             try {
                 byte[] plain = new GZIPInputStream(new ByteArrayInputStream(rs.getBytes(1))).readAllBytes();
-                for (Event e : decoder().decodeEvents(new String(plain, StandardCharsets.UTF_8))) {
+                for (Event e : EventLogs.decode(new String(plain, StandardCharsets.UTF_8))) {
                     count(e, drawn, lucky, cards, misc);
                 }
             } catch (IOException | RuntimeException e) {
@@ -193,15 +187,6 @@ public class Dashboard {
             default -> {
             }
         }
-    }
-
-    private Engine<SessionState> decoder() {
-        Engine<SessionState> d = decoder;
-        if (d == null) {
-            d = new Engine<>(RuleConfigs.defaultV1(), SessionDomain.INSTANCE);
-            decoder = d;
-        }
-        return d;
     }
 
     private static LocalDate day(long epochMs) {

@@ -1,10 +1,15 @@
 package com.millionnaire.gateway.auth;
 
 import com.millionnaire.gateway.auth.UserStore.User;
+import com.millionnaire.gateway.record.EventLogs;
 import com.millionnaire.gateway.record.GameRecords;
+import com.millionnaire.gateway.room.Wire;
 import com.millionnaire.gateway.room.LiveRoom;
 import com.millionnaire.gateway.room.RoomService;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -22,15 +28,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class ApiController {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ApiController.class);
     private final UserStore users;
     private final SessionTokens tokens;
     private final RoomService rooms;
     private final boolean testLoginEnabled;
     private final GameRecords records;
     private final WechatAuth wechat;
+    private final Wire wire;
 
     public ApiController(UserStore users, SessionTokens tokens, RoomService rooms, GameRecords records, WechatAuth wechat,
-                         @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled) {
+                         Wire wire, @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled) {
+        this.wire = wire;
         this.wechat = wechat;
         this.records = records;
         this.users = users;
@@ -146,6 +155,64 @@ public class ApiController {
             return error(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED");
         }
         return ResponseEntity.ok(records.recent(user.get().id()));
+    }
+
+    /**
+     * 战绩详情（用户 2026-10-09）：我参加过的一局的表头、全部玩家的名次与资产（按名次），以及本局公开事件（与 UPDATE 消息里的
+     * events 同形，客户端按对局记录的格式翻译；没存日志时为 null）。没参加过的局返回 404。
+     */
+    @GetMapping("/me/games/{roomId}/{gameNo}")
+    public ResponseEntity<?> game(@RequestHeader(value = "Authorization", required = false) String auth,
+                                  @PathVariable("roomId") long roomId, @PathVariable("gameNo") long gameNo) {
+        Optional<User> user = user(auth);
+        if (user.isEmpty()) {
+            return error(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED");
+        }
+        Optional<GameRecords.Detail> found = records.detail(user.get().id(), roomId, gameNo);
+        if (found.isEmpty()) {
+            return error(HttpStatus.NOT_FOUND, "NOT_FOUND");
+        }
+        GameRecords.Detail d = found.get();
+        GameRecords.Row h = d.header();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("roomId", h.roomId());
+        out.put("gameNo", h.gameNo());
+        out.put("endMode", h.endMode());
+        out.put("timeLimitMinutes", h.timeLimitMinutes());
+        out.put("boardId", h.boardId());
+        out.put("playerCount", h.playerCount());
+        out.put("startedAt", h.startedAt());
+        out.put("endedAt", h.endedAt());
+        out.put("endReason", h.endReason());
+        out.put("initialCash", d.initialCash());
+        List<Map<String, Object>> players = new ArrayList<>();
+        d.seats().stream()
+                .sorted(Comparator.comparing((GameRecords.Seat s) -> s.rank() == null ? Integer.MAX_VALUE : s.rank())
+                        .thenComparingInt(GameRecords.Seat::seatNo))
+                .forEach(s -> {
+                    Map<String, Object> p = new LinkedHashMap<>();
+                    Optional<User> u = users.find(s.userId());
+                    p.put("playerId", String.valueOf(s.userId()));
+                    p.put("nickname", u.map(User::nickname).orElse("玩家"));
+                    p.put("avatar", u.map(User::avatar).orElse(0));
+                    p.put("rank", s.rank());
+                    p.put("netWorth", s.netWorth());
+                    p.put("cash", s.cash());
+                    p.put("life", s.life());
+                    p.put("me", s.userId() == user.get().id());
+                    players.add(p);
+                });
+        out.put("players", players);
+        Object events = null;
+        if (d.events() != null) {
+            try {
+                events = wire.events(EventLogs.decode(d.events()));
+            } catch (RuntimeException e) {
+                log.warn("cannot decode game log room {} game {}: {}", roomId, gameNo, e.toString());
+            }
+        }
+        out.put("events", events);
+        return ResponseEntity.ok(out);
     }
 
     /** 我的数据（全部已记录对局的汇总）：{games, finished, wins, top3, bankrupt, avgRank, bestNetWorth}。 */

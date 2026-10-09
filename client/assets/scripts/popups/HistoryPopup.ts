@@ -13,6 +13,7 @@ import { fillCircle, fillRR, gfx, line, mk, onTap, strokeRR, text } from '../ui/
 import { Popup } from '../ui/Popup';
 import { ScrollList } from '../ui/ScrollList';
 import { ctx } from '../ui/Ctx';
+import { GameDetailPopup } from './GameDetailPopup';
 
 const W = 680;
 const H = 1180;
@@ -115,6 +116,12 @@ export class HistoryPopup extends Popup {
         const cx = COLS[4][1] - 20 + 6;
         drawCoin(gfx(mk(n, 'Coin', cx, top + (midH - 30) / 2, 30, 30)), 15, 15, 15);
         text(n, String(r.finalAssets), cx + 36, top, COLS[4][2] - 50, midH, 28, Theme.c.navy, { bold: true, align: 'l' });
+        // 点一局看详情（全部玩家排名与对局记录）
+        if (r.roomId !== undefined && r.gameNo !== undefined) {
+            const roomId = r.roomId;
+            const gameNo = r.gameNo;
+            onTap(n, () => ctx.popups.open(new GameDetailPopup(roomId, gameNo)), false);
+        }
         const ch = gfx(mk(n, 'Chevron', w - 40 - 34, rh / 2 - 12, 20, 24));
         line(ch, 4, 2, 14, 12, '#9AA6B6', 4);
         line(ch, 14, 12, 4, 22, '#9AA6B6', 4);

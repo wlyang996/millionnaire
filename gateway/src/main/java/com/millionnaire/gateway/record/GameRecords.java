@@ -39,7 +39,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  *   <li>战绩表头与全部座位明细在同一事务里写入；</li>
  *   <li>写库失败（数据库暂时不可用等）按 {@link #RETRY_DELAYS_MS} 退避重试，约 10 分钟后放弃并记错误日志；
  *       约束冲突（如发送者已注销）不重试。重试队列只在内存里，进程退出前最多等 {@value #SHUTDOWN_WAIT_S} 秒把手头的写完；</li>
- *   <li>未启用 db 配置时：战绩在内存里保留每人最近 {@value #RECENT} 局；事件日志与聊天不保存（本地开发、测试）。</li>
+ *   <li>未启用 db 配置时：战绩在内存里保留每人最近 {@value #RECENT} 局，最近 {@value #MEMORY_GAMES} 局的事件日志供战绩详情；聊天不保存（本地开发、测试）。</li>
  * </ul>
  */
 @Component
@@ -73,7 +73,14 @@ public class GameRecords {
 
     /** "我的最近 20 局"的一行。 */
     public record Row(long gameNo, String endMode, Integer timeLimitMinutes, String boardId, int playerCount,
-                      long startedAt, long endedAt, String endReason, Integer rank, Long netWorth, Long cash, String life) {
+                      long startedAt, long endedAt, String endReason, Integer rank, Long netWorth, Long cash, String life,
+                      long roomId) {
+    }
+
+    /**
+     * 一局的详情（用户 2026-10-09 "战绩看详情"）：表头（我那一行）、全部座位（已注销的不在内）、公开事件日志（没存时为 null）。
+     */
+    public record Detail(Row header, long initialCash, List<Seat> seats, String events) {
     }
 
     /**
@@ -93,6 +100,20 @@ public class GameRecords {
         return t;
     });
     private final Map<Long, Deque<Row>> memory = new ConcurrentHashMap<>();
+    /** 未启用数据库时最近 {@value #MEMORY_GAMES} 局的草稿与事件日志（键 "房间#局号"），供战绩详情。 */
+    private final Map<String, Draft> memoryGames = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Draft> e) {
+            return size() > MEMORY_GAMES;
+        }
+    });
+    private final Map<String, String> memoryLogs = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> e) {
+            return size() > MEMORY_GAMES;
+        }
+    });
+    static final int MEMORY_GAMES = 100;
 
     @Autowired
     public GameRecords(ObjectProvider<JdbcTemplate> jdbc, ObjectProvider<PlatformTransactionManager> txm, Clock clock) {
@@ -173,6 +194,7 @@ public class GameRecords {
     void saveLog(LogDraft d) {
         JdbcTemplate t = jdbc.get();
         if (t == null) {
+            memoryLogs.put(d.roomId() + "#" + d.gameNo(), d.events());
             return;
         }
         byte[] plain = d.events().getBytes(StandardCharsets.UTF_8);
@@ -221,6 +243,7 @@ public class GameRecords {
         JdbcTemplate t = jdbc.get();
         TransactionTemplate txt = tx.get();
         if (t == null || txt == null) {
+            memoryGames.put(d.roomId() + "#" + d.gameNo(), d);
             for (Seat s : d.seats()) {
                 Deque<Row> q = memory.computeIfAbsent(s.userId(), k -> new ArrayDeque<>());
                 synchronized (q) {
@@ -320,19 +343,66 @@ public class GameRecords {
                 return new ArrayList<>(q);
             }
         }
-        return t.query("SELECT r.game_no, r.end_mode, r.time_limit_min, r.board_id, r.player_count, r.started_at, r.ended_at,"
-                        + " r.end_reason, p.finish_rank, p.final_net_worth, p.final_cash, p.life_state"
-                        + " FROM game_record_player p JOIN game_record r ON r.record_id = p.record_id"
-                        + " WHERE p.user_id = ? AND p.user_live = 1 ORDER BY p.ended_at DESC, p.record_id DESC LIMIT " + RECENT,
-                (rs, i) -> new Row(rs.getLong(1), rs.getString(2), (Integer) rs.getObject(3, Integer.class), rs.getString(4),
-                        rs.getInt(5), rs.getLong(6), rs.getLong(7), rs.getString(8), (Integer) rs.getObject(9, Integer.class),
-                        (Long) rs.getObject(10, Long.class), (Long) rs.getObject(11, Long.class), rs.getString(12)),
-                userId);
+        return t.query(ROW_SELECT + " WHERE p.user_id = ? AND p.user_live = 1 ORDER BY p.ended_at DESC, p.record_id DESC LIMIT " + RECENT,
+                GameRecords::rowOf, userId);
+    }
+
+    private static final String ROW_SELECT = "SELECT r.game_no, r.end_mode, r.time_limit_min, r.board_id, r.player_count, r.started_at,"
+            + " r.ended_at, r.end_reason, p.finish_rank, p.final_net_worth, p.final_cash, p.life_state, r.room_id, r.initial_cash,"
+            + " r.record_id FROM game_record_player p JOIN game_record r ON r.record_id = p.record_id";
+
+    private static Row rowOf(java.sql.ResultSet rs, int i) throws java.sql.SQLException {
+        return new Row(rs.getLong(1), rs.getString(2), (Integer) rs.getObject(3, Integer.class), rs.getString(4),
+                rs.getInt(5), rs.getLong(6), rs.getLong(7), rs.getString(8), (Integer) rs.getObject(9, Integer.class),
+                (Long) rs.getObject(10, Long.class), (Long) rs.getObject(11, Long.class), rs.getString(12), rs.getLong(13));
+    }
+
+    /** 我参加过的某一局的详情；没参加（或不存在）时为空。 */
+    public java.util.Optional<Detail> detail(long userId, long roomId, long gameNo) {
+        JdbcTemplate t = jdbc.get();
+        if (t == null) {
+            Draft d = memoryGames.get(roomId + "#" + gameNo);
+            if (d == null) {
+                return java.util.Optional.empty();
+            }
+            for (Seat s : d.seats()) {
+                if (s.userId() == userId) {
+                    return java.util.Optional.of(new Detail(row(d, s), d.initialCash(), d.seats(), memoryLogs.get(roomId + "#" + gameNo)));
+                }
+            }
+            return java.util.Optional.empty();
+        }
+        long[] extra = new long[2]; // initial_cash, record_id
+        List<Row> mine = t.query(ROW_SELECT + " WHERE p.user_id = ? AND p.user_live = 1 AND r.room_id = ? AND r.game_no = ?",
+                (rs, i) -> {
+                    extra[0] = rs.getLong(14);
+                    extra[1] = rs.getLong(15);
+                    return rowOf(rs, i);
+                }, userId, roomId, gameNo);
+        if (mine.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        List<Seat> seats = t.query("SELECT seat_no, user_id, finish_rank, final_net_worth, final_cash, life_state"
+                        + " FROM game_record_player WHERE record_id = ? ORDER BY seat_no",
+                (rs, i) -> new Seat(rs.getInt(1), rs.getLong(2), (Integer) rs.getObject(3, Integer.class),
+                        (Long) rs.getObject(4, Long.class), (Long) rs.getObject(5, Long.class), rs.getString(6)), extra[1]);
+        List<byte[]> payload = t.query("SELECT payload FROM game_log WHERE room_id = ? AND game_no = ?",
+                (rs, i) -> rs.getBytes(1), roomId, gameNo);
+        String events = null;
+        if (!payload.isEmpty()) {
+            try {
+                events = new String(new java.util.zip.GZIPInputStream(new java.io.ByteArrayInputStream(payload.get(0))).readAllBytes(),
+                        StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                log.warn("cannot read game log room {} game {}: {}", roomId, gameNo, e.toString());
+            }
+        }
+        return java.util.Optional.of(new Detail(mine.get(0), extra[0], seats, events));
     }
 
     private static Row row(Draft d, Seat s) {
         return new Row(d.gameNo(), d.endMode(), d.timeLimitMinutes(), d.boardId(), d.seats().size(), d.startedAt(),
-                d.endedAt(), d.reason(), s.rank(), s.netWorth(), s.cash(), s.life());
+                d.endedAt(), d.reason(), s.rank(), s.netWorth(), s.cash(), s.life(), d.roomId());
     }
 
     /** 草稿的规范文本（全部座位）：重复提交时用其 SHA-256 判断是否同一份。 */
