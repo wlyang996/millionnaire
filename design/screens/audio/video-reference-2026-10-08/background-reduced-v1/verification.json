@@ -1,0 +1,50 @@
+[
+  {
+    "file": "骰子投掷-背景抑制试听-v1.wav",
+    "start": 1.28,
+    "end": 2.7,
+    "duration": 1.42,
+    "rate": 44100,
+    "channels": 1,
+    "bits": 16,
+    "gain": 0.8867763675456964,
+    "peak_dbfs": -1.01,
+    "input_rms": 0.08740646413634875,
+    "output_rms": 0.0680180580656725,
+    "sha256": "cbb4a596dd70d9f0b96cecf976be374fdf1b51789c1ddf7d3d4b230ce97dbbc1",
+    "status": "background-reduced preview; not auditioned or adopted",
+    "method": "harmonic/percussive spectral mask, low floor attenuation, movement time gate if applicable"
+  },
+  {
+    "file": "人物移动-连续逐格-背景抑制试听-v1.wav",
+    "start": 2.76,
+    "end": 4.43,
+    "duration": 1.67,
+    "rate": 44100,
+    "channels": 1,
+    "bits": 16,
+    "gain": 0.9530177467156323,
+    "peak_dbfs": -1.01,
+    "input_rms": 0.17681551035154655,
+    "output_rms": 0.14824256131371136,
+    "sha256": "0925f9ef87982579f52268c9cbc9a920198922b4245f50b60083344490b0aee5",
+    "status": "background-reduced preview; not auditioned or adopted",
+    "method": "harmonic/percussive spectral mask, low floor attenuation, movement time gate if applicable"
+  },
+  {
+    "file": "人物移动-单格-背景抑制试听-v1.wav",
+    "start": 3.1,
+    "end": 3.32,
+    "duration": 0.22,
+    "rate": 44100,
+    "channels": 1,
+    "bits": 16,
+    "gain": 1.0,
+    "peak_dbfs": -1.1,
+    "input_rms": 0.18618760127143993,
+    "output_rms": 0.17489470427188902,
+    "sha256": "4cb7fc3c74c64af3973efa798c417109aeba1a87439b284c8e712749efafbafe",
+    "status": "background-reduced preview; not auditioned or adopted",
+    "method": "harmonic/percussive spectral mask, low floor attenuation, movement time gate if applicable"
+  }
+]
