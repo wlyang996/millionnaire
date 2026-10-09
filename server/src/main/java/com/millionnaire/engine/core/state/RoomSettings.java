@@ -8,7 +8,10 @@ import com.millionnaire.engine.config.RuleConfig;
  * initialCards：开局每人随机发几张道具（0 = 不发，最多为手牌上限）；{@link #AS_CONFIG} 表示沿用规则配置的 initialHandSize
  * （旧局、测试夹具与五参数构造器的语义，行为与加入此项之前完全一致）。正式配置（道具开启）建房默认 0（用户 2026-10-07 决定）。
  */
-public record RoomSettings(String boardId, long initialCash, EndMode endMode, int timeLimitMinutes, int rollSeconds, int initialCards) {
+public record RoomSettings(String boardId, long initialCash, EndMode endMode, int timeLimitMinutes, int rollSeconds, int initialCards, boolean fastMode) {
+    public RoomSettings(String boardId, long initialCash, EndMode endMode, int timeLimitMinutes, int rollSeconds, int initialCards) {
+        this(boardId, initialCash, endMode, timeLimitMinutes, rollSeconds, initialCards, false);
+    }
     /** 开局道具数沿用配置的 initialHandSize。 */
     public static final int AS_CONFIG = -1;
 
@@ -19,7 +22,16 @@ public record RoomSettings(String boardId, long initialCash, EndMode endMode, in
     public static RoomSettings defaults(RuleConfig config) {
         var r = config.room();
         return new RoomSettings(r.defaultBoardId(), r.defaultInitialCash(), r.defaultEndMode(),
-                r.defaultTimeLimitMinutes(), r.defaultRollSeconds(), config.economy().cardsEnabled() ? 0 : AS_CONFIG);
+                r.defaultTimeLimitMinutes(), r.defaultRollSeconds(), config.economy().cardsEnabled() ? 0 : AS_CONFIG, r.defaultFastMode());
+    }
+
+    /** 全房间统一动画留时；操作窗口不缩短。向上取整，与客户端一致。 */
+    public long animationMs(RuleConfig config, long normalMs) {
+        return fastMode ? Math.floorDiv(Math.addExact(Math.multiplyExact(normalMs, config.room().fastAnimationPercent()), 99), 100) : normalMs;
+    }
+
+    public RoomSettings withFastMode(boolean fast) {
+        return new RoomSettings(boardId, initialCash, endMode, timeLimitMinutes, rollSeconds, initialCards, fast);
     }
 
     /** 开局每人实际发牌数。 */
@@ -29,6 +41,6 @@ public record RoomSettings(String boardId, long initialCash, EndMode endMode, in
 
     /** 改开局道具数（其余不变）。 */
     public RoomSettings withInitialCards(int n) {
-        return new RoomSettings(boardId, initialCash, endMode, timeLimitMinutes, rollSeconds, n);
+        return new RoomSettings(boardId, initialCash, endMode, timeLimitMinutes, rollSeconds, n, fastMode);
     }
 }

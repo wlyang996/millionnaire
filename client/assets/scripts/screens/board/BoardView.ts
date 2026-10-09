@@ -7,7 +7,7 @@
  */
 import { Label, Mask, Node, UITransform, Vec3, view } from 'cc';
 import { axisCell, gridCell, gridFor, GridSpec, ringLength } from '../../core/BoardLayout';
-import { BoardTile, GameView, PlayerView, PropertyState } from '../../core/Models';
+import { ROBOT_AVATAR, BoardTile, GameView, PlayerView, PropertyState } from '../../core/Models';
 import { playerColor, Theme, textWidth } from '../../core/Theme';
 import { drawHouse, drawPips } from '../../ui/Icons';
 import { col, fillCircle, fillPoly, fillRR, gfx, line, mk, place, setOpacity, strokeRR, text } from '../../ui/Kit';
@@ -539,7 +539,7 @@ export class BoardView {
             }
             // 支点节点放在脚底：挤压拉伸以脚为中心，不会"浮起来"
             const body = mk(n, 'Body', s / 2, s, 0, 0);
-            const idle = art(body, characterKey(p.avatar, true), -s / 2, -s * 1.5, s, s * 1.5, 'contain', false, { bottom: true });
+            const idle = p.avatar === ROBOT_AVATAR ? null : art(body, characterKey(p.avatar, true), -s / 2, -s * 1.5, s, s * 1.5, 'contain', false, { bottom: true });
             if (!idle) avatar(n, 0, 0, s, p.avatar, p.nickname, { ring: me ? Theme.c.blue : cur ? Theme.c.yellow : undefined });
             if (p.inJail) this.drawBars(n, s);
             if (me) this.drawBubble(n, s, '我·' + myName);
@@ -600,11 +600,11 @@ export class BoardView {
             const inner = d - 8;
             const clip = mk(disc, 'Clip', 4, 4, inner, inner);
             clip.addComponent(Mask).type = Mask.Type.GRAPHICS_ELLIPSE;
-            if (!art(clip, characterKey(p.avatar), -inner * 0.08, -inner * 0.02, inner * 1.16, inner * 1.16, 'contain'))
+            if (p.avatar === ROBOT_AVATAR || !art(clip, characterKey(p.avatar), -inner * 0.08, -inner * 0.02, inner * 1.16, inner * 1.16, 'contain'))
                 avatar(clip, 0, 0, inner, p.avatar, p.nickname);
             idle = disc;
         } else {
-            idle = art(body, characterKey(p.avatar, true), -s / 2, -s * 1.5, s, s * 1.5, 'contain', false, { bottom: true });
+            idle = p.avatar === ROBOT_AVATAR ? null : art(body, characterKey(p.avatar, true), -s / 2, -s * 1.5, s, s * 1.5, 'contain', false, { bottom: true });
             if (!idle) idle = avatar(body, -s / 2, -s, s, p.avatar, p.nickname);
         }
         if (p.inJail) this.drawBars(n, s, badge ? 1.06 : 1.42);
@@ -707,7 +707,7 @@ export class BoardView {
 
     /** 切换姿态帧：按站立立绘的人物高度缩放画布，脚底对齐支点；素材未到时保持站立立绘。 */
     private showPose(tk: Token, pose: Pose | null): void {
-        if (tk.pose === pose) return;
+        if (tk.avatar === ROBOT_AVATAR || tk.pose === pose) return;
         if (pose && !tk.poses) {
             const name = characterKey(tk.avatar, true);
             const poses = new Map<Pose, Node>();

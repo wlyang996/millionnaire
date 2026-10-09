@@ -461,7 +461,7 @@ final class TurnModule {
         int from = game(ctx).player(player).orElseThrow().position();
         ctx.emit(new MoveChainStarted(Math.addExact(game(ctx).turn().lastChainId(), 1), game(ctx).turn().turnNo(), player, from));
         MoveSegment segment = MovementRules.segment(1, MoveKind.DICE, from, die, board.size());
-        moveAndLand(ctx, segment, Math.addExact(carriedLeadMs, ctx.config().timing().animDiceMs()));
+        moveAndLand(ctx, segment, Math.addExact(carriedLeadMs, ctx.state().game().settings().animationMs(ctx.config(), ctx.config().timing().animDiceMs())));
     }
 
     /** 共用移动→奖励→普通落点路径。M3b/c 在来源授权接入后复用，不在重定向前结束回合。 */
@@ -482,10 +482,10 @@ final class TurnModule {
         ctx.emit(new Landed(player, to, type, placeholder(type)));
         MoveSegment verified = game(ctx).turn().chain().segments().getLast();
         long animation = Math.addExact(carriedLeadMs,
-                Math.multiplyExact((long) verified.walked().size(), ctx.config().timing().animPerStepMs()));
+                Math.multiplyExact((long) verified.walked().size(), ctx.state().game().settings().animationMs(ctx.config(), ctx.config().timing().animPerStepMs())));
         if (type == TileType.JAIL) {
             ctx.emit(new PlayerJailed(player));
-            endTurn(ctx, animation);
+            endTurn(ctx, Math.addExact(animation, ctx.state().game().settings().animationMs(ctx.config(), ctx.config().timing().jailPresentationMs())));
         } else {
             // 落点推进器：地产、车站、银行、事件格、游戏区（虎口拔牙）等
             EconomyModule.land(ctx, to, animation);
@@ -496,7 +496,7 @@ final class TurnModule {
         String player = game(ctx).turn().currentPlayer();
         int value = ctx.draw(DrawPoint.JAIL_DIE, ctx.config().economy().dieFaces()) + 1;
         ctx.emit(new JailRolled(player, value, auto));
-        long animation = ctx.config().timing().animDiceMs();
+        long animation = ctx.state().game().settings().animationMs(ctx.config(), ctx.config().timing().animDiceMs());
         if (value % 2 == 0) {
             ctx.emit(new JailReleased(player, ReleaseReason.EVEN_ROLL));
             openStage(ctx, TurnStage.PRE_ROLL, animation, remaining, null);

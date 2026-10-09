@@ -14,7 +14,7 @@ import {
     HistoryEntry, Member, PlayerStats, FlowResult, MinigameOutcome, PendingRequest, PlayerView, Profile, PropertyState, QueryResult, RoomSettings, StartPickResult, SessionView,
 } from './Models';
 import {
-    auctionParams, boardSizeOf, emergencyMortgage, landPrice, maxPlayers, netWorth, rankStandings, standardValue, START_BONUS,
+    applyRoomAnimation, PRESENTATION, auctionParams, boardSizeOf, emergencyMortgage, landPrice, maxPlayers, netWorth, rankStandings, standardValue, START_BONUS,
 } from './Rules';
 
 export const NAMES = ['糖糖', '可可', '阿杰', '奶茶', '阿凯', '圆圆', '豆豆', '毛毛'];
@@ -101,6 +101,7 @@ export class MockStore {
     }
 
     emit(): void {
+        applyRoomAnimation(this.session.settings.fastMode);
         for (const l of this.listeners) l();
     }
 
@@ -124,7 +125,7 @@ export class MockStore {
         const prevSettings = this.session?.settings;
         const settings: RoomSettings = prevSettings
             ? { ...prevSettings, boardId: sc.boardSize === 30 ? 'classic-30' : 'classic-50' }
-            : { boardId: sc.boardSize === 30 ? 'classic-30' : 'classic-50', initialCash: 3000, endMode: 'TIME_LIMIT', timeLimitMinutes: 30, rollSeconds: 15, initialCards: 0 };
+            : { boardId: sc.boardSize === 30 ? 'classic-30' : 'classic-50', initialCash: 3000, endMode: 'TIME_LIMIT', timeLimitMinutes: 30, rollSeconds: 15, initialCards: 0, fastMode: false };
         const members: Member[] = [];
         for (let i = 0; i < sc.players; i++) {
             members.push({
@@ -430,7 +431,7 @@ export class MockStore {
             if (e.phase === 'FLIPPING' && e.result && now - e.since >= Theme.anim.eventFlipMs) {
                 this.eventDraw = { ...e, phase: 'RESULT', since: now };
                 this.emit();
-            } else if (e.phase === 'RESULT' && now - e.since >= animMs(isCash(e.result) ? EVENT_CASH_SHOW_MS : EVENT_RESULT_SHOW_MS)) {
+            } else if (e.phase === 'RESULT' && now - e.since >= Math.max(0, animMs(isCash(e.result) ? PRESENTATION.cash : PRESENTATION.event) - Theme.anim.eventFlipMs)) {
                 this.eventDraw = { ...EVENT_IDLE, settled: e.settled };
                 this.emit();
             }

@@ -142,7 +142,7 @@ final class EventModule {
             m = motion(c, LobbyModule.board(c, g.settings()), kind, l.tile(), ctx::draw);
         }
         ctx.emit(new GameEvent.EventDrawn(g.turn().currentPlayer(), l.landingId(), l.cursor(), kind, amount, m.kind(), m.distance(), auto));
-        EconomyModule.resumeLanding(ctx, 0);
+        EconomyModule.resumeLanding(ctx, presentation(ctx, kind));
     }
     /** 起点三选一：按配置比例抽现金或道具（现金再抽金额）；道具由后续的 CARD 效果按事件得道具的概率抽。 */
     static void pickStart(DecisionContext<SessionState> ctx, int index, boolean auto) {
@@ -153,10 +153,15 @@ final class EventModule {
         long amount = cash ? sp.cashMin() + (long) ctx.draw(DrawPoint.START_PICK_CASH, sp.cashBound()) * sp.cashStep() : 0;
         ctx.emit(new GameEvent.StartPickDrawn(g.turn().currentPlayer(), l.landingId(), l.cursor(), index,
                 cash ? EventKind.CASH_REWARD : EventKind.CARD, amount, auto));
-        EconomyModule.resumeLanding(ctx, 0);
+        EconomyModule.resumeLanding(ctx, ctx.state().game().settings().animationMs(ctx.config(), ctx.config().timing().startPickPresentationMs()));
     }
 
-    static void performEffect(DecisionContext<SessionState> ctx) {
+    private static long presentation(DecisionContext<SessionState> ctx, EventKind kind) {
+        return kind == EventKind.CASH_REWARD || kind == EventKind.CASH_FINE
+                ? ctx.state().game().settings().animationMs(ctx.config(), ctx.config().timing().eventCashPresentationMs()) : ctx.state().game().settings().animationMs(ctx.config(), ctx.config().timing().eventPresentationMs());
+    }
+
+    static void performEffect(DecisionContext<SessionState> ctx, long leadMs) {
         var g = ctx.state().game();
         var l = g.turn().landing();
         String player = g.turn().currentPlayer();
@@ -168,7 +173,7 @@ final class EventModule {
                 var f = pool.get(pick);
                 Motion m = fixedMotion(ctx.config(), board, f, l.tile(), ctx::draw);
                 ctx.emit(new GameEvent.FixedEventTriggered(player, l.landingId(), l.cursor(), f.kind(), f.amount(), m.kind(), m.distance(), pick));
-                EconomyModule.resumeLanding(ctx, 0);
+                EconomyModule.resumeLanding(ctx, Math.addExact(leadMs, presentation(ctx, f.kind())));
             }
             case EVENT_BUILD, EVENT_DOWNGRADE -> {
                 boolean build = l.currentTask() == LandingStep.EVENT_BUILD;
@@ -180,19 +185,19 @@ final class EventModule {
                     int level = g.board().ownable(tile).orElseThrow().level() + (build ? 1 : -1);
                     ctx.emit(new GameEvent.EventPropertyChanged(player, l.landingId(), l.cursor(), tile, level));
                 }
-                EconomyModule.resumeLanding(ctx, 0);
+                EconomyModule.resumeLanding(ctx, leadMs);
             }
             case REWARD -> {
                 ctx.emit(new GameEvent.EventRewardPaid(player, l.landingId(), l.cursor(), l.event().amount()));
-                EconomyModule.resumeLanding(ctx, 0);
+                EconomyModule.resumeLanding(ctx, leadMs);
             }
             case FINE -> EconomyModule.chargeFee(ctx,
-                    new FeeSource(FeeSource.Kind.FINE, l.landingId(), l.cursor(), l.tile(), null, l.event().amount()), 0);
+                    new FeeSource(FeeSource.Kind.FINE, l.landingId(), l.cursor(), l.tile(), null, l.event().amount()), leadMs);
             case CARD -> {
                 var card = CardDeck.pick(ctx.config(), ctx.draw(DrawPoint.EVENT_CARD, CardDeck.totalWeight(ctx.config())));
                 ctx.emit(new GameEvent.EventCardReceived(player, l.landingId(), l.cursor(), card));
                 ctx.emit(new GameEvent.EventHandCount(player, l.landingId(), l.cursor(), ctx.state().game().player(player).orElseThrow().hand().size(), false));
-                EconomyModule.resumeLanding(ctx, 0);
+                EconomyModule.resumeLanding(ctx, leadMs);
             }
             case MOVE, TO_JAIL -> {
                 MoveKind kind = l.currentTask() == LandingStep.TO_JAIL ? MoveKind.TO_JAIL : l.event().moveKind();
@@ -204,7 +209,7 @@ final class EventModule {
                 var segment = kind == MoveKind.TO_JAIL
                         ? MovementRules.jailJump(chain.segments().size() + 1, l.tile(), TurnModule.jailIndex(board), board.size())
                         : MovementRules.segment(chain.segments().size() + 1, kind, l.tile(), distance, board.size());
-                TurnModule.moveAndLand(ctx, segment, 0);
+                TurnModule.moveAndLand(ctx, segment, leadMs);
             }
             default -> throw new IllegalStateException("not an event effect " + l.currentTask());
         }

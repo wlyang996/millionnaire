@@ -48,6 +48,17 @@ class EventsV2Test {
     }
 
     @Test
+    void fixedEventKeepsTheIncomingMovementAndPresentationBuffers() {
+        Table t = table(Table.dice(DrawPoint.MOVE_DIE, 6), Table.steps(DrawPoint.LUCKY_EVENT, 100, 0));
+        M3bTest.craft(t, g -> g.withPlayer(g.player("p1").orElseThrow().at(3)));
+        t.rollOnly();
+        assertEquals("p2", t.current());
+        assertEquals(t.now + RULES.timing().animDiceMs() + 6 * RULES.timing().animPerStepMs()
+                + RULES.timing().eventCashPresentationMs(), t.window().window().opensAt());
+        assertEquals(15000, t.window().window().deadline() - t.window().window().opensAt());
+    }
+
+    @Test
     void productionBoardsSplitEventTilesIntoDrawnAndFixed() {
         var b30 = RULES.board(RuleConfigs.BOARD_30).orElseThrow();
         assertEquals(3, b30.count(TileType.EVENT));

@@ -100,7 +100,13 @@ public record GameSettings(
      */
     public record TimingSetting(int decisionSeconds, int responseSeconds, int discardSeconds, int tradeSeconds,
                                 int toothSeconds, int auctionSeconds, int auctionExtendSeconds, int auctionMaxSeconds,
-                                int debtSegmentSeconds, int animDiceMs, int animPerStepMs, int autoActDelayMs, Integer allAwayTurns) {
+                                int debtSegmentSeconds, int animDiceMs, int animPerStepMs, int autoActDelayMs, Integer allAwayTurns, Integer eventPresentationMs, Integer eventCashPresentationMs, Integer startPickPresentationMs, Integer jailPresentationMs) {
+        public TimingSetting(int decisionSeconds, int responseSeconds, int discardSeconds, int tradeSeconds,
+                             int toothSeconds, int auctionSeconds, int auctionExtendSeconds, int auctionMaxSeconds,
+                             int debtSegmentSeconds, int animDiceMs, int animPerStepMs, int autoActDelayMs, Integer allAwayTurns) {
+            this(decisionSeconds, responseSeconds, discardSeconds, tradeSeconds, toothSeconds, auctionSeconds, auctionExtendSeconds,
+                    auctionMaxSeconds, debtSegmentSeconds, animDiceMs, animPerStepMs, autoActDelayMs, allAwayTurns, null, null, null, null);
+        }
         public TimingSetting(int decisionSeconds, int responseSeconds, int discardSeconds, int tradeSeconds,
                              int toothSeconds, int auctionSeconds, int auctionExtendSeconds, int auctionMaxSeconds,
                              int debtSegmentSeconds, int animDiceMs, int animPerStepMs, int autoActDelayMs) {
@@ -123,7 +129,13 @@ public record GameSettings(
     public record RoomSetting(List<Long> initialCashOptions, long defaultInitialCash,
                               List<Integer> timeLimitMinutesOptions, int defaultTimeLimitMinutes,
                               List<Integer> rollSecondsOptions, int defaultRollSeconds,
-                              String defaultEndMode, int bankruptcyCapMinutes) {
+                              String defaultEndMode, int bankruptcyCapMinutes, Boolean fastModeEnabled, Boolean defaultFastMode, Integer fastAnimationPercent) {
+        public RoomSetting(List<Long> initialCashOptions, long defaultInitialCash, List<Integer> timeLimitMinutesOptions,
+                           int defaultTimeLimitMinutes, List<Integer> rollSecondsOptions, int defaultRollSeconds,
+                           String defaultEndMode, int bankruptcyCapMinutes) {
+            this(initialCashOptions, defaultInitialCash, timeLimitMinutesOptions, defaultTimeLimitMinutes, rollSecondsOptions,
+                    defaultRollSeconds, defaultEndMode, bankruptcyCapMinutes, null, null, null);
+        }
     }
 
     public record RentRise(int freeRounds, int everyRounds, int stepPercent, int capPercent) {

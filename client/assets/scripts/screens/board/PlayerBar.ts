@@ -4,7 +4,7 @@
  * 取代早先的文字提示）；动画由 BoardScreen.tickCashChanges 按时间驱动，重建时按剩余时间接着播。
  */
 import { Node } from 'cc';
-import { ConnState, ControlMode, PlayerView } from '../../core/Models';
+import { ROBOT_AVATAR, ConnState, ControlMode, PlayerView } from '../../core/Models';
 import { Theme } from '../../core/Theme';
 import { drawCoin } from '../../ui/Icons';
 import { fillCircle, fillRR, gfx, mk, onTap, place, setOpacity, strokeRR, text } from '../../ui/Kit';
@@ -111,7 +111,8 @@ export function drawPlayerBar(parent: Node, x: number, y: number, players: Playe
             text(rb, String(rank), 0, 0, 24, 24, 15, rank <= 3 ? '#5A3A00' : Theme.c.navy, { bold: true });
         }
         text(cell, p.nickname, 66, 6, cw - (rank && !dead ? 96 : 70), 26, 20, ink, { bold: true, align: 'l' });
-        const b = statusBadge(p) ?? (p.playerId === drawingId ? { text: '抽卡中', bg: '#FFF1C9', fg: '#7A5A00' } : null);
+        const b = p.avatar === ROBOT_AVATAR && p.life === 'ALIVE' ? null
+            : statusBadge(p) ?? (p.playerId === drawingId ? { text: '抽卡中', bg: '#FFF1C9', fg: '#7A5A00' } : null);
         if (b) {
             // 设计稿 06（连接状态）：状态胶囊占据现金那一行；"已掉线·自动投骰"分两行
             const lines = b.text.split('·');

@@ -1,12 +1,13 @@
 /** Approved asset overview. Values and ownership remain driven by the store. */
 import { Node } from 'cc';
+import { ROBOT_AVATAR } from '../core/Models';
 import { standardValue } from '../core/Rules';
 import { Theme } from '../core/Theme';
 import { art, informationCharacterKey } from '../ui/Art';
 import { ctx } from '../ui/Ctx';
 import { mk, onTap, text } from '../ui/Kit';
 import { ScrollList } from '../ui/ScrollList';
-import { chip } from '../ui/Widgets';
+import { avatar, chip } from '../ui/Widgets';
 import { InformationPage, informationClose, informationPanel, shopKey } from './InformationPage';
 import { TileInfoPopup } from './TileInfoPopup';
 import { tierName } from './Common';
@@ -19,7 +20,8 @@ export class AssetsPopup extends InformationPage {
     protected buildBody(p: Node, w: number, h: number): void {
         const st = ctx.store;
         const me = st.player(this.playerId) ?? st.me();
-        art(p, informationCharacterKey(me.avatar), 310, 184, 345, 310);
+        if (me.avatar === ROBOT_AVATAR) avatar(p, 380, 244, 200, me.avatar, me.nickname);
+        else art(p, informationCharacterKey(me.avatar), 310, 184, 345, 310);
         const sum = informationPanel(p, 'info_summary_panel', 32, 452, w - 64, 146);
         const metrics: [string, string, number][] = [
             ['现金', 'info_cash', me.cash], ['冻结资金', 'info_frozen', me.frozen],

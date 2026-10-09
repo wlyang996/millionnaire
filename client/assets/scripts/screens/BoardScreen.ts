@@ -516,7 +516,11 @@ export class BoardScreen extends Screen {
             }
             setOpacity(this.clockNode, Math.round(255 * matchClockOpacity(state, Date.now())));
         }
-        if (this.cdSec) setText(this.cdSec, this.turnCd.remainingSec() + '秒');
+        if (this.cdSec) {
+            const w = st.online?.turnWindow(st.game.currentPlayer);
+            const waiting = !!w && (!st.online!.isOpen(w) || this.cashAnimating() || ctx.popups.has('start-pick') || !!this.jailOv);
+            setText(this.cdSec, waiting ? '等待中' : this.turnCd.remainingSec() + '秒');
+        }
     }
 
     tick(dt: number): void {
@@ -536,6 +540,11 @@ export class BoardScreen extends Screen {
         this.dice?.setReady(this.canRoll());
         this.dice?.update();
         if (st.online) {
+            // 最后一段动画结束后主动刷新余额，不依赖下一次推送（连续收租金额相同也要刷新）。
+            if (!this.cashAnimating() && g.players.some(p => this.shownCash.get(p.playerId) !== p.cash)) {
+                this.refresh();
+                return;
+            }
             this.tickOnline();
             return;
         }
@@ -575,6 +584,14 @@ export class BoardScreen extends Screen {
     }
 
     // ---------- 联机 ----------
+    /** 动画进行中或待播放时暂缓现金显示；结束后由 tick 主动补刷新。 */
+    private cashAnimating(): boolean {
+        const st = ctx.store;
+        return !!this.move || !!(this.dice && this.dice.playing)
+            || !!st.online?.cues.some(c => c.kind === 'dice' || c.kind === 'move')
+            || st.eventDraw.phase === 'FLIPPING' || st.eventDraw.phase === 'RESULT';
+    }
+
     /** 动画进行中或待播放时，棋子先显示在动画起点（服务端视图里已是终点）。 */
     private displayGame(game: GameView): GameView {
         const online = ctx.store.online;
@@ -585,10 +602,7 @@ export class BoardScreen extends Screen {
         for (const c of online.cues) if (c.kind === 'move' && !shown.has(c.playerId)) shown.set(c.playerId, c.from);
         // 骰子、走棋、事件翻牌播完前，所有人的现金都停在动画开始前的数（用户 2026-10-08：走到别人的地上才扣钱、
         // 对方也是那时才加钱；经过起点的奖励、事件奖励等同理）
-        const animating = shown.size > 0 || !!(this.dice && this.dice.playing)
-            || online.cues.some((c) => c.kind === 'dice' || c.kind === 'move')
-            || ctx.store.eventDraw.phase === 'FLIPPING' || ctx.store.eventDraw.phase === 'RESULT';
-        if (!animating) {
+        if (!this.cashAnimating()) {
             for (const p of game.players) this.shownCash.set(p.playerId, p.cash);
             return game;
         }

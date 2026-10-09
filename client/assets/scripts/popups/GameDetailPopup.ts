@@ -3,6 +3,7 @@
  * 下方是全部玩家的最终排名与结算。数据来自 GET /api/me/games/{roomId}/{gameNo}。
  */
 import { Node } from 'cc';
+import { ROBOT_AVATAR } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { SGameDetail } from '../net/Protocol';
 import { defaultAvatar } from '../net/ViewAdapter';
@@ -93,7 +94,7 @@ export class GameDetailPopup extends Popup {
             fillRR(g, 0, 0, lw, PLAYER_H - 10, 16, pl.me ? '#FFF6DA' : Theme.c.white);
             const out = pl.life === 'BANKRUPT' || pl.life === 'SURRENDERED';
             text(n, pl.rank ? '第' + pl.rank + '名' : '—', 10, 0, 92, PLAYER_H - 10, 26, pl.rank === 1 ? Theme.c.payRed : '#2B79C4', { bold: true });
-            avatar(n, 104, 10, 66, pl.avatar >= 0 && pl.avatar < 8 ? pl.avatar : defaultAvatar(pl.playerId), pl.nickname, { dim: out });
+            avatar(n, 104, 10, 66, pl.avatar >= 0 && pl.avatar <= ROBOT_AVATAR ? pl.avatar : defaultAvatar(pl.playerId), pl.nickname, { dim: out });
             text(n, pl.nickname + (pl.me ? '（我）' : ''), 184, 6, 230, 42, 26, Theme.c.navy, { bold: true, align: 'l' });
             text(n, out ? (pl.life === 'SURRENDERED' ? '认输' : '破产') : '现金 ' + (pl.cash ?? 0), 184, 46, 230, 34, 21,
                 out ? Theme.c.payRed : Theme.c.noteGray, { align: 'l' });

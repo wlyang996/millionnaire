@@ -238,7 +238,7 @@ public class RoomService {
 
     /** 房主给自己的房间加一个测试机器人（机器人是一个新建的测试用户）。 */
     public LiveRoom.Reply addBot(User host, String requestId, User bot) {
-        rememberAvatar(bot);
+        avatars.put(bot.playerId(), 8); // 专属机器人头像；真人内置头像为 0..7
         LiveRoom room = byPlayer.get(host.playerId());
         if (room == null) {
             throw new ClientException("NOT_IN_ROOM", "join or create a room first");

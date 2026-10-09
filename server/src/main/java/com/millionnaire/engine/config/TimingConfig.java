@@ -31,7 +31,27 @@ public record TimingConfig(
         long animPerStepMs,
         long autoActDelayMs,
         boolean endWhenAllAway,
-        int allAwayTurns) {
+        int allAwayTurns, long eventPresentationMs, long eventCashPresentationMs, long startPickPresentationMs, long jailPresentationMs) {
+    public TimingConfig(List<Integer> rollSecondsOptions, List<Integer> timeLimitMinutesOptions, int bankruptcyModeCapMinutes,
+                        long decisionWindowMs, long responseWindowMs, long discardWindowMs, long tradeResponseMs,
+                        long toothPickMs, long auctionDurationMs, long auctionExtendMs, long auctionMaxMs, long debtSegmentMs,
+                        long heartbeatMs, long suspectAfterMs, long offlineAfterMs, long allOfflineCloseMs,
+                        long downtimeBudgetMs, long recoveryPrepMs, long animDiceMs, long animPerStepMs, long autoActDelayMs,
+                        boolean endWhenAllAway, int allAwayTurns) {
+        this(rollSecondsOptions, timeLimitMinutesOptions, bankruptcyModeCapMinutes, decisionWindowMs, responseWindowMs,
+                discardWindowMs, tradeResponseMs, toothPickMs, auctionDurationMs, auctionExtendMs, auctionMaxMs, debtSegmentMs,
+                heartbeatMs, suspectAfterMs, offlineAfterMs, allOfflineCloseMs, downtimeBudgetMs, recoveryPrepMs, animDiceMs,
+                animPerStepMs, autoActDelayMs, endWhenAllAway, allAwayTurns, 0, 0, 0, 0);
+    }
+
+    public TimingConfig withPresentation(long event, long cash, long start, long jail) {
+        return new TimingConfig(rollSecondsOptions, timeLimitMinutesOptions, bankruptcyModeCapMinutes, decisionWindowMs,
+                responseWindowMs, discardWindowMs, tradeResponseMs, toothPickMs, auctionDurationMs, auctionExtendMs,
+                auctionMaxMs, debtSegmentMs, heartbeatMs, suspectAfterMs, offlineAfterMs, allOfflineCloseMs,
+                downtimeBudgetMs, recoveryPrepMs, animDiceMs, animPerStepMs, autoActDelayMs, endWhenAllAway, allAwayTurns,
+                event, cash, start, jail);
+    }
+
     /** 兼容旧调用：默认一个玩家回合。 */
     public TimingConfig(List<Integer> rollSecondsOptions, List<Integer> timeLimitMinutesOptions, int bankruptcyModeCapMinutes,
                         long decisionWindowMs, long responseWindowMs, long discardWindowMs, long tradeResponseMs,
@@ -49,7 +69,7 @@ public record TimingConfig(
         return new TimingConfig(rollSecondsOptions, timeLimitMinutesOptions, bankruptcyModeCapMinutes, decisionWindowMs,
                 responseWindowMs, discardWindowMs, tradeResponseMs, toothPickMs, auctionDurationMs, auctionExtendMs,
                 auctionMaxMs, debtSegmentMs, heartbeatMs, suspectAfterMs, offlineAfterMs, allOfflineCloseMs,
-                downtimeBudgetMs, recoveryPrepMs, animDiceMs, animPerStepMs, autoActDelayMs, endWhenAllAway, turns);
+                downtimeBudgetMs, recoveryPrepMs, animDiceMs, animPerStepMs, autoActDelayMs, endWhenAllAway, turns, eventPresentationMs, eventCashPresentationMs, startPickPresentationMs, jailPresentationMs);
     }
 
     public TimingConfig {
@@ -64,7 +84,7 @@ public record TimingConfig(
         return new TimingConfig(rollSecondsOptions, timeLimitMinutesOptions, bankruptcyModeCapMinutes, decision, response,
                 discard, tradeResponse, toothPick, auctionDuration, auctionExtend, auctionMax, debtSegment,
                 heartbeatMs, suspectAfterMs, offlineAfterMs, allOfflineCloseMs, downtimeBudgetMs, recoveryPrepMs, animDice,
-                animPerStep, autoActDelay, endWhenAllAway, allAwayTurns);
+                animPerStep, autoActDelay, endWhenAllAway, allAwayTurns, eventPresentationMs, eventCashPresentationMs, startPickPresentationMs, jailPresentationMs);
     }
 
     /** 换掉建房可选的投骰时间、限时档位与破产模式时长上限（管理后台可配），其余计时不变。 */
@@ -72,6 +92,6 @@ public record TimingConfig(
         return new TimingConfig(rollSeconds, timeLimitMinutes, bankruptcyCapMinutes, decisionWindowMs, responseWindowMs,
                 discardWindowMs, tradeResponseMs, toothPickMs, auctionDurationMs, auctionExtendMs, auctionMaxMs, debtSegmentMs,
                 heartbeatMs, suspectAfterMs, offlineAfterMs, allOfflineCloseMs, downtimeBudgetMs, recoveryPrepMs, animDiceMs,
-                animPerStepMs, autoActDelayMs, endWhenAllAway, allAwayTurns);
+                animPerStepMs, autoActDelayMs, endWhenAllAway, allAwayTurns, eventPresentationMs, eventCashPresentationMs, startPickPresentationMs, jailPresentationMs);
     }
 }

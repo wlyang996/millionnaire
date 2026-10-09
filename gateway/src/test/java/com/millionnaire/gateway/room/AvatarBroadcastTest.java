@@ -35,6 +35,32 @@ class AvatarBroadcastTest {
     }
 
     @Test
+    void botsHaveDedicatedAvatarsAndCashInTheGameView() throws Exception {
+        Clock clock = Clock.systemUTC();
+        RoomStore store = new RoomStore(new StaticListableBeanFactory().getBeanProvider(JdbcTemplate.class), clock);
+        ObjectMapper json = new ObjectMapper();
+        RoomService rooms = new RoomService(store, (player, msg) -> {}, new Wire(json), clock);
+        try {
+            User host = new User(1, "真人", 2);
+            LiveRoom room = rooms.create(host, "create", null).room();
+            assertThat(rooms.addBot(host, "add", new User(2, "机器人1", 3)).ok()).isTrue();
+            JsonNode snap = json.readTree(room.snapshot("1"));
+            assertThat(snap.path("avatars").path("1").asInt()).isEqualTo(1);
+            assertThat(snap.path("avatars").path("2").asInt()).isEqualTo(8);
+            assertThat(room.submitClient("1", "ready", new com.millionnaire.engine.core.command.RoomCommand.SetReady("1", true)).ok()).isTrue();
+            assertThat(room.submitClient("1", "start", new com.millionnaire.engine.core.command.SessionCommand.StartGame("1")).ok()).isTrue();
+            JsonNode game = json.readTree(room.snapshot("1")).path("view").path("game");
+            JsonNode robot = null;
+            for (JsonNode player : game.path("players")) if (player.path("playerId").asText().equals("2")) robot = player;
+            assertThat(robot).isNotNull();
+            assertThat(robot.path("cash").asLong()).isEqualTo(3000);
+            assertThat(robot.path("control").asText()).isEqualTo("HOSTED");
+        } finally {
+            rooms.shutdown();
+        }
+    }
+
+    @Test
     void userAvatarIndexIsStoredPlusOne() {
         assertThat(new User(1, "a", 0).avatar()).isEqualTo(-1);
         assertThat(new User(1, "a", 1).avatar()).isEqualTo(0);

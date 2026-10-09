@@ -1,5 +1,6 @@
 /** 通用控件：RoundedPanel、Avatar、Chip、CountdownRing/Label、Segmented 选项组。 */
 import { Graphics, Label, Node } from 'cc';
+import { ROBOT_AVATAR } from '../core/Models';
 import { Countdown } from '../core/Clock';
 import { Theme, textWidth } from '../core/Theme';
 import {
@@ -25,6 +26,12 @@ export interface AvatarOpts {
 export function avatar(parent: Node, x: number, y: number, size: number, idx: number, name: string, o: AvatarOpts = {}): Node {
     const n = mk(parent, 'Avatar:' + name, x, y, size, size);
     const g = gfx(n);
+    if (idx === ROBOT_AVATAR) {
+        fillCircle(g, size / 2, size / 2, size / 2, o.dim ? Theme.c.gray : Theme.c.blueSoft);
+        text(n, '🤖', 0, 0, size, size, Math.round(size * 0.7), Theme.c.navy);
+        strokeCircle(g, size / 2, size / 2, size / 2 - 2, o.ring ?? Theme.c.white, o.ring ? 4 : 3);
+        return n;
+    }
     if (art(n, characterKey(idx), 0, 0, size, size, 'contain', !!o.dim)) {
         if (o.ring) strokeCircle(g, size / 2, size / 2, size / 2 - 2, o.ring, 4);
         return n;

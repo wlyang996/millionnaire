@@ -4,7 +4,7 @@
  */
 import { DESIGN_30, DESIGN_50 } from './BoardNames';
 import { matchClockOpacity, matchClockState, remainingSecFromMs } from './MatchClock';
-import { Theme } from './Theme';
+import { animMs, Theme } from './Theme';
 import {
     advanceEvent, canClickCard, CARD_ODDS, clickCard, closeResult, EVENT_IDLE, EVENT_KIND_ODDS, eventViewMode, rollEvent, triggerEvent,
 } from './EventDraw';
@@ -15,7 +15,7 @@ import { appendLog } from '../net/GameLog';
 import { Clock, Countdown } from './Clock';
 import { MockStore } from './MockStore';
 import {
-    auctionParams, checkNickname, clampTradePrice, debtShortfall, emergencyMortgage, maxPlayers, netWorth,
+    applyRoomAnimation, ROOM_ANIMATION, auctionParams, checkNickname, clampTradePrice, debtShortfall, emergencyMortgage, maxPlayers, netWorth,
     groupCards, rankStandings, rentOf, setRentPercent, standardValue, stationRent, toothCount, tradeRange, TIERS, STATION,
 } from './Rules';
 import { textWidth } from './Theme';
@@ -286,6 +286,15 @@ export function runSelfCheck(): CheckResult {
     ok('欠款能力 = 现金 + 应急抵押所得', st.debtCapacity() > st.me().cash);
     st.patchScenario({ spectator: true });
     ok('观战场景：我已破产且无手牌', st.isSpectator() && st.game.myHand.length === 0);
+
+    // 房间快速模式统一作用于动画，切回普通模式后恢复原时长。
+    const normalDice = Theme.anim.diceMs; const normalHop = Theme.anim.hopMs;
+    applyRoomAnimation(true);
+    eq('房间快速投骰与移动统一比例', [Theme.anim.diceMs, Theme.anim.hopMs],
+        [Math.ceil(normalDice * ROOM_ANIMATION.percent / 100), Math.ceil(normalHop * ROOM_ANIMATION.percent / 100)]);
+    eq('房间结果展示时长同样加速', animMs(2301), Math.ceil(2301 * ROOM_ANIMATION.percent / 100));
+    applyRoomAnimation(false);
+    eq('普通房间恢复动画时长', [Theme.anim.diceMs, Theme.anim.hopMs], [normalDice, normalHop]);
 
     return { passed, failures: fails };
 }

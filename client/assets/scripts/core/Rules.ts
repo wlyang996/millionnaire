@@ -1,3 +1,4 @@
+import { applyAnimationTiming, setRoomAnimation } from './Theme';
 /**
  * 规则常量与纯函数（无 cc 依赖，可用 node 直接断言）。数值取自 requirements.md / open-decisions.md，不得自创。
  * 取整：向上取整（open-decisions #1 / #12 的口径）。
@@ -43,6 +44,9 @@ export let RENT_RISE: RentRiseRule = { freeRounds: 10, everyRounds: 5, stepPerce
 
 /** 停在起点的三选一：现金 / 道具权重与现金范围（规则页、弹窗说明用；结果以服务端为准）。 */
 export interface StartPickRule { cashWeight: number; cardWeight: number; cashMin: number; cashMax: number; cashStep: number }
+export const ROOM_ANIMATION = { enabled: true, defaultFast: false, percent: 50 };
+export function applyRoomAnimation(fast: boolean): void { setRoomAnimation(fast, ROOM_ANIMATION.percent); }
+export const PRESENTATION = { event: 3700, cash: 2300, start: 1800, jail: 2600 };
 export let START_PICK: StartPickRule = { cashWeight: 60, cardWeight: 40, cashMin: 200, cashMax: 1000, cashStep: 100 };
 
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
@@ -55,6 +59,8 @@ export interface ServerRules {
     rentRise?: RentRiseRule;
     /** 操作时限（秒）与动画留时（毫秒），后台「操作时限」 */
     timing?: {
+        animDiceMs: number; animPerStepMs: number; eventPresentationMs: number; eventCashPresentationMs: number;
+        startPickPresentationMs: number; jailPresentationMs: number;
         decisionSeconds: number; responseSeconds: number; discardSeconds: number; tradeSeconds: number; toothSeconds: number;
         auctionSeconds: number; auctionExtendSeconds: number; auctionMaxSeconds: number; debtSegmentSeconds: number;
     };
@@ -64,7 +70,7 @@ export interface ServerRules {
     startPick?: StartPickRule;
     room?: {
         initialCashOptions: number[]; timeLimitMinutesOptions: number[]; rollSecondsOptions: number[];
-        bankruptcyCapMinutes: number;
+        bankruptcyCapMinutes: number; fastModeEnabled: boolean; defaultFastMode: boolean; fastAnimationPercent: number;
     };
 }
 
@@ -88,6 +94,11 @@ export function applyServerRules(r: ServerRules): void {
     if (r.timing) {
         // 弹窗倒计时的默认值（联机时实际截止以服务端窗口为准）
         const t = r.timing;
+        PRESENTATION.event = t.eventPresentationMs;
+        PRESENTATION.cash = t.eventCashPresentationMs;
+        PRESENTATION.start = t.startPickPresentationMs;
+        PRESENTATION.jail = t.jailPresentationMs;
+        applyAnimationTiming(t.animDiceMs, t.animPerStepMs, Math.min(t.eventPresentationMs, t.eventCashPresentationMs));
         Object.assign(SECONDS, {
             buy: t.decisionSeconds, upgrade: t.decisionSeconds, rent: t.responseSeconds, trade: t.tradeSeconds,
             auction: t.auctionSeconds, auctionMax: t.auctionMaxSeconds, auctionTail: t.auctionExtendSeconds,
@@ -95,6 +106,9 @@ export function applyServerRules(r: ServerRules): void {
         });
     }
     if (r.room) {
+        ROOM_ANIMATION.enabled = r.room.fastModeEnabled;
+        ROOM_ANIMATION.defaultFast = r.room.defaultFastMode;
+        ROOM_ANIMATION.percent = r.room.fastAnimationPercent;
         replaceAll(INITIAL_CASH_OPTIONS, r.room.initialCashOptions);
         replaceAll(TIME_LIMIT_OPTIONS, r.room.timeLimitMinutesOptions);
         replaceAll(ROLL_SECONDS_OPTIONS, r.room.rollSecondsOptions);

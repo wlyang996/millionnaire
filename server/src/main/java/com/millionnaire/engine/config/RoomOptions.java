@@ -11,7 +11,12 @@ public record RoomOptions(
         long defaultInitialCash,
         EndMode defaultEndMode,
         int defaultTimeLimitMinutes,
-        int defaultRollSeconds) {
+        int defaultRollSeconds, boolean fastModeEnabled, boolean defaultFastMode, int fastAnimationPercent) {
+    public RoomOptions(int minPlayersToStart, List<Long> initialCashOptions, String defaultBoardId, long defaultInitialCash,
+                       EndMode defaultEndMode, int defaultTimeLimitMinutes, int defaultRollSeconds) {
+        this(minPlayersToStart, initialCashOptions, defaultBoardId, defaultInitialCash, defaultEndMode,
+                defaultTimeLimitMinutes, defaultRollSeconds, true, false, 50);
+    }
     public RoomOptions {
         initialCashOptions = Immutable.list(initialCashOptions);
     }

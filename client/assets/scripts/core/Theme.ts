@@ -89,16 +89,23 @@ export const Theme = {
 };
 
 /**
- * 快速动画（用户 2026-10-08，玩家自己在头像菜单里开关，存在本机）：骰子、跳格、翻牌、结果停留、入狱等动画时长减半。
- * 只影响本机画面；服务端按自己的节奏推进，动画快了只是等待更短。
+ * 房间动画模式：由房主开局前选择，全员同速；比例取服务端配置，与服务端动画留时一致。
  */
 const BASE_ANIM = { ...Theme.anim };
 const SCALED: (keyof typeof BASE_ANIM)[] = ['diceMs', 'hopMs', 'diceReadyMs', 'eventResultHoldMs', 'eventFlipMs', 'eventOtherHoldMs'];
 let animSpeed = 1;
 
-export function setFastAnim(on: boolean): void {
-    animSpeed = on ? 2 : 1;
-    for (const k of SCALED) (Theme.anim as Record<string, number>)[k] = Math.round(BASE_ANIM[k] / animSpeed);
+export function setRoomAnimation(on: boolean, percent: number): void {
+    animSpeed = on ? 100 / percent : 1;
+    for (const k of SCALED) (Theme.anim as Record<string, number>)[k] = Math.ceil(BASE_ANIM[k] / animSpeed);
+}
+
+/** 联机动画采用服务端预留时间；房间快速模式同时缩短服务端动画留时。 */
+export function applyAnimationTiming(dice: number, step: number, presentation: number): void {
+    BASE_ANIM.diceMs = Math.max(1, dice);
+    BASE_ANIM.hopMs = Math.max(1, step);
+    BASE_ANIM.eventFlipMs = Math.min(700, presentation);
+    for (const k of SCALED) (Theme.anim as Record<string, number>)[k] = Math.ceil(BASE_ANIM[k] / animSpeed);
 }
 
 export function fastAnim(): boolean {
@@ -107,7 +114,7 @@ export function fastAnim(): boolean {
 
 /** 按当前动画速度缩放的时长（毫秒）。 */
 export function animMs(base: number): number {
-    return Math.round(base / animSpeed);
+    return Math.ceil(base / animSpeed);
 }
 
 /** 大致估算文字宽度（CJK 按 1 个字号宽，ASCII/数字按 0.56），用于 Chip 等自适应宽度。 */

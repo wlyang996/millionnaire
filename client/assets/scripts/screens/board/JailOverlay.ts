@@ -3,6 +3,7 @@
  * 暗场 → 监狱近景弹出（招牌上写"某某 入狱"）→ 一排铁栏杆从屏幕上方砸下、回弹并轻微震屏 → 淡出。
  * 状态（谁、何时开始）由 BoardScreen 保存，页面重建后按时间戳续播。
  */
+import { PRESENTATION } from '../../core/Rules';
 import { Node } from 'cc';
 import { animMs, Theme } from '../../core/Theme';
 import { art } from '../../ui/Art';
@@ -10,7 +11,7 @@ import { fillRR, gfx, line, mk, place, setOpacity, text } from '../../ui/Kit';
 
 /** 当前动画倍速（快速动画为 2）。 */
 const speed = (): number => 1000 / animMs(1000);
-export const JAIL_SHOW_MS = 2600;
+
 
 const POP_MS = 380;
 const DROP_AT = 520;
@@ -58,7 +59,7 @@ export class JailOverlay {
     }
 
     get done(): boolean {
-        return (Date.now() - this.start) * speed() >= JAIL_SHOW_MS;
+        return (Date.now() - this.start) * speed() >= PRESENTATION.jail;
     }
 
     tick(now: number): void {
@@ -82,7 +83,7 @@ export class JailOverlay {
             y = -18 * Math.sin(Math.PI * q) * (1 - q);
         }
         place(this.bars, shake, BARS_Y + y);
-        const fade = JAIL_SHOW_MS - t;
+        const fade = PRESENTATION.jail - t;
         setOpacity(this.root, fade < FADE_MS ? Math.round(255 * Math.max(0, fade) / FADE_MS) : 255);
     }
 }

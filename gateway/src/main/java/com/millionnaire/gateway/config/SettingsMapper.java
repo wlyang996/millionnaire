@@ -80,7 +80,8 @@ public final class SettingsMapper {
         var t = BASE.timing();
         return new GameSettings.TimingSetting(sec(t.decisionWindowMs()), sec(t.responseWindowMs()), sec(t.discardWindowMs()),
                 sec(t.tradeResponseMs()), sec(t.toothPickMs()), sec(t.auctionDurationMs()), sec(t.auctionExtendMs()),
-                sec(t.auctionMaxMs()), sec(t.debtSegmentMs()), (int) t.animDiceMs(), (int) t.animPerStepMs(), (int) t.autoActDelayMs(), t.allAwayTurns());
+                sec(t.auctionMaxMs()), sec(t.debtSegmentMs()), (int) t.animDiceMs(), (int) t.animPerStepMs(), (int) t.autoActDelayMs(), t.allAwayTurns(), (int) t.eventPresentationMs(), (int) t.eventCashPresentationMs(),
+                (int) t.startPickPresentationMs(), (int) t.jailPresentationMs());
     }
 
     private static int sec(long ms) {
@@ -90,10 +91,14 @@ public final class SettingsMapper {
     public static GameSettings.TimingSetting timingOf(GameSettings s) {
         if (s.timing() == null) return defaultTiming();
         var t = s.timing();
-        return t.allAwayTurns() != null ? t : new GameSettings.TimingSetting(t.decisionSeconds(), t.responseSeconds(),
+        return new GameSettings.TimingSetting(t.decisionSeconds(), t.responseSeconds(),
                 t.discardSeconds(), t.tradeSeconds(), t.toothSeconds(), t.auctionSeconds(), t.auctionExtendSeconds(),
                 t.auctionMaxSeconds(), t.debtSegmentSeconds(), t.animDiceMs(), t.animPerStepMs(), t.autoActDelayMs(),
-                BASE.timing().allAwayTurns());
+                t.allAwayTurns() == null ? BASE.timing().allAwayTurns() : t.allAwayTurns(),
+                t.eventPresentationMs() == null ? (int) BASE.timing().eventPresentationMs() : t.eventPresentationMs(),
+                t.eventCashPresentationMs() == null ? (int) BASE.timing().eventCashPresentationMs() : t.eventCashPresentationMs(),
+                t.startPickPresentationMs() == null ? (int) BASE.timing().startPickPresentationMs() : t.startPickPresentationMs(),
+                t.jailPresentationMs() == null ? (int) BASE.timing().jailPresentationMs() : t.jailPresentationMs());
     }
 
     /** 内置起点三选一（引擎默认）。 */
@@ -127,12 +132,18 @@ public final class SettingsMapper {
         return new RoomSetting(List.copyOf(r.initialCashOptions()), r.defaultInitialCash(),
                 List.copyOf(BASE.timing().timeLimitMinutesOptions()), r.defaultTimeLimitMinutes(),
                 List.copyOf(BASE.timing().rollSecondsOptions()), r.defaultRollSeconds(),
-                r.defaultEndMode().name(), BASE.timing().bankruptcyModeCapMinutes());
+                r.defaultEndMode().name(), BASE.timing().bankruptcyModeCapMinutes(), r.fastModeEnabled(), r.defaultFastMode(), r.fastAnimationPercent());
     }
 
     /** 没有建房可选项（旧版本快照）时用内置默认。 */
     public static RoomSetting roomOf(GameSettings s) {
-        return s.room() == null ? defaultRoom() : s.room();
+        if (s.room() == null) return defaultRoom();
+        var r = s.room(); var base = BASE.room();
+        return new RoomSetting(r.initialCashOptions(), r.defaultInitialCash(), r.timeLimitMinutesOptions(), r.defaultTimeLimitMinutes(),
+                r.rollSecondsOptions(), r.defaultRollSeconds(), r.defaultEndMode(), r.bankruptcyCapMinutes(),
+                r.fastModeEnabled() == null ? base.fastModeEnabled() : r.fastModeEnabled(),
+                r.defaultFastMode() == null ? base.defaultFastMode() : r.defaultFastMode(),
+                r.fastAnimationPercent() == null ? base.fastAnimationPercent() : r.fastAnimationPercent());
     }
 
     /** 没有道具上限（旧版本快照）时用内置默认。 */
@@ -278,6 +289,10 @@ public final class SettingsMapper {
         range(errors, "欠款每段时限", t.debtSegmentSeconds(), 10, 120, "秒");
         range(errors, "投骰动画时间", t.animDiceMs(), 0, 5000, "毫秒");
         range(errors, "每格移动动画时间", t.animPerStepMs(), 0, 2000, "毫秒");
+        range(errors, "事件翻牌及结果展示", t.eventPresentationMs(), 0, 10000, "毫秒");
+        range(errors, "现金事件翻牌及结果展示", t.eventCashPresentationMs(), 0, 10000, "毫秒");
+        range(errors, "起点抽卡结果展示", t.startPickPresentationMs(), 0, 10000, "毫秒");
+        range(errors, "入狱动画展示", t.jailPresentationMs(), 0, 10000, "毫秒");
         range(errors, "全员挂机 / 托管结束回合数", t.allAwayTurns(), 1, 100, "回合");
         range(errors, "托管代操作等待", t.autoActDelayMs(), 1, 10000, "毫秒");
     }
@@ -348,6 +363,8 @@ public final class SettingsMapper {
     static final int MAX_ROOM_CHOICES = 5;
 
     private static void room(List<String> errors, RoomSetting r) {
+        range(errors, "快速模式动画时长比例", r.fastAnimationPercent(), 10, 100, "%");
+        if (r.defaultFastMode() && !r.fastModeEnabled()) errors.add("默认快速模式需要先允许房主选择快速模式");
         choices(errors, "初始现金", r.initialCashOptions(), r.defaultInitialCash(), 1, MAX_PRICE, "");
         choices(errors, "限时时长", r.timeLimitMinutesOptions(), r.defaultTimeLimitMinutes(), 5, 240, " 分钟");
         choices(errors, "投骰时间", r.rollSecondsOptions(), r.defaultRollSeconds(), 5, 120, " 秒");
@@ -560,7 +577,7 @@ public final class SettingsMapper {
         return new RoomSetting(r.initialCashOptions().stream().sorted().toList(), r.defaultInitialCash(),
                 r.timeLimitMinutesOptions().stream().sorted().toList(), r.defaultTimeLimitMinutes(),
                 r.rollSecondsOptions().stream().sorted().toList(), r.defaultRollSeconds(),
-                r.defaultEndMode(), r.bankruptcyCapMinutes());
+                r.defaultEndMode(), r.bankruptcyCapMinutes(), r.fastModeEnabled(), r.defaultFastMode(), r.fastAnimationPercent());
     }
 
     /** 调用前须先通过 {@link #validate} 的结构检查。 */
@@ -608,14 +625,16 @@ public final class SettingsMapper {
         RoomSetting rs = sortedRoom(roomOf(s));
         RoomOptions base = BASE.room();
         RoomOptions room = new RoomOptions(base.minPlayersToStart(), rs.initialCashOptions(), base.defaultBoardId(),
-                rs.defaultInitialCash(), EndMode.valueOf(rs.defaultEndMode()), rs.defaultTimeLimitMinutes(), rs.defaultRollSeconds());
+                rs.defaultInitialCash(), EndMode.valueOf(rs.defaultEndMode()), rs.defaultTimeLimitMinutes(), rs.defaultRollSeconds(),
+                rs.fastModeEnabled(), rs.defaultFastMode(), rs.fastAnimationPercent());
         GameSettings.TimingSetting ts = timingOf(s);
         GameSettings.StartPickSetting sp = startPickOf(s);
         var timing = BASE.timing().withRoomChoices(rs.rollSecondsOptions(), rs.timeLimitMinutesOptions(), rs.bankruptcyCapMinutes())
                 .withWindows(ts.decisionSeconds() * 1000L, ts.responseSeconds() * 1000L, ts.discardSeconds() * 1000L,
                         ts.tradeSeconds() * 1000L, ts.toothSeconds() * 1000L, ts.auctionSeconds() * 1000L,
                         ts.auctionExtendSeconds() * 1000L, ts.auctionMaxSeconds() * 1000L, ts.debtSegmentSeconds() * 1000L,
-                        ts.animDiceMs(), ts.animPerStepMs(), ts.autoActDelayMs()).withAllAwayTurns(ts.allAwayTurns());
+                        ts.animDiceMs(), ts.animPerStepMs(), ts.autoActDelayMs()).withAllAwayTurns(ts.allAwayTurns())
+                .withPresentation(ts.eventPresentationMs(), ts.eventCashPresentationMs(), ts.startPickPresentationMs(), ts.jailPresentationMs());
         return new RuleConfig(BASE.ruleVersion(), boards, tiers, st, economy, BASE.ratios(), cards, events,
                 timing, room,
                 new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()),

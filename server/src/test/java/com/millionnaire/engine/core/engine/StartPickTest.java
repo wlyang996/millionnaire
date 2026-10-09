@@ -139,6 +139,8 @@ class StartPickTest {
         assertEquals(2, e.get(0).index());
         assertEquals(EventKind.CASH_REWARD, e.get(0).kind());
         assertEquals("p2", t.current());
+        assertEquals(t.now + RULES.timing().startPickPresentationMs(), t.window().window().opensAt());
+        assertEquals(RULES.timing().decisionWindowMs(), t.window().window().deadline() - t.window().window().opensAt());
         assertEquals(t.state, t.engine.rebuild(t.log));
         assertEquals(t.state, t.engine.restore(t.engine.snapshot(t.state)));
     }

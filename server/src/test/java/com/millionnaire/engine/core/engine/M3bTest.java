@@ -15,6 +15,43 @@ class M3bTest {
         return new Table(new ScriptedRandom(Table.script(Table.order(90, 10), Table.deal(2),
                 Table.dice(DrawPoint.MOVE_DIE, 2), Table.steps(DrawPoint.EVENT_KIND, 100, kind), payload)), 1).start(2);
     }
+    private static Table timedEvent(int kind, List<ScriptedRandom.Step> payload) {
+        var c = com.millionnaire.engine.testkit.TestBoards.legacyV1();
+        var timed = new com.millionnaire.engine.config.RuleConfig(c.ruleVersion(), c.boards(), c.tiers(), c.station(), c.economy(), c.ratios(),
+                c.cardWeights(), c.eventWeights(), c.timing().withPresentation(3700, 2300, 1800, 2600), c.room(), c.rentInflation(), c.setBonus(), c.startPick());
+        return new Table(timed, new ScriptedRandom(Table.script(Table.order(90, 10), Table.deal(2),
+                Table.dice(DrawPoint.MOVE_DIE, 2), Table.steps(DrawPoint.EVENT_KIND, 100, kind), payload)), 1).start(2);
+    }
+
+    @Test void nextRollStartsAfterCashEventPresentationWithFullDuration() {
+        var t = timedEvent(0, Table.steps(DrawPoint.EVENT_CASH, 9, 0));
+        t.rollOnly();
+        t.act(w -> new GameCommand.DrawEventCard("p1", w));
+        assertEquals("p2", t.current());
+        assertEquals(t.now + 2300, t.window().window().opensAt());
+        assertEquals(15000, t.window().window().deadline() - t.window().window().opensAt());
+        assertEquals(StepResult.Outcome.REJECTED, t.send(t.now, new GameCommand.RollDice("p2", t.windowId())).outcome());
+        assertEquals(t.state, t.engine.rebuild(t.log));
+    }
+
+    @Test void eventMoveAddsItsPresentationBeforeTheDestinationWindow() {
+        var t = timedEvent(80, Table.script(Table.steps(DrawPoint.EVENT_MOVE_DIRECTION, 2, 0),
+                Table.steps(DrawPoint.EVENT_MOVE_DISTANCE, 3, 0)));
+        t.rollOnly();
+        t.act(w -> new GameCommand.DrawEventCard("p1", w));
+        assertEquals(3, t.position("p1"));
+        assertEquals(t.now + 3700 + t.config.timing().animPerStepMs(), t.window().window().opensAt());
+        assertEquals(t.state, t.engine.rebuild(t.log));
+    }
+
+    @Test void jailEventWaitsForTheEventAndJailAnimations() {
+        var t = timedEvent(95, List.of());
+        t.rollOnly();
+        t.act(w -> new GameCommand.DrawEventCard("p1", w));
+        assertEquals("p2", t.current());
+        assertEquals(t.now + 3700 + 2600, t.window().window().opensAt());
+    }
+
     @Test void rewardIsTransferredFromSystemUsingTheAuditedAmount() {
         var t = event(0, Table.steps(DrawPoint.EVENT_CASH, 9, 8));
         t.rollOnly();
@@ -64,6 +101,23 @@ class M3bTest {
         assertEquals(2, t.game().turn().chain().segments().size());
         assertEquals(t.state, t.engine.rebuild(t.log));
     }
+    @Test void eventForwardAndBackwardLandingsPayRentToTheOwner() {
+        for (int direction : new int[] {0, 1}) {
+            var t = event(80, Table.script(Table.steps(DrawPoint.EVENT_MOVE_DIRECTION, 2, direction),
+                    Table.steps(DrawPoint.EVENT_MOVE_DISTANCE, 3, 0)));
+            int target = direction == 0 ? 3 : 1;
+            craft(t, g -> g.withBoard(g.board().with(new com.millionnaire.engine.core.state.OwnableState(target, "p2", 2, false, 0, null))));
+            t.rollOnly();
+            t.act(w -> new GameCommand.DrawEventCard("p1", w));
+            assertEquals(target, t.position("p1"));
+            assertEquals(2550, t.cash("p1"));
+            assertEquals(3450, t.cash("p2"));
+            assertEquals(List.of(new GameEvent.RentPaid("p1", "p2", target, 450)),
+                    t.log.stream().filter(GameEvent.RentPaid.class::isInstance).map(GameEvent.RentPaid.class::cast).toList());
+            assertEquals(t.state, t.engine.restore(t.engine.snapshot(t.state)));
+        }
+    }
+
     @Test void cardKindIsPrivateWhileReceiptAndHandSizeArePublic() {
         var t = event(55, Table.steps(DrawPoint.EVENT_CARD, 1000, 999));
         t.rollOnly();

@@ -7,7 +7,7 @@
 import { buildBoard } from '../core/BoardLayout';
 import { boardNames } from '../core/BoardNames';
 import {
-    BoardTile, Card, CardType, GameResult, GameView, Member, PlayerView, PropertyState, RoomSettings, SessionView,
+    ROBOT_AVATAR, BoardTile, Card, CardType, GameResult, GameView, Member, PlayerView, PropertyState, RoomSettings, SessionView,
 } from '../core/Models';
 import { boardSizeOf, luckyPool, TIERS } from '../core/Rules';
 import { BoardTemplate, SEvent, SGame, SView } from './Protocol';
@@ -49,7 +49,7 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
     // 玩家所选头像优先（服务端随推送下发），没选的按玩家 ID 取默认头像
     const avatarOf = (id: string): number => {
         const a = chosen[id];
-        return typeof a === 'number' && a >= 0 && a < 8 ? a : defaultAvatar(id);
+        return typeof a === 'number' && a >= 0 && a <= ROBOT_AVATAR ? a : defaultAvatar(id);
     };
     const members: Member[] = v.members.map((m) => ({
         playerId: m.playerId, nickname: m.nickname, ready: m.ready, avatar: avatarOf(m.playerId),
@@ -62,6 +62,7 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
         timeLimitMinutes: v.settings.timeLimitMinutes,
         rollSeconds: v.settings.rollSeconds,
         initialCards: v.settings.initialCards ?? 0,
+        fastMode: v.settings.fastMode ?? false,
     };
     const lastResult: GameResult | null = v.lastResult && {
         gameNo: v.lastResult.gameNo,

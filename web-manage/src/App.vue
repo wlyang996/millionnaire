@@ -158,6 +158,10 @@ const TIMING_FIELDS = [
   ['debtSegmentSeconds', '欠款每段', 10, 120, '秒', '现金不足时应急抵押的时间，共两段'],
   ['animDiceMs', '投骰动画留时', 0, 5000, '毫秒', '投骰后等这么久再开下一步（给动画）'],
   ['animPerStepMs', '每走一格留时', 0, 2000, '毫秒', ''],
+  ['eventPresentationMs', '事件翻牌及结果展示', 0, 10000, '毫秒', '包含翻牌和结果停留，结束后再进行后续移动或开启下一位的投骰窗口'],
+  ['eventCashPresentationMs', '现金事件展示', 0, 10000, '毫秒', '现金奖励 / 罚款的翻牌和结果停留总时长'],
+  ['startPickPresentationMs', '起点抽卡结果展示', 0, 10000, '毫秒', '抽卡结果展示完再走剩余步数或开始下一回合'],
+  ['jailPresentationMs', '入狱动画展示', 0, 10000, '毫秒', '展示结束后再开始下一回合'],
   ['allAwayTurns', '全员挂机 / 托管结束', 1, 100, '回合', '全员连续挂机或托管达到该回合数后结束；每名玩家的一次行动算一回合，恢复手动操作后清零'],
   ['autoActDelayMs', '托管代操作等待', 1, 10000, '毫秒', '托管 / 掉线时系统代为操作前的等待'],
 ]
@@ -456,6 +460,10 @@ onMounted(() => {
       <el-tab-pane label="建房选项" name="room">
         <el-form v-if="form.room" label-width="160px" class="narrow">
           <p class="muted">房主建房时能选的项与默认值。每组 1～5 个，用逗号分隔，保存时按从小到大排列；默认值必须是其中一个。只影响发布之后新建的房间。</p>
+          <h3>动画模式</h3>
+          <el-form-item label="允许快速模式"><el-switch v-model="form.room.fastModeEnabled" @change="(v) => { if (!v) form.room.defaultFastMode = false }" /><span class="hint">房主开局前选择，全员统一，开局后不可切换</span></el-form-item>
+          <el-form-item label="默认快速模式"><el-switch v-model="form.room.defaultFastMode" :disabled="!form.room.fastModeEnabled" /></el-form-item>
+          <el-form-item label="快速动画时长比例"><el-input-number v-model="form.room.fastAnimationPercent" :min="10" :max="100" /><span class="hint">% · 50 表示动画用普通模式一半时间，操作时限不变</span></el-form-item>
           <h3>初始现金</h3>
           <el-form-item label="可选金额"><el-input :model-value="draft('initialCashOptions')" @update:model-value="(v) => (drafts['initialCashOptions'] = v)" @change="commit('initialCashOptions')" placeholder="如 2000, 3000, 5000" /></el-form-item>
           <el-form-item label="默认"><el-select v-model="form.room.defaultInitialCash"><el-option v-for="v in form.room.initialCashOptions" :key="v" :label="v" :value="v" /></el-select></el-form-item>

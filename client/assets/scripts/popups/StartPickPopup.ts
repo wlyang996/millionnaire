@@ -3,10 +3,11 @@
  * 点牌后发送 PickStartCard（windowId + 第几张），服务端抽出结果（StartPickDrawn，道具种类只发给本人），弹窗翻开所选的牌，
  * 稍候自动关闭。超时由服务端代选第一张，结果以提示显示。现金范围与比例取后台「起点三选一」的参数。
  */
+import { PRESENTATION } from '../core/Rules';
 import { Node } from 'cc';
 import { CARD_NAMES } from '../core/Models';
 import { SECONDS, START_PICK } from '../core/Rules';
-import { Theme } from '../core/Theme';
+import { animMs, Theme } from '../core/Theme';
 import { art, CARD_ART } from '../ui/Art';
 import { ctx } from '../ui/Ctx';
 import { drawCardIcon } from '../ui/Icons';
@@ -18,7 +19,7 @@ const H = 540;
 const CW = 168;
 const CH = 236;
 const GAP = 22;
-const SHOW_MS = 1800;
+
 
 export class StartPickPopup extends Popup {
     private sel = -1;
@@ -45,7 +46,7 @@ export class StartPickPopup extends Popup {
         this.revealed = true;
         this.sel = r.index;
         this.rebuildBody();
-        setTimeout(() => this.close(), SHOW_MS);
+        setTimeout(() => this.close(), animMs(PRESENTATION.start));
     }
 
     protected buildBody(p: Node): void {

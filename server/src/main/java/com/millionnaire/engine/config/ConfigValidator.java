@@ -394,6 +394,9 @@ public final class ConfigValidator {
         options("timing.timeLimitMinutesOptions", t.timeLimitMinutesOptions(), 1440, 60_000);
         count("timing.bankruptcyModeCapMinutes", t.bankruptcyModeCapMinutes(), 1, 1440);
         derived("timing.bankruptcyModeCapMinutes in ms", () -> Math.multiplyExact((long) t.bankruptcyModeCapMinutes(), 60_000L));
+        for (long ms : new long[] {t.eventPresentationMs(), t.eventCashPresentationMs(), t.startPickPresentationMs(), t.jailPresentationMs()}) {
+            if (ms < 0 || ms > 10000) fail("timing presentation buffers must be in 0..10000 ms");
+        }
         count("timing.allAwayTurns", t.allAwayTurns(), 1, 100);
         duration("timing.decisionWindowMs", t.decisionWindowMs());
         duration("timing.responseWindowMs", t.responseWindowMs());
@@ -466,6 +469,8 @@ public final class ConfigValidator {
 
     private void checkRoom(RuleConfig c) {
         RoomOptions r = c.room();
+        if (r.fastAnimationPercent() < 10 || r.fastAnimationPercent() > 100) fail("room.fastAnimationPercent must be in 10..100");
+        if (r.defaultFastMode() && !r.fastModeEnabled()) fail("room.defaultFastMode requires fastModeEnabled");
         int smallestBoard = c.boards().stream().mapToInt(BoardTemplate::maxPlayers).min().orElse(0);
         if (r.minPlayersToStart() < 2 || r.minPlayersToStart() > smallestBoard) {
             fail("room.minPlayersToStart must be in 2.." + smallestBoard + " so every board can start");

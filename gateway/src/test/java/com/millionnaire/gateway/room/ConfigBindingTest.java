@@ -83,7 +83,7 @@ class ConfigBindingTest {
     void timingAndAnnouncementAreEditable() {
         GameSettings d = SettingsMapper.defaults();
         assertThat(d.timing().decisionSeconds()).isEqualTo(15);
-        var t = new GameSettings.TimingSetting(20, 12, 15, 15, 8, 30, 3, 60, 40, 1200, 200, 800, 3);
+        var t = new GameSettings.TimingSetting(20, 12, 15, 15, 8, 30, 3, 60, 40, 1200, 200, 800, 3, 4200, 2400, 1900, 2700);
         var notice = new GameSettings.Announcement(true, "周末活动", "周末起点奖励翻倍！");
         GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets(), t, notice);
@@ -93,6 +93,15 @@ class ConfigBindingTest {
         assertThat(timing.auctionMaxMs()).isEqualTo(60_000);
         assertThat(timing.animPerStepMs()).isEqualTo(200);
         assertThat(timing.allAwayTurns()).isEqualTo(3);
+        assertThat(timing.eventPresentationMs()).isEqualTo(4200);
+        assertThat(timing.eventCashPresentationMs()).isEqualTo(2400);
+        assertThat(timing.startPickPresentationMs()).isEqualTo(1900);
+        assertThat(timing.jailPresentationMs()).isEqualTo(2700);
+        var oldTiming = new GameSettings.TimingSetting(20, 12, 15, 15, 8, 30, 3, 60, 40, 1200, 200, 800, 3);
+        var oldSettings = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets(), oldTiming, null);
+        assertThat(SettingsMapper.toRuleConfig(oldSettings).timing().eventPresentationMs())
+                .isEqualTo(d.timing().eventPresentationMs().longValue());
         assertThat(SettingsMapper.timingOf(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
                 d.eventWeights(), d.cardWeights(), d.tileNames())).allAwayTurns()).isEqualTo(1);
         assertThat(timing.heartbeatMs()).isEqualTo(RuleConfigs.defaultV1().timing().heartbeatMs());
@@ -112,6 +121,28 @@ class ConfigBindingTest {
         assertThat(SettingsMapper.toRuleConfig(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
                 d.eventWeights(), d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets()))
                 .contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+    }
+
+    @Test
+    void sharedAnimationModeIsConfigurableAndOldRoomSettingsRemainCompatible() throws Exception {
+        GameSettings d = SettingsMapper.defaults(); var r = d.room();
+        var fast = new GameSettings.RoomSetting(r.initialCashOptions(), r.defaultInitialCash(), r.timeLimitMinutesOptions(),
+                r.defaultTimeLimitMinutes(), r.rollSecondsOptions(), r.defaultRollSeconds(), r.defaultEndMode(),
+                r.bankruptcyCapMinutes(), true, true, 40);
+        GameSettings edited = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), fast);
+        assertThat(SettingsMapper.validate(edited)).isEmpty();
+        var config = SettingsMapper.toRuleConfig(edited);
+        assertThat(config.room().fastAnimationPercent()).isEqualTo(40);
+        assertThat(com.millionnaire.engine.core.state.RoomSettings.defaults(config).fastMode()).isTrue();
+        var old = new ObjectMapper().readValue("{\"boardId\":\"classic-30\",\"initialCash\":3000,\"endMode\":\"TIME_LIMIT\",\"timeLimitMinutes\":30,\"rollSeconds\":15,\"initialCards\":0}",
+                com.millionnaire.engine.core.state.RoomSettings.class);
+        assertThat(old.fastMode()).isFalse();
+        var oldRoom = new GameSettings.RoomSetting(r.initialCashOptions(), r.defaultInitialCash(), r.timeLimitMinutesOptions(),
+                r.defaultTimeLimitMinutes(), r.rollSecondsOptions(), r.defaultRollSeconds(), r.defaultEndMode(), r.bankruptcyCapMinutes());
+        var oldSettings = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
+                d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), oldRoom);
+        assertThat(SettingsMapper.toRuleConfig(oldSettings).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
     }
 
     @Test

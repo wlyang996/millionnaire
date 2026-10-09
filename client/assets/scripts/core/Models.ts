@@ -3,6 +3,9 @@
  * 标注 [公开] 所有人可见；[私有] 仅本人；[待服务端] 服务端 M1 视图尚未提供、本客户端为演示预设的字段。
  */
 
+/** 服务端保留的机器人头像编号；真人可选头像仍为 0..7。 */
+export const ROBOT_AVATAR = 8;
+
 export type ConnState = 'ONLINE' | 'SUSPECT' | 'OFFLINE';
 export type ControlMode = 'MANUAL' | 'AWAY' | 'HOSTED';
 export type LifeState = 'ALIVE' | 'BANKRUPT' | 'SURRENDERED';
@@ -30,6 +33,7 @@ export interface RoomSettings {
     timeLimitMinutes: number; // 15 | 30 | 60
     rollSeconds: number; // 15 | 30 | 45 | 60
     initialCards: number; // 开局每人道具数：0 = 不发（默认），1～6
+    fastMode: boolean; // 房主开局前选择，全员动画统一，开局后锁定
 }
 
 /** 房间成员（Member）。avatar / speaking 为客户端展示字段 [待服务端]。 */

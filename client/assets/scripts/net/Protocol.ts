@@ -19,6 +19,7 @@ export interface SSettings {
     rollSeconds: number;
     /** 开局每人道具数：0 = 不发，1～6；-1 = 沿用规则配置（旧房间）。旧后台没有这个字段。 */
     initialCards?: number;
+    fastMode?: boolean;
 }
 
 export interface SPlayer {

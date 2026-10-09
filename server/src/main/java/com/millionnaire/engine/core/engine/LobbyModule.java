@@ -194,6 +194,7 @@ final class LobbyModule {
     static boolean validSettings(RuleConfig config, RoomSettings n) {
         return n != null && n.endMode() != null && n.boardId() != null
                 && config.board(n.boardId()).isPresent()
+                && (!n.fastMode() || config.room().fastModeEnabled())
                 && config.room().initialCashOptions().contains(n.initialCash())
                 && config.timing().timeLimitMinutesOptions().contains(n.timeLimitMinutes())
                 && config.timing().rollSecondsOptions().contains(n.rollSeconds())

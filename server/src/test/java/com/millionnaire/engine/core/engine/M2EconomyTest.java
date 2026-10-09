@@ -98,6 +98,20 @@ class M2EconomyTest {
     }
 
     @Test
+    void consecutiveVisitorsEachPayTheSameLandOwner() {
+        Table t = table(3, 1, 1);
+        craft(t, own(1, "p3", 2));
+        t.rollThenResolveEvent();
+        assertEquals(2550, t.cash("p1"));
+        assertEquals(3450, t.cash("p3"));
+        t.rollThenResolveEvent();
+        assertEquals(2550, t.cash("p2"));
+        assertEquals(3900, t.cash("p3"));
+        assertEquals(List.of(new GameEvent.RentPaid("p1", "p3", 1, 450), new GameEvent.RentPaid("p2", "p3", 1, 450)),
+                events(t.log, GameEvent.RentPaid.class));
+    }
+
+    @Test
     void declineAndTimeoutLeaveTheLandUnowned() {
         Table t = table(2, 1, 3);
         t.rollThenResolveEvent();

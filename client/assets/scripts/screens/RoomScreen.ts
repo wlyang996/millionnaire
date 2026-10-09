@@ -1,8 +1,8 @@
 /** 页面 3：好友房间（房号分享、8 个座位、房主设置、语音条/聊天片段、准备/开局）。 */
 import { Node } from 'cc';
 import { copyText, shareRoom } from '../net/Wx';
-import { BANKRUPTCY_CAP_MINUTES, boardSizeOf, INITIAL_CASH_OPTIONS, MAX_HAND, maxPlayers, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
-import { EndMode, Member } from '../core/Models';
+import { BANKRUPTCY_CAP_MINUTES, boardSizeOf, INITIAL_CASH_OPTIONS, MAX_HAND, maxPlayers, ROOM_ANIMATION, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
+import { ROBOT_AVATAR, EndMode, Member } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { ChatPopup } from '../popups/ChatPopup';
 import { RulesPopup } from '../popups/RulesPopup';
@@ -72,19 +72,18 @@ export class RoomScreen extends Screen {
 
         // 设置
         const set = roundedPanel(this.root, 24, 622, 672, 408);
-        const rows = 6;
-        const rowH = 66;
+        const rows = 7;
+        const rowH = 56;
         const lockHint = '仅房主可修改设置';
         const mk1 = (label: string, i: number) => text(set, label, 24, 8 + i * rowH, 150, rowH - 8, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
         const segX = 180;
         const segW = 672 - segX - 20;
         const n = s.members.length;
         mk1('地图', 0);
-        const map = new Segmented(set, segX, 12, segW, 50, [
+        const map = new Segmented(set, segX, 12, segW, 44, [
             { label: '30格', value: 'classic-30', disabled: n > 4, note: '30 格最多 4 人（当前 ' + n + ' 人）' },
             { label: '50格', value: 'classic-50' },
         ], s.settings.boardId, (v) => st.setSetting({ boardId: v as 'classic-30' | 'classic-50' }));
-        if (n > 4) text(set, n + ' 人时 30 格不可选', segX, 62, segW, 18, Theme.font.xs, Theme.c.red, { align: 'l' });
         mk1('初始资金', 1);
         const cash = new Segmented(set, segX, 12 + rowH, segW, 50, INITIAL_CASH_OPTIONS.map((v) => ({ label: String(v), value: v })), s.settings.initialCash,
             (v) => st.setSetting({ initialCash: v as number }));
@@ -104,8 +103,12 @@ export class RoomScreen extends Screen {
         const cards = new Segmented(set, segX, 12 + rowH * 5, segW, 50,
             [{ label: '无', value: 0 }, ...Array.from({ length: MAX_HAND }, (_, i) => ({ label: String(i + 1), value: i + 1 }))],
             s.settings.initialCards, (v) => st.setSetting({ initialCards: v as number }), 6, Theme.font.sm);
-        for (const sg of [map, cash, mode, dur, roll, cards]) {
-            sg.locked = !isHost;
+        mk1('动画模式', 6);
+        const animation = new Segmented(set, segX, 12 + rowH * 6, segW, 44,
+            [{ label: '普通', value: 'normal' }, { label: '快速', value: 'fast', disabled: !ROOM_ANIMATION.enabled, note: '本房间配置未开放快速模式' }],
+            s.settings.fastMode ? 'fast' : 'normal', (v) => st.setSetting({ fastMode: v === 'fast' }));
+        for (const sg of [map, cash, mode, dur, roll, cards, animation]) {
+            sg.locked = !isHost || (!!st.online && s.status !== 'LOBBY');
             sg.lockHint = lockHint;
         }
         void rows;
@@ -159,7 +162,7 @@ export class RoomScreen extends Screen {
         fillRR(cg, 0, 0, 104, 104, 20, Theme.avatarColors[((m.avatar % 8) + 8) % 8] + '55');
         strokeRR(cg, 1, 1, 102, 102, 20, '#FFFFFF', 3);
         // 半身人物图（透明底）直接站在色块上；素材未到时退回圆形头像
-        if (!art(card, informationCharacterKey(m.avatar), 6, 4, 92, 100)) avatar(card, 10, 10, 84, m.avatar, m.nickname);
+        if (m.avatar === ROBOT_AVATAR || !art(card, informationCharacterKey(m.avatar), 6, 4, 92, 100)) avatar(card, 10, 10, 84, m.avatar, m.nickname);
         if (m.playerId === s.hostId) {
             const tag = mk(cell, 'Host', 86, -8, 56, 30);
             fillRR(gfx(tag), 0, 0, 56, 30, 12, Theme.c.orange);

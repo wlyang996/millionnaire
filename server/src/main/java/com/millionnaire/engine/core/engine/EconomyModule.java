@@ -213,7 +213,7 @@ final class EconomyModule {
                 }
             }
             case RENT -> chargeRent(ctx, game(ctx).board().ownable(l.tile()).orElseThrow(), leadMs);
-            case EFFECT -> EventModule.performEffect(ctx);
+            case EFFECT -> EventModule.performEffect(ctx, leadMs);
             case FLOW -> {
                 if (l.next() == LandingStep.AUCTION) {
                     AuctionModule.beginLand(ctx, leadMs);

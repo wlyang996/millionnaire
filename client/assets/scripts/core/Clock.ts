@@ -60,7 +60,7 @@ export class Countdown {
     }
 
     remainingMs(): number {
-        return Math.max(0, this.deadline - this.clock.now());
+        return Math.min(this.total, Math.max(0, this.deadline - this.clock.now()));
     }
 
     /** 向上取整的剩余秒数，显示用。 */
