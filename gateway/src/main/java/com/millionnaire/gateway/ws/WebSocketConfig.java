@@ -42,9 +42,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                        WebSocketHandler wsHandler, Map<String, Object> attributes) {
             String token = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams().getFirst("token");
-            tokens.resolve(token)
-                    .or(() -> tokens.fromAuthorization(request.getHeaders().getFirst("Authorization")))
-                    .ifPresent(uid -> attributes.put(GameSocketHandler.USER, uid));
+            var uid = tokens.resolve(token)
+                    .or(() -> tokens.fromAuthorization(request.getHeaders().getFirst("Authorization")));
+            uid.ifPresent(u -> attributes.put(GameSocketHandler.USER, u));
+            if (uid.isEmpty() && token != null && !token.isBlank()) {
+                attributes.put(GameSocketHandler.TOKEN_REJECTED, Boolean.TRUE); // 带了令牌但已失效（如后台重启）：连上后立即告知重新登录
+            }
             return true; // 未带令牌也允许连上，之后必须先发 AUTH
         }
 

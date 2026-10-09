@@ -142,6 +142,15 @@ export class GameClient {
         this.open(this.attempts === 0 ? 'connecting' : 'reconnecting');
     }
 
+    /** 退出登录：断开连接、丢掉令牌（登录失效后重新登录前调用）。 */
+    logout(): void {
+        this.close();
+        this.token = null;
+        this.userId = null;
+        this.roomCode = null;
+        this.latest = null;
+    }
+
     close(): void {
         this.wantOpen = false;
         this.clearTimers();
@@ -284,6 +293,11 @@ export class GameClient {
                 const r = m as unknown as ResultMsg;
                 if (r.ok && r.roomCode) this.roomCode = r.roomCode;
                 const p = r.requestId ? this.pending.get(r.requestId) : undefined;
+                if (!p && r.code === 'UNAUTHENTICATED') {
+                    // 连接时带的令牌已失效（如后台重启）：交给上层回登录页
+                    this.onNotice?.({ type: 'AUTH_EXPIRED' });
+                    return;
+                }
                 if (p) {
                     clearTimeout(p.timer);
                     this.pending.delete(r.requestId!);

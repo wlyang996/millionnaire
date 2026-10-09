@@ -29,7 +29,7 @@ export type Cue =
 /** 拍卖 / 交易结果卡显示时长。 */
 const RESULT_MS = 3500;
 
-export type Route = 'lobby' | 'room' | 'board' | 'spectator' | 'result';
+export type Route = 'profile' | 'lobby' | 'room' | 'board' | 'spectator' | 'result';
 
 /** 常见错误码的中文说明（未列出的显示原码）。 */
 const MESSAGES: Record<string, string> = {
@@ -96,6 +96,7 @@ export class OnlineSession {
                 this.leaveLocally();
                 this.onRoute?.('lobby');
             } else if (m.type === 'REPLACED') this.onToast?.('账号在别处登录，本连接已断开');
+            else if (m.type === 'AUTH_EXPIRED') this.expired();
         };
     }
 
@@ -145,12 +146,15 @@ export class OnlineSession {
     }
 
     async join(code: string): Promise<ResultMsg> {
-        return this.client.joinRoom(code); // 由加入弹窗自己显示错误
+        const r = await this.client.joinRoom(code); // 由加入弹窗自己显示错误
+        if (r.code === 'UNAUTHENTICATED') this.expired();
+        return r;
     }
 
     /** 观战：房间号对应的对局正在进行时，只看不操作；快照随后推来，对局开始的推送会把页面切到棋盘。 */
     async watch(code: string): Promise<ResultMsg> {
         const r = await this.client.watchRoom(code);
+        if (r.code === 'UNAUTHENTICATED') this.expired();
         if (r.ok) this.watching = code;
         return r;
     }
@@ -548,8 +552,21 @@ export class OnlineSession {
     }
 
     private check(r: ResultMsg): ResultMsg {
-        if (!r.ok && r.outcome !== 'DUPLICATE') this.onToast?.(describe(r.code));
+        if (r.code === 'UNAUTHENTICATED') this.expired();
+        else if (!r.ok && r.outcome !== 'DUPLICATE') this.onToast?.(describe(r.code));
         return r;
+    }
+
+    /** 登录已失效（如后台重启、令牌过期）：断开、清掉登录状态，回到登录页重新登录。 */
+    private expired(): void {
+        if (!this.client.token) return; // 已经处理过
+        this.client.logout();
+        this.watching = null;
+        this.hadGame = false;
+        this.leaveLocally();
+        this.store.setProfile({ loggedIn: false });
+        this.onToast?.('登录已过期，请重新登录');
+        this.onRoute?.('profile');
     }
 }
 

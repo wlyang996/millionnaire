@@ -38,6 +38,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @Component
 public class GameSocketHandler extends TextWebSocketHandler {
     static final String USER = "millionnaire.userId";
+    /** 握手时带的令牌已失效（见 WebSocketConfig）：连上后立即回 UNAUTHENTICATED。 */
+    public static final String TOKEN_REJECTED = "mn.tokenRejected";
     private static final Logger log = LoggerFactory.getLogger(GameSocketHandler.class);
     private static final int MAX_REQUEST_ID = 64;
 
@@ -67,6 +69,8 @@ public class GameSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         if (session.getAttributes().get(USER) instanceof Long uid) {
             authenticate(session, uid);
+        } else if (Boolean.TRUE.equals(session.getAttributes().get(TOKEN_REJECTED))) {
+            sockets.sendTo(session, wire.write(result(null, "ERROR", "UNAUTHENTICATED", null)));
         }
     }
 
