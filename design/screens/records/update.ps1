@@ -54,7 +54,8 @@ $entries = @(
     [pscustomobject]@{ File = '28-发起交易-等待答复.png'; Source = (Join-Path $sourceUi 'interaction-supplement-2026-10-07/发起交易-等待答复-v3.png'); Role = '发起交易-等待答复'; Version = 3; Status = 'design candidate; not implemented in this request' },
     [pscustomobject]@{ File = '29-拍卖交易-排队横幅与结果提示.png'; Source = (Join-Path $sourceUi 'interaction-supplement-2026-10-07/拍卖交易-排队横幅与结果提示-v3.png'); Role = '拍卖交易-排队横幅与结果提示'; Version = 3; Status = 'design candidate; not implemented in this request' },
     [pscustomobject]@{ File = '30-房屋保护-拆楼响应.png'; Source = (Join-Path $sourceUi 'interaction-supplement-2026-10-07/房屋保护-拆楼响应-v3.png'); Role = '房屋保护-拆楼响应'; Version = 3; Status = 'design candidate; not implemented in this request' },
-    [pscustomobject]@{ File = '32-半程奖励-城市事件-趣味称号-候选.png'; Source = (Join-Path $sourceUi 'global-gameplay-v1/半程奖励-城市事件-趣味称号-v1.png'); Role = '轮次收入奖励全局提醒-城市事件预告与常驻标签-结算趣味称号'; Version = 1; Status = 'layout approved by user; implemented; historical reward title retained' }
+    [pscustomobject]@{ File = '32-半程奖励-城市事件-趣味称号-候选.png'; Source = (Join-Path $sourceUi 'global-gameplay-v1/半程奖励-城市事件-趣味称号-v1.png'); Role = '轮次收入奖励全局提醒-城市事件预告与常驻标签-结算趣味称号'; Version = 1; Status = 'layout approved by user; implemented; historical reward title retained' },
+    [pscustomobject]@{ File = '33-好友系列赛-设置-积分-结算-候选.png'; Source = (Join-Path $sourceUi 'friend-series-v1/好友系列赛-设置-积分-结算-v1.png'); Role = '好友系列赛首局设置-局间积分-系列冠军'; Version = 1; Status = 'candidate awaiting user review; no series implementation' }
 )
 
 # Check every source before copying any file.

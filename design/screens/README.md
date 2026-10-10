@@ -103,3 +103,8 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 - [完整方案](ui/global-gameplay-v1/方案.md)、[原稿与提示词](ui/global-gameplay-v1/README.md)、[来源记录](records/global-gameplay-2026-10-10.md)。用户已确认两种模式独立奖励轮次、累计玩法收入比例奖励（5%，每人封顶1000）；其余示例默认值待实施评审。
 - 互动表情、玩法预设、机器人策略暂缓；奖励/称号和城市事件完成后再增加好友系列赛。
 - [实施与验证记录](records/global-gameplay-implementation-2026-10-10.md)、[真实节点预览](records/global-gameplay-preview-2026-10-10/README.md)、[本批独立素材](assets-global-gameplay-v1/README.md)。尚未推送/部署或进行微信真机验证。
+
+## 好友系列赛候选（2026-10-10）
+
+- [33-好友系列赛-设置-积分-结算-候选.png](33-好友系列赛-设置-积分-结算-候选.png)：首局设置、局间积分与系列冠军三状态，待审阅，尚未实现。
+- [方案](ui/friend-series-v1/方案.md)、[原稿与提示词](ui/friend-series-v1/README.md)、[来源记录](records/friend-series-2026-10-10.md)。现有“再来一局”仍是单局重开。
