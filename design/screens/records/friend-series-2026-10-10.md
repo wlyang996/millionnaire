@@ -1,6 +1,6 @@
 # 好友系列赛候选来源
 
-2026-10-10。状态：待审阅，未实现系列功能。奖励、城市事件、称号的前置实现已提交f116add。
+2026-10-10。状态：用户已选择“采用这版布局与规则，继续实现”，系列功能已接入。奖励、城市事件、称号的前置实现已提交f116add。原稿与提示词保留；[实施与验证记录](friend-series-implementation-2026-10-10.md)。
 
 工具：内置image_gen（imagegen技能）；参考图08好友房间和03结算已查看。原始输出保留于`C:/Users/Administrator/.codex/generated_images/01a10ec9-bf84-7480-b53f-50c189c668dc/exec-75745333-c7cc-4a54-b585-c16cf6ef1f7d.png`。
 

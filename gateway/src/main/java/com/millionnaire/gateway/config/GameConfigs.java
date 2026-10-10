@@ -205,7 +205,7 @@ public class GameConfigs {
                     SettingsMapper.handLimitOf(s), SettingsMapper.roomOf(s),
                     SettingsMapper.setsOf(s), SettingsMapper.timingOf(s), s.announcement(),
                     SettingsMapper.startPickOf(s), SettingsMapper.roundRewardOf(s),
-                    SettingsMapper.funTitlesOf(s), SettingsMapper.cityEventsOf(s));
+                    SettingsMapper.funTitlesOf(s), SettingsMapper.cityEventsOf(s), SettingsMapper.seriesOf(s));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("bad game_config payload", e);
         }

@@ -15,6 +15,8 @@ import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, chip, roundedPanel, Segmented } from '../ui/Widgets';
 import { art, informationCharacterKey } from '../ui/Art';
+import { GLOBAL_RULES } from '../core/Rules';
+import { seriesLocked } from '../core/Series';
 
 export class RoomScreen extends Screen {
     readonly id = 'room' as const;
@@ -24,6 +26,8 @@ export class RoomScreen extends Screen {
         const st = ctx.store;
         const s = st.session;
         const isHost = s.hostId === st.myId;
+        const series = s.series;
+        const lockedSeries = seriesLocked(series);
         const cap = maxPlayers(boardSizeOf(s.settings.boardId));
         this.backdrop('sky');
         art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
@@ -73,8 +77,8 @@ export class RoomScreen extends Screen {
         // 设置
         const set = roundedPanel(this.root, 24, 622, 672, 408);
         const rows = 7;
-        const rowH = 56;
-        const lockHint = '仅房主可修改设置';
+        const rowH = GLOBAL_RULES.series?.enabled || series ? 49 : 56;
+        const lockHint = lockedSeries ? '系列首局开始后规则已锁定' : '仅房主可修改设置';
         const mk1 = (label: string, i: number) => text(set, label, 24, 8 + i * rowH, 150, rowH - 8, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
         const segX = 180;
         const segW = 672 - segX - 20;
@@ -108,10 +112,25 @@ export class RoomScreen extends Screen {
             [{ label: '普通', value: 'normal' }, { label: '快速', value: 'fast', disabled: !ROOM_ANIMATION.enabled, note: '本房间配置未开放快速模式' }],
             s.settings.fastMode ? 'fast' : 'normal', (v) => st.setSetting({ fastMode: v === 'fast' }));
         for (const sg of [map, cash, mode, dur, roll, cards, animation]) {
-            sg.locked = !isHost || (!!st.online && s.status !== 'LOBBY');
+            sg.locked = lockedSeries || !isHost || (!!st.online && s.status !== 'LOBBY');
             sg.lockHint = lockHint;
         }
         void rows;
+        if (GLOBAL_RULES.series?.enabled || series) {
+            const seriesLink = mk1('系列规则 ›', 7);
+            onTap(seriesLink.node, () => ctx.screens.go('series'));
+            const selected = series?.status === 'SETUP' || lockedSeries ? 'series' : 'single';
+            const sg = new Segmented(set, segX, 12 + rowH * 7, segW, 44,
+                [{ label: '普通单局', value: 'single' }, { label: selected === 'series' ? '系列 ' + series?.totalGames + '局 ›' : '好友系列赛 ›', value: 'series' }], selected,
+                v => {
+                    if (v === 'single') void st.online?.configureSeries(0);
+                    else if (st.online && series?.status !== 'SETUP') {
+                        void st.online.configureSeries(GLOBAL_RULES.series!.defaultGames).then(r => { if (r.ok) ctx.screens.go('series'); });
+                    } else ctx.screens.go('series');
+                }, 8, Theme.font.sm);
+            sg.locked = lockedSeries || !isHost;
+            sg.lockHint = lockHint;
+        }
 
         // 语音条 + 聊天片段
         const voice = roundedPanel(this.root, 24, 1042, 672, 76, { r: 38 });
@@ -135,13 +154,14 @@ export class RoomScreen extends Screen {
         const ready = st.allReady();
         let main: Button;
         if (isHost) {
-            main = primaryButton(this.root, ready ? '开始游戏' : '等待全员准备', 24, 1136, 440, 100, () => {
+            main = primaryButton(this.root, ready ? lockedSeries ? '开始第' + ((series?.games.length ?? 0) + 1) + '局' : series?.status === 'SETUP' ? '开始系列赛' : '开始游戏' : '等待全员准备', 24, 1136, 440, 100, () => {
                 if (st.online) return void st.online.start(); // 开局后服务端推送对局视图，自动进入棋盘
                 st.patchScenario({ players: s.members.length });
                 Toast.show('对局开始（演示）');
                 ctx.screens.go('board');
             }, Theme.font.lg);
-            main.setEnabled(ready, s.members.length < 2 ? '至少 2 人才能开局' : '需全员准备后才能开局');
+            const enough = s.members.length >= (series?.status === 'SETUP' || lockedSeries ? series?.rules.minPlayers ?? 2 : 2);
+            main.setEnabled(ready && enough, !enough ? '系列人数不足，可结束系列或等待成员准备' : '需全员准备后才能开局');
         } else {
             main = primaryButton(this.root, me.ready ? '已准备，等待开局' : '准备', 24, 1136, 440, 100, () => st.setReady(st.myId, true), Theme.font.lg);
             main.setEnabled(!me.ready, '已准备');
@@ -178,7 +198,7 @@ export class RoomScreen extends Screen {
             Toast.show('演示：切换 ' + m.nickname + ' 的准备状态');
             st.setReady(m.playerId, !m.ready);
         });
-        if (isHost && !isMe) {
+        if (isHost && !isMe && !seriesLocked(s.series)) {
             const x = mk(cell, 'Kick', 4, -6, 40, 40);
             const g = gfx(x);
             fillCircle(g, 20, 20, 17, Theme.c.red);
@@ -197,7 +217,8 @@ export class RoomScreen extends Screen {
     private drawEmpty(cell: Node, locked: boolean, isHost: boolean): void {
         const g = gfx(cell);
         // 联机测试：房主点空位加一个机器人（服务端托管代打），一个人也能开局
-        const bot = !locked && isHost && !!ctx.store.online;
+        const bot = !locked && isHost && !!ctx.store.online && !seriesLocked(ctx.store.session.series)
+            && (ctx.store.session.series?.status !== 'SETUP' || ctx.store.session.series.rules.allowBots);
         strokeCircle(g, 75, 42, 40, locked ? Theme.c.gray : bot ? Theme.c.blue : Theme.c.ivoryLine, 3);
         text(cell, locked ? '×' : '+', 33, 2, 84, 80, Theme.font.xl, bot ? Theme.c.blue : Theme.c.inkFaint);
         text(cell, locked ? '30格不可用' : bot ? '加机器人' : '空位', 0, 88, 150, 32, Theme.font.sm, bot ? Theme.c.blue : Theme.c.inkFaint, { bold: bot });

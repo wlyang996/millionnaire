@@ -104,7 +104,7 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 - 互动表情、玩法预设、机器人策略暂缓；奖励/称号和城市事件完成后再增加好友系列赛。
 - [实施与验证记录](records/global-gameplay-implementation-2026-10-10.md)、[真实节点预览](records/global-gameplay-preview-2026-10-10/README.md)、[本批独立素材](assets-global-gameplay-v1/README.md)。尚未推送/部署或进行微信真机验证。
 
-## 好友系列赛候选（2026-10-10）
+## 好友系列赛（2026-10-10）
 
-- [33-好友系列赛-设置-积分-结算-候选.png](33-好友系列赛-设置-积分-结算-候选.png)：首局设置、局间积分与系列冠军三状态，待审阅，尚未实现。
-- [方案](ui/friend-series-v1/方案.md)、[原稿与提示词](ui/friend-series-v1/README.md)、[来源记录](records/friend-series-2026-10-10.md)。现有“再来一局”仍是单局重开。
+- [33-好友系列赛-设置-积分-结算-候选.png](33-好友系列赛-设置-积分-结算-候选.png)：首局设置、局间积分与系列冠军三状态，已获用户批准并接入。历史候选文件名保留。
+- [方案](ui/friend-series-v1/方案.md)、[原稿与提示词](ui/friend-series-v1/README.md)、[来源记录](records/friend-series-2026-10-10.md)、[实施记录](records/friend-series-implementation-2026-10-10.md)、[真实预览](records/friend-series-preview-2026-10-10/README.md)。默认普通单局，系列可选3/5/7局并在后台配置；蓝绶带等素材复用存在视觉差异，未声称逐像素还原。

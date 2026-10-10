@@ -11,6 +11,8 @@ public sealed interface RoomCommand extends Command {
             return playerId;
         }
     }
+    /** Bot identity can only be supplied through the trusted system admission path. */
+    record JoinBot(String playerId, String nickname) implements RoomCommand, SystemCommand { }
 
     record Leave(String playerId) implements RoomCommand {
         @Override

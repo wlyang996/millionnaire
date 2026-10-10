@@ -48,8 +48,14 @@ final class LobbyModule {
             }
             return RejectionCode.GAME_IN_PROGRESS;
         }
+        var series = ctx.state().series();
+        if (series != null && series.locked() && (command instanceof Join || command instanceof RoomCommand.JoinBot || command instanceof Kick || command instanceof ChangeSettings))
+            return RejectionCode.NOT_ALLOWED;
+        if (series != null && series.status() == com.millionnaire.engine.core.state.SeriesState.Status.SETUP
+                && command instanceof RoomCommand.JoinBot && !series.rules().allowBots()) return RejectionCode.NOT_ALLOWED;
         return switch (command) {
-            case Join c -> join(ctx, c);
+            case Join c -> join(ctx, c, false);
+            case RoomCommand.JoinBot c -> join(ctx, new Join(c.playerId(), c.nickname()), true);
             case Leave c -> leave(ctx, c.playerId(), LeaveReason.LEFT);
             case Kick c -> kick(ctx, c);
             case SetReady c -> setReady(ctx, c);
@@ -62,7 +68,7 @@ final class LobbyModule {
             case PlayerJoined x -> {
                 check(s.status() == RoomStatus.OPEN && !s.isMember(x.playerId()) && validNickname(x.nickname()), "cannot join");
                 yield new RoomState(s.status(), s.hostId(),
-                        Immutable.append(s.members(), new Member(x.playerId(), x.nickname(), false)), s.settings());
+                        Immutable.append(s.members(), new Member(x.playerId(), x.nickname(), false, x.bot())), s.settings());
             }
             case PlayerLeft x -> {
                 check(s.isMember(x.playerId()), "not a member");
@@ -107,7 +113,7 @@ final class LobbyModule {
 
     // ------------------------------------------------------------ 判定
 
-    private static RejectionCode join(DecisionContext<SessionState> ctx, Join c) {
+    private static RejectionCode join(DecisionContext<SessionState> ctx, Join c, boolean bot) {
         RoomState s = ctx.state().lobby();
         if (blank(c.playerId())) {
             return RejectionCode.INVALID_ARGUMENT;
@@ -122,7 +128,7 @@ final class LobbyModule {
         if (s.members().size() >= board(ctx.config(), s.settings()).maxPlayers()) {
             return RejectionCode.ROOM_FULL;
         }
-        ctx.emit(new PlayerJoined(c.playerId(), nickname));
+        ctx.emit(new PlayerJoined(c.playerId(), nickname, bot));
         if (ctx.state().lobby().hostId() == null) {
             ctx.emit(new HostChanged(c.playerId()));
         }

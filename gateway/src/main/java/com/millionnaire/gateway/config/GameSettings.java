@@ -49,7 +49,17 @@ public record GameSettings(
         StartPickSetting startPick,
         RoundRewardConfig roundReward,
         FunTitleConfig funTitles,
-        CityEventConfig cityEvents) {
+        CityEventConfig cityEvents,
+        com.millionnaire.engine.config.SeriesConfig series) {
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
+                        Integer handLimit, RoomSetting room, SetSetting sets, TimingSetting timing,
+                        Announcement announcement, StartPickSetting startPick, RoundRewardConfig roundReward,
+                        FunTitleConfig funTitles, CityEventConfig cityEvents) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit,
+                room, sets, timing, announcement, startPick, roundReward, funTitles, cityEvents, null);
+    }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,

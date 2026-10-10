@@ -141,6 +141,7 @@ const startPickHint = computed(() => {
 
 // 旧版本没有公告：补一个关闭的公告，免得编辑区判为"有修改"
 function fill(s) {
+  if (s && !s.series) s.series = { enabled: false, gameOptions: [3,5,7], defaultGames: 3, rankPoints: [10,6,4,3,2,1,0,0], tieMode: 'SHARED_RANK', allowBots: true, minPlayers: 2 }
   if (s && !s.announcement) s.announcement = { enabled: false, title: '', text: '' }
   if (s && !s.roundReward) s.roundReward = { enabled: false, name: '月度荣耀奖励', timeLimitRewardRound: 5, bankruptcyRewardRound: 5, rewardPercent: 5, perPlayerCap: 1000, roundingUnit: 10, incomeSources: Object.keys(INCOME_LABEL), presentationMs: 3000 }
   if (s && !s.funTitles) s.funTitles = { enabled: false, titles: Object.entries(TITLE_LABEL).map(([kind, name]) => ({ kind, name, enabled: true, minimum: kind === 'COMEBACK' ? 2 : 1 })) }
@@ -562,6 +563,19 @@ onMounted(() => {
           <el-table-column label="显示名称"><template #default="{row}"><el-input v-model="row.name" maxlength="12" /></template></el-table-column>
           <el-table-column label="最低有效金额/数量/名次提升"><template #default="{row}"><el-input-number v-model="row.minimum" :min="1" :max="row.kind === 'COMEBACK' ? 7 : 1000000" /></template></el-table-column>
         </el-table>
+      </el-tab-pane>
+      <el-tab-pane label="好友系列赛" name="series">
+        <el-alert class="gap" :closable="false" title="首局开始时锁定成员与房间规则；每局现金、土地、手牌重置。积分只决定系列名次，不发现金。中止局不计分，退出保留已有积分。" />
+        <el-form label-width="160px" class="narrow">
+          <el-form-item label="开放系列赛"><el-switch v-model="form.series.enabled" /></el-form-item>
+          <el-form-item label="可选局数"><el-select v-model="form.series.gameOptions" multiple><el-option v-for="n in 19" :key="n" :label="(n+1)+'局'" :value="n+1" /></el-select></el-form-item>
+          <el-form-item label="默认局数"><el-select v-model="form.series.defaultGames"><el-option v-for="n in form.series.gameOptions" :key="n" :label="n+'局'" :value="n" /></el-select></el-form-item>
+          <el-form-item v-for="(_,i) in form.series.rankPoints" :key="i" :label="'第'+(i+1)+'名积分'"><el-input-number v-model="form.series.rankPoints[i]" :min="0" :max="1000" /></el-form-item>
+          <el-form-item label="单局并列计分"><el-select v-model="form.series.tieMode"><el-option label="并列名次各拿该名次积分" value="SHARED_RANK" /><el-option label="平分占用名次积分（向下取整）" value="SPLIT_OCCUPIED" /></el-select></el-form-item>
+          <el-form-item label="允许机器人参赛"><el-switch v-model="form.series.allowBots" /></el-form-item>
+          <el-form-item label="下一局最少人数"><el-input-number v-model="form.series.minPlayers" :min="2" :max="8" /></el-form-item>
+          <p class="hint">累计积分相同即并列冠军，不额外比较胜场或净资产。普通单局仍是建房默认选项。</p>
+        </el-form>
       </el-tab-pane>
       <el-tab-pane label="操作时限" name="timing">
         <el-form v-if="form.timing" label-width="170px" class="narrow">

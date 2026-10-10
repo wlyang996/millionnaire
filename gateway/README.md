@@ -108,6 +108,17 @@
 - 断线期间错过的 `UPDATE` 不补发，以最新快照为准。
 
 ## 尚未实现
+以下早期清单可能陈旧，以后面的日期记录和当前源代码为准。
 - 掉线判定（15 秒疑似、30 秒确认）还没接到引擎的连接命令上，目前断线的玩家按"在线但不操作"处理（超时由引擎自动处理）。
 - 微信登录走 `wx.login` + `jscode2session`（需要 AppSecret），沿用现在客户端直连云托管域名的 HTTP / WebSocket。如果以后改用 `wx.cloud.callContainer` / `connectContainer`，可以改读云托管注入的 `X-WX-OPENID`（不需要 AppSecret），但必须确认公网请求无法伪造这个头。
 - 战绩写库（`game_record`）、聊天落库、房间号加入频率限制、空房间超时关闭。
+
+## 2026-10-10 好友系列赛
+
+首局前发送WS `CONFIGURE_SERIES {requestId,totalGames}`，0切普通单局，其他值须在房间绑定series.gameOptions中；局间房主发送 `END_SERIES {requestId,seriesNo}`。actor始终取认证连接身份。START_GAME/READY沿用原协议；UPDATE.view.series含固定名册、规则、每局积分、累计积分及退出名单。
+
+首局开始后JOIN_ROOM新用户只进入观战，RESULT含watching:true；已有成员重连身份不变。观战允许局间继续看积分和等待开局。机器人通过可信JoinBot加入，全局/系列机器人开关均须允许。
+
+GET `/api/me/series/{roomId}/{seriesNo}`要求Bearer认证，仅固定参赛名单可读；无认证401、无权限/不存在404。返回最新保存的系列状态与当前昵称/头像，注销账号不暴露旧昵称。当前观战者只通过实时视图看榜。GET单局详情附带series快照，旧result_json缺项仍可读。
+
+GameSettings、SettingsMapper、client config和Vue管理页均支持series配置，旧参数快照缺项时关闭。V4新增friend_series、friend_series_player、friend_series_score；原V1–V3未改。单局与系列计分同一事务，唯一主键和revision防止重复或迟到覆盖。H2迁移与36项网关测试通过；真实MySQL5.7/微信真机及部署尚未验证。房间仍在内存，不提供跨部署恢复。

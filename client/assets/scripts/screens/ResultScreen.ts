@@ -14,10 +14,13 @@ import { Screen } from '../ui/Screen';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar, roundedPanel } from '../ui/Widgets';
 import { titleMetric } from './board/GlobalNoticeView';
+import { renderSeriesScore } from './SeriesScreen';
+import { previewName } from '../net/Config';
 
 const MEDAL = ['#F2B82E', '#B8C2CC', '#D98A4B'];
 
 export class ResultScreen extends Screen {
+    private showingSeries = /^series-(points|final)/.test(previewName() ?? '');
     readonly id = 'result' as const;
     readonly title = '结算';
 
@@ -29,6 +32,12 @@ export class ResultScreen extends Screen {
             return;
         }
         const s = st.session;
+        const series = s.series;
+        const seriesResult = !!series && !!series.games.length && series.games[series.games.length - 1].gameNo === res.gameNo;
+        if (seriesResult && this.showingSeries) {
+            renderSeriesScore(this.root, series);
+            return;
+        }
         this.backdrop('sky');
         art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
 
@@ -94,6 +103,12 @@ export class ResultScreen extends Screen {
             contentH += Math.ceil(res.titles.length / 2) * 116;
         }
         list.setContentHeight(contentH);
+
+        if (seriesResult) {
+            primaryButton(this.root, '查看系列积分', 40, 1018, 640, 96, () => { this.showingSeries = true; this.rebuild(); }, Theme.font.lg);
+            text(this.root, '本局净资产排名计入系列积分，下一局资产重置', 20, 1120, 680, 60, 25, Theme.c.navy, { bold: true });
+            return;
+        }
 
         if (st.isWatcher()) {
             // 观战者：留在本页等房间开下一局（开局时自动进入观战），或返回大厅

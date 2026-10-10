@@ -8,7 +8,7 @@
  */
 import { requestJson } from './Http';
 import { BoardTemplate, ClientConfig, GameArgs, GameCommandName, HelloMsg, ResultMsg, SGameDetail, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
-import type { PlayerStats } from '../core/Models';
+import type { PlayerStats, SeriesState } from '../core/Models';
 
 export type LinkState = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
 
@@ -137,6 +137,12 @@ export class GameClient {
         return r.body;
     }
 
+    async seriesDetail(roomId: number, seriesNo: number): Promise<SeriesState> {
+        const r = await requestJson<SeriesState>('GET', this.baseUrl + '/api/me/series/' + roomId + '/' + seriesNo, undefined, this.token ?? undefined);
+        if (r.status !== 200 || !r.body) throw new Error('cannot load series');
+        return r.body;
+    }
+
     async stats(): Promise<PlayerStats> {
         const r = await requestJson<PlayerStats>('GET', this.baseUrl + '/api/me/stats', undefined, this.token ?? undefined);
         if (r.status !== 200 || !r.body) throw new Error('cannot load stats');
@@ -215,6 +221,8 @@ export class GameClient {
     startGame(): Promise<ResultMsg> {
         return this.request('START_GAME');
     }
+    configureSeries(totalGames: number): Promise<ResultMsg> { return this.request('CONFIGURE_SERIES', { totalGames }); }
+    endSeries(seriesNo: number): Promise<ResultMsg> { return this.request('END_SERIES', { seriesNo }); }
 
     game(command: GameCommandName, args: GameArgs = {}): Promise<ResultMsg> {
         return this.request('GAME', { command, args });

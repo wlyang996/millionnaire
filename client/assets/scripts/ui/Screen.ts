@@ -6,7 +6,7 @@ import { drawBack } from './Icons';
 import { IconButton } from './Buttons';
 import { destroyChildren, mk, text } from './Kit';
 
-export type ScreenId = 'profile' | 'lobby' | 'room' | 'board' | 'teeth' | 'result' | 'spectator';
+export type ScreenId = 'profile' | 'lobby' | 'room' | 'board' | 'teeth' | 'result' | 'spectator' | 'series';
 
 export abstract class Screen {
     root!: Node;

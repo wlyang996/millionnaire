@@ -2,6 +2,10 @@ package com.millionnaire.engine.core.command;
 
 /** 开局 / 回房边界命令。 */
 public sealed interface SessionCommand extends Command {
+    /** 0 selects an ordinary game; changing series rules clears every ready flag. */
+    record ConfigureSeries(String actor, int totalGames) implements SessionCommand { }
+    /** Host may end a series between games, retaining every already awarded point. */
+    record EndSeries(String actor, long seriesNo) implements SessionCommand { }
 
     /** 客户端命令：房主开局（至少 minPlayersToStart 人且全员准备）。 */
     record StartGame(String actor) implements SessionCommand {

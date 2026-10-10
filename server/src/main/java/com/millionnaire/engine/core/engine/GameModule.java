@@ -54,6 +54,8 @@ final class GameModule {
             return RejectionCode.ROOM_CLOSED;
         }
         return switch (command) {
+            case SessionCommand.ConfigureSeries c -> SeriesModule.configure(ctx, c);
+            case SessionCommand.EndSeries c -> SeriesModule.end(ctx, c);
             case StartGame c -> start(ctx, c);
             case EndGame c -> {
                 if (!s.inGame()) {
@@ -91,6 +93,10 @@ final class GameModule {
         if (!lobby.members().stream().allMatch(Member::ready)) {
             return RejectionCode.NOT_ALL_READY;
         }
+        var rejected = SeriesModule.beforeStart(s, ctx.config());
+        if (rejected != null) return rejected;
+        if (s.series() != null && s.series().status() == com.millionnaire.engine.core.state.SeriesState.Status.SETUP)
+            ctx.emit(new com.millionnaire.engine.core.event.SeriesEvent.SeriesStarted(s.series().seriesNo(), lobby.members(), lobby.settings()));
         List<String> seats = lobby.members().stream().map(Member::playerId).toList();
         ctx.emit(new GameStarted(Math.addExact(s.gamesPlayed(), 1), seats, lobby.settings(), ctx.now()));
         TurnModule.begin(ctx);
@@ -114,7 +120,7 @@ final class GameModule {
                         x.seats().stream().map(PlayerState::seated).toList(), List.of(),
                         new BoardState(x.settings().boardId(), ownables), TurnState.notStarted(),
                         FlowState.initial(s.nextWindowId()), Ledger.open(cash), new GameClock(0, 0), null, List.of());
-                yield s.withGame(g);
+                yield s.withGame(g).withSeries(SeriesModule.started(s.series()));
             }
             case GameEnded x -> {
                 LobbyModule.check(s.inGame() && s.game().gameNo() == x.gameNo(), "no such game " + x.gameNo());
@@ -193,7 +199,8 @@ final class GameModule {
         RoomState l = s.lobby();
         RoomState back = new RoomState(l.status(), l.hostId(), LobbyModule.unready(l), l.settings());
         // 回房同时消费中止凭据，保证同一终态不能再被重用。
-        return new SessionState(back, null, s.game().gameNo(), s.game().flow().nextWindowId(), result);
+        return new SessionState(back, null, s.game().gameNo(), s.game().flow().nextWindowId(), result)
+                .withSeries(SeriesModule.ended(s.series(), result));
     }
 
     /**

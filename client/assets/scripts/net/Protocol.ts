@@ -3,10 +3,11 @@
  * 服务端视图（S 前缀）经 ViewAdapter 转成 core/Models 的客户端模型后再给界面用。
  */
 import type { ServerRules } from '../core/Rules';
-import type { PublicProgress, TitleAward, IncomeMetrics } from '../core/Models';
+import type { PublicProgress, TitleAward, IncomeMetrics, SeriesState } from '../core/Models';
 
 
 export interface SMember {
+    bot?: boolean;
     playerId: string;
     nickname: string;
     ready: boolean;
@@ -136,6 +137,7 @@ export interface SResult {
 }
 
 export interface SView {
+    series?: SeriesState | null;
     roomId: string;
     status: 'OPEN' | 'CLOSED';
     hostId: string | null;
@@ -179,6 +181,7 @@ export interface ResultMsg {
     outcome: string;
     code: string | null;
     roomCode?: string;
+    watching?: boolean;
     message?: string;
     settingsCode?: string;
 }
@@ -204,6 +207,7 @@ export interface SHistoryRow {
 
 /** 战绩详情（GET /api/me/games/{roomId}/{gameNo}）。players 按名次；events 与 UPDATE 消息的 events 同形，没存时为 null。 */
 export interface SGameDetail {
+    series?: SeriesState | null;
     titles?: TitleAward[];
     metrics?: Record<string, IncomeMetrics>;
     roomId: number; gameNo: number; endMode: 'TIME_LIMIT' | 'BANKRUPTCY'; timeLimitMinutes: number | null; boardId: string;

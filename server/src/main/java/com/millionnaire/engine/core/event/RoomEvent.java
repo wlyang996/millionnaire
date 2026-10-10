@@ -10,7 +10,8 @@ public sealed interface RoomEvent extends Event {
         return Visibility.PUBLIC;
     }
 
-    record PlayerJoined(String playerId, String nickname) implements RoomEvent {
+    record PlayerJoined(String playerId, String nickname, boolean bot) implements RoomEvent {
+        public PlayerJoined(String playerId, String nickname) { this(playerId, nickname, false); }
     }
 
     record PlayerLeft(String playerId, LeaveReason reason) implements RoomEvent {

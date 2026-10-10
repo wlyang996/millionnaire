@@ -74,7 +74,7 @@ export class JoinRoomPopup extends Popup {
             void online.join(code).then((r) => {
                 if (r.ok) {
                     this.close();
-                    ctx.screens.push('room');
+                    ctx.screens.push(r.watching ? (ctx.store.session.game ? 'board' : 'series') : 'room');
                 } else setText(this.err, describe(r.code), Theme.c.red);
             });
             return;

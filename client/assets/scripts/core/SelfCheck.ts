@@ -19,6 +19,7 @@ import {
     groupCards, rankStandings, rentOf, setRentPercent, standardValue, stationRent, toothCount, tradeRange, TIERS, STATION,
 } from './Rules';
 import { textWidth } from './Theme';
+import { seriesRows, seriesLocked } from './Series';
 
 export interface CheckResult { passed: number; failures: string[] }
 
@@ -296,5 +297,17 @@ export function runSelfCheck(): CheckResult {
     applyRoomAnimation(false);
     eq('普通房间恢复动画时长', [Theme.anim.diceMs, Theme.anim.hopMs], [normalDice, normalHop]);
 
+    const series: import('./Models').SeriesState = { seriesNo: 1, totalGames: 3, status: 'BETWEEN_GAMES',
+        roster: st.session.members.slice(0, 4), settings: st.session.settings,
+        rules: { enabled: true, gameOptions: [3,5,7], defaultGames: 3, rankPoints: [10,6,4,3,2,1,0,0], tieMode: 'SHARED_RANK', allowBots: true, minPlayers: 2 },
+        games: [{ gameNo: 2, index: 2, reason: 'TIME_UP', scores: [] }], points: {}, withdrawn: [] };
+    series.roster.forEach((p, i) => { series.points[p.playerId] = [16,16,8,6][i]; });
+    eq('系列累计积分并列不破同分', seriesRows(series).map(p => p.rank), series.roster.length === 4 ? [1,1,3,4] : [1,1]);
+    const rosterId = series.roster[0].playerId;
+    series.withdrawn = [rosterId];
+    ok('退出系列保留积分', !!seriesRows(series).find(p => p.playerId === rosterId)?.withdrawn && seriesRows(series)[0].points === 16);
+    ok('进行中系列锁定规则', seriesLocked(series));
+    series.status = 'FINISHED';
+    ok('结束系列允许重新设置', !seriesLocked(series));
     return { passed, failures: fails };
 }

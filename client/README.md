@@ -113,8 +113,17 @@ demo/    DemoPanel LayoutCheck
 - 登录/分享/语音：ProfileScreen 的微信登录、RoomScreen 的分享邀请与语音条、聊天均为占位按钮。
 
 ## 微信构建准备
+早期占位功能清单以各日期实施记录与当前源码为准。
 本地预览通过后，在 Cocos 的"构建发布"选择微信小游戏、竖屏，填写自己的 AppID，并配置微信开发者工具路径。AppSecret 不进入客户端或 Git。微信构建和真机联调尚未执行。
 引擎生成的 library、temp、build、local、profiles 不提交；保留 assets、settings、package.json、tsconfig.json、元数据及本说明。
+
+## 2026-10-10 好友系列赛
+
+房间设置选择系列，按服务端绑定配置展示局数和名次积分；首局后锁定设置与名册。本局结算保留净资产/称号，再进入33号局间积分或最终冠军榜。回房准备下一局，资产重置而累计积分保留；退出/结束由服务器校验。历史战绩详情“查看系列积分榜”独立读取已保存榜单，只读且不影响当前房间。
+
+复用已有背景、人物、奖杯、蓝绶带和扁平按钮，4/8人名单、积分和总榜可滚动。浏览器离线预览 `?demo=1&preview=series-setup4`；setup8、points4、points8、final4、final8、result4同理。fixture不计分、不联网。联机不复制积分常量。
+
+严格TypeScript检查、214项SelfCheck、Cocos3.8.8 web-mobile构建通过；实际画面见 `design/screens/records/friend-series-preview-2026-10-10/`。普通550ms移动未改。微信真机未验证；完整方案/边界见friend-series-implementation-2026-10-10.md。
 
 ## 2026-10-06 资产与格子详情
 

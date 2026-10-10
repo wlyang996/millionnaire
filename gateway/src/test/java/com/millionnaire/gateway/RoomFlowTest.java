@@ -36,6 +36,65 @@ class RoomFlowTest {
     JdbcTemplate jdbc;
     @Autowired
     com.millionnaire.gateway.record.Dashboard dashboard;
+    @Autowired com.millionnaire.gateway.room.RoomService rooms;
+
+    @Test void seriesWsCommandsLockRosterTrustBotIdentityAndLetNewcomersOnlyWatch() throws Exception {
+        var a = login("系列房主"); var b = login("系列观战");
+        String aid = (String) a.get("userId"), bid = (String) b.get("userId");
+        try (WsClient wa = new WsClient(port, (String) a.get("token")); WsClient wb = new WsClient(port, (String) b.get("token"))) {
+            wa.awaitType("HELLO"); wb.awaitType("HELLO");
+            var created = wa.call(wa.msg("CREATE_ROOM", "series-create"));
+            String code = created.path("roomCode").asText();
+            assertThat(wa.call(wa.msg("ADD_BOT", "series-bot")).path("ok").asBoolean()).isTrue();
+            var configure = wa.msg("CONFIGURE_SERIES", "series-mode").put("totalGames", 3).put("actor", bid);
+            assertThat(wa.call(configure).path("ok").asBoolean()).isTrue();
+            assertThat(wa.call(configure).path("ok").asBoolean()).isTrue();
+            var room = rooms.byCode(Integer.parseInt(code)).orElseThrow();
+            assertThat(room.view(aid).series().seriesNo()).isEqualTo(1);
+            assertThat(wa.call(wa.msg("READY", "series-ready").put("ready", true)).path("ok").asBoolean()).isTrue();
+            assertThat(wa.call(wa.msg("START_GAME", "series-start")).path("ok").asBoolean()).isTrue();
+            assertThat(room.view(aid).series().roster()).hasSize(2);
+            assertThat(room.view(aid).series().roster().stream().filter(com.millionnaire.engine.core.state.Member::bot)).hasSize(1);
+            assertThat(room.view(aid).series().status().name()).isEqualTo("PLAYING");
+            room.submitSystem(new com.millionnaire.engine.core.command.SessionCommand.EndGame(room.gameNo().orElseThrow(), "TEST_STOP"));
+            assertThat(room.view(aid).series().games()).isEmpty();
+            assertThat(room.view(aid).series().status().name()).isEqualTo("BETWEEN_GAMES");
+            assertThat(wa.call(wa.msg("CONFIGURE_SERIES", "series-locked").put("totalGames", 5)).path("code").asText()).isEqualTo("NOT_ALLOWED");
+            var watcher = wb.call(wb.msg("JOIN_ROOM", "series-watch").put("roomCode", code));
+            assertThat(watcher.path("ok").asBoolean()).isTrue();
+            assertThat(watcher.path("watching").asBoolean()).isTrue();
+            assertThat(room.isMember(bid)).isFalse();
+            assertThat(wb.call(wb.msg("END_SERIES", "series-forged-end").put("seriesNo", 1)).path("ok").asBoolean()).isFalse();
+            assertThat(wa.call(wa.msg("READY", "series-ready-again").put("ready", true)).path("ok").asBoolean()).isTrue();
+            assertThat(wa.call(wa.msg("START_GAME", "series-replay")).path("ok").asBoolean()).isTrue();
+            com.fasterxml.jackson.databind.node.ObjectNode surrender = wa.msg("GAME", "series-surrender").put("command", "Surrender")
+                    .set("args", wa.msg("x", null).put("gameNo", 2));
+            assertThat(wa.call(surrender).path("ok").asBoolean()).isTrue();
+            assertThat(wa.call(surrender).path("ok").asBoolean()).isTrue();
+            assertThat(room.view(aid).series().games()).hasSize(1);
+            assertThat(room.view(aid).series().games().getFirst().index()).isEqualTo(1);
+            assertThat(room.view(aid).series().points().get(aid)).isEqualTo(6);
+            assertThat(room.view(bid).series().points()).isEqualTo(room.view(aid).series().points());
+            var auth = new org.springframework.http.HttpEntity<>(bearer((String) a.get("token")));
+            String path = "/api/me/series/" + room.roomId() + "/1";
+            org.springframework.http.ResponseEntity<JsonNode> saved = null;
+            for (int i = 0; i < 50; i++) {
+                saved = http.exchange(path, org.springframework.http.HttpMethod.GET, auth, JsonNode.class);
+                if (saved.getStatusCode().is2xxSuccessful() && saved.getBody().path("games").size() == 1) break;
+                Thread.sleep(100);
+            }
+            assertThat(saved.getStatusCode().is2xxSuccessful()).isTrue();
+            assertThat(saved.getBody().path("points").path(aid).asInt()).isEqualTo(6);
+            assertThat(saved.getBody().path("roster").get(1).path("avatar").asInt()).isEqualTo(8);
+            assertThat(http.exchange(path, org.springframework.http.HttpMethod.GET,
+                    new org.springframework.http.HttpEntity<>(bearer((String) b.get("token"))), JsonNode.class)
+                    .getStatusCode().value()).isEqualTo(404);
+            assertThat(http.getForEntity(path, JsonNode.class).getStatusCode().value()).isEqualTo(401);
+            assertThat(wa.call(wa.msg("END_SERIES", "series-end").put("seriesNo", 1)).path("ok").asBoolean()).isTrue();
+            assertThat(room.view(aid).series().status().name()).isEqualTo("ENDED");
+            assertThat(room.view(aid).series().points().values()).containsExactlyInAnyOrder(6, 10);
+        }
+    }
 
     /**
      * H2 2.x 的 MySQL 模式下 LENGTH(VARBINARY) 按 UTF-8 解码后的字符数计算，随机字节常不等于 16；

@@ -214,9 +214,9 @@ public final class LiveRoom {
         if (((SessionState) runner.committed().domain()).inGame()) {
             throw new ClientException("IN_GAME", "cannot add bots during a game");
         }
-        Command join = new Join(botId, nickname);
+        Command join = new com.millionnaire.engine.core.command.RoomCommand.JoinBot(botId, nickname);
         try {
-            engine.admitClient(join);
+            engine.admitSystem(join);
         } catch (InvalidInputException e) {
             throw new ClientException("BAD_REQUEST", e.getMessage());
         }
@@ -316,7 +316,7 @@ public final class LiveRoom {
     public synchronized String snapshot(String playerId) {
         EngineState s = runner.committed();
         return service.wire().update(code(), s.lastSeq(), service.now(), List.of(),
-                SessionDomain.INSTANCE.project(s, playerId), service.avatarsOf(members(s)), configId);
+                SessionDomain.INSTANCE.project(s, playerId), service.avatarsOf(avatarPlayers(s)), configId);
     }
 
     public synchronized boolean isMember(String playerId) {
@@ -368,7 +368,7 @@ public final class LiveRoom {
             Set<String> audience = new LinkedHashSet<>(membersBefore);
             audience.addAll(membersAfter);
             audience.addAll(watchers); // 观战者按非玩家视角投影
-            Map<String, Integer> avatars = service.avatarsOf(audience);
+            Map<String, Integer> avatars = service.avatarsOf(avatarPlayers(after));
             for (String p : audience) {
                 try {
                     List<Event> visible = EventProjector.project(r.events(), p);
@@ -380,10 +380,20 @@ public final class LiveRoom {
             }
         }
         recordIfEnded(before, r.events(), at);
+        var seriesBefore = ((SessionState) before.domain()).series();
+        var seriesAfter = ((SessionState) after.domain()).series();
+        if (seriesAfter != null && !seriesAfter.equals(seriesBefore) && r.events().stream().noneMatch(e -> e instanceof GameEnded))
+            service.seriesChanged(new GameRecords.SeriesDraft(roomId, after.lastSeq(), engine.configHash(), seriesAfter));
         collectLog(r.events(), at);
         markAway(missedRolls(r.events(), after), at);
         tendBots(at);
         return r;
+    }
+    private static Set<String> avatarPlayers(EngineState s) {
+        var ids = new LinkedHashSet<>(members(s));
+        var series = ((SessionState) s.domain()).series();
+        if (series != null) series.roster().forEach(m -> ids.add(m.playerId()));
+        return ids;
     }
 
     /**
@@ -523,7 +533,8 @@ public final class LiveRoom {
             service.gameEnded(new GameRecords.Draft(roomId, ended.gameNo(), ended.reason(), set.endMode().name(),
                     timed ? set.timeLimitMinutes() : null, set.boardId(), set.initialCash(), g.startedAt(),
                     Math.max(at, g.startedAt()), engine.configHash(), seats,
-                    com.millionnaire.gateway.record.ResultSnapshot.encode(ended.result())));
+                    com.millionnaire.gateway.record.ResultSnapshot.encode(ended.result(), ((SessionState) runner.committed().domain()).series()),
+                    new GameRecords.SeriesDraft(roomId, runner.committed().lastSeq(), engine.configHash(), ((SessionState) runner.committed().domain()).series())));
         }
     }
 

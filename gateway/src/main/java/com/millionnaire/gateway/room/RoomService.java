@@ -212,7 +212,7 @@ public class RoomService {
         if (byPlayer.containsKey(pid)) {
             throw new ClientException("ALREADY_IN_ROOM", "leave your room before watching another");
         }
-        if (room.gameNo().isEmpty()) {
+        if (room.gameNo().isEmpty() && (room.view(pid).series() == null || !room.view(pid).series().locked())) {
             throw new ClientException("NOT_IN_GAME", "this room has not started a game; join it instead");
         }
         LiveRoom previous = watching.get(pid);
@@ -300,6 +300,7 @@ public class RoomService {
     void gameEnded(GameRecords.Draft draft) {
         records.submit(draft);
     }
+    void seriesChanged(GameRecords.SeriesDraft draft) { records.submitSeries(draft); }
 
     /** 局结束：提交本局公开事件日志（异步落库）。 */
     void gameLogged(GameRecords.LogDraft draft) {

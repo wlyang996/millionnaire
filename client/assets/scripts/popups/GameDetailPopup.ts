@@ -14,6 +14,7 @@ import { Popup } from '../ui/Popup';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar } from '../ui/Widgets';
 import { titleMetric } from '../screens/board/GlobalNoticeView';
+import { SeriesHistoryPopup } from './SeriesHistoryPopup';
 
 const W = 680;
 const H = 1180;
@@ -86,6 +87,17 @@ export class GameDetailPopup extends Popup {
         text(info, '结束：' + (REASONS[d.endReason] ?? d.endReason) + ' · 初始现金 ' + d.initialCash, 20, 98, lw - 40, 36, 22,
             Theme.c.inkSoft, { align: 'l' });
         y += 166;
+        if (d.series) {
+            const series = d.series;
+            const game = series.games.find(g => g.gameNo === d.gameNo);
+            const mine = game?.scores.find(r => r.playerId === ctx.store.myId);
+            text(c, '系列赛第' + (game?.index ?? series.games.length) + '/' + series.totalGames + '局 · 本局积分 +' + (mine?.points ?? 0)
+                + ' · 累计 ' + (series.points[ctx.store.myId] ?? 0) + '分', 4, y, lw - 8, 58, 26, Theme.c.navy, { bold: true, align: 'l' });
+            y += 66;
+            const board = text(c, '查看系列积分榜', 4, y, lw - 8, 44, 26, Theme.c.navy, { bold: true, align: 'l' });
+            onTap(board.node, () => ctx.popups.open(new SeriesHistoryPopup(d.roomId, series.seriesNo)));
+            y += 54;
+        }
 
         // 结算
         y = this.section(c, '最终排名', y, lw);

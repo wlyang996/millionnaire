@@ -38,6 +38,7 @@ export interface RoomSettings {
 
 /** 房间成员（Member）。avatar / speaking 为客户端展示字段 [待服务端]。 */
 export interface Member {
+    bot?: boolean;
     playerId: string;
     nickname: string;
     ready: boolean;
@@ -304,6 +305,7 @@ export interface PublicProgress { metrics: Record<string, IncomeMetrics>; observ
 
 /** 会话视图（SessionView） */
 export interface SessionView {
+    series?: SeriesState | null;
     roomId: string;
     status: RoomStatus;
     hostId: string;
@@ -312,6 +314,17 @@ export interface SessionView {
     game: GameView | null;
     gamesPlayed: number;
     lastResult: GameResult | null;
+}
+export interface SeriesRules {
+    enabled: boolean; gameOptions: number[]; defaultGames: number; rankPoints: number[];
+    tieMode: 'SHARED_RANK' | 'SPLIT_OCCUPIED'; allowBots: boolean; minPlayers: number;
+}
+export interface SeriesScore { playerId: string; rank: number; points: number }
+export interface SeriesGame { gameNo: number; index: number; reason: string; scores: SeriesScore[] }
+export interface SeriesState {
+    seriesNo: number; totalGames: number; status: 'SETUP' | 'PLAYING' | 'BETWEEN_GAMES' | 'FINISHED' | 'ENDED';
+    roster: Member[]; settings: RoomSettings | null; rules: SeriesRules;
+    games: SeriesGame[]; points: Record<string, number>; withdrawn: string[];
 }
 
 /** 战绩（最近 20 局，只看自己） */

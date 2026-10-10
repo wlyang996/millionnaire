@@ -52,9 +52,9 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
         return typeof a === 'number' && a >= 0 && a <= ROBOT_AVATAR ? a : defaultAvatar(id);
     };
     const members: Member[] = v.members.map((m) => ({
-        playerId: m.playerId, nickname: m.nickname, ready: m.ready, avatar: avatarOf(m.playerId),
+        playerId: m.playerId, nickname: m.nickname, ready: m.ready, bot: m.bot, avatar: m.bot ? ROBOT_AVATAR : avatarOf(m.playerId),
     }));
-    const nick = (id: string) => v.members.find((m) => m.playerId === id)?.nickname ?? '玩家' + id.slice(-4);
+    const nick = (id: string) => v.members.find((m) => m.playerId === id)?.nickname ?? v.series?.roster.find(m => m.playerId === id)?.nickname ?? '玩家' + id.slice(-4);
     const settings: RoomSettings = {
         boardId: v.settings.boardId === 'classic-30' ? 'classic-30' : 'classic-50',
         initialCash: v.settings.initialCash,
@@ -74,6 +74,7 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
         })),
     };
     return {
+        series: v.series ? { ...v.series, roster: v.series.roster.map(m => ({ ...m, avatar: m.bot ? ROBOT_AVATAR : avatarOf(m.playerId) })) } : null,
         roomId: v.roomId,
         status: v.game ? 'PLAYING' : 'LOBBY',
         hostId: v.hostId ?? '',

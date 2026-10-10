@@ -9,3 +9,11 @@
 注意：内容哈希与状态哈希是**结构哈希而非语义哈希**——比例 50/100 与 1/2、列表换序都会得到不同哈希（保守地视为不同配置，拒绝续跑）。
 
 **提交契约**（外层必须遵守）：`Engine.step` 返回 ACCEPTED 或 REJECTED 时，都要把完整的 `state`、`events` 与幂等结果放在同一事务里持久化。REJECTED 只拒绝该命令本身，输入之前已到期任务的效果（任务触发、超时自动动作）仍要提交并广播。DUPLICATE 和 STALE 不改变任何东西。发生 `KernelFaultException` 时整步不提交，房间停止推进，并保存 `FaultReport`（参考实现见 `RoomRunner`），同一故障输入不得自动重试。客户端命令先经 `admitClient` 再分配序号，可信系统命令（`SystemCommand`）经 `admitSystem`。
+
+## 2026-10-10 好友系列赛
+
+版本engine-0.19.0-friend-series。SeriesConfig默认开放3/5/7局、默认3局，积分10/6/4/3/2/1/0/0；参数、并列算法、机器人开关和最少人数通过管理后台配置。普通单局仍为建房默认。
+
+ConfigureSeries首局前选择，StartGame固定名册与设置，GameEnded以真实名次计分一次，GameAborted不计分，EndSeries在局间结束。系列积分不兑换现金；局间退出保留已有积分，掉线可重连；首局后不接受补位/踢人/改规则。JoinBot是可信系统命令，普通Join不含机器人标记。
+
+SeriesState进入快照/回放与哈希，旧构造/缺失series按无系列处理；跨引擎版本快照不直接续跑。617项测试包含2/4/8人完整系列、双并列算法、资产重置、退出、重连、中止和幂等。

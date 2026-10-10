@@ -73,6 +73,7 @@ public final class ConfigValidator {
         }
         checkSets(c);
         errors.addAll(GlobalGameplayValidator.validate(c.roundReward(), c.funTitles(), c.cityEvents()));
+        errors.addAll(SeriesConfig.validate(c.series()));
         StartPick sp = c.startPick();
         if (sp.cashWeight() < 0 || sp.cardWeight() < 0 || sp.cashWeight() > 1000 || sp.cardWeight() > 1000) {
             fail("startPick weights must be in 0..1000");

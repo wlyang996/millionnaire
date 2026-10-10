@@ -170,6 +170,12 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     sockets.sendTo(session, target.snapshot(pid));
                     return;
                 }
+                if (target != null && target.view(pid).series() != null && target.view(pid).series().locked()) {
+                    rooms.watch(user, code);
+                    sockets.sendTo(session, wire.write(result(requestId, "ACCEPTED", null, target.code()).put("watching", true)));
+                    sockets.sendTo(session, target.snapshot(pid));
+                    return;
+                }
                 reply = rooms.join(user, code, requestId);
                 roomCode = String.format("%06d", code);
             }
@@ -184,6 +190,10 @@ public class GameSocketHandler extends TextWebSocketHandler {
                             new ChangeSettings(pid, wire.settings(msg.get("settings"))));
                     case "KICK" -> room.submitClient(pid, requestId, new Kick(pid, text(msg, "target")));
                     case "START_GAME" -> room.submitClient(pid, requestId, new StartGame(pid));
+                    case "CONFIGURE_SERIES" -> room.submitClient(pid, requestId,
+                            new com.millionnaire.engine.core.command.SessionCommand.ConfigureSeries(pid, msg.path("totalGames").asInt(-1)));
+                    case "END_SERIES" -> room.submitClient(pid, requestId,
+                            new com.millionnaire.engine.core.command.SessionCommand.EndSeries(pid, msg.path("seriesNo").asLong(-1)));
                     case "GAME" -> room.submitClient(pid, requestId,
                             wire.gameCommand(text(msg, "command"), msg.get("args"), pid));
                     case "SET_CONTROL" -> setControl(room, pid, text(msg, "mode"));

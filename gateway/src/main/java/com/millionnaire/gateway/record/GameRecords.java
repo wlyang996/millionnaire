@@ -54,7 +54,11 @@ public class GameRecords {
 
     /** 一局的草稿：座位按开局顺序。 */
     public record Draft(long roomId, long gameNo, String reason, String endMode, Integer timeLimitMinutes, String boardId,
-                        long initialCash, long startedAt, long endedAt, String configHash, List<Seat> seats, String resultJson) {
+                        long initialCash, long startedAt, long endedAt, String configHash, List<Seat> seats, String resultJson, SeriesDraft series) {
+        public Draft(long roomId, long gameNo, String reason, String endMode, Integer timeLimitMinutes, String boardId,
+                     long initialCash, long startedAt, long endedAt, String configHash, List<Seat> seats, String resultJson) {
+            this(roomId, gameNo, reason, endMode, timeLimitMinutes, boardId, initialCash, startedAt, endedAt, configHash, seats, resultJson, null);
+        }
         public Draft(long roomId, long gameNo, String reason, String endMode, Integer timeLimitMinutes, String boardId,
                      long initialCash, long startedAt, long endedAt, String configHash, List<Seat> seats) {
             this(roomId, gameNo, reason, endMode, timeLimitMinutes, boardId, initialCash, startedAt, endedAt, configHash, seats, null);
@@ -63,6 +67,25 @@ public class GameRecords {
 
     /** 一个座位的结算；rank 等为 null 表示中止局。 */
     public record Seat(int seatNo, long userId, Integer rank, Long netWorth, Long cash, String life) {
+    }
+    public record SeriesDraft(long roomId, long revision, String configHash, com.millionnaire.engine.core.state.SeriesState series) { }
+    private final Map<String, SeriesDraft> memorySeries = new ConcurrentHashMap<>();
+    public void submitSeries(SeriesDraft d) { enqueue("series " + d.roomId(), () -> saveSeries(d), 0); }
+    void saveSeries(SeriesDraft d) {
+        if (d.series() == null || d.series().roster().isEmpty()) return;
+        JdbcTemplate t = jdbc.get(); TransactionTemplate tr = tx.get();
+        if (t == null || tr == null) {
+            memorySeries.compute(d.roomId() + "#" + d.series().seriesNo(), (k, old) -> old == null || old.revision() < d.revision() ? d : old);
+        } else tr.executeWithoutResult(status -> SeriesPersistence.save(t, d, clock.millis()));
+    }
+    public java.util.Optional<com.millionnaire.engine.core.state.SeriesState> series(long userId, long roomId, long seriesNo) {
+        JdbcTemplate t = jdbc.get();
+        if (t == null) {
+            var d = memorySeries.get(roomId + "#" + seriesNo);
+            return d != null && d.series().roster().stream().anyMatch(m -> m.playerId().equals(Long.toString(userId))) ? java.util.Optional.of(d.series()) : java.util.Optional.empty();
+        }
+        var texts = t.query("SELECT s.snapshot_json FROM friend_series s JOIN friend_series_player p ON p.room_id = s.room_id AND p.series_no = s.series_no WHERE s.room_id = ? AND s.series_no = ? AND p.player_id = ?", (rs, i) -> rs.getString(1), roomId, seriesNo, Long.toString(userId));
+        return texts.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(SeriesPersistence.decode(texts.getFirst()));
     }
 
     /**
@@ -247,7 +270,8 @@ public class GameRecords {
         JdbcTemplate t = jdbc.get();
         TransactionTemplate txt = tx.get();
         if (t == null || txt == null) {
-            memoryGames.put(d.roomId() + "#" + d.gameNo(), d);
+            if (memoryGames.putIfAbsent(d.roomId() + "#" + d.gameNo(), d) != null) return;
+            if (d.series() != null) saveSeries(d.series());
             for (Seat s : d.seats()) {
                 Deque<Row> q = memory.computeIfAbsent(s.userId(), k -> new ArrayDeque<>());
                 synchronized (q) {
@@ -263,6 +287,7 @@ public class GameRecords {
         byte[] sha = sha256(canonical(d));
         try {
             txt.executeWithoutResult(status -> {
+                if (d.series() != null) SeriesPersistence.save(t, d.series(), now);
                 t.update("INSERT INTO game_record (room_id, game_no, outcome, end_reason, end_mode, time_limit_min, board_id,"
                                 + " initial_cash, player_count, started_at, ended_at, engine_version, config_hash, draft_sha256,"
                                 + " created_at, result_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",

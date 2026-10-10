@@ -35,7 +35,7 @@ class ConfigBindingTest {
         assertThat(actual.settings().cityEvents()).isEqualTo(defaults.cityEvents());
         assertThat(actual.settings().funTitles()).isEqualTo(defaults.funTitles());
         var tree = (com.fasterxml.jackson.databind.node.ObjectNode)json.valueToTree(defaults);
-        tree.remove(List.of("roundReward", "cityEvents", "funTitles"));
+        tree.remove(List.of("roundReward", "cityEvents", "funTitles", "series"));
         var old = SettingsMapper.normalized(json.treeToValue(tree, GameSettings.class));
         assertThat(old.roundReward().enabled()).isFalse();
         assertThat(old.cityEvents().enabled()).isFalse();

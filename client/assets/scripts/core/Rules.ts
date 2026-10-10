@@ -51,6 +51,7 @@ export let START_PICK: StartPickRule = { cashWeight: 60, cardWeight: 40, cashMin
 
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
 export interface ServerRules {
+    series?: import('./Models').SeriesRules;
     roundReward?: { enabled: boolean; name: string; timeLimitRewardRound: number; bankruptcyRewardRound: number; rewardPercent: number; perPlayerCap: number; roundingUnit: number; incomeSources: string[]; presentationMs: number };
     funTitles?: { enabled: boolean; titles: { kind: string; enabled: boolean; name: string; minimum: number }[] };
     cityEvents?: { enabled: boolean; allowedModes: string[]; firstCheckRound: number; checkEveryRounds: number; triggerPercent: number; advanceRounds: number; announcementMs: number; activationMs: number; endMs: number; pool: CitySpec[] };
@@ -79,6 +80,7 @@ export interface ServerRules {
 
 /** 用房间绑定的参数版本覆盖价格、租金与固定费用（就地修改，已引用 TIERS / STATION 的地方随之生效）。 */
 export function applyServerRules(r: ServerRules): void {
+    GLOBAL_RULES.series = r.series;
     GLOBAL_RULES.roundReward = r.roundReward;
     GLOBAL_RULES.funTitles = r.funTitles;
     GLOBAL_RULES.cityEvents = r.cityEvents;
@@ -162,7 +164,7 @@ export function landPrice(isStation: boolean, tier: Tier | undefined): number {
  * 联机以服务端视图的 rentPercent 为准，由 OnlineSession 写入；演示 / 限时模式为 100。
  */
 let rentPercentNow = 100;
-export const GLOBAL_RULES: Pick<ServerRules, 'roundReward' | 'funTitles' | 'cityEvents'> = {};
+export const GLOBAL_RULES: Pick<ServerRules, 'roundReward' | 'funTitles' | 'cityEvents' | 'series'> = {};
 let currentCity: CityEvent | null = null;
 let currentRound = 0;
 export function setCityEvent(event: CityEvent | null, round: number): void { currentCity = event; currentRound = round; }

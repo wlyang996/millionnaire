@@ -9,10 +9,16 @@ import java.util.Map;
 
 /** Immutable end-of-game projection; independent of public-event log retention. */
 public record ResultSnapshot(List<GameProgressState.TitleAward> titles,
-                             Map<String, GameProgressState.Metrics> metrics) {
+                             Map<String, GameProgressState.Metrics> metrics,
+                             com.millionnaire.engine.core.state.SeriesState series) {
+    public ResultSnapshot(List<GameProgressState.TitleAward> titles, Map<String, GameProgressState.Metrics> metrics) { this(titles, metrics, null); }
     private static final ObjectMapper JSON = new ObjectMapper();
     public static String encode(GameResult r) {
-        try { return JSON.writeValueAsString(new ResultSnapshot(r.titles(), r.metrics())); }
+        return encode(r, null);
+    }
+    public static String encode(GameResult r, com.millionnaire.engine.core.state.SeriesState series) {
+        if (series == null || series.games().isEmpty() || series.games().getLast().gameNo() != r.gameNo()) series = null;
+        try { return JSON.writeValueAsString(new ResultSnapshot(r.titles(), r.metrics(), series)); }
         catch (JsonProcessingException e) { throw new IllegalStateException("cannot encode game result", e); }
     }
     public static ResultSnapshot decode(String text) {

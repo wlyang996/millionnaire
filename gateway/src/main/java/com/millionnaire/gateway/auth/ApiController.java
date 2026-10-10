@@ -206,6 +206,7 @@ public class ApiController {
         var result = com.millionnaire.gateway.record.ResultSnapshot.decode(d.resultJson());
         out.put("titles", result.titles());
         out.put("metrics", result.metrics());
+        out.put("series", privateSeries(result.series()));
         Object events = null;
         if (d.events() != null) {
             try {
@@ -219,6 +220,26 @@ public class ApiController {
     }
 
     /** 我的数据（全部已记录对局的汇总）：{games, finished, wins, top3, bankrupt, avgRank, bestNetWorth}。 */
+    @GetMapping("/me/series/{roomId}/{seriesNo}")
+    public ResponseEntity<?> series(@RequestHeader(value = "Authorization", required = false) String auth,
+                                    @PathVariable("roomId") long roomId, @PathVariable("seriesNo") long seriesNo) {
+        var user = user(auth); if (user.isEmpty()) return error(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED");
+        var s = records.series(user.get().id(), roomId, seriesNo);
+        return s.isEmpty() ? error(HttpStatus.NOT_FOUND, "NOT_FOUND") : ResponseEntity.ok(privateSeries(s.get()));
+    }
+    /** Deleted accounts must not reveal their saved nickname. Current legal watchers use the live projection. */
+    private Map<String, Object> privateSeries(com.millionnaire.engine.core.state.SeriesState s) {
+        if (s == null) return null;
+        var roster = s.roster().stream().map(m -> {
+            Optional<User> u;
+            try { u = users.find(Long.parseLong(m.playerId())); } catch (NumberFormatException e) { u = Optional.empty(); }
+            return Map.of("playerId", m.playerId(), "nickname", u.map(User::nickname).orElse("已注销玩家"),
+                    "ready", false, "bot", m.bot(), "avatar", m.bot() ? 8 : u.map(User::avatar).filter(a -> a >= 0 && a < 8).orElse(0));
+        }).toList();
+        return Map.of("seriesNo", s.seriesNo(), "totalGames", s.totalGames(), "status", s.status(), "roster", roster,
+                "settings", s.settings(), "rules", s.rules(), "games", s.games(), "points", s.points(), "withdrawn", s.withdrawn());
+    }
+
     @GetMapping("/me/stats")
     public ResponseEntity<?> stats(@RequestHeader(value = "Authorization", required = false) String auth) {
         Optional<User> user = user(auth);

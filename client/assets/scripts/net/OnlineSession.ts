@@ -29,7 +29,7 @@ export type Cue =
 /** 拍卖 / 交易结果卡显示时长。 */
 const RESULT_MS = 3500;
 
-export type Route = 'profile' | 'lobby' | 'room' | 'board' | 'spectator' | 'result';
+export type Route = 'profile' | 'lobby' | 'room' | 'board' | 'spectator' | 'result' | 'series';
 
 /** 常见错误码的中文说明（未列出的显示原码）。 */
 const MESSAGES: Record<string, string> = {
@@ -148,6 +148,7 @@ export class OnlineSession {
     async join(code: string): Promise<ResultMsg> {
         const r = await this.client.joinRoom(code); // 由加入弹窗自己显示错误
         if (r.code === 'UNAUTHENTICATED') this.expired();
+        if (r.ok && r.watching) this.watching = code;
         return r;
     }
 
@@ -155,7 +156,10 @@ export class OnlineSession {
     async watch(code: string): Promise<ResultMsg> {
         const r = await this.client.watchRoom(code);
         if (r.code === 'UNAUTHENTICATED') this.expired();
-        if (r.ok) this.watching = code;
+        if (r.ok) {
+            this.watching = code;
+            if (this.store.session.roomId === code && !this.store.session.game && this.store.session.series?.roster.length) this.onRoute?.('series');
+        }
         return r;
     }
 
@@ -250,6 +254,8 @@ export class OnlineSession {
     async start(): Promise<ResultMsg> {
         return this.check(await this.client.startGame());
     }
+    async configureSeries(totalGames: number): Promise<ResultMsg> { return this.check(await this.client.configureSeries(totalGames)); }
+    async endSeries(seriesNo: number): Promise<ResultMsg> { return this.check(await this.client.endSeries(seriesNo)); }
 
     /** 对局命令；被拒时自动提示原因。 */
     async act(command: GameCommandName, args: GameArgs = {}): Promise<ResultMsg> {
@@ -375,7 +381,9 @@ export class OnlineSession {
             this.onRoute?.('board');
         } else if (!hasGame && this.hadGame) {
             this.cues.length = 0;
-            this.onRoute?.('result');
+            this.onRoute?.(s.series?.status === 'BETWEEN_GAMES' && !s.lastResult ? 'series' : 'result');
+        } else if (!hasGame && this.watching && s.series?.roster.length) {
+            this.onRoute?.('series');
         }
         this.hadGame = hasGame;
         if (s.game) {

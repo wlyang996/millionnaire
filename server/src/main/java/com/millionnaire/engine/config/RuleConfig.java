@@ -26,7 +26,16 @@ public record RuleConfig(
         StartPick startPick,
         RoundRewardConfig roundReward,
         FunTitleConfig funTitles,
-        CityEventConfig cityEvents) {
+        CityEventConfig cityEvents,
+        SeriesConfig series) {
+    public RuleConfig(String ruleVersion, List<BoardTemplate> boards, List<TierPricing> tiers, StationPricing station,
+                      EconomyConfig economy, RatioConfig ratios, Map<CardType, Integer> cardWeights,
+                      Map<EventKind, Integer> eventWeights, TimingConfig timing, RoomOptions room, RentInflation rentInflation,
+                      SetBonus setBonus, StartPick startPick, RoundRewardConfig roundReward, FunTitleConfig funTitles,
+                      CityEventConfig cityEvents) {
+        this(ruleVersion, boards, tiers, station, economy, ratios, cardWeights, eventWeights, timing, room, rentInflation,
+                setBonus, startPick, roundReward, funTitles, cityEvents, SeriesConfig.NONE);
+    }
 
     /** Historical configurations do not acquire new gameplay when loaded. */
     public RuleConfig(String ruleVersion, List<BoardTemplate> boards, List<TierPricing> tiers, StationPricing station,
@@ -61,6 +70,7 @@ public record RuleConfig(
     }
 
     public RuleConfig {
+        series = series == null ? SeriesConfig.NONE : series;
         roundReward = roundReward == null ? RoundRewardConfig.NONE : roundReward;
         funTitles = funTitles == null ? FunTitleConfig.NONE : funTitles;
         cityEvents = cityEvents == null ? CityEventConfig.NONE : cityEvents;
