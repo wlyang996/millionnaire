@@ -2,6 +2,9 @@ package com.millionnaire.gateway.config;
 
 import java.util.List;
 import java.util.Map;
+import com.millionnaire.engine.config.RoundRewardConfig;
+import com.millionnaire.engine.config.FunTitleConfig;
+import com.millionnaire.engine.config.CityEventConfig;
 
 /**
  * 管理后台可调整的游戏参数（发布快照的 JSON 形状）。其余规则（地图格子类型与顺序、计时、比例、房间选项）
@@ -43,7 +46,19 @@ public record GameSettings(
         SetSetting sets,
         TimingSetting timing,
         Announcement announcement,
-        StartPickSetting startPick) {
+        StartPickSetting startPick,
+        RoundRewardConfig roundReward,
+        FunTitleConfig funTitles,
+        CityEventConfig cityEvents) {
+
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+                        Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,
+                        Map<String, List<String>> tileNames, List<LuckySetting> lucky, RentRise rentRise,
+                        Integer handLimit, RoomSetting room, SetSetting sets, TimingSetting timing,
+                        Announcement announcement, StartPickSetting startPick) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit,
+                room, sets, timing, announcement, startPick, null, null, null);
+    }
 
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,

@@ -274,6 +274,7 @@ export class MockStore {
 
     /** 结算：净资产排名（并列 1/1/3），破产者在存活者之后。 */
     buildResult(): GameResult {
+        if (this.previewResult) return this.previewResult;
         const list = this.game.players.map((p) => ({
             playerId: p.playerId, nickname: p.nickname, avatar: p.avatar, cash: p.cash,
             netWorth: this.netWorthOf(p.playerId), bankrupt: p.life !== 'ALIVE',
@@ -296,6 +297,8 @@ export class MockStore {
     }
 
     // ---------- 动作（演示用的本地状态变更） ----------
+    /** Offline UI review fixture; live results always come from session.lastResult. */
+    previewResult: GameResult | null = null;
     setReady(id: string, ready: boolean): void {
         if (this.online) {
             if (id === this.myId) void this.online.ready(ready);

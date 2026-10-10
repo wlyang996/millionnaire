@@ -24,6 +24,18 @@ import java.util.List;
  * 携带随机结果的事件（OrderNumberDrawn、DiceRolled、JailRolled）在演化时消费对应的 RandomDrawn 并核对。
  */
 public sealed interface GameEvent extends Event {
+    sealed interface ProgressEvent extends GameEvent { }
+    record RoundBoundaryProcessed(long completedRound, java.util.Map<String, Integer> observedRanks)
+            implements ProgressEvent, PublicEvent { }
+    record RoundRewardGranted(long completedRound, List<com.millionnaire.engine.core.state.GameProgressState.Award> awards)
+            implements ProgressEvent, PublicEvent { }
+    record CityEventChecked(long completedRound, boolean triggered) implements ProgressEvent { }
+    record CityEventAnnounced(com.millionnaire.engine.core.state.GameProgressState.CityEvent event) implements ProgressEvent, PublicEvent { }
+    record CityEventActivated(long eventId) implements ProgressEvent, PublicEvent { }
+    record CityEventEnded(long eventId) implements ProgressEvent, PublicEvent { }
+    record GlobalNoticeBatchOpened(List<com.millionnaire.engine.core.state.GameProgressState.Notice> notices, long taskId)
+            implements ProgressEvent { }
+    record GlobalNoticeBatchClosed(long taskId, long at, boolean cancelled) implements ProgressEvent { }
     record EventDrawn(String playerId, long landingId, int cursor, com.millionnaire.engine.config.EventKind kind,
                       long amount, MoveKind moveKind, int distance, boolean auto) implements GameEvent, PublicEvent { }
     record EventRewardPaid(String playerId, long landingId, int cursor, long amount) implements GameEvent, PublicEvent { }

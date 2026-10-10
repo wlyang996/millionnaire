@@ -72,6 +72,10 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
 
     @Override
     public void onTask(DecisionContext<SessionState> ctx, ScheduledTask task) {
+        if (task.kind() == com.millionnaire.engine.time.TaskKind.GLOBAL_NOTICE) {
+            GameProgressModule.onTask(ctx, task);
+            return;
+        }
         // 按任务所属模块分派：覆盖窗口到期 → 覆盖流程模块；全局到时、自动动作、回合窗口到期 → 回合模块
         if (task.kind() == com.millionnaire.engine.time.TaskKind.FLOW) {
             OverlayModule.onTask(ctx, task);
@@ -130,6 +134,8 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     /** 步边界：对局中回合的步内衔接记录必须为空（C4）。 */
     @Override
     public void checkBoundary(SessionState state) {
+        if (state.inGame() && state.game().progress().cityDrawPending())
+            throw new IllegalStateException("unconsumed city event draw");
         if (state.controlSource() != null) {
             throw new IllegalStateException("unconsumed control source at a step boundary");
         }
@@ -194,6 +200,12 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
         if (current.inGame() && current.game().turn().track().safePointPhase() == 1
                 && !(event instanceof GameEvent.SafePointEntered)) {
             throw new IllegalStateException("SafePointEntered must immediately follow TurnStarted");
+        }
+        if (event instanceof GameEvent.GlobalNoticeBatchOpened e) {
+            var task = engine.timers().find(e.taskId()).orElseThrow();
+            LobbyModule.check(task.kind() == com.millionnaire.engine.time.TaskKind.GLOBAL_NOTICE
+                    && task.ref() == current.game().turn().turnNo() && task.dueAt() == e.notices().getLast().endsAt(),
+                    "global notice task mismatch");
         }
         if (event instanceof GameEvent.WindowOpened e) {
             var f = e.frame();

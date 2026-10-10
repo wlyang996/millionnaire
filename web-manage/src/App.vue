@@ -142,8 +142,25 @@ const startPickHint = computed(() => {
 // 旧版本没有公告：补一个关闭的公告，免得编辑区判为"有修改"
 function fill(s) {
   if (s && !s.announcement) s.announcement = { enabled: false, title: '', text: '' }
+  if (s && !s.roundReward) s.roundReward = { enabled: false, name: '月度荣耀奖励', timeLimitRewardRound: 5, bankruptcyRewardRound: 5, rewardPercent: 5, perPlayerCap: 1000, roundingUnit: 10, incomeSources: Object.keys(INCOME_LABEL), presentationMs: 3000 }
+  if (s && !s.funTitles) s.funTitles = { enabled: false, titles: Object.entries(TITLE_LABEL).map(([kind, name]) => ({ kind, name, enabled: true, minimum: kind === 'COMEBACK' ? 2 : 1 })) }
+  if (s && !s.cityEvents) s.cityEvents = { enabled: false, allowedModes: ['TIME_LIMIT', 'BANKRUPTCY'], firstCheckRound: 5, checkEveryRounds: 5, triggerPercent: 30, advanceRounds: 1, announcementMs: 3000, activationMs: 1500, endMs: 1500, pool: Object.entries(CITY_LABEL).map(([kind, name]) => ({ kind, name, enabled: true, weight: 1, multiplierPercent: kind === 'STATION_RENT' ? 150 : 80, durationRounds: 2, artworkKey: CITY_ART[kind] })) }
   return s
 }
+const INCOME_LABEL = { RENT: '实际收租', START: '起点奖励', EVENT: '现金事件', MINIGAME: '小游戏奖励', COMMISSION: '拍卖佣金' }
+const TITLE_LABEL = { RENT_KING: '收租王', PROPERTY_TYCOON: '地产大亨', LUCKY_STAR: '幸运之星', COMEBACK: '逆风翻盘' }
+const CITY_LABEL = { UPGRADE_DISCOUNT: '建设节', STATION_RENT: '旅游旺季', PROPERTY_RENT: '安居日' }
+const CITY_ART = { UPGRADE_DISCOUNT: 'city_construction', STATION_RENT: 'scene_station', PROPERTY_RENT: 'scene_property_low' }
+const rewardIncome = ref(8000)
+const rewardPreview = computed(() => {
+  const r = form.value?.roundReward
+  return r && r.roundingUnit > 0 ? Math.floor(Math.min(Math.floor(rewardIncome.value * r.rewardPercent / 100), r.perPlayerCap) / r.roundingUnit) * r.roundingUnit : 0
+})
+const CITY_FIELDS = [
+  ['firstCheckRound', '首次检查：完成第几轮', 1, 1000], ['checkEveryRounds', '后续每几轮检查', 1, 100],
+  ['triggerPercent', '触发概率（%）', 0, 100], ['advanceRounds', '提前轮数', 1, 10],
+  ['announcementMs', '预告展示（毫秒）', 1000, 10000], ['activationMs', '生效提示（毫秒，0关闭）', 0, 10000], ['endMs', '结束提示（毫秒，0关闭）', 0, 10000],
+]
 
 // 操作时限的编辑项：[字段, 名称, 最小, 最大, 单位, 说明]
 const TIMING_FIELDS = [
@@ -503,6 +520,49 @@ onMounted(() => {
         </el-form>
       </el-tab-pane>
 
+      <el-tab-pane label="轮次奖励" name="roundReward">
+        <el-alert class="gap" :closable="false" title="第 N 整轮完成后一次性发放。累计实际玩法收入，排除开局资金、抵押借款、资产买卖和奖励本身；只给存活玩家，提醒结束后开始下一位投骰。" />
+        <el-form label-width="220px" class="narrow">
+          <el-form-item label="启用收入奖励"><el-switch v-model="form.roundReward.enabled" /></el-form-item>
+          <el-form-item label="奖励显示名称"><el-input v-model="form.roundReward.name" maxlength="12" /><span class="hint">例如“月度荣耀奖励”，与局时或半程无关</span></el-form-item>
+          <el-form-item label="限时模式奖励轮次"><el-input-number v-model="form.roundReward.timeLimitRewardRound" :min="1" :max="1000" /></el-form-item>
+          <el-form-item label="破产模式奖励轮次"><el-input-number v-model="form.roundReward.bankruptcyRewardRound" :min="1" :max="1000" /></el-form-item>
+          <el-form-item label="奖励比例（%）"><el-input-number v-model="form.roundReward.rewardPercent" :min="0" :max="100" /></el-form-item>
+          <el-form-item label="每人封顶"><el-input-number v-model="form.roundReward.perPlayerCap" :min="0" :max="1000000" /></el-form-item>
+          <el-form-item label="向下取整单位"><el-select v-model="form.roundReward.roundingUnit"><el-option v-for="n in [1,10,50,100]" :key="n" :label="n" :value="n" /></el-select></el-form-item>
+          <el-form-item label="收入来源"><el-checkbox-group v-model="form.roundReward.incomeSources"><el-checkbox v-for="(label,key) in INCOME_LABEL" :key="key" :value="key">{{ label }}</el-checkbox></el-checkbox-group></el-form-item>
+          <el-form-item label="提醒展示（毫秒）"><el-input-number v-model="form.roundReward.presentationMs" :min="1000" :max="10000" /></el-form-item>
+          <el-form-item label="计算预览：累计收入"><el-input-number v-model="rewardIncome" :min="0" :max="100000000" /><span class="hint">奖励 +{{ rewardPreview }}</span></el-form-item>
+        </el-form>
+      </el-tab-pane>
+      <el-tab-pane label="城市事件" name="cityEvents">
+        <el-alert class="gap" :closable="false" title="整轮交界随机触发，至多一个事件，不叠加。有事件时跳过新抽取。租金顺序：基础→同组→轮次上涨→城市倍率（向下取整到10）；建设折扣不改变资产标准价值。" />
+        <el-form label-width="240px" class="narrow">
+          <el-form-item label="启用城市事件"><el-switch v-model="form.cityEvents.enabled" /></el-form-item>
+          <el-form-item label="适用模式"><el-checkbox-group v-model="form.cityEvents.allowedModes"><el-checkbox value="TIME_LIMIT">限时</el-checkbox><el-checkbox value="BANKRUPTCY">破产</el-checkbox></el-checkbox-group></el-form-item>
+          <el-form-item v-for="[key,label,min,max] in CITY_FIELDS" :key="key" :label="label"><el-input-number v-model="form.cityEvents[key]" :min="min" :max="max" /></el-form-item>
+        </el-form>
+        <p class="hint">首次成功后：第 {{ form.cityEvents.firstCheckRound + form.cityEvents.advanceRounds }} 轮开始生效。有效权重决定被选中的相对概率，全关闭或权重为0不触发。</p>
+        <el-table :data="form.cityEvents.pool">
+          <el-table-column label="效果" width="150"><template #default="{row}">{{ CITY_LABEL[row.kind] }}</template></el-table-column>
+          <el-table-column label="启用" width="80"><template #default="{row}"><el-switch v-model="row.enabled" /></template></el-table-column>
+          <el-table-column label="显示名称"><template #default="{row}"><el-input v-model="row.name" maxlength="12" /></template></el-table-column>
+          <el-table-column label="权重"><template #default="{row}"><el-input-number class="cell-num" v-model="row.weight" :min="0" :max="1000" /></template></el-table-column>
+          <el-table-column label="费用/租金倍率%"><template #default="{row}"><el-input-number class="cell-num" v-model="row.multiplierPercent" :min="1" :max="300" /></template></el-table-column>
+          <el-table-column label="持续整轮数"><template #default="{row}"><el-input-number class="cell-num" v-model="row.durationRounds" :min="1" :max="20" /></template></el-table-column>
+          <el-table-column label="插画"><template #default="{row}"><el-select v-model="row.artworkKey"><el-option v-for="(key,kind) in CITY_ART" :key="key" :value="key" :label="CITY_LABEL[kind]" /></el-select></template></el-table-column>
+        </el-table>
+      </el-tab-pane>
+      <el-tab-pane label="结算称号" name="funTitles">
+        <el-alert class="gap" :closable="false" title="称号只作展示，不发现金。收租王按实际收租，地产大亨按同时持有峰值，幸运之星按事件与小游戏收入，逆风翻盘比较奖励轮次前的名次与最终名次；并列共同获奖。" />
+        <el-switch v-model="form.funTitles.enabled" active-text="启用趣味称号" />
+        <el-table :data="form.funTitles.titles">
+          <el-table-column label="指标" width="150"><template #default="{row}">{{ TITLE_LABEL[row.kind] }}</template></el-table-column>
+          <el-table-column label="启用" width="80"><template #default="{row}"><el-switch v-model="row.enabled" /></template></el-table-column>
+          <el-table-column label="显示名称"><template #default="{row}"><el-input v-model="row.name" maxlength="12" /></template></el-table-column>
+          <el-table-column label="最低有效金额/数量/名次提升"><template #default="{row}"><el-input-number v-model="row.minimum" :min="1" :max="row.kind === 'COMEBACK' ? 7 : 1000000" /></template></el-table-column>
+        </el-table>
+      </el-tab-pane>
       <el-tab-pane label="操作时限" name="timing">
         <el-form v-if="form.timing" label-width="170px" class="narrow">
           <p class="muted">各类弹窗的倒计时与动画留时。投骰时间在「建房选项」里配置。只影响发布之后新建的房间。</p>

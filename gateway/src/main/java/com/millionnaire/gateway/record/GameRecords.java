@@ -54,7 +54,11 @@ public class GameRecords {
 
     /** 一局的草稿：座位按开局顺序。 */
     public record Draft(long roomId, long gameNo, String reason, String endMode, Integer timeLimitMinutes, String boardId,
-                        long initialCash, long startedAt, long endedAt, String configHash, List<Seat> seats) {
+                        long initialCash, long startedAt, long endedAt, String configHash, List<Seat> seats, String resultJson) {
+        public Draft(long roomId, long gameNo, String reason, String endMode, Integer timeLimitMinutes, String boardId,
+                     long initialCash, long startedAt, long endedAt, String configHash, List<Seat> seats) {
+            this(roomId, gameNo, reason, endMode, timeLimitMinutes, boardId, initialCash, startedAt, endedAt, configHash, seats, null);
+        }
     }
 
     /** 一个座位的结算；rank 等为 null 表示中止局。 */
@@ -80,7 +84,7 @@ public class GameRecords {
     /**
      * 一局的详情（用户 2026-10-09 "战绩看详情"）：表头（我那一行）、全部座位（已注销的不在内）、公开事件日志（没存时为 null）。
      */
-    public record Detail(Row header, long initialCash, List<Seat> seats, String events) {
+    public record Detail(Row header, long initialCash, List<Seat> seats, String events, String resultJson) {
     }
 
     /**
@@ -261,10 +265,10 @@ public class GameRecords {
             txt.executeWithoutResult(status -> {
                 t.update("INSERT INTO game_record (room_id, game_no, outcome, end_reason, end_mode, time_limit_min, board_id,"
                                 + " initial_cash, player_count, started_at, ended_at, engine_version, config_hash, draft_sha256,"
-                                + " created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                + " created_at, result_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         d.roomId(), d.gameNo(), "FINISHED", d.reason(), d.endMode(), d.timeLimitMinutes(), d.boardId(),
                         d.initialCash(), d.seats().size(), d.startedAt(), d.endedAt(), EngineVersion.VALUE, d.configHash(),
-                        sha, now);
+                        sha, now, d.resultJson());
                 Long recordId = t.queryForObject("SELECT record_id FROM game_record WHERE room_id = ? AND game_no = ?",
                         Long.class, d.roomId(), d.gameNo());
                 for (Seat s : d.seats()) {
@@ -367,7 +371,7 @@ public class GameRecords {
             }
             for (Seat s : d.seats()) {
                 if (s.userId() == userId) {
-                    return java.util.Optional.of(new Detail(row(d, s), d.initialCash(), d.seats(), memoryLogs.get(roomId + "#" + gameNo)));
+                    return java.util.Optional.of(new Detail(row(d, s), d.initialCash(), d.seats(), memoryLogs.get(roomId + "#" + gameNo), d.resultJson()));
                 }
             }
             return java.util.Optional.empty();
@@ -397,7 +401,8 @@ public class GameRecords {
                 log.warn("cannot read game log room {} game {}: {}", roomId, gameNo, e.toString());
             }
         }
-        return java.util.Optional.of(new Detail(mine.get(0), extra[0], seats, events));
+        String result = t.queryForObject("SELECT result_json FROM game_record WHERE record_id = ?", String.class, extra[1]);
+        return java.util.Optional.of(new Detail(mine.get(0), extra[0], seats, events, result));
     }
 
     private static Row row(Draft d, Seat s) {
@@ -415,6 +420,7 @@ public class GameRecords {
             b.append('\n').append(s.seatNo()).append('|').append(s.userId()).append('|').append(s.rank()).append('|')
                     .append(s.netWorth()).append('|').append(s.cash()).append('|').append(s.life());
         }
+        if (d.resultJson() != null) b.append('\n').append(d.resultJson());
         return b.toString();
     }
 

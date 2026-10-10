@@ -9,6 +9,10 @@ import com.millionnaire.engine.config.EconomyConfig;
 import com.millionnaire.engine.config.EventKind;
 import com.millionnaire.engine.config.FixedEvent;
 import com.millionnaire.engine.config.RuleConfig;
+import com.millionnaire.engine.config.RoundRewardConfig;
+import com.millionnaire.engine.config.FunTitleConfig;
+import com.millionnaire.engine.config.CityEventConfig;
+import com.millionnaire.engine.config.GlobalGameplayValidator;
 import com.millionnaire.engine.config.RuleConfigs;
 import com.millionnaire.engine.config.StationPricing;
 import com.millionnaire.engine.config.Tier;
@@ -66,13 +70,25 @@ public final class SettingsMapper {
                 new Fees(e.startReward(), e.miniGameWinReward(), e.bailCost()),
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
                 events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise(), e.handLimit(),
-                defaultRoom(), defaultSets(), defaultTiming(), null, defaultStartPick());
+                defaultRoom(), defaultSets(), defaultTiming(), null, defaultStartPick(),
+                BASE.roundReward(), BASE.funTitles(), BASE.cityEvents());
     }
 
     /** 内置租金上涨参数（引擎默认）。 */
     public static RentRise defaultRentRise() {
         RentInflation r = BASE.rentInflation();
         return new RentRise(r.freeRounds(), r.everyRounds(), r.stepPercent(), r.capPercent());
+    }
+
+    /** Missing fields in a previously published configuration keep the old rules. */
+    public static RoundRewardConfig roundRewardOf(GameSettings s) {
+        return s.roundReward() == null ? RoundRewardConfig.NONE : s.roundReward();
+    }
+    public static FunTitleConfig funTitlesOf(GameSettings s) {
+        return s.funTitles() == null ? FunTitleConfig.NONE : s.funTitles();
+    }
+    public static CityEventConfig cityEventsOf(GameSettings s) {
+        return s.cityEvents() == null ? CityEventConfig.NONE : s.cityEvents();
     }
 
     /** 内置操作时限（引擎默认）。 */
@@ -268,6 +284,7 @@ public final class SettingsMapper {
         timing(errors, timingOf(s));
         announcement(errors, announcementOf(s));
         startPick(errors, startPickOf(s));
+        errors.addAll(GlobalGameplayValidator.validate(roundRewardOf(s), funTitlesOf(s), cityEventsOf(s)));
         int hand = handLimitOf(s);
         if (hand < BASE.economy().initialHandSize() || hand > MAX_HAND_LIMIT) {
             errors.add("道具上限必须在 " + BASE.economy().initialHandSize() + "～" + MAX_HAND_LIMIT + " 张之间");
@@ -569,7 +586,7 @@ public final class SettingsMapper {
                 new GameSettings.Announcement(announcementOf(s).enabled(),
                         announcementOf(s).title() == null ? "" : announcementOf(s).title().strip(),
                         announcementOf(s).text() == null ? "" : announcementOf(s).text().strip()),
-                startPickOf(s));
+                startPickOf(s), roundRewardOf(s), funTitlesOf(s), cityEventsOf(s));
     }
 
     /** 选项按从小到大保存（建房页按这个顺序显示）。 */
@@ -639,7 +656,8 @@ public final class SettingsMapper {
                 timing, room,
                 new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()),
                 new SetBonus(setsOf(s).rentPercent(), setsOf(s).groups()),
-                new StartPick(sp.cashWeight(), sp.cardWeight(), sp.cashMin(), sp.cashMax(), sp.cashStep()));
+                new StartPick(sp.cashWeight(), sp.cardWeight(), sp.cashMin(), sp.cashMax(), sp.cashStep()),
+                roundRewardOf(s), funTitlesOf(s), cityEventsOf(s));
     }
 
     private static Map<String, List<String>> loadDefaultNames() {

@@ -199,12 +199,13 @@ public class GameConfigs {
     private GameSettings parse(String payload) {
         try {
             GameSettings s = json.readValue(payload, GameSettings.class);
-            // 旧版本没有奖池或只有幸运奖池：按内置默认补齐（引擎换算时同样补齐，规则哈希不变）
+            // 补齐历史可选字段；新全局玩法缺项按关闭处理。引擎升级后的规范哈希不回写历史发布记录。
             return new GameSettings(s.tiers(), s.station(), s.fees(), s.eventCash(), s.eventWeights(), s.cardWeights(),
                     s.tileNames(), SettingsMapper.mergeLucky(s.lucky()), SettingsMapper.rentRiseOf(s),
                     SettingsMapper.handLimitOf(s), SettingsMapper.roomOf(s),
                     SettingsMapper.setsOf(s), SettingsMapper.timingOf(s), s.announcement(),
-                    SettingsMapper.startPickOf(s));
+                    SettingsMapper.startPickOf(s), SettingsMapper.roundRewardOf(s),
+                    SettingsMapper.funTitlesOf(s), SettingsMapper.cityEventsOf(s));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("bad game_config payload", e);
         }

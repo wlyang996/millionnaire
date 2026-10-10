@@ -48,6 +48,7 @@ final class BusinessCommands {
     static RejectionCode beforeCommand(DecisionContext<SessionState> ctx, Command command) {
         if (kind(command) != Kind.BUSINESS || !ctx.state().inGame()) { return null; }
         var g=ctx.state().game(); var p=g.player(command.actor()).orElse(null);
+        if (g.progress().noticeTaskId() != 0) return RejectionCode.WINDOW_NOT_OPEN;
         if (p == null || !p.alive()) { return null; } // command-specific membership/life error remains authoritative
         if (p.conn() == ConnState.OFFLINE) { return RejectionCode.CONTROL_NOT_MANUAL; }
         if (p.control() != ControlMode.MANUAL) {

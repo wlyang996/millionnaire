@@ -4,7 +4,7 @@
  */
 import { Node } from 'cc';
 import {
-    BAIL_COST, BANKRUPTCY_CAP_MINUTES, MAX_HAND, MINIGAME_REWARD, RENT_RISE, START_BONUS, START_PICK, STATION, TIERS,
+    BAIL_COST, BANKRUPTCY_CAP_MINUTES, MAX_HAND, MINIGAME_REWARD, RENT_RISE, START_BONUS, START_PICK, STATION, TIERS, GLOBAL_RULES,
 } from '../core/Rules';
 import { setBonusPercent } from '../core/SetBonus';
 import { Theme } from '../core/Theme';
@@ -111,6 +111,16 @@ export function ruleSections(): { title: string; lines: string[] }[] {
                 '点自己的头像可以主动托管或认输。',
             ],
         },
+        ...(GLOBAL_RULES.roundReward?.enabled ? [{ title: GLOBAL_RULES.roundReward.name, lines: [
+            '完成第' + (timed ? GLOBAL_RULES.roundReward.timeLimitRewardRound : GLOBAL_RULES.roundReward.bankruptcyRewardRound) + '整轮后仅发放一次。',
+            '按所选累计玩法收入的' + GLOBAL_RULES.roundReward.rewardPercent + '%发放，每人封顶' + GLOBAL_RULES.roundReward.perPlayerCap + '，向下取整到' + GLOBAL_RULES.roundReward.roundingUnit + '。',
+            '只给存活玩家，初始资金、抵押与资产买卖不计。提示结束后才开始下一位投骰。',
+        ] }] : []),
+        ...(GLOBAL_RULES.cityEvents?.enabled ? [{ title: '城市事件', lines: [
+            '完成第' + GLOBAL_RULES.cityEvents.firstCheckRound + '轮后首次检查，之后每' + GLOBAL_RULES.cityEvents.checkEveryRounds + '轮检查，触发概率' + GLOBAL_RULES.cityEvents.triggerPercent + '%。',
+            ...GLOBAL_RULES.cityEvents.pool.filter(e => e.enabled && e.weight > 0).map(e => e.name + '：' + (e.kind === 'UPGRADE_DISCOUNT' ? '地产升级费' : e.kind === 'STATION_RENT' ? '车站租金' : '地产租金') + ' ×' + e.multiplierPercent + '%，持续' + e.durationRounds + '轮。'),
+            '最多一个事件，效果不叠加。',
+        ] }] : []),
     ];
 }
 

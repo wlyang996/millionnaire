@@ -128,7 +128,9 @@ final class GameModule {
                 LobbyModule.check(s.game().phase() != GamePhase.DRAINING || "TIME_UP".equals(x.reason()),
                         "a game past its global end can only end as TIME_UP");
                 LobbyModule.check(x.result().gameNo() == x.gameNo() && x.result().reason().equals(x.reason())
-                        && x.result().standings().equals(TurnModule.standings(s.game(), rules)), "game result does not follow the rules");
+                        && x.result().standings().equals(TurnModule.standings(s.game(), rules))
+                        && x.result().titles().equals(GameProgressModule.titles(s.game(), rules))
+                        && x.result().metrics().equals(s.game().progress().metrics()), "game result does not follow the rules");
                 yield backToLobby(s, x.result());
             }
             case GameAborted x -> {
@@ -175,9 +177,14 @@ final class GameModule {
                 }
                 yield s.withGame(next);
             }
+            case GameEvent.ProgressEvent x -> {
+                LobbyModule.check(s.inGame(), "progress event outside game");
+                yield s.withGame(GameProgressModule.evolve(s.game(), x, draws, rules));
+            }
             default -> {
                 LobbyModule.check(s.inGame(), "game event outside a game: " + event);
-                yield s.withGame(TurnModule.evolve(s.game(), event, draws, rules));
+                var next = TurnModule.evolve(s.game(), event, draws, rules);
+                yield s.withGame(GameProgressModule.capture(s.game(), next, event, rules));
             }
         };
     }
@@ -231,6 +238,24 @@ final class GameModule {
         CardModule.validate(g, config);
         AuctionModule.validate(g, config);
         TradeModule.validate(g, config);
+        var progress = g.progress();
+        LobbyModule.expect(progress.boundaryRound() >= 0 && progress.boundaryRound() < g.turn().round()
+                && progress.nextNoticeId() >= 1 && !progress.cityDrawPending(), "progress counters invalid");
+        for (var entry : progress.metrics().entrySet()) {
+            var m = entry.getValue();
+            LobbyModule.expect(ids.contains(entry.getKey()) && m.peakProperties() >= 0 && m.peakStations() >= 0
+                    && m.peakProperties() + m.peakStations() <= boardSize
+                    && m.income().values().stream().allMatch(v -> v != null && v >= 0), "progress metrics invalid");
+        }
+        if (progress.noticeTaskId() != 0) {
+            var task = engine.timers().find(progress.noticeTaskId()).orElse(null);
+            LobbyModule.expect(task != null && task.kind() == com.millionnaire.engine.time.TaskKind.GLOBAL_NOTICE
+                    && task.ref() == g.turn().turnNo() && !progress.notices().isEmpty()
+                    && task.dueAt() == progress.notices().getLast().endsAt()
+                    && g.turn().stage() == TurnStage.AWAITING_FLOW && g.turn().continuation() instanceof Continuation.BeginTurn
+                    && g.flow().frames().isEmpty(), "global notice task invalid");
+            claims.add(new FlowCoordinator.TaskClaim(com.millionnaire.engine.time.TaskKind.GLOBAL_NOTICE, g.turn().turnNo()));
+        } else LobbyModule.expect(progress.notices().isEmpty(), "notices without task");
         for (var frame : g.flow().frames()) {
             if (frame.kind() == FlowKind.TURN) { continue; }
             FlowOrigin o = frame.origin();
@@ -421,7 +446,9 @@ final class GameModule {
         return new GameView(g.gameNo(), g.phase(), players, g.orderDraws(), g.board(), g.turn().turnNo(),
                 g.turn().currentPlayer(), g.turn().stage(), g.clock().endsAt(), windows, publicLanding(g), publicDebt(g), mine,
                 MinigameModule.view(g), CardModule.view(g), AuctionModule.view(g), TradeModule.view(g),
-                g.turn().round(), g.turn().rentPercent());
+                g.turn().round(), g.turn().rentPercent(),
+                new GameView.PublicProgress(g.progress().metrics(), g.progress().observedRanks(),
+                        g.progress().rewardGranted(), g.progress().cityEvent(), g.progress().notices()));
     }
 
     /** E6：当前落点的公开部分（步骤与决策是否仍待做）。 */

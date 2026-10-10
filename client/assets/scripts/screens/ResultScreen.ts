@@ -13,6 +13,7 @@ import { copyText } from '../net/Wx';
 import { Screen } from '../ui/Screen';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar, roundedPanel } from '../ui/Widgets';
+import { titleMetric } from './board/GlobalNoticeView';
 
 const MEDAL = ['#F2B82E', '#B8C2CC', '#D98A4B'];
 
@@ -58,7 +59,7 @@ export class ResultScreen extends Screen {
         text(head, '玩家', 120, 0, 200, 48, 22, Theme.c.noteGray, { bold: true });
         text(head, '净资产', 400, 0, 200, 48, 22, Theme.c.noteGray, { bold: true });
         const list = new ScrollList(card, 0, 146, 656, 484);
-        const rowH = 60;
+        const rowH = res.titles?.length ? 48 : 60;
         res.standings.forEach((r, i) => {
             const row = mk(list.content, 'Row' + i, 20, i * rowH, 616, rowH);
             const g = gfx(row);
@@ -70,12 +71,29 @@ export class ResultScreen extends Screen {
             } else {
                 text(row, String(r.rank), 34, 0, 42, rowH, 26, Theme.c.navy, { bold: true });
             }
-            avatar(row, 120, 6, 48, r.avatar ?? 0, r.nickname ?? '?', { dim: r.bankrupt });
+            avatar(row, 120, 4, rowH - 8, r.avatar ?? 0, r.nickname ?? '?', { dim: r.bankrupt });
             text(row, r.nickname ?? '', 182, 0, 190, rowH, 24, Theme.c.navy, { bold: true, align: 'l' });
             drawCoin(gfx(mk(row, 'C', 400, 16, 28, 28)), 14, 14, 13);
             text(row, String(r.netWorth), 438, 0, 170, rowH, 28, Theme.c.navy, { bold: true, align: 'l' });
         });
-        list.setContentHeight(res.standings.length * rowH);
+        let contentH = res.standings.length * rowH;
+        if (res.titles?.length) {
+            text(list.content, '本局趣味称号', 16, contentH + 6, 624, 42, 30, '#7A4A12', { bold: true });
+            contentH += 56;
+            const keys: Record<string, string> = { RENT_KING: 'result_trophy', PROPERTY_TYCOON: 'icon_house', LUCKY_STAR: 'event_reward', COMEBACK: 'info_net_worth' };
+            res.titles.forEach((a, i) => {
+                const x = i % 2 === 0 ? 16 : 336;
+                const n = roundedPanel(list.content, x, contentH + Math.floor(i / 2) * 116, 304, 110, { fill: '#FFF7E3', r: 20 });
+                art(n, keys[a.kind] ?? 'result_trophy', 14, 6, 42, 42);
+                text(n, a.name, 66, 2, 222, 44, 28, '#6F2D16', { bold: true, align: 'l' });
+                const p = res.standings.find(p => p.playerId === a.playerId);
+                avatar(n, 14, 54, 46, p?.avatar ?? 0, p?.nickname ?? '玩家');
+                text(n, p?.nickname ?? '玩家', 76, 46, 214, 34, 24, Theme.c.navy, { bold: true, align: 'l' });
+                text(n, titleMetric(a), 76, 78, 214, 30, 19, Theme.c.navy, { bold: true, align: 'l' });
+            });
+            contentH += Math.ceil(res.titles.length / 2) * 116;
+        }
+        list.setContentHeight(contentH);
 
         if (st.isWatcher()) {
             // 观战者：留在本页等房间开下一局（开局时自动进入观战），或返回大厅

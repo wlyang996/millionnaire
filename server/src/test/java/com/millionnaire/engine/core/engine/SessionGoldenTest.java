@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 class SessionGoldenTest {
     private static final String CONFIG_HASH = "15be5a0b1185660540974ce2b74ac25d73bfb205f06e368cdb3c79b0ed26b668";
     /** 测试配置新增道具开关（cardsEnabled，测试配置关闭）后的配置哈希；换回 CONFIG_HASH 后历史黄金值不变。 */
-    private static final String CARDS_CONFIG_HASH = "22144dc9407506e84e6ed03ffec23009c89288689f5f02d9e9ba8520c799c10c"; // 租金上涨参数进入配置后（之前 993156de…，事件拆分）
+    private static final String CARDS_CONFIG_HASH = "2af045b6dcd66a72257f8b02fc2f62acb79cfb406fb89ddd2e0fda288cc06672"; // 租金上涨参数进入配置后（之前 993156de…，事件拆分）
     private static final String PREVIOUS_CONFIG_HASH = "f8524a62880278ca3e3a0e6838140e916f28cf1b2498111c53a29ddb38ef709d";
 
     @Test void scriptedSessionDebtToFinalLogHasStableBytes() {
@@ -21,7 +21,7 @@ class SessionGoldenTest {
         assertEquals(raw, t.engine.encodeEvents(t.engine.decodeEvents(raw)));
         // 虎口拔牙接入（engine-0.11.0-m6a）不改变这段债务会话：换回 m3c 版本号后，以下历史黄金值逐字节不变
         // 开局道具数接入（engine-0.13.0-m6c）给房间设置加了 initialCards；旧局沿用配置（-1），去掉这个字段后与历史字节一致
-        String bytes = raw.replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
+        String bytes = raw.replace(",\"titles\":[],\"metrics\":[]", "").replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
                 .replace(",\"initialCards\":-1", "").replace(",\"fastMode\":false", "");
         assertEquals(1, raw.split(java.util.regex.Pattern.quote(com.millionnaire.engine.EngineVersion.VALUE), -1).length - 1, "only the version header changes");
         // Preserve the historical behavioral golden after removing only this revision's source metadata.
@@ -35,7 +35,7 @@ class SessionGoldenTest {
             return e;
         }).toList();
         // 配置新增正式服策略开关后（测试配置沿用旧规则），配置哈希从 f8524a62… 变为 15be5a0b…；其余字节必须不变
-        String historicalBytes = t.engine.encodeEvents(historicalEvents).replace(CARDS_CONFIG_HASH, CONFIG_HASH)
+        String historicalBytes = t.engine.encodeEvents(historicalEvents).replace(",\"titles\":[],\"metrics\":[]", "").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
                 .replace(",\"initialCards\":-1", "").replace(",\"fastMode\":false", "")
                 .replaceAll(",\"plannedDistance\":\\d+,\"stoppedBy\":null", "")
                 .replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")

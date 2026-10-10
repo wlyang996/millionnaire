@@ -150,7 +150,10 @@ final class EconomyModule {
         if (tile.type() == TileType.PROPERTY && setComplete(config, board, g, o)) {
             base = com.millionnaire.engine.config.RentInflation.apply(base, config.setBonus().rentPercent());
         }
-        return com.millionnaire.engine.config.RentInflation.apply(base, g.turn().rentPercent());
+        base = com.millionnaire.engine.config.RentInflation.apply(base, g.turn().rentPercent());
+        return com.millionnaire.engine.config.RentInflation.apply(base, GameProgressModule.multiplier(g,
+                tile.type() == TileType.STATION ? com.millionnaire.engine.config.CityEventConfig.Kind.STATION_RENT
+                        : com.millionnaire.engine.config.CityEventConfig.Kind.PROPERTY_RENT));
     }
 
     // ================================================================ 落点推进器
@@ -181,7 +184,8 @@ final class EconomyModule {
                     yield canUpgrade(config, board, g, player, o) ? LandingStep.UPGRADE : null;
                 }
                 // 持有免租卡时先问是否使用（响应先于费用成立与现金不足判定，O4）
-                yield o.mortgaged() ? null : CardModule.rentResponseDue(config, g, tileIndex) ? LandingStep.RESPONSE : LandingStep.RENT;
+                yield o.mortgaged() || rent(config, board, g, o) == 0 ? null
+                        : CardModule.rentResponseDue(config, g, tileIndex) ? LandingStep.RESPONSE : LandingStep.RENT;
             }
             // O16：全局到时后不允许银行常规抵押 / 赎回（阶段表 BANK.drainingAllowed = false），因此不开银行窗口
             case BANK -> g.phase() == GamePhase.RUNNING || StageTable.rule(StageTable.Point.BANK).drainingAllowed()
@@ -228,7 +232,7 @@ final class EconomyModule {
         Tile tile = board.tiles().get(o.tile());
         return tile.type() == TileType.PROPERTY && player.equals(o.owner()) && !o.mortgaged() && o.lockedBy() == null
                 && o.level() < config.economy().maxLevel()
-                && g.ledger().available(player) >= config.tier(tile.tier()).upgradeCost();
+                && g.ledger().available(player) >= GameProgressModule.upgradeCost(config, g, tile);
     }
 
     /** 买下之后：若可升级则必须开升级窗口（PropertyBought 按任务表消费 BUY 并追加后续任务）；M4 建造卡在此之后接入。 */
@@ -336,7 +340,7 @@ final class EconomyModule {
         OwnableState o = g.board().ownable(l.tile()).orElseThrow();
         Tile tile = board(ctx).tiles().get(l.tile());
         ctx.emit(new PropertyUpgraded(g.turn().currentPlayer(), l.tile(), o.level() + 1,
-                ctx.config().tier(tile.tier()).upgradeCost()));
+                GameProgressModule.upgradeCost(ctx.config(), game(ctx), tile)));
         // 每次最多升一级（requirements 第 6 节）
         resolve(ctx, 0);
     }
@@ -894,7 +898,7 @@ final class EconomyModule {
                 Tile tile = board.tiles().get(e.tile());
                 check(current(g, e.playerId()) && l != null && l.step() == LandingStep.UPGRADE && l.decisionOpen()
                         && l.tile() == e.tile() && o != null && canUpgrade(rules, board, g, e.playerId(), o)
-                        && e.level() == o.level() + 1 && e.cost() == rules.tier(tile.tier()).upgradeCost(), "upgrade mismatch");
+                        && e.level() == o.level() + 1 && e.cost() == GameProgressModule.upgradeCost(rules, g, tile), "upgrade mismatch");
                 Ledger ledger = g.ledger().transfer(e.playerId(), Ledger.SYSTEM, e.cost(), UPGRADE, "tile-" + e.tile());
                 GameState upgraded = g.withLedger(ledger).withBoard(g.board().with(o.level(e.level())));
                 yield upgraded.withTurn(t.withLanding(LandingRules.consume(rules, upgraded, l, LandingResult.UPGRADED)));

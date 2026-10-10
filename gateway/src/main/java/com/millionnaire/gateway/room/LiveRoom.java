@@ -522,7 +522,8 @@ public final class LiveRoom {
             boolean timed = set.endMode() == EndMode.TIME_LIMIT;
             service.gameEnded(new GameRecords.Draft(roomId, ended.gameNo(), ended.reason(), set.endMode().name(),
                     timed ? set.timeLimitMinutes() : null, set.boardId(), set.initialCash(), g.startedAt(),
-                    Math.max(at, g.startedAt()), engine.configHash(), seats));
+                    Math.max(at, g.startedAt()), engine.configHash(), seats,
+                    com.millionnaire.gateway.record.ResultSnapshot.encode(ended.result())));
         }
     }
 

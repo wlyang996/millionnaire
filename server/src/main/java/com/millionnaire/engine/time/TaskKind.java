@@ -6,6 +6,7 @@ package com.millionnaire.engine.time;
  */
 public enum TaskKind {
     GLOBAL_END(0),
+    GLOBAL_NOTICE(1),
     FLOW(1),
     TURN_WINDOW(2),
     AUTO_ACT(3);

@@ -203,4 +203,7 @@ export const ART_PATHS: Record<string, string> = {
     'lucky_face': 'art/event_faces/lucky_face',
     'unlucky_face': 'art/event_faces/unlucky_face',
     'scene_jail_closeup': 'art/alignment/scene_jail_closeup',
+    'reward_gift': 'art/global_gameplay/reward_gift',
+    'city_construction': 'art/global_gameplay/city_construction',
+    'scene_property_low': 'art/information/shop_low',
 };

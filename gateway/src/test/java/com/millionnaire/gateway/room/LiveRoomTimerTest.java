@@ -198,6 +198,12 @@ class LiveRoomTimerTest {
             // 手动投骰（避免连续超时被判挂机），其余窗口等到期自动处理，直到有人落在游戏区
             for (int i = 0; i < 2000 && room.view("1").game() != null && room.view("1").game().minigame() == null; i++) {
                 var g = room.view("1").game();
+                if (g.windows().isEmpty()) {
+                    assertThat(g.progress().notices()).isNotEmpty();
+                    clock.now = room.scheduledWakeAt();
+                    rooms.wake(room, clock.now);
+                    continue;
+                }
                 var top = g.windows().get(g.windows().size() - 1);
                 if (top.kind() == com.millionnaire.engine.core.state.FlowKind.TURN
                         && (g.stage() == com.millionnaire.engine.core.state.TurnStage.PRE_ROLL

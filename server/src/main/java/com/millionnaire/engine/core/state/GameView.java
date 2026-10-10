@@ -15,7 +15,18 @@ public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players,
                        BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                        List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
                        PublicMinigame minigame, PublicCards cards, PublicAuction auction, PublicTrade trade,
-                       long round, int rentPercent) {
+                       long round, int rentPercent, PublicProgress progress) {
+    public record PublicProgress(java.util.Map<String, GameProgressState.Metrics> metrics,
+                                 java.util.Map<String, Integer> observedRanks, boolean rewardGranted,
+                                 GameProgressState.CityEvent cityEvent, List<GameProgressState.Notice> notices) { }
+    public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
+                    BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
+                    List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
+                    PublicMinigame minigame, PublicCards cards, PublicAuction auction, PublicTrade trade,
+                    long round, int rentPercent) {
+        this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows, landing, debt,
+                myHand, minigame, cards, auction, trade, round, rentPercent, null);
+    }
     /** round：当前轮数；rentPercent：当前租金倍率（百分比，破产模式随轮数上涨）。 */
     public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
                     BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,

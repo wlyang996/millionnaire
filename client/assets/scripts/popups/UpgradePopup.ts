@@ -3,7 +3,7 @@
  * 一级 / 二级 / 三级示意（目标等级黄色圆底高亮），底部"放弃 / 升级 (金币) 费用"。不弹成功 / 超时提示。
  */
 import { Node } from 'cc';
-import { MAX_LEVEL, rentOf, SECONDS, TIERS } from '../core/Rules';
+import { MAX_LEVEL, rentOf, SECONDS, TIERS, upgradeCost } from '../core/Rules';
 import { Theme } from '../core/Theme';
 import { primaryButton, softButton } from '../ui/Buttons';
 import { art } from '../ui/Art';
@@ -28,7 +28,7 @@ export class UpgradePopup extends Popup {
         const prop = st.prop(this.tileIndex);
         const level = prop ? prop.level : 0;
         const next = Math.min(MAX_LEVEL, level + 1);
-        const cost = TIERS[tier].upgrade;
+        const cost = upgradeCost(tier);
         const full = level >= MAX_LEVEL;
         const cash = st.me().cash;
         art(p, 'house_lv' + next, (W - 315) / 2, 64, 315, 178);

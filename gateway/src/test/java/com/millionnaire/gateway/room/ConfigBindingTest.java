@@ -20,6 +20,30 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 /** 发布新参数后：新建的房间用新版本，已开的房间整局沿用建房时的版本；UPDATE 带 configId。 */
 class ConfigBindingTest {
+    private static com.millionnaire.engine.config.RuleConfig legacyDefaults() {
+        var c = RuleConfigs.defaultV1();
+        return new com.millionnaire.engine.config.RuleConfig(c.ruleVersion(), c.boards(), c.tiers(), c.station(), c.economy(), c.ratios(),
+                c.cardWeights(), c.eventWeights(), c.timing(), c.room(), c.rentInflation(), c.setBonus(), c.startPick());
+    }
+
+    @Test void globalGameplaySurvivesPublishingAndOldJsonDoesNotEnableIt() throws Exception {
+        var json = new ObjectMapper(); var defaults = SettingsMapper.defaults();
+        var configs = GameConfigs.inMemory(Clock.systemUTC());
+        var p = configs.publish(defaults, "global", "test", 0, null);
+        var actual = configs.load(p.configId()).orElseThrow();
+        assertThat(actual.settings().roundReward()).isEqualTo(defaults.roundReward());
+        assertThat(actual.settings().cityEvents()).isEqualTo(defaults.cityEvents());
+        assertThat(actual.settings().funTitles()).isEqualTo(defaults.funTitles());
+        var tree = (com.fasterxml.jackson.databind.node.ObjectNode)json.valueToTree(defaults);
+        tree.remove(List.of("roundReward", "cityEvents", "funTitles"));
+        var old = SettingsMapper.normalized(json.treeToValue(tree, GameSettings.class));
+        assertThat(old.roundReward().enabled()).isFalse();
+        assertThat(old.cityEvents().enabled()).isFalse();
+        assertThat(old.funTitles().enabled()).isFalse();
+        assertThat(SettingsMapper.toRuleConfig(old)).isEqualTo(legacyDefaults());
+        assertThat(SettingsMapper.validate(old)).isEmpty();
+    }
+
     @Test
     void defaultsReproduceTheEngineConfigExactly() {
         GameSettings d = SettingsMapper.defaults();
@@ -77,7 +101,7 @@ class ConfigBindingTest {
         // 旧版本快照没有 lucky：按默认处理，规则与默认一致
         GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames());
-        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(legacyDefaults().contentHash());
     }
 
     @Test
@@ -121,7 +145,7 @@ class ConfigBindingTest {
         // 旧版本快照没有 timing：按默认处理
         assertThat(SettingsMapper.toRuleConfig(new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(),
                 d.eventWeights(), d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room(), d.sets()))
-                .contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+                .contentHash()).isEqualTo(legacyDefaults().contentHash());
     }
 
     @Test
@@ -143,7 +167,7 @@ class ConfigBindingTest {
                 r.defaultTimeLimitMinutes(), r.rollSecondsOptions(), r.defaultRollSeconds(), r.defaultEndMode(), r.bankruptcyCapMinutes());
         var oldSettings = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), oldRoom);
-        assertThat(SettingsMapper.toRuleConfig(oldSettings).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+        assertThat(SettingsMapper.toRuleConfig(oldSettings).contentHash()).isEqualTo(legacyDefaults().contentHash());
     }
 
     @Test
@@ -187,7 +211,7 @@ class ConfigBindingTest {
         // 旧版本快照没有 sets：按默认处理
         GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit(), d.room());
-        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(legacyDefaults().contentHash());
     }
 
     @Test
@@ -219,7 +243,7 @@ class ConfigBindingTest {
         // 旧版本快照没有 room：按默认处理
         GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise(), d.handLimit());
-        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(legacyDefaults().contentHash());
     }
 
     @Test
@@ -238,7 +262,7 @@ class ConfigBindingTest {
         // 旧版本快照没有 handLimit：按默认处理
         GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames(), d.lucky(), d.rentRise());
-        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(legacyDefaults().contentHash());
     }
 
     @Test
@@ -257,7 +281,7 @@ class ConfigBindingTest {
         // 旧版本快照没有 rentRise：按默认处理，规则与默认一致
         GameSettings old = new GameSettings(d.tiers(), d.station(), d.fees(), d.eventCash(), d.eventWeights(),
                 d.cardWeights(), d.tileNames(), d.lucky());
-        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(RuleConfigs.defaultV1().contentHash());
+        assertThat(SettingsMapper.toRuleConfig(old).contentHash()).isEqualTo(legacyDefaults().contentHash());
     }
 
     @Test

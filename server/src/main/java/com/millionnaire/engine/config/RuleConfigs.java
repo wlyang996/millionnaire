@@ -135,7 +135,10 @@ public final class RuleConfigs {
                         production, 1, production ? 3700 : 0, production ? 2300 : 0, production ? 1800 : 0, production ? 2600 : 0),
                 // 默认地图、默认初始现金、默认结束模式尚未裁定，此处为占位（见 m0-report 待确认）
                 new RoomOptions(2, List.of(2000L, 3000L, 5000L), BOARD_30, 3000, EndMode.TIME_LIMIT, 30, 15, true, false, 50),
-                RentInflation.DEFAULT, sets, eventsV2 ? StartPick.DEFAULT : StartPick.NONE);
+                RentInflation.DEFAULT, sets, eventsV2 ? StartPick.DEFAULT : StartPick.NONE,
+                production && eventsV2 ? RoundRewardConfig.DEFAULT : RoundRewardConfig.NONE,
+                production && eventsV2 ? FunTitleConfig.DEFAULT : FunTitleConfig.NONE,
+                production && eventsV2 ? CityEventConfig.DEFAULT : CityEventConfig.NONE);
     }
 
     /** 由紧凑记号生成棋盘。 */

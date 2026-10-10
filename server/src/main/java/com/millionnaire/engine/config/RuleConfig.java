@@ -23,7 +23,19 @@ public record RuleConfig(
         RoomOptions room,
         RentInflation rentInflation,
         SetBonus setBonus,
-        StartPick startPick) {
+        StartPick startPick,
+        RoundRewardConfig roundReward,
+        FunTitleConfig funTitles,
+        CityEventConfig cityEvents) {
+
+    /** Historical configurations do not acquire new gameplay when loaded. */
+    public RuleConfig(String ruleVersion, List<BoardTemplate> boards, List<TierPricing> tiers, StationPricing station,
+                      EconomyConfig economy, RatioConfig ratios, Map<CardType, Integer> cardWeights,
+                      Map<EventKind, Integer> eventWeights, TimingConfig timing, RoomOptions room, RentInflation rentInflation,
+                      SetBonus setBonus, StartPick startPick) {
+        this(ruleVersion, boards, tiers, station, economy, ratios, cardWeights, eventWeights, timing, room, rentInflation,
+                setBonus, startPick, RoundRewardConfig.NONE, FunTitleConfig.NONE, CityEventConfig.NONE);
+    }
 
     /** 不指定起点三选一时关闭（{@link StartPick#NONE}）。 */
     public RuleConfig(String ruleVersion, List<BoardTemplate> boards, List<TierPricing> tiers, StationPricing station,
@@ -49,6 +61,9 @@ public record RuleConfig(
     }
 
     public RuleConfig {
+        roundReward = roundReward == null ? RoundRewardConfig.NONE : roundReward;
+        funTitles = funTitles == null ? FunTitleConfig.NONE : funTitles;
+        cityEvents = cityEvents == null ? CityEventConfig.NONE : cityEvents;
         rentInflation = rentInflation == null ? RentInflation.DEFAULT : rentInflation;
         setBonus = setBonus == null ? SetBonus.NONE : setBonus;
         startPick = startPick == null ? StartPick.NONE : startPick;

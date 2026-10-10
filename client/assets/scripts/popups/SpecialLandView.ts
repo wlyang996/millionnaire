@@ -1,7 +1,7 @@
 /** Separate layouts from screens 20,21,22,23,25; supplied sprites, live values. */
 import { Node } from 'cc';
 import { Theme } from '../core/Theme';
-import { BAIL_COST, landPrice, START_BONUS, STATION } from '../core/Rules';
+import { BAIL_COST, landPrice, START_BONUS, STATION, stationRent } from '../core/Rules';
 import { art } from '../ui/Art';
 import { Button } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -99,11 +99,11 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         for (let i = 1; i <= total; i++) {
             const row = informationPanel(list.content, 'info_asset_panel', 0, (i - 1) * 44, 616, 42);
             caption(row, (!prop?.mortgaged && i === count ? '当前 · ' : '') + i + '座', 28, 0, 274, 42, 24);
-            art(row, 'info_cash', 344, 6, 30, 30); caption(row, String(i * STATION.rentEach), 390, 0, 194, 42, 26);
+            art(row, 'info_cash', 344, 6, 30, 30); caption(row, String(stationRent(i)), 390, 0, 194, 42, 26);
         }
         list.setContentHeight(total * 44);
-        caption(panel, '租金 = 未抵押车站数 × ' + STATION.rentEach + '；车站不可升级', 24, 248, 608, 38, 22);
-        caption(panel, prop?.mortgaged ? '抵押本金 ' + prop.mortgagePaid + ' · 抵押期间不收租' : '当前租金 ' + count * STATION.rentEach, 24, 286, 608, 38, 22);
+        caption(panel, '基础 = 未抵押车站数 × ' + STATION.rentEach + '；已含本局租金倍率', 24, 248, 608, 38, 22);
+        caption(panel, prop?.mortgaged ? '抵押本金 ' + prop.mortgagePaid + ' · 抵押期间不收租' : '当前租金 ' + stationRent(count), 24, 286, 608, 38, 22);
         redeemOrClose(p, index, 44, 1156, 632, close);
     } else if (tile.type === 'BANK') {
         // Screen20: cash, two tabs, selectable owned assets, totals, two footer actions.

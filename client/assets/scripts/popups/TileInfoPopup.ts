@@ -1,6 +1,6 @@
 /** Screen18: property identity, prices and four flat rent rows with live values. */
 import { Node } from 'cc';
-import { inflateRent, landPrice, TIERS } from '../core/Rules';
+import { inflateRent, landPrice, TIERS, upgradeCost } from '../core/Rules';
 import { applySet, groupMembers, setBonusPercent, setComplete } from '../core/SetBonus';
 import { art } from '../ui/Art';
 import { ctx } from '../ui/Ctx';
@@ -47,7 +47,7 @@ export class TileInfoPopup extends InformationPage {
         [price, upgrade].forEach((card, i) => {
             text(card, i ? '升级费' : '原价', 30, 8, 260, 36, 25, INK, { align: 'l' });
             art(card, 'info_cash', 28, 54, 52, 52);
-            text(card, String(i ? TIERS[tile.tier ?? 'LOW'].upgrade : landPrice(false, tile.tier)),
+            text(card, String(i ? upgradeCost(tile.tier ?? 'LOW') : landPrice(false, tile.tier)),
                 96, 44, 204, 66, 44, INK, { bold: true, align: 'l' });
         });
 

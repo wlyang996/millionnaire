@@ -114,6 +114,7 @@ export interface ChatLine {
 
 /** 对局视图（GameView）；myHand 为 [私有]；tiles/properties/lastDice/chat 为 [待服务端]。 */
 export interface GameView {
+    progress?: PublicProgress | null;
     gameNo: number;
     phase: GamePhase;
     players: PlayerView[];
@@ -288,7 +289,18 @@ export interface GameResult {
     gameNo: number;
     reason: string;
     standings: Standing[];
+    titles?: TitleAward[];
+    metrics?: Record<string, IncomeMetrics>;
 }
+
+export type CityKind = 'UPGRADE_DISCOUNT' | 'STATION_RENT' | 'PROPERTY_RENT';
+export interface CitySpec { kind: CityKind; enabled: boolean; name: string; weight: number; multiplierPercent: number; durationRounds: number; artworkKey: string }
+export interface CityEvent { id: number; spec: CitySpec; startRound: number; endRound: number }
+export interface IncomeMetrics { income: Record<string, number>; peakProperties: number; peakStations: number }
+export interface RewardAward { playerId: string; income: number; reward: number }
+export interface GlobalNotice { id: number; kind: 'ROUND_REWARD' | 'CITY_ANNOUNCED' | 'CITY_ACTIVE' | 'CITY_ENDED'; opensAt: number; endsAt: number; completedRound: number; awards: RewardAward[]; event: CityEvent | null }
+export interface TitleAward { kind: string; name: string; playerId: string; value: number; previousRank: number; finalRank: number }
+export interface PublicProgress { metrics: Record<string, IncomeMetrics>; observedRanks: Record<string, number>; rewardGranted: boolean; cityEvent: CityEvent | null; notices: GlobalNotice[] }
 
 /** 会话视图（SessionView） */
 export interface SessionView {

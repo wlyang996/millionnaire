@@ -45,6 +45,7 @@ import { CASH_DELTA_MS, CashChange, CashChangeNode, drawPlayerBar, liveRanks, ti
 import { BAIL_COST, MAX_HAND } from '../core/Rules';
 import { currentStep, drawGuide } from './board/Guide';
 import { boardHooks } from './board/BoardHooks';
+import { cityBadge, GlobalNoticeView } from './board/GlobalNoticeView';
 
 /** 停在休息区时自动展示休息区页面的时长 */
 const REST_SHOW_MS = 3000;
@@ -89,6 +90,9 @@ export class BoardScreen extends Screen {
     /** 入狱动画（谁、何时开始）；页面重建后按时间戳续播 */
     private jail: { name: string; start: number } | null = null;
     private jailOv: JailOverlay | null = null;
+    private globalOv: GlobalNoticeView | null = null;
+    private cityNode: Node | null = null;
+    private cityKey = '';
 
     constructor(private readonly spectator: boolean) {
         super();
@@ -118,6 +122,7 @@ export class BoardScreen extends Screen {
     }
 
     protected build(): void {
+        this.globalOv = null; this.cityNode = null; this.cityKey = '';
         const st = ctx.store;
         const game = this.displayGame(st.game);
         this.backdrop('sky');
@@ -175,6 +180,7 @@ export class BoardScreen extends Screen {
         const step = ctx.popups.count === 0 && !this.jail ? currentStep(game, st.me(), this.myId, st.eventDraw, this.spectator) : null;
         if (step) drawGuide(this.root, step, () => this.refresh());
         this.tickTexts();
+        this.tickGlobalNotice();
     }
 
     // ---------- 覆盖层 ----------
@@ -527,6 +533,7 @@ export class BoardScreen extends Screen {
         const st = ctx.store;
         const g = st.game;
         if (!this.view || !g) return;
+        this.tickGlobalNotice();
         if (this.dirty && !this.move && !(this.dice && this.dice.playing)) {
             this.refresh();
             return;
@@ -588,6 +595,7 @@ export class BoardScreen extends Screen {
     private cashAnimating(): boolean {
         const st = ctx.store;
         return !!this.move || !!(this.dice && this.dice.playing)
+            || !!st.game.progress?.notices.some(n => n.kind === 'ROUND_REWARD' && (st.online?.now() ?? 0) < n.endsAt)
             || !!st.online?.cues.some(c => c.kind === 'dice' || c.kind === 'move')
             || st.eventDraw.phase === 'FLIPPING' || st.eventDraw.phase === 'RESULT';
     }
@@ -612,6 +620,30 @@ export class BoardScreen extends Screen {
                 ...p, position: shown.has(p.playerId) ? shown.get(p.playerId)! : p.position, cash: this.shownCash.get(p.playerId) ?? p.cash,
             })),
         };
+    }
+
+    private tickGlobalNotice(): void {
+        const g = ctx.store.game;
+        const now = ctx.store.online?.now() ?? ctx.clock.now();
+        const notice = g.progress?.notices.find(n => now >= n.opensAt && now < n.endsAt);
+        const full = notice && (notice.kind === 'ROUND_REWARD' || notice.kind === 'CITY_ANNOUNCED') ? notice : null;
+        if (this.globalOv && this.globalOv.notice.id !== full?.id) { this.globalOv.destroy(); this.globalOv = null; }
+        const animationPending = this.move || this.dice?.playing || ctx.store.online?.cues.some(c => c.kind === 'move' || c.kind === 'dice')
+            || ctx.store.eventDraw.phase === 'FLIPPING' || ctx.store.eventDraw.phase === 'RESULT' || this.jailOv;
+        if (full && !this.globalOv && !animationPending) {
+            ctx.popups.closeAll();
+            this.globalOv = new GlobalNoticeView(this.root, full, g);
+        }
+        this.globalOv?.tick();
+        const short = notice && !full ? notice : undefined;
+        const city = short?.event ?? g.progress?.cityEvent;
+        const key = city ? city.id + ':' + (g.round ?? 0) + ':' + (short?.kind ?? '') : '';
+        if (this.cityKey !== key) {
+            this.cityNode?.removeFromParent(); this.cityNode?.destroy();
+            this.cityNode = cityBadge(this.root, g, g.players.length > 4 ? 222 : 158, short);
+            this.cityKey = key;
+            if (this.globalOv) this.globalOv.node.setSiblingIndex(this.root.children.length - 1);
+        }
     }
 
     private tickOnline(): void {

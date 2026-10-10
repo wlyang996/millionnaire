@@ -318,6 +318,19 @@ final class TurnModule {
         ctx.emit(new TurnStarted(Math.addExact(g.turn().turnNo(), 1), next.get()));
         // 回合交界是安全点：最多启动一个排队流程，回合在流程返回后再开始（O12）
         FlowCoordinator.enterSafePoint(ctx, GameModule.FLOW);
+        if (GameProgressModule.onRoundBoundary(ctx, leadMs)) return;
+        continueNewTurn(ctx, leadMs);
+    }
+
+    static void continueAfterGlobalNotice(DecisionContext<SessionState> ctx) {
+        if (game(ctx).phase() == GamePhase.DRAINING) {
+            finish(ctx, "TIME_UP");
+            return;
+        }
+        continueNewTurn(ctx, 0);
+    }
+
+    private static void continueNewTurn(DecisionContext<SessionState> ctx, long leadMs) {
         // 排队标的已失效（玩家出局、卡已弃、地块已抵押或易主）的申请先取消（正式规则；旧测试配置的占位申请没有标的）
         if (AuctionModule.enabled(ctx.config())) {
             for (FlowRequest r : List.copyOf(game(ctx).flow().queue())) {
@@ -595,6 +608,7 @@ final class TurnModule {
         }
         GameState g = game(ctx);
         TurnState t = g.turn();
+        if (g.progress().noticeTaskId() != 0) return;
         if (t.stage() == TurnStage.AWAITING_FLOW && g.flow().frames().isEmpty()) {
             // 只补足尚未播完的缓冲（若流程提前结束），不重复累计
             resume(ctx, t.continuation(), Math.max(0, t.notBefore() - ctx.now()));
@@ -715,11 +729,12 @@ final class TurnModule {
     static void finish(DecisionContext<SessionState> ctx, String reason) {
         GameState g = game(ctx);
         terminate(ctx);
-        ctx.emit(new GameEnded(g.gameNo(), reason, new GameResult(g.gameNo(), reason, standings(game(ctx), ctx.config()))));
+        ctx.emit(new GameEnded(g.gameNo(), reason, new GameResult(g.gameNo(), reason, standings(game(ctx), ctx.config()), GameProgressModule.titles(game(ctx), ctx.config()), game(ctx).progress().metrics())));
     }
 
     /** 清理对局占用的窗口、排队申请与任务（结算或管理端中止）。 */
     static void terminate(DecisionContext<SessionState> ctx) {
+        GameProgressModule.cancel(ctx);
         disarm(ctx);
         FlowCoordinator.cancelAll(ctx, GameModule.FLOW);
         FlowCoordinator.cancelQueue(ctx, GameModule.FLOW);
@@ -1093,10 +1108,10 @@ final class TurnModule {
                     && t.currentPlayer().equals(bottom.owner()) && t.stage().name().equals(bottom.resumeTag()),
                     "turn must be bound to the bottom TURN window");
         } else {
-            LobbyModule.expect(t.windowId() == 0 && bottom != null
+            LobbyModule.expect(t.windowId() == 0 && (bottom != null || g.progress().noticeTaskId() != 0)
                     && g.flow().frames().stream().noneMatch(f -> f.kind() == FlowKind.TURN),
                     "a turn awaiting a flow has no TURN window but at least one running flow");
-            LobbyModule.expect(bottom.window().paused() || bottom.window().opensAt() >= t.notBefore(),
+            LobbyModule.expect(bottom == null || bottom.window().paused() || bottom.window().opensAt() >= t.notBefore(),
                     "the flow opened before the pending animation ended");
         }
         FlowFrame top = g.flow().top().orElse(null);

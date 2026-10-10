@@ -65,6 +65,8 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
         fastMode: v.settings.fastMode ?? false,
     };
     const lastResult: GameResult | null = v.lastResult && {
+        titles: v.lastResult.titles ?? [],
+        metrics: v.lastResult.metrics ?? {},
         gameNo: v.lastResult.gameNo,
         reason: v.lastResult.reason,
         standings: v.lastResult.standings.map((s) => ({
@@ -102,6 +104,7 @@ function adaptGame(g: SGame, boards: BoardTemplate[] | null, lastDice: number, n
     const myHand: Card[] = g.myHand.map((type, i) => ({ id: type + '#' + i, type: type as CardType }));
     return {
         gameNo: g.gameNo,
+        progress: g.progress ?? null,
         phase: 'PLAYING',
         players,
         orderDraws: g.orderDraws.map((d) => ({ playerId: d.playerId, value: d.draws[d.draws.length - 1] ?? 0 })),

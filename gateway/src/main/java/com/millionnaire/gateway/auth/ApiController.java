@@ -203,6 +203,9 @@ public class ApiController {
                     players.add(p);
                 });
         out.put("players", players);
+        var result = com.millionnaire.gateway.record.ResultSnapshot.decode(d.resultJson());
+        out.put("titles", result.titles());
+        out.put("metrics", result.metrics());
         Object events = null;
         if (d.events() != null) {
             try {

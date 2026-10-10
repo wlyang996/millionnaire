@@ -20,3 +20,7 @@ export function serverUrl(): string {
 export function onlineEnabled(): boolean {
     return query('demo') !== '1';
 }
+
+export function previewName(): string | null {
+    return onlineEnabled() ? null : query('preview');
+}

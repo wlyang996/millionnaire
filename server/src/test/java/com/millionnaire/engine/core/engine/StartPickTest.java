@@ -22,7 +22,13 @@ import org.junit.jupiter.api.Test;
  * 30 格正式棋盘：p1 依次掷 5、6、5、6、6、2 停在 5 / 11 / 16 / 22 / 28 / 0，p2 掷 1、3、4、2、3 停在 1 / 4 / 8 / 10 / 13，途中只有买地窗口（都放弃）。
  */
 class StartPickTest {
-    private static final RuleConfig RULES = RuleConfigs.defaultV1();
+    // Isolate start-pick RNG from optional whole-round rewards/city draws.
+    private static final RuleConfig RULES = startPickRules();
+    private static RuleConfig startPickRules() {
+        var c = RuleConfigs.defaultV1();
+        return new RuleConfig(c.ruleVersion(), c.boards(), c.tiers(), c.station(), c.economy(), c.ratios(),
+                c.cardWeights(), c.eventWeights(), c.timing(), c.room(), c.rentInflation(), c.setBonus(), c.startPick());
+    }
 
     private static Table reachStart(List<ScriptedRandom.Step> after) {
         return reachStart(2, after);

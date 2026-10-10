@@ -8,7 +8,7 @@ import type { MockStore } from '../core/MockStore';
 import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType, StartPickResult } from '../core/Models';
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
 import { applyServerNames } from '../core/BoardNames';
-import { applyServerRules, BAIL_COST, luckyPool, rentPercent, setRentPercent } from '../core/Rules';
+import { applyServerRules, BAIL_COST, luckyPool, rentPercent, setRentPercent, setCityEvent } from '../core/Rules';
 import { applyServerSets } from '../core/SetBonus';
 import { appendLog } from './GameLog';
 import { serverUrl } from './Config';
@@ -365,6 +365,7 @@ export class OnlineSession {
         const rp = s.game?.rentPercent ?? 100;
         if (s.game && this.hadGame && rp > rentPercent()) this.onToast?.('物价上涨！第 ' + s.game.round + ' 轮起租金 ×' + rp / 100);
         setRentPercent(rp);
+        setCityEvent(s.game?.progress?.cityEvent ?? null, s.game?.round ?? 0);
         this.trackCards(u, s);
         this.trackStartPick(u, s);
         const hasGame = !!s.game;

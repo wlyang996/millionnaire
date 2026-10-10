@@ -99,6 +99,7 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 
 ## 轮次奖励、城市事件与结算称号（2026-10-10）
 
-- [32-半程奖励-城市事件-趣味称号-候选.png](32-半程奖励-城市事件-趣味称号-候选.png)：全员奖励提醒、城市预告、常驻标签与结算称号四状态，待用户审阅，尚未接入游戏。
+- [32-半程奖励-城市事件-趣味称号-候选.png](32-半程奖励-城市事件-趣味称号-候选.png)：四状态布局已获用户确认并接入。历史稿文件名保留，实际默认奖励名称为“月度荣耀奖励”，后台可改。
 - [完整方案](ui/global-gameplay-v1/方案.md)、[原稿与提示词](ui/global-gameplay-v1/README.md)、[来源记录](records/global-gameplay-2026-10-10.md)。用户已确认两种模式独立奖励轮次、累计玩法收入比例奖励（5%，每人封顶1000）；其余示例默认值待实施评审。
 - 互动表情、玩法预设、机器人策略暂缓；奖励/称号和城市事件完成后再增加好友系列赛。
+- [实施与验证记录](records/global-gameplay-implementation-2026-10-10.md)、[真实节点预览](records/global-gameplay-preview-2026-10-10/README.md)、[本批独立素材](assets-global-gameplay-v1/README.md)。尚未推送/部署或进行微信真机验证。

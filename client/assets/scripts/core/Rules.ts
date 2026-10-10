@@ -3,7 +3,7 @@ import { applyAnimationTiming, setRoomAnimation } from './Theme';
  * 规则常量与纯函数（无 cc 依赖，可用 node 直接断言）。数值取自 requirements.md / open-decisions.md，不得自创。
  * 取整：向上取整（open-decisions #1 / #12 的口径）。
  */
-import { PropertyState, Standing, Tier } from './Models';
+import { CityEvent, CityKind, CitySpec, PropertyState, Standing, Tier } from './Models';
 import { LUCKY_POOL, UNLUCKY_POOL } from './EventDraw';
 
 export interface TierRule {
@@ -51,6 +51,9 @@ export let START_PICK: StartPickRule = { cashWeight: 60, cardWeight: 40, cashMin
 
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
 export interface ServerRules {
+    roundReward?: { enabled: boolean; name: string; timeLimitRewardRound: number; bankruptcyRewardRound: number; rewardPercent: number; perPlayerCap: number; roundingUnit: number; incomeSources: string[]; presentationMs: number };
+    funTitles?: { enabled: boolean; titles: { kind: string; enabled: boolean; name: string; minimum: number }[] };
+    cityEvents?: { enabled: boolean; allowedModes: string[]; firstCheckRound: number; checkEveryRounds: number; triggerPercent: number; advanceRounds: number; announcementMs: number; activationMs: number; endMs: number; pool: CitySpec[] };
     lucky?: { kind: string; amount: number; label: string; weight: number; unlucky?: boolean }[];
     tiers: { tier: Tier; basePrice: number; upgradeCost: number; rents: number[] }[];
     station: { price: number; rentPerStation: number };
@@ -76,6 +79,9 @@ export interface ServerRules {
 
 /** 用房间绑定的参数版本覆盖价格、租金与固定费用（就地修改，已引用 TIERS / STATION 的地方随之生效）。 */
 export function applyServerRules(r: ServerRules): void {
+    GLOBAL_RULES.roundReward = r.roundReward;
+    GLOBAL_RULES.funTitles = r.funTitles;
+    GLOBAL_RULES.cityEvents = r.cityEvents;
     for (const t of r.tiers) {
         const rule = TIERS[t.tier];
         if (!rule || t.rents.length !== 4) continue;
@@ -156,6 +162,14 @@ export function landPrice(isStation: boolean, tier: Tier | undefined): number {
  * 联机以服务端视图的 rentPercent 为准，由 OnlineSession 写入；演示 / 限时模式为 100。
  */
 let rentPercentNow = 100;
+export const GLOBAL_RULES: Pick<ServerRules, 'roundReward' | 'funTitles' | 'cityEvents'> = {};
+let currentCity: CityEvent | null = null;
+let currentRound = 0;
+export function setCityEvent(event: CityEvent | null, round: number): void { currentCity = event; currentRound = round; }
+export function cityMultiplier(kind: CityKind): number {
+    return currentCity && currentRound >= currentCity.startRound && currentRound < currentCity.endRound && currentCity.spec.kind === kind ? currentCity.spec.multiplierPercent : 100;
+}
+export function upgradeCost(tier: Tier): number { return Math.max(1, Math.floor(TIERS[tier].upgrade * cityMultiplier('UPGRADE_DISCOUNT') / 100)); }
 export function setRentPercent(p: number): void {
     rentPercentNow = p > 0 ? p : 100;
 }
@@ -163,8 +177,10 @@ export function rentPercent(): number {
     return rentPercentNow;
 }
 /** 基础租金乘当前倍率，向下取整到 10（与服务端 RentInflation.apply 一致）。 */
-export function inflateRent(base: number): number {
-    return rentPercentNow === 100 ? base : Math.floor((base * rentPercentNow) / 100 / 10) * 10;
+export function inflateRent(base: number, station = false): number {
+    const inflated = rentPercentNow === 100 ? base : Math.floor((base * rentPercentNow) / 100 / 10) * 10;
+    const pct = cityMultiplier(station ? 'STATION_RENT' : 'PROPERTY_RENT');
+    return pct === 100 ? inflated : Math.floor(inflated * pct / 100 / 10) * 10;
 }
 
 export function rentOf(tier: Tier, level: number): number {
@@ -173,7 +189,7 @@ export function rentOf(tier: Tier, level: number): number {
 
 /** 车站租金 = 所有者持有未抵押车站数 × 200（乘当前租金倍率） */
 export function stationRent(unmortgagedStations: number): number {
-    return inflateRent(unmortgagedStations * STATION.rentEach);
+    return inflateRent(unmortgagedStations * STATION.rentEach, true);
 }
 
 /** 应急抵押可得金额（按土地原价 × 比例，非银行 100%） */

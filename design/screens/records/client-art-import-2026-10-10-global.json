@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-10",
+  "status": "runtime copies for UI preview; original candidates unchanged",
+  "files": 2,
+  "resourceKeys": 206,
+  "entries": [
+    {
+      "key": "reward_gift",
+      "source": "design/screens/assets-global-gameplay-v1/reward_gift.png",
+      "runtime": "client/assets/resources/art/global_gameplay/reward_gift.png",
+      "sha256": "2c95110a3dcc7421db9c54371b5f430ce50e208b215b186f5db65e48fcd7c763"
+    },
+    {
+      "key": "city_construction",
+      "source": "design/screens/assets-global-gameplay-v1/city_construction.png",
+      "runtime": "client/assets/resources/art/global_gameplay/city_construction.png",
+      "sha256": "5f47a68ef960b12f5482e66eb6d05dec7f64f269a3382b9bb23c0296f00c6f68"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import { fillCircle, fillRR, gfx, mk, onTap, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
 import { ScrollList } from '../ui/ScrollList';
 import { avatar } from '../ui/Widgets';
+import { titleMetric } from '../screens/board/GlobalNoticeView';
 
 const W = 680;
 const H = 1180;
@@ -107,6 +108,18 @@ export class GameDetailPopup extends Popup {
             y += 40;
         }
 
+        if (d.titles?.length) {
+            y = this.section(c, '本局趣味称号', y, lw);
+            for (const award of d.titles) {
+                const pl = d.players.find(p => p.playerId === award.playerId);
+                const n = mk(c, 'Title', 0, y, lw, 88);
+                fillRR(gfx(n), 0, 0, lw, 88, 18, '#FFF6DA');
+                avatar(n, 14, 12, 62, pl?.avatar ?? 0, pl?.nickname ?? '玩家');
+                text(n, award.name + ' · ' + (pl?.nickname ?? '玩家'), 94, 6, lw - 110, 40, 27, Theme.c.navy, { bold: true, align: 'l' });
+                text(n, titleMetric(award), 94, 48, lw - 110, 32, 22, Theme.c.noteGray, { align: 'l' });
+                y += 98;
+            }
+        }
         list.setContentHeight(y + 16);
     }
 

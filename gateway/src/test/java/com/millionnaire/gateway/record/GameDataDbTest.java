@@ -36,6 +36,31 @@ class GameDataDbTest {
     JdbcTemplate jdbc;
 
     @Test
+    void resultTitlesAndIncomeRemainReadableWithoutEventLogs() {
+        // H2 LENGTH(binary) differs from MySQL's byte length; keep the original migration unchanged.
+        jdbc.execute("ALTER TABLE game_record DROP CONSTRAINT ck_game_record_values");
+        jdbc.execute("ALTER TABLE game_record ADD CONSTRAINT ck_game_record_values CHECK (game_no >= 1 AND player_count >= 1"
+                + " AND player_count <= 8 AND initial_cash >= 0 AND ended_at >= started_at AND OCTET_LENGTH(draft_sha256) = 32)");
+        jdbc.update("INSERT INTO app_user (user_id, nickname, avatar_id, status, created_at, updated_at, last_login_at)"
+                + " VALUES (9002, '可可', 1, 'ACTIVE', 1, 1, 1)");
+        var title = new com.millionnaire.engine.core.state.GameProgressState.TitleAward("RENT_KING", "收租王", "9002", 500, 2, 1);
+        var metrics = new com.millionnaire.engine.core.state.GameProgressState.Metrics(
+                Map.of(com.millionnaire.engine.config.RoundRewardConfig.IncomeSource.RENT, 500L), 2, 1);
+        var result = new com.millionnaire.engine.core.state.GameResult(1, "TIME_UP", List.of(), List.of(title), Map.of("9002", metrics));
+        var d = new GameRecords.Draft(7003, 1, "TIME_UP", "TIME_LIMIT", 30, "classic-30", 3000,
+                1, 10, RuleConfigs.defaultV1().contentHash(),
+                List.of(new GameRecords.Seat(0, 9002, 1, 5000L, 3500L, "ALIVE")), ResultSnapshot.encode(result));
+        records.save(d); records.save(d);
+        String stored = jdbc.queryForObject("SELECT result_json FROM game_record WHERE room_id=7003 AND game_no=1", String.class);
+        assertThat(ResultSnapshot.decode(stored).titles()).containsExactly(title);
+        assertThat(ResultSnapshot.decode(stored).metrics()).containsEntry("9002", metrics);
+        assertThat(ResultSnapshot.decode(records.detail(9002, 7003, 1).orElseThrow().resultJson()).titles()).containsExactly(title);
+        assertThat(records.detail(9001, 7003, 1)).isEmpty();
+        assertThat(ResultSnapshot.decode(null).titles()).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM game_record WHERE room_id=7003 AND game_no=1", Integer.class)).isEqualTo(1);
+    }
+
+    @Test
     void gameLogRoundTripsThroughGzip() throws Exception {
         Engine<SessionState> engine = new Engine<>(RuleConfigs.defaultV1(), SessionDomain.INSTANCE);
         List<Event> events = List.of(new GameEvent.GameEnded(3, "TIME_UP", null));

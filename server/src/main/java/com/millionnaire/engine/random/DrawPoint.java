@@ -35,7 +35,9 @@ public enum DrawPoint {
     /** R10 危险牙。 */
     DANGER_TOOTH("R10"),
     /** R11 代选牙。 */
-    AUTO_TOOTH("R11");
+    AUTO_TOOTH("R11"),
+    CITY_TRIGGER("R13a"),
+    CITY_KIND("R13b");
 
     private final String code;
 
