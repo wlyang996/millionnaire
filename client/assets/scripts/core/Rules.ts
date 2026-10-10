@@ -51,6 +51,13 @@ export let START_PICK: StartPickRule = { cashWeight: 60, cardWeight: 40, cashMin
 
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
 export interface ServerRules {
+    /** Server-configured values only; no team entry is enabled until gameplay is integrated. */
+    team?: {
+        enabled: boolean; teamSizeOptions: number[]; defaultTeamSize: number;
+        allowBots: boolean; allyRentWaiver: boolean; allyRoadblockPass: boolean;
+        aidEnabled: boolean; aidMaxAmount: number; aidPerTurn: number; aidQuickAmounts: number[];
+        debtAidEnabled: boolean; debtAidWindowMs: number;
+    };
     series?: import('./Models').SeriesRules;
     roundReward?: { enabled: boolean; name: string; timeLimitRewardRound: number; bankruptcyRewardRound: number; rewardPercent: number; perPlayerCap: number; roundingUnit: number; incomeSources: string[]; presentationMs: number };
     funTitles?: { enabled: boolean; titles: { kind: string; enabled: boolean; name: string; minimum: number }[] };

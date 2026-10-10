@@ -74,6 +74,14 @@ public final class ConfigValidator {
         checkSets(c);
         errors.addAll(GlobalGameplayValidator.validate(c.roundReward(), c.funTitles(), c.cityEvents()));
         errors.addAll(SeriesConfig.validate(c.series()));
+        errors.addAll(TeamConfig.validate(c.team()));
+        if (c.team().enabled() && c.boards() != null && c.team().teamSizeOptions() != null) {
+            for (Integer size : c.team().teamSizeOptions()) {
+                if (size != null && size >= 2 && size <= 4 && c.boards().stream().noneMatch(
+                        b -> b != null && b.minPlayers() <= size * 2 && b.maxPlayers() >= size * 2))
+                    fail("组队形式" + size + "v" + size + "没有可容纳对应人数的地图");
+            }
+        }
         StartPick sp = c.startPick();
         if (sp.cashWeight() < 0 || sp.cardWeight() < 0 || sp.cashWeight() > 1000 || sp.cardWeight() > 1000) {
             fail("startPick weights must be in 0..1000");

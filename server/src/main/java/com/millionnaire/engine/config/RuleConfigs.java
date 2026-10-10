@@ -139,7 +139,7 @@ public final class RuleConfigs {
                 production && eventsV2 ? RoundRewardConfig.DEFAULT : RoundRewardConfig.NONE,
                 production && eventsV2 ? FunTitleConfig.DEFAULT : FunTitleConfig.NONE,
                 production && eventsV2 ? CityEventConfig.DEFAULT : CityEventConfig.NONE,
-                production && eventsV2 ? SeriesConfig.DEFAULT : SeriesConfig.NONE);
+                production && eventsV2 ? SeriesConfig.DEFAULT : SeriesConfig.NONE, TeamConfig.NONE);
     }
 
     /** 由紧凑记号生成棋盘。 */

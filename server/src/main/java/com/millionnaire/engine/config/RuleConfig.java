@@ -27,7 +27,17 @@ public record RuleConfig(
         RoundRewardConfig roundReward,
         FunTitleConfig funTitles,
         CityEventConfig cityEvents,
-        SeriesConfig series) {
+        SeriesConfig series,
+        TeamConfig team) {
+    /** Existing callers and historical configurations keep teams disabled. */
+    public RuleConfig(String ruleVersion, List<BoardTemplate> boards, List<TierPricing> tiers, StationPricing station,
+                      EconomyConfig economy, RatioConfig ratios, Map<CardType, Integer> cardWeights,
+                      Map<EventKind, Integer> eventWeights, TimingConfig timing, RoomOptions room, RentInflation rentInflation,
+                      SetBonus setBonus, StartPick startPick, RoundRewardConfig roundReward, FunTitleConfig funTitles,
+                      CityEventConfig cityEvents, SeriesConfig series) {
+        this(ruleVersion, boards, tiers, station, economy, ratios, cardWeights, eventWeights, timing, room,
+                rentInflation, setBonus, startPick, roundReward, funTitles, cityEvents, series, TeamConfig.NONE);
+    }
     public RuleConfig(String ruleVersion, List<BoardTemplate> boards, List<TierPricing> tiers, StationPricing station,
                       EconomyConfig economy, RatioConfig ratios, Map<CardType, Integer> cardWeights,
                       Map<EventKind, Integer> eventWeights, TimingConfig timing, RoomOptions room, RentInflation rentInflation,
@@ -70,6 +80,7 @@ public record RuleConfig(
     }
 
     public RuleConfig {
+        team = team == null ? TeamConfig.NONE : team;
         series = series == null ? SeriesConfig.NONE : series;
         roundReward = roundReward == null ? RoundRewardConfig.NONE : roundReward;
         funTitles = funTitles == null ? FunTitleConfig.NONE : funTitles;

@@ -31,7 +31,7 @@ const saved = ref('')          // 载入时的 JSON，用于判断是否有未�
 const errors = ref([])
 const history = ref([])
 
-const dirty = computed(() => form.value && JSON.stringify(form.value) !== saved.value)
+const dirty = computed(() => form.value && (drafts.teamQuickAmounts !== undefined || JSON.stringify(form.value) !== saved.value))
 const eventTotal = computed(() => sum(form.value?.eventWeights))
 const cardTotal = computed(() => sum(form.value?.cardWeights))
 function poolTotal(unlucky) {
@@ -60,6 +60,12 @@ function commit(key) {
   if (drafts[key] === undefined) return
   setList(key, drafts[key])
   delete drafts[key]
+}
+
+function commitTeamQuickAmounts() {
+  if (drafts.teamQuickAmounts === undefined || !form.value?.team) return
+  form.value.team.aidQuickAmounts = String(drafts.teamQuickAmounts).split(/[,，\s]+/).filter(Boolean).map(Number)
+  delete drafts.teamQuickAmounts
 }
 
 // 同组地产：某格同组的其他地名
@@ -220,6 +226,7 @@ async function load() {
     const a = await call('GET', '/admin-api/v1/config/active')
     active.value = a
     form.value = fill(a.settings)
+    delete drafts.teamQuickAmounts
     saved.value = JSON.stringify(a.settings)
     errors.value = []
     history.value = await call('GET', '/admin-api/v1/config/history')
@@ -241,6 +248,7 @@ async function useDefaults() {
   await ElMessageBox.confirm('把编辑区填成内置默认值（发布后才生效）？', '填入默认值', { type: 'warning' })
   try {
     form.value = fill(await call('GET', '/admin-api/v1/config/defaults'))
+    delete drafts.teamQuickAmounts
     errors.value = []
   } catch (e) {
     fail(e)
@@ -248,6 +256,7 @@ async function useDefaults() {
 }
 
 async function validate() {
+  commitTeamQuickAmounts()
   try {
     const r = await call('POST', '/admin-api/v1/config/validate', form.value)
     errors.value = r.errors
@@ -576,6 +585,25 @@ onMounted(() => {
           <el-form-item label="下一局最少人数"><el-input-number v-model="form.series.minPlayers" :min="2" :max="8" /></el-form-item>
           <p class="hint">累计积分相同即并列冠军，不额外比较胜场或净资产。普通单局仍是建房默认选项。</p>
         </el-form>
+      </el-tab-pane>
+      <el-tab-pane label="组队合作" name="team">
+        <el-alert class="gap" type="info" :closable="false" title="组队布局已确认，玩法正在接入。此页先配置规则，游戏入口尚未开放；当前默认关闭。个人资金和产权独立，队友免租，可自愿援助。" />
+        <el-form v-if="form.team" label-width="190px" class="narrow">
+          <el-form-item label="开放组队（尚未接通）"><el-switch v-model="form.team.enabled" disabled /><span class="hint">分队、免租、援助和客户端验证完成后开放</span></el-form-item>
+          <el-form-item label="允许的组队形式"><el-select v-model="form.team.teamSizeOptions" multiple><el-option v-for="n in [2,3,4]" :key="n" :label="n+'v'+n" :value="n" /></el-select></el-form-item>
+          <el-form-item label="默认组队形式"><el-select v-model="form.team.defaultTeamSize"><el-option v-for="n in form.team.teamSizeOptions" :key="n" :label="n+'v'+n" :value="n" /></el-select></el-form-item>
+          <el-form-item label="允许机器人"><el-switch v-model="form.team.allowBots" /><span class="hint">同时遵守已有机器人总开关；首版机器人不自动援助</span></el-form-item>
+          <el-form-item label="队友土地/车站免租"><el-switch v-model="form.team.allyRentWaiver" /></el-form-item>
+          <el-form-item label="队友通过路障"><el-switch v-model="form.team.allyRoadblockPass" /></el-form-item>
+          <el-form-item label="开放资金援助"><el-switch v-model="form.team.aidEnabled" /></el-form-item>
+          <el-form-item label="援助单笔上限"><el-input-number v-model="form.team.aidMaxAmount" :min="1" :max="1000000" /><span class="hint">还受本人未冻结的可用现金限制</span></el-form-item>
+          <el-form-item label="主动援助每回合次数"><el-input-number v-model="form.team.aidPerTurn" :min="1" :max="10" /><span class="hint">本人合法操作阶段；欠款求助另按缺口和债务窗口限制</span></el-form-item>
+          <el-form-item label="援助快捷金额"><el-input :model-value="drafts.teamQuickAmounts ?? form.team.aidQuickAmounts.join(', ')" @update:model-value="drafts.teamQuickAmounts=$event" @blur="commitTeamQuickAmounts" @keyup.enter="commitTeamQuickAmounts" /><span class="hint">1～6项，逗号分隔，不重复、不超过单笔上限</span></el-form-item>
+          <el-form-item label="开放欠款援助"><el-switch v-model="form.team.debtAidEnabled" /><span class="hint">仅在资金援助开放时生效，队友自愿出资</span></el-form-item>
+          <el-form-item label="欠款援助等待（毫秒）"><el-input-number v-model="form.team.debtAidWindowMs" :min="1000" :max="120000" :step="1000" /><span class="hint">求助不能延长倒计时，清算后不接受援助</span></el-form-item>
+          <p class="hint">30格只容纳2v2；50格可容纳2v2/3v3/4v4。按队伍净资产结算，个人破产后队友继续。援助不计累计玩法收入与月度奖励。</p>
+        </el-form>
+        <p v-else class="muted">当前服务端未下发组队参数，请升级服务端后配置；不使用浏览器自设默认金额。</p>
       </el-tab-pane>
       <el-tab-pane label="操作时限" name="timing">
         <el-form v-if="form.timing" label-width="170px" class="narrow">

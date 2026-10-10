@@ -71,7 +71,7 @@ public final class SettingsMapper {
                 new EventCash(e.eventCashMin(), e.eventCashMax(), e.eventCashStep()),
                 events, cards, DEFAULT_NAMES, defaultLucky(), defaultRentRise(), e.handLimit(),
                 defaultRoom(), defaultSets(), defaultTiming(), null, defaultStartPick(),
-                BASE.roundReward(), BASE.funTitles(), BASE.cityEvents(), BASE.series());
+                BASE.roundReward(), BASE.funTitles(), BASE.cityEvents(), BASE.series(), BASE.team());
     }
 
     /** 内置租金上涨参数（引擎默认）。 */
@@ -92,6 +92,9 @@ public final class SettingsMapper {
     }
     public static com.millionnaire.engine.config.SeriesConfig seriesOf(GameSettings s) {
         return s.series() == null ? com.millionnaire.engine.config.SeriesConfig.NONE : s.series();
+    }
+    public static com.millionnaire.engine.config.TeamConfig teamOf(GameSettings s) {
+        return s.team() == null ? com.millionnaire.engine.config.TeamConfig.NONE : s.team();
     }
 
     /** 内置操作时限（引擎默认）。 */
@@ -289,6 +292,7 @@ public final class SettingsMapper {
         startPick(errors, startPickOf(s));
         errors.addAll(GlobalGameplayValidator.validate(roundRewardOf(s), funTitlesOf(s), cityEventsOf(s)));
         errors.addAll(com.millionnaire.engine.config.SeriesConfig.validate(seriesOf(s)));
+        errors.addAll(com.millionnaire.engine.config.TeamConfig.validate(teamOf(s)));
         int hand = handLimitOf(s);
         if (hand < BASE.economy().initialHandSize() || hand > MAX_HAND_LIMIT) {
             errors.add("道具上限必须在 " + BASE.economy().initialHandSize() + "～" + MAX_HAND_LIMIT + " 张之间");
@@ -590,7 +594,7 @@ public final class SettingsMapper {
                 new GameSettings.Announcement(announcementOf(s).enabled(),
                         announcementOf(s).title() == null ? "" : announcementOf(s).title().strip(),
                         announcementOf(s).text() == null ? "" : announcementOf(s).text().strip()),
-                startPickOf(s), roundRewardOf(s), funTitlesOf(s), cityEventsOf(s), seriesOf(s));
+                startPickOf(s), roundRewardOf(s), funTitlesOf(s), cityEventsOf(s), seriesOf(s), teamOf(s));
     }
 
     /** 选项按从小到大保存（建房页按这个顺序显示）。 */
@@ -661,7 +665,7 @@ public final class SettingsMapper {
                 new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()),
                 new SetBonus(setsOf(s).rentPercent(), setsOf(s).groups()),
                 new StartPick(sp.cashWeight(), sp.cardWeight(), sp.cashMin(), sp.cashMax(), sp.cashStep()),
-                roundRewardOf(s), funTitlesOf(s), cityEventsOf(s), seriesOf(s));
+                roundRewardOf(s), funTitlesOf(s), cityEventsOf(s), seriesOf(s), teamOf(s));
     }
 
     private static Map<String, List<String>> loadDefaultNames() {

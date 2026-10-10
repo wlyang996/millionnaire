@@ -51,6 +51,7 @@ public class ClientConfigController {
             out.put("funTitles", SettingsMapper.funTitlesOf(s));
             out.put("cityEvents", SettingsMapper.cityEventsOf(s));
             out.put("series", SettingsMapper.seriesOf(s));
+            out.put("team", SettingsMapper.teamOf(s));
             // 版本 0（内置默认）随后台升级会变，不缓存；已发布版本内容不变，缓存一天
             CacheControl cache = id == GameConfigs.DEFAULT_ID ? CacheControl.noCache()
                     : CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic();
