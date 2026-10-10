@@ -272,6 +272,15 @@
                       "status":  "design candidate; not implemented in this request",
                       "sha256":  "433e815f00b10ca35a319cef0777313d89791d5a6ad6b5451f4dfeb265d54816",
                       "bytes":  2172697
+                  },
+                  {
+                      "file":  "32-半程奖励-城市事件-趣味称号-候选.png",
+                      "source":  "screens/ui/global-gameplay-v1/半程奖励-城市事件-趣味称号-v1.png",
+                      "version":  1,
+                      "role":  "轮次收入奖励全局提醒-城市事件预告与常驻标签-结算趣味称号",
+                      "status":  "design candidate awaiting user review; reward semantics confirmed; not implemented",
+                      "sha256":  "2a2968830d1ba21f9af6481f6eb3a2e0f676d7ea106568f0b92e2c020ba3e9a0",
+                      "bytes":  2588193
                   }
               ]
 }
