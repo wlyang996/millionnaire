@@ -91,6 +91,7 @@ export interface SCards {
 }
 
 export interface SGame {
+    team?: STeam | null;
     progress?: PublicProgress | null;
     gameNo: number;
     phase: 'RUNNING' | 'DRAINING';
@@ -136,7 +137,14 @@ export interface SResult {
     metrics?: Record<string, IncomeMetrics>;
 }
 
+export interface STeam {
+    teamSize: number;
+    assignments: Record<string, 'BLUE' | 'RED'>;
+    lockedGameNo: number;
+}
+
 export interface SView {
+    team?: STeam | null;
     series?: SeriesState | null;
     roomId: string;
     status: 'OPEN' | 'CLOSED';

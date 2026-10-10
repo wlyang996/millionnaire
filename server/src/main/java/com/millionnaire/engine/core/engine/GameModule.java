@@ -54,6 +54,7 @@ final class GameModule {
             return RejectionCode.ROOM_CLOSED;
         }
         return switch (command) {
+            case SessionCommand.TeamCommand c -> TeamModule.decide(ctx, c);
             case SessionCommand.ConfigureSeries c -> SeriesModule.configure(ctx, c);
             case SessionCommand.EndSeries c -> SeriesModule.end(ctx, c);
             case StartGame c -> start(ctx, c);
@@ -95,6 +96,8 @@ final class GameModule {
         }
         var rejected = SeriesModule.beforeStart(s, ctx.config());
         if (rejected != null) return rejected;
+        rejected = TeamModule.beforeStart(s, ctx.config());
+        if (rejected != null) return rejected;
         if (s.series() != null && s.series().status() == com.millionnaire.engine.core.state.SeriesState.Status.SETUP)
             ctx.emit(new com.millionnaire.engine.core.event.SeriesEvent.SeriesStarted(s.series().seriesNo(), lobby.members(), lobby.settings()));
         List<String> seats = lobby.members().stream().map(Member::playerId).toList();
@@ -107,6 +110,8 @@ final class GameModule {
         return switch (event) {
             case GameStarted x -> {
                 LobbyModule.check(!s.inGame() && x.gameNo() == s.gamesPlayed() + 1, "game number mismatch");
+                LobbyModule.check(TeamModule.beforeStart(s, rules) == null, "invalid team start");
+                if (s.team() != null) LobbyModule.check(s.lobby().members().stream().allMatch(Member::ready), "teams must be ready");
                 LobbyModule.check(x.seats().equals(s.lobby().members().stream().map(Member::playerId).toList()),
                         "seats must be the lobby members");
                 LobbyModule.check(x.settings().equals(s.lobby().settings()), "settings must be frozen from the lobby");
@@ -120,7 +125,8 @@ final class GameModule {
                         x.seats().stream().map(PlayerState::seated).toList(), List.of(),
                         new BoardState(x.settings().boardId(), ownables), TurnState.notStarted(),
                         FlowState.initial(s.nextWindowId()), Ledger.open(cash), new GameClock(0, 0), null, List.of());
-                yield s.withGame(g).withSeries(SeriesModule.started(s.series()));
+                var team = s.team() == null ? null : new com.millionnaire.engine.core.state.TeamState(s.team().teamSize(), s.team().assignments(), x.gameNo());
+                yield s.withGame(g.withTeam(team)).withTeam(team).withSeries(SeriesModule.started(s.series()));
             }
             case GameEnded x -> {
                 LobbyModule.check(s.inGame() && s.game().gameNo() == x.gameNo(), "no such game " + x.gameNo());
@@ -200,7 +206,7 @@ final class GameModule {
         RoomState back = new RoomState(l.status(), l.hostId(), LobbyModule.unready(l), l.settings());
         // 回房同时消费中止凭据，保证同一终态不能再被重用。
         return new SessionState(back, null, s.game().gameNo(), s.game().flow().nextWindowId(), result)
-                .withSeries(SeriesModule.ended(s.series(), result));
+                .withSeries(SeriesModule.ended(s.series(), result)).withTeam(TeamModule.unlock(s.team(), back));
     }
 
     /**
@@ -455,7 +461,7 @@ final class GameModule {
                 MinigameModule.view(g), CardModule.view(g), AuctionModule.view(g), TradeModule.view(g),
                 g.turn().round(), g.turn().rentPercent(),
                 new GameView.PublicProgress(g.progress().metrics(), g.progress().observedRanks(),
-                        g.progress().rewardGranted(), g.progress().cityEvent(), g.progress().notices()));
+                        g.progress().rewardGranted(), g.progress().cityEvent(), g.progress().notices()), g.team());
     }
 
     /** E6：当前落点的公开部分（步骤与决策是否仍待做）。 */

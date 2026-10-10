@@ -2,6 +2,13 @@ package com.millionnaire.engine.core.command;
 
 /** 开局 / 回房边界命令。 */
 public sealed interface SessionCommand extends Command {
+    sealed interface TeamCommand extends SessionCommand { }
+    /** 0 selects individual play; a positive value selects the configured number per team. */
+    record ConfigureTeams(String actor, int teamSize) implements TeamCommand { }
+    /** Real people choose their own team. */
+    record ChooseTeam(String actor, com.millionnaire.engine.core.state.TeamState.TeamId teamId) implements TeamCommand { }
+    /** Host may assign only a server-identified bot, never another real person. */
+    record AssignBotTeam(String actor, String target, com.millionnaire.engine.core.state.TeamState.TeamId teamId) implements TeamCommand { }
     /** 0 selects an ordinary game; changing series rules clears every ready flag. */
     record ConfigureSeries(String actor, int totalGames) implements SessionCommand { }
     /** Host may end a series between games, retaining every already awarded point. */

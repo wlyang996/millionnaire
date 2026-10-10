@@ -14,7 +14,18 @@ import java.util.Optional;
 public record GameState(long gameNo, long startedAt, RoomSettings settings, GamePhase phase, List<PlayerState> players,
                         List<OrderDraw> orderDraws, BoardState board, TurnState turn, FlowState flow, Ledger ledger,
                         GameClock clock, DebtState debt, List<String> pendingSurrenders, MinigameState minigame,
-                        CardState cards, AuctionState auction, TradeState trade, GameProgressState progress) {
+                        CardState cards, AuctionState auction, TradeState trade, GameProgressState progress, TeamState team) {
+    public GameState(long gameNo, long startedAt, RoomSettings settings, GamePhase phase, List<PlayerState> players,
+                     List<OrderDraw> orderDraws, BoardState board, TurnState turn, FlowState flow, Ledger ledger,
+                     GameClock clock, DebtState debt, List<String> pendingSurrenders, MinigameState minigame,
+                     CardState cards, AuctionState auction, TradeState trade, GameProgressState progress) {
+        this(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
+                pendingSurrenders, minigame, cards, auction, trade, progress, null);
+    }
+    public GameState withTeam(TeamState value) {
+        return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
+                pendingSurrenders, minigame, cards, auction, trade, progress, value);
+    }
     public GameState(long gameNo, long startedAt, RoomSettings settings, GamePhase phase, List<PlayerState> players,
                      List<OrderDraw> orderDraws, BoardState board, TurnState turn, FlowState flow, Ledger ledger,
                      GameClock clock, DebtState debt, List<String> pendingSurrenders, MinigameState minigame,
@@ -68,12 +79,12 @@ public record GameState(long gameNo, long startedAt, RoomSettings settings, Game
 
     public GameState withFlow(FlowState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, value, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withPlayers(List<PlayerState> value) {
         return new GameState(gameNo, startedAt, settings, phase, value, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withPlayer(PlayerState value) {
@@ -82,65 +93,65 @@ public record GameState(long gameNo, long startedAt, RoomSettings settings, Game
 
     public GameState withOrderDraws(List<OrderDraw> value) {
         return new GameState(gameNo, startedAt, settings, phase, players, value, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withBoard(BoardState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, value, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withTurn(TurnState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, value, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withLedger(Ledger value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, value, clock, debt,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withClock(GameClock value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, value, debt,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withPhase(GamePhase value) {
         return new GameState(gameNo, startedAt, settings, value, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withDebt(DebtState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, value,
-                pendingSurrenders, minigame, cards, auction, trade, progress);
+                pendingSurrenders, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withPendingSurrenders(List<String> value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                value, minigame, cards, auction, trade, progress);
+                value, minigame, cards, auction, trade, progress, team);
     }
 
     public GameState withMinigame(MinigameState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, value, cards, auction, trade, progress);
+                pendingSurrenders, value, cards, auction, trade, progress, team);
     }
 
     public GameState withCards(CardState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, value, auction, trade, progress);
+                pendingSurrenders, minigame, value, auction, trade, progress, team);
     }
 
     public GameState withAuction(AuctionState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, value, trade, progress);
+                pendingSurrenders, minigame, cards, value, trade, progress, team);
     }
 
     public GameState withTrade(TradeState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, auction, value, progress);
+                pendingSurrenders, minigame, cards, auction, value, progress, team);
     }
     public GameState withProgress(GameProgressState value) {
         return new GameState(gameNo, startedAt, settings, phase, players, orderDraws, board, turn, flow, ledger, clock, debt,
-                pendingSurrenders, minigame, cards, auction, trade, value);
+                pendingSurrenders, minigame, cards, auction, trade, value, team);
     }
 }

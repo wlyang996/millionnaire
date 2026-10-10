@@ -190,6 +190,13 @@ public class GameSocketHandler extends TextWebSocketHandler {
                             new ChangeSettings(pid, wire.settings(msg.get("settings"))));
                     case "KICK" -> room.submitClient(pid, requestId, new Kick(pid, text(msg, "target")));
                     case "START_GAME" -> room.submitClient(pid, requestId, new StartGame(pid));
+                    case "CONFIGURE_TEAMS" -> room.submitClient(pid, requestId,
+                            new com.millionnaire.engine.core.command.SessionCommand.ConfigureTeams(pid,
+                                    msg.path("teamSize").isIntegralNumber() && msg.path("teamSize").canConvertToInt() ? msg.path("teamSize").intValue() : -1));
+                    case "CHOOSE_TEAM" -> room.submitClient(pid, requestId,
+                            new com.millionnaire.engine.core.command.SessionCommand.ChooseTeam(pid, teamId(msg)));
+                    case "ASSIGN_BOT_TEAM" -> room.submitClient(pid, requestId,
+                            new com.millionnaire.engine.core.command.SessionCommand.AssignBotTeam(pid, text(msg, "target"), teamId(msg)));
                     case "CONFIGURE_SERIES" -> room.submitClient(pid, requestId,
                             new com.millionnaire.engine.core.command.SessionCommand.ConfigureSeries(pid, msg.path("totalGames").asInt(-1)));
                     case "END_SERIES" -> room.submitClient(pid, requestId,
@@ -202,6 +209,13 @@ public class GameSocketHandler extends TextWebSocketHandler {
             }
         }
         sockets.sendTo(session, wire.write(result(requestId, reply.outcome(), reply.code(), roomCode)));
+    }
+
+    /** Unknown team identifiers remain invalid rather than silently selecting a default. */
+    private static com.millionnaire.engine.core.state.TeamState.TeamId teamId(JsonNode msg) {
+        String value = msg.path("teamId").asText("");
+        for (var id : com.millionnaire.engine.core.state.TeamState.TeamId.values()) if (id.name().equals(value)) return id;
+        return null;
     }
 
     /** 机器人昵称：机器人1、机器人2……（按房间现有人数取号）。 */

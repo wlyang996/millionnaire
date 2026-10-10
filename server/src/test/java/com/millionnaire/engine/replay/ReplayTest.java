@@ -36,7 +36,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 class ReplayTest {
     /** 黄金值：锁定引擎行为 + 规范格式 + 随机协议。有意修改时同步更新，并提升 EngineVersion。 */
-    static final String GOLDEN_FINAL_HASH = "9ea7519d6f33b6a051cea16694eb9107e1b8737b29d33501b92f145024e04063";
+    static final String GOLDEN_FINAL_HASH = "495f9bc5c7fc6a1bd0a81eba5d0c7c9a3cd9d7df3b34085422f0933bb8344a26";
     /** 测试配置新增道具开关（EconomyConfig.cardsEnabled，测试配置关闭）后的配置哈希；之前为 15be5a0b…。 */
     /** 事件拆分（engine-0.13.0-m6c）给配置加了 0 权重的新事件种类与空的固定事件表，测试配置哈希因此变化，行为不变。 */
     /** 租金上涨（rentInflation）、同组加成（setBonus）与起点三选一（startPick）进入配置（2026-10-08），哈希变化；之前为 993156de… / fcdd7d92… / 10ea2d53…。 */

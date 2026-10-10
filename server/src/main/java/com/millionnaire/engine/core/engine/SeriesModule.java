@@ -21,6 +21,7 @@ final class SeriesModule {
         var s = ctx.state();
         if (s.inGame()) return RejectionCode.GAME_IN_PROGRESS;
         if (!s.lobby().isHost(c.actor())) return RejectionCode.NOT_HOST;
+        if (c.totalGames() > 0 && s.team() != null) return RejectionCode.NOT_ALLOWED;
         if (s.series() != null && s.series().locked()) return RejectionCode.NOT_ALLOWED;
         var r = ctx.config().series();
         if (c.totalGames() != 0 && (!r.enabled() || !r.gameOptions().contains(c.totalGames()))) return RejectionCode.INVALID_SETTINGS;
@@ -52,6 +53,7 @@ final class SeriesModule {
         return switch (e) {
             case SeriesEvent.SeriesConfigured x -> {
                 LobbyModule.check(!s.inGame() && (old == null || !old.locked()), "series configuration locked");
+                LobbyModule.check(x.totalGames() == 0 || s.team() == null, "series cannot be combined with teams");
                 long expected = old == null ? 1 : old.status() == SeriesState.Status.SETUP ? old.seriesNo() : old.seriesNo() + 1;
                 LobbyModule.check(expected == x.seriesNo() && (x.totalGames() == 0 || config.series().enabled() && config.series().gameOptions().contains(x.totalGames())), "invalid series configuration");
                 var l = s.lobby();

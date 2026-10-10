@@ -15,7 +15,15 @@ public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players,
                        BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
                        List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
                        PublicMinigame minigame, PublicCards cards, PublicAuction auction, PublicTrade trade,
-                       long round, int rentPercent, PublicProgress progress) {
+                       long round, int rentPercent, PublicProgress progress, TeamState team) {
+    public GameView(long gameNo, GamePhase phase, List<PublicPlayer> players, List<OrderDraw> orderDraws,
+                    BoardState board, long turnNo, String currentPlayer, TurnStage stage, long globalEndsAt,
+                    List<OpenWindow> windows, PublicLanding landing, PublicDebt debt, List<CardType> myHand,
+                    PublicMinigame minigame, PublicCards cards, PublicAuction auction, PublicTrade trade,
+                    long round, int rentPercent, PublicProgress progress) {
+        this(gameNo, phase, players, orderDraws, board, turnNo, currentPlayer, stage, globalEndsAt, windows,
+                landing, debt, myHand, minigame, cards, auction, trade, round, rentPercent, progress, null);
+    }
     public record PublicProgress(java.util.Map<String, GameProgressState.Metrics> metrics,
                                  java.util.Map<String, Integer> observedRanks, boolean rewardGranted,
                                  GameProgressState.CityEvent cityEvent, List<GameProgressState.Notice> notices) { }

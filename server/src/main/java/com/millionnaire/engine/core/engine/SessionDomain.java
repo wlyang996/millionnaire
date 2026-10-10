@@ -31,7 +31,7 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
 
     private static final TypeRegistry TYPES = TypeRegistry.builder()
             .add(Command.class, RoomCommand.class, SessionCommand.class, GameCommand.class)
-            .add(Event.class, RoomEvent.class, GameEvent.class, com.millionnaire.engine.core.event.SeriesEvent.class)
+            .add(Event.class, RoomEvent.class, GameEvent.class, com.millionnaire.engine.core.event.SeriesEvent.class, com.millionnaire.engine.core.event.TeamEvent.class)
             .add(DomainState.class, SessionState.class)
             .build();
 
@@ -86,6 +86,7 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
 
     @Override
     public SessionState acceptSystemInput(SessionState state, Input input) {
+        if (input.command() instanceof SessionCommand.TeamCommand c) return state.withTeamSource(c);
         if (input.command() instanceof SessionCommand.EndGame c) {
             return state.withAbortSource(new SessionState.AbortSource(input.seq(), c));
         }
@@ -112,6 +113,7 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     @Override
     public boolean recordsInputSource(Command command) {
         return Domain.super.recordsInputSource(command) || command instanceof GameCommand.DeclareBankruptcy
+                || command instanceof SessionCommand.TeamCommand
                 || command instanceof GameCommand.Surrender || command instanceof GameCommand.ResumeControl
                 || BusinessCommands.kind(command) == BusinessCommands.Kind.BUSINESS;
     }
@@ -134,6 +136,7 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     /** 步边界：对局中回合的步内衔接记录必须为空（C4）。 */
     @Override
     public void checkBoundary(SessionState state) {
+        if (state.teamSource() != null) throw new IllegalStateException("unconsumed team command source");
         if (state.inGame() && state.game().progress().cityDrawPending())
             throw new IllegalStateException("unconsumed city event draw");
         if (state.controlSource() != null) {
@@ -156,8 +159,9 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
             case RoomEvent e -> {
                 var next = state.withLobby(LobbyModule.evolve(state.lobby(), e));
                 if (e instanceof RoomEvent.PlayerLeft left) next = SeriesModule.memberLeft(next, left.playerId());
-                yield next;
+                yield TeamModule.roomChanged(next, e);
             }
+            case com.millionnaire.engine.core.event.TeamEvent e -> TeamModule.evolve(state, e, rules);
             case com.millionnaire.engine.core.event.SeriesEvent e -> SeriesModule.evolve(state, e, rules);
             case GameEvent.ControlChanged e -> {
                 LobbyModule.check(e.equals(state.controlSource()), "control change requires its matching accepted input source");
@@ -171,6 +175,8 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     @Override
     public void checkEvent(EngineState engine, Event event, RuleConfig rules) {
         SessionState current = (SessionState) engine.domain();
+        if (current.teamSource() != null && !(event instanceof com.millionnaire.engine.core.event.TeamEvent))
+            throw new IllegalStateException("team selection must immediately consume its input source");
         if (event instanceof GameEvent.MovementEffectCommitted e) {
             LobbyModule.check(e.source() != null && e.source().at() == engine.now(), "internal movement source time mismatch");
         }
@@ -237,6 +243,7 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
         LobbyModule.expect(state.abortSource() == null, "unconsumed EndGame source at a step boundary");
         LobbyModule.validate(state.lobby(), config);
         SeriesModule.validate(state, config);
+        TeamModule.validate(state, config);
         List<FlowCoordinator.TaskClaim> claims = GameModule.validate(engine, state, config, full);
         for (ScheduledTask t : engine.timers().tasks()) {
             LobbyModule.expect(claims.contains(new FlowCoordinator.TaskClaim(t.kind(), t.ref())),
@@ -250,6 +257,6 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
         SessionState s = (SessionState) state.domain();
         RoomState l = s.lobby();
         return new SessionView(state.roomId(), l.status(), l.hostId(), l.members(), l.settings(),
-                s.game() == null ? null : GameModule.view(s.game(), viewerId), s.gamesPlayed(), s.lastResult(), s.series());
+                s.game() == null ? null : GameModule.view(s.game(), viewerId), s.gamesPlayed(), s.lastResult(), s.series(), s.team());
     }
 }

@@ -56,6 +56,9 @@
 | `UPDATE_SETTINGS` | `settings` | 房主修改设置，全员重新准备 |
 | `KICK` | `target`（userId） | 房主开局前移除玩家 |
 | `START_GAME` | — | 房主开局（全员准备且人数够） |
+| `CONFIGURE_TEAMS` | `teamSize`: 0 / 服务端开放形式 | 房主选择个人模式（0）或每队人数；改模式清空分队和准备；组队与个人系列赛互斥。组队当前仍在开发，默认关闭 |
+| `CHOOSE_TEAM` | `teamId`: `BLUE` / `RED` | 真人选择自己的队伍，身份取连接令牌；不接受替他人选队，变动清除全部准备 |
+| `ASSIGN_BOT_TEAM` | `target`, `teamId`: `BLUE` / `RED` | 房主仅可分配服务端标识的机器人，不能把真人标作机器人来换队 |
 | `ADD_BOT` | — | 测试用：房主加一个机器人（新建测试用户"机器人N"）。机器人自动准备，开局后服务端把它转为托管、由引擎自动动作代打；对局结束回到大厅后自动重新准备；只剩机器人时它们自动离开、房间关闭。仅 `TEST_LOGIN_ENABLED=true` 时可用，否则 `BOTS_DISABLED`；对局中 `IN_GAME` |
 | `GAME` | `command`, `args` | 对局命令，见下表 |
 | `SET_CONTROL` | `mode`: `MANUAL` / `AWAY` / `HOSTED` | 切换自己的控制模式（暂离 / 托管） |

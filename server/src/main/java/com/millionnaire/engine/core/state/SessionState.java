@@ -14,22 +14,34 @@ import com.millionnaire.engine.core.event.GameEvent.ControlChanged;
  * @param controlSource 已核对输入的本步控制凭据；紧随的 ControlChanged 消费，步边界必须为空
  */
 public record SessionState(RoomState lobby, GameState game, long gamesPlayed, long nextWindowId, GameResult lastResult,
-                           AbortSource abortSource, ControlChanged controlSource, SeriesState series)
+                           AbortSource abortSource, ControlChanged controlSource, SeriesState series, TeamState team,
+                           com.millionnaire.engine.core.command.SessionCommand.TeamCommand teamSource)
         implements DomainState {
+
+    public SessionState(RoomState lobby, GameState game, long gamesPlayed, long nextWindowId, GameResult lastResult,
+                        AbortSource abortSource, ControlChanged controlSource, SeriesState series) {
+        this(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series, null, null);
+    }
+    public SessionState withTeam(TeamState value) {
+        return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series, value, teamSource);
+    }
+    public SessionState withTeamSource(com.millionnaire.engine.core.command.SessionCommand.TeamCommand value) {
+        return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series, team, value);
+    }
 
     public record AbortSource(long inputSeq, EndGame command) {
     }
 
     /** Accepted input's one-use control credential; never survives a step boundary or restore. */
     public SessionState withControlSource(ControlChanged value) {
-        return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, value, series);
+        return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, value, series, team, teamSource);
     }
     public SessionState(RoomState lobby, GameState game, long gamesPlayed, long nextWindowId, GameResult lastResult,
                         AbortSource abortSource, ControlChanged controlSource) {
         this(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, null);
     }
     public SessionState withSeries(SeriesState value) {
-        return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, value);
+        return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, value, team, teamSource);
     }
     public SessionState(RoomState lobby, GameState game, long gamesPlayed, long nextWindowId, GameResult lastResult,
                         AbortSource abortSource) {
@@ -44,14 +56,14 @@ public record SessionState(RoomState lobby, GameState game, long gamesPlayed, lo
     }
 
     public SessionState withLobby(RoomState value) {
-        return new SessionState(value, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series);
+        return new SessionState(value, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series, team, teamSource);
     }
 
     public SessionState withGame(GameState value) {
-        return new SessionState(lobby, value, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series);
+        return new SessionState(lobby, value, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series, team, teamSource);
     }
 
     public SessionState withAbortSource(AbortSource value) {
-        return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, value, controlSource, series);
+        return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, value, controlSource, series, team, teamSource);
     }
 }

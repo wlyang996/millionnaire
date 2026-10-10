@@ -8,7 +8,7 @@ import java.util.List;
  * 也不含原始 {@link GameState}（对局部分为按观察者投影的 {@link GameView}）。lastResult 为上一局结算摘要。
  */
 public record SessionView(String roomId, RoomStatus status, String hostId, List<Member> members, RoomSettings settings,
-                          GameView game, long gamesPlayed, GameResult lastResult, SeriesState series) {
+                          GameView game, long gamesPlayed, GameResult lastResult, SeriesState series, TeamState team) {
     public SessionView {
         members = Immutable.list(members);
     }

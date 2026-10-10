@@ -424,6 +424,7 @@ public final class LiveRoom {
                         c = new SetControl(session.game().gameNo(), bot, ControlMode.HOSTED);
                     }
                 } else if (lobby(s).status() == RoomStatus.OPEN
+                        && (session.team() == null || session.team().assignments().containsKey(bot))
                         && lobby(s).member(bot).map(m -> !m.ready()).orElse(false)) {
                     c = new SetReady(bot, true);
                 }

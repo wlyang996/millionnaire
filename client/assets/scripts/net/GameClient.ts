@@ -222,6 +222,9 @@ export class GameClient {
         return this.request('START_GAME');
     }
     configureSeries(totalGames: number): Promise<ResultMsg> { return this.request('CONFIGURE_SERIES', { totalGames }); }
+    configureTeams(teamSize: number): Promise<ResultMsg> { return this.request('CONFIGURE_TEAMS', { teamSize }); }
+    chooseTeam(teamId: 'BLUE' | 'RED'): Promise<ResultMsg> { return this.request('CHOOSE_TEAM', { teamId }); }
+    assignBotTeam(target: string, teamId: 'BLUE' | 'RED'): Promise<ResultMsg> { return this.request('ASSIGN_BOT_TEAM', { target, teamId }); }
     endSeries(seriesNo: number): Promise<ResultMsg> { return this.request('END_SERIES', { seriesNo }); }
 
     game(command: GameCommandName, args: GameArgs = {}): Promise<ResultMsg> {

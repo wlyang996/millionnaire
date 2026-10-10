@@ -120,7 +120,7 @@ final class TurnModule {
             }
             drawers = TurnOrder.tiedGroups(game(ctx).orderDraws()).stream().flatMap(List::stream).toList();
         }
-        ctx.emit(new TurnOrderFixed(TurnOrder.order(game(ctx).orderDraws())));
+        ctx.emit(new TurnOrderFixed(TeamModule.turnOrder(game(ctx))));
     }
 
     /** 开局发牌（R2）：按行动顺序，每人连续抽房间设置的张数（默认沿用 initialHandSize；0 = 不发）；牌面私发，张数公开。 */
@@ -829,7 +829,7 @@ final class TurnModule {
                 yield next.withOrderDraws(out);
             }
             case TurnOrderFixed e -> {
-                check(k.drawQueue().isEmpty() && e.order().equals(TurnOrder.order(g.orderDraws())),
+                check(k.drawQueue().isEmpty() && e.order().equals(TeamModule.turnOrder(g)),
                         "turn order does not follow the draws");
                 yield g.withPlayers(e.order().stream().map(id -> g.player(id).orElseThrow()).toList());
             }
@@ -1054,7 +1054,7 @@ final class TurnModule {
                         && o.draws().stream().allMatch(v -> v != null && v >= 1 && v <= config.economy().orderNumberMax())),
                 "order draws invalid");
         LobbyModule.expect(TurnOrder.tiedGroups(g.orderDraws()).isEmpty()
-                && TurnOrder.order(g.orderDraws()).equals(g.players().stream().map(PlayerState::playerId).toList()),
+                && TeamModule.turnOrder(g).equals(g.players().stream().map(PlayerState::playerId).toList()),
                 "player order must follow the order draws");
         Ledger l = g.ledger();
         TreeSet<String> ids = new TreeSet<>(g.players().stream().map(PlayerState::playerId).toList());

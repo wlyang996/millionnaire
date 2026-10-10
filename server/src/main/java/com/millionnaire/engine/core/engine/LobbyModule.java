@@ -49,6 +49,8 @@ final class LobbyModule {
             return RejectionCode.GAME_IN_PROGRESS;
         }
         var series = ctx.state().series();
+        var team = ctx.state().team();
+        if (team != null && command instanceof RoomCommand.JoinBot && !ctx.config().team().allowBots()) return RejectionCode.NOT_ALLOWED;
         if (series != null && series.locked() && (command instanceof Join || command instanceof RoomCommand.JoinBot || command instanceof Kick || command instanceof ChangeSettings))
             return RejectionCode.NOT_ALLOWED;
         if (series != null && series.status() == com.millionnaire.engine.core.state.SeriesState.Status.SETUP
@@ -128,6 +130,7 @@ final class LobbyModule {
         if (s.members().size() >= board(ctx.config(), s.settings()).maxPlayers()) {
             return RejectionCode.ROOM_FULL;
         }
+        if (ctx.state().team() != null && s.members().size() >= ctx.state().team().teamSize() * 2) return RejectionCode.ROOM_FULL;
         ctx.emit(new PlayerJoined(c.playerId(), nickname, bot));
         if (ctx.state().lobby().hostId() == null) {
             ctx.emit(new HostChanged(c.playerId()));
@@ -169,6 +172,7 @@ final class LobbyModule {
         if (m.isEmpty()) {
             return RejectionCode.NOT_MEMBER;
         }
+        if (c.ready() && ctx.state().team() != null && !ctx.state().team().assignments().containsKey(c.playerId())) return RejectionCode.TEAM_NOT_SELECTED;
         if (m.get().ready() == c.ready()) {
             return RejectionCode.UNCHANGED;
         }
@@ -191,6 +195,7 @@ final class LobbyModule {
         if (s.members().size() > board(ctx.config(), n).maxPlayers()) {
             return RejectionCode.CAPACITY_EXCEEDED;
         }
+        if (ctx.state().team() != null && !TeamModule.fits(ctx.config(), n, ctx.state().team().teamSize())) return RejectionCode.CAPACITY_EXCEEDED;
         ctx.emit(new SettingsChanged(n));
         return null;
     }
