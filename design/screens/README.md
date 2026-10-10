@@ -108,3 +108,7 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 
 - [33-好友系列赛-设置-积分-结算-候选.png](33-好友系列赛-设置-积分-结算-候选.png)：首局设置、局间积分与系列冠军三状态，已获用户批准并接入。历史候选文件名保留。
 - [方案](ui/friend-series-v1/方案.md)、[原稿与提示词](ui/friend-series-v1/README.md)、[来源记录](records/friend-series-2026-10-10.md)、[实施记录](records/friend-series-implementation-2026-10-10.md)、[真实预览](records/friend-series-preview-2026-10-10/README.md)。默认普通单局，系列可选3/5/7局并在后台配置；蓝绶带等素材复用存在视觉差异，未声称逐像素还原。
+
+## 组队合作方案（2026-10-10）
+
+[规则与实现方案](ui/team-coop-v1/方案.md)、[来源记录](records/team-coop-2026-10-10.md)。用户已确认个人资金和产权独立、队友免租及可互相援助；具体细则和34号UI待评审，尚未实现。首版建议组队单局，与现有个人系列赛互斥。
