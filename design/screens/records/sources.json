@@ -296,7 +296,7 @@
                       "source":  "screens/ui/team-coop-v1/分队-棋盘-队友资产-v1.png",
                       "version":  1,
                       "role":  "组队分队准备-个人现金与队伍净资产-队友个人资产",
-                      "status":  "candidate awaiting user review; not implemented",
+                      "status":  "layout approved by user; not implemented",
                       "sha256":  "ba6c35e33b949f93cf47db761402952901470fd44ae4ce15580a8e94d2958753",
                       "bytes":  2408089
                   },
@@ -305,7 +305,7 @@
                       "source":  "screens/ui/team-coop-v1/主动援助-欠款援助-队伍结算-v1.png",
                       "version":  1,
                       "role":  "主动援助-队友欠款出资-单局队伍结算",
-                      "status":  "candidate awaiting user review; not implemented",
+                      "status":  "layout approved by user; not implemented",
                       "sha256":  "5265085ddf1f6056f3e5a73fa6c0dc131ed5e1823981df71707b2fe1f397f443",
                       "bytes":  2272033
                   },
@@ -314,7 +314,7 @@
                       "source":  "screens/ui/team-coop-v1/队友土地-敌方土地-欠款发起求助-v1.png",
                       "version":  1,
                       "role":  "队友与敌方土地-当前等级-欠款人发起求助",
-                      "status":  "candidate awaiting user review; not implemented",
+                      "status":  "layout approved by user; not implemented",
                       "sha256":  "d9eb5a4b45d5a7d280798b34deb3aa33912f5861cf6b2ed387270aaadae1910c",
                       "bytes":  2226874
                   }

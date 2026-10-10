@@ -1,4 +1,4 @@
-{
+﻿{
   "date": "2026-10-10",
   "generator": "built-in image_gen",
   "references": [
@@ -21,7 +21,7 @@
         "prompt-34.txt",
         "prompt-34-correction.txt"
       ],
-      "status": "candidate awaiting user review; not implemented"
+      "status": "layout approved by user; not implemented"
     },
     {
       "file": "ui/team-coop-v1/主动援助-欠款援助-队伍结算-v1.png",
@@ -34,7 +34,7 @@
       "prompts": [
         "prompt-35.txt"
       ],
-      "status": "candidate awaiting user review; not implemented"
+      "status": "layout approved by user; not implemented"
     },
     {
       "file": "ui/team-coop-v1/队友土地-敌方土地-欠款发起求助-v1.png",
@@ -47,7 +47,7 @@
       "prompts": [
         "prompt-36.txt"
       ],
-      "status": "candidate awaiting user review; not implemented"
+      "status": "layout approved by user; not implemented"
     }
   ]
 }
