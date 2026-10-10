@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-10",
+  "generator": "built-in image_gen",
+  "references": [
+    "08-风格参考B-大厅与好友房间.png",
+    "18-资产总览-格子详情-房间号键盘-候选.png",
+    "33-好友系列赛-设置-积分-结算-候选.png",
+    "01-对局棋盘-普通回合.png"
+  ],
+  "initial_variant": "ui/team-coop-v1/raw/分队-棋盘-队友资产-初稿-v1.png",
+  "files": [
+    {
+      "file": "ui/team-coop-v1/分队-棋盘-队友资产-v1.png",
+      "gallery": "34-组队合作-分队-棋盘-队友资产-候选.png",
+      "generated_source": "C:/Users/Administrator/.codex/generated_images/01a10ec9-bf84-7480-b53f-50c189c668dc/exec-57a9432e-52de-485f-a92e-97f82c1b6386.png",
+      "sha256": "ba6c35e33b949f93cf47db761402952901470fd44ae4ce15580a8e94d2958753",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2408089,
+      "prompts": [
+        "prompt-34.txt",
+        "prompt-34-correction.txt"
+      ],
+      "status": "candidate awaiting user review; not implemented"
+    },
+    {
+      "file": "ui/team-coop-v1/主动援助-欠款援助-队伍结算-v1.png",
+      "gallery": "35-组队合作-主动援助-欠款援助-队伍结算-候选.png",
+      "generated_source": "C:/Users/Administrator/.codex/generated_images/01a10ec9-bf84-7480-b53f-50c189c668dc/exec-459e6478-f536-46e8-b5df-5dc52ccea696.png",
+      "sha256": "5265085ddf1f6056f3e5a73fa6c0dc131ed5e1823981df71707b2fe1f397f443",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2272033,
+      "prompts": [
+        "prompt-35.txt"
+      ],
+      "status": "candidate awaiting user review; not implemented"
+    },
+    {
+      "file": "ui/team-coop-v1/队友土地-敌方土地-欠款发起求助-v1.png",
+      "gallery": "36-组队合作-土地详情-欠款发起求助-候选.png",
+      "generated_source": "C:/Users/Administrator/.codex/generated_images/01a10ec9-bf84-7480-b53f-50c189c668dc/exec-c87394bc-3265-4d1a-8211-c62399e56142.png",
+      "sha256": "d9eb5a4b45d5a7d280798b34deb3aa33912f5861cf6b2ed387270aaadae1910c",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2226874,
+      "prompts": [
+        "prompt-36.txt"
+      ],
+      "status": "candidate awaiting user review; not implemented"
+    }
+  ]
+}
