@@ -101,6 +101,7 @@
 
 `view` 为引擎的 `SessionView`：`status`、`hostId`、`members[{playerId,nickname,ready}]`、`settings`、`game`（未开局为 null）、`gamesPlayed`、`lastResult`。
 `game` 含 `players`（位置、现金、手牌数、监狱、控制与连接状态）、`board.ownables`、`currentPlayer`、`stage`、`windows[{windowId,kind,owner,opensAt,deadline,paused}]`、`landing`、`debt`、`myHand`（只有自己的手牌）。
+组队局的`team`随大厅和`game`返回冻结分队；正常结算的`lastResult.teamStandings`包含`teamId`、`rank`、`netWorth`、`members`和`survivors`。队伍净资产只汇总存活成员，`lastResult.standings`仍为个人成绩；普通局队伍成绩为空列表。只剩一队以`LAST_TEAM`结束，队友免租受绑定配置`allyRentWaiver`控制。完整组队UI、援助和历史战绩尚未接入，入口仍关闭。
 倒计时请用 `deadline - serverTime` 结合本地时钟偏差计算，不要只靠本地计时器。
 
 ### 挂机判定

@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.millionnaire.engine.config.TeamConfig;
-import com.millionnaire.engine.core.command.SessionCommand;
+import com.millionnaire.engine.core.command.GameCommand;
 import com.millionnaire.engine.core.state.Member;
 import com.millionnaire.engine.core.state.TeamState.TeamId;
 import com.millionnaire.gateway.config.*;
@@ -85,7 +85,25 @@ class TeamRoomFlowTest {
                 assertThat(snapshot.path("view").path("game").path("team").path("lockedGameNo").asLong()).isEqualTo(frozen.lockedGameNo());
                 assertThat(snapshot.path("view").has("teamSource")).isFalse();
             }
-            room.submitSystem(new SessionCommand.EndGame(room.gameNo().orElseThrow(), "TEST_STOP"));
+            long gameNo = room.gameNo().orElseThrow();
+            String redBot = bots.get(1).playerId();
+            assertThat(room.submitClient(redBot, "team-bot-surrender", new GameCommand.Surrender(redBot, gameNo)).ok()).isTrue();
+            assertThat(room.gameNo()).isPresent();
+            assertThat(room.submitClient(bid, "team-human-surrender", new GameCommand.Surrender(bid, gameNo)).ok()).isTrue();
+            assertThat(room.gameNo()).isEmpty();
+            var result = room.view(aid).lastResult();
+            assertThat(result.reason()).isEqualTo("LAST_TEAM");
+            assertThat(result.teamStandings()).hasSize(2);
+            assertThat(result.teamStandings().getFirst().teamId()).isEqualTo(TeamId.BLUE);
+            assertThat(result.teamStandings().getFirst().survivors()).containsExactlyInAnyOrder(aid, bots.getFirst().playerId());
+            assertThat(result.teamStandings().getFirst().netWorth()).isEqualTo(6000);
+            assertThat(result.standings().stream().filter(s -> s.playerId().equals(aid)).findFirst().orElseThrow().cash()).isEqualTo(3000);
+            try (WsClient reconnect = new WsClient(port, (String) a.get("token"))) {
+                reconnect.awaitType("HELLO");
+                var snapshot = reconnect.awaitType("UPDATE");
+                assertThat(snapshot.path("view").path("lastResult").path("teamStandings").size()).isEqualTo(2);
+                assertThat(snapshot.path("view").path("lastResult").path("reason").asText()).isEqualTo("LAST_TEAM");
+            }
             assertThat(room.view(aid).team().locked()).isFalse();
             assertThat(room.view(aid).team().assignments()).isEqualTo(frozen.assignments());
             assertThat(room.view(aid).members().stream().filter(m -> !m.bot())).allMatch(m -> !m.ready());

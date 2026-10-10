@@ -290,6 +290,7 @@ export interface GameResult {
     gameNo: number;
     reason: string;
     standings: Standing[];
+    teamStandings?: { teamId: 'BLUE' | 'RED'; rank: number; netWorth: number; members: string[]; survivors: string[] }[];
     titles?: TitleAward[];
     metrics?: Record<string, IncomeMetrics>;
 }

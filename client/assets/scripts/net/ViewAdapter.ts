@@ -65,6 +65,7 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
         fastMode: v.settings.fastMode ?? false,
     };
     const lastResult: GameResult | null = v.lastResult && {
+        teamStandings: v.lastResult.teamStandings ?? [],
         titles: v.lastResult.titles ?? [],
         metrics: v.lastResult.metrics ?? {},
         gameNo: v.lastResult.gameNo,

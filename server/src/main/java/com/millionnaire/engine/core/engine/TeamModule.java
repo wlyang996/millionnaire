@@ -15,6 +15,35 @@ import java.util.TreeSet;
 
 final class TeamModule {
     private TeamModule() { }
+    static boolean rentWaived(RuleConfig rules, GameState g, String payer, String owner) {
+        return g.team() != null && rules.team().allyRentWaiver() && g.team().sameTeam(payer, owner);
+    }
+    static long survivingTeams(GameState g) {
+        return g.alive().stream().map(p -> g.team().assignments().get(p.playerId())).distinct().count();
+    }
+    static List<TeamStanding> standings(GameState g, RuleConfig rules) {
+        if (g.team() == null) return List.of();
+        var rows = new ArrayList<TeamStanding>();
+        for (var id : TeamId.values()) {
+            var members = g.team().assignments().entrySet().stream().filter(e -> e.getValue() == id)
+                    .map(java.util.Map.Entry::getKey).toList();
+            var survivors = members.stream().filter(pid -> g.player(pid).orElseThrow().alive()).toList();
+            long total = 0;
+            for (String pid : survivors) total = Math.addExact(total, EconomyModule.netWorth(rules, g, pid));
+            rows.add(new TeamStanding(id, 0, total, members, survivors));
+        }
+        rows.sort(java.util.Comparator.comparing((TeamStanding row) -> row.survivors().isEmpty())
+                .thenComparing(java.util.Comparator.comparingLong(TeamStanding::netWorth).reversed()));
+        var result = new ArrayList<TeamStanding>();
+        for (int i = 0; i < rows.size(); i++) {
+            var row = rows.get(i);
+            int rank = i + 1;
+            if (i > 0 && row.survivors().isEmpty() == rows.get(i - 1).survivors().isEmpty()
+                    && row.netWorth() == rows.get(i - 1).netWorth()) rank = result.get(i - 1).rank();
+            result.add(new TeamStanding(row.teamId(), rank, row.netWorth(), row.members(), row.survivors()));
+        }
+        return List.copyOf(result);
+    }
     static RejectionCode decide(DecisionContext<SessionState> ctx, TeamCommand c) {
         var rejected = rejection(ctx.state(), c, ctx.config());
         if (rejected != null) return rejected;

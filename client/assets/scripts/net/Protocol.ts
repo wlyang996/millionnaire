@@ -133,6 +133,7 @@ export interface SResult {
     gameNo: number;
     reason: string;
     standings: SStanding[];
+    teamStandings?: { teamId: 'BLUE' | 'RED'; rank: number; netWorth: number; members: string[]; survivors: string[] }[];
     titles?: TitleAward[];
     metrics?: Record<string, IncomeMetrics>;
 }

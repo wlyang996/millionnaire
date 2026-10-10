@@ -729,7 +729,7 @@ final class TurnModule {
     static void finish(DecisionContext<SessionState> ctx, String reason) {
         GameState g = game(ctx);
         terminate(ctx);
-        ctx.emit(new GameEnded(g.gameNo(), reason, new GameResult(g.gameNo(), reason, standings(game(ctx), ctx.config()), GameProgressModule.titles(game(ctx), ctx.config()), game(ctx).progress().metrics())));
+        ctx.emit(new GameEnded(g.gameNo(), reason, new GameResult(g.gameNo(), reason, standings(game(ctx), ctx.config()), GameProgressModule.titles(game(ctx), ctx.config()), game(ctx).progress().metrics(), TeamModule.standings(game(ctx), ctx.config()))));
         var series = ctx.state().series();
         if (series != null && !series.games().isEmpty() && series.games().getLast().gameNo() == g.gameNo())
             ctx.emit(new com.millionnaire.engine.core.event.SeriesEvent.SeriesGameScored(series.seriesNo(), series.games().getLast()));

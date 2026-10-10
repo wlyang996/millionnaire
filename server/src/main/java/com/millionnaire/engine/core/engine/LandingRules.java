@@ -49,7 +49,8 @@ final class LandingRules {
                         && g.phase() == com.millionnaire.engine.core.state.GamePhase.RUNNING,
                 (c, g, l) -> LobbyModule.board(c, g.settings()).tiles().get(l.tile()).type() == com.millionnaire.engine.config.TileType.BANK,
                 List.of(new Outcome(LandingResult.BANK_FINISHED, List.of()))),
-        new Rule(LandingStep.RENT, Execution.RENT, null, ALWAYS, (c, g, l) -> false,
+        new Rule(LandingStep.RENT, Execution.RENT, null, (c, g, l) ->
+                EconomyModule.shouldChargeRent(c, g, g.turn().currentPlayer(), g.board().ownable(l.tile()).orElse(null)), (c, g, l) -> false,
                 List.of(new Outcome(LandingResult.PAID, List.of()))),
         new Rule(LandingStep.EVENT, Execution.WINDOW, StageTable.Point.EVENT_DRAW,
                 (c, g, l) -> eventTile(c, g, l) && !g.turn().chain().eventDrawn(),

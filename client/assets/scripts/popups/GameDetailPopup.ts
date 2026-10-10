@@ -23,6 +23,7 @@ const PLAYER_H = 96;
 const REASONS: Record<string, string> = {
     TIME_UP: '时间到，按净资产排名',
     LAST_SURVIVOR: '只剩一名玩家',
+    LAST_TEAM: '只剩一支队伍',
     ALL_ELIMINATED: '所有玩家都已出局',
     ALL_AWAY: '全员挂机或托管',
     NO_PLAYERS: '玩家都离开了',

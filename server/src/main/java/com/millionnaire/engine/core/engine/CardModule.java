@@ -361,7 +361,7 @@ final class CardModule {
     static boolean rentResponseDue(RuleConfig config, GameState g, int tileIndex) {
         String payer = g.turn().currentPlayer();
         return enabled(config) && holds(g, payer, CardType.RENT_WAIVER) && g.board().ownable(tileIndex)
-                .map(o -> o.owner() != null && !o.owner().equals(payer) && !o.mortgaged()).orElse(false);
+                .map(o -> EconomyModule.shouldChargeRent(config, g, payer, o)).orElse(false);
     }
 
     // ================================================================ 演化

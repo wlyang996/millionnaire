@@ -139,8 +139,13 @@ final class GameModule {
                         "game ended with an unfinished debt, surrender or turn track");
                 LobbyModule.check(s.game().phase() != GamePhase.DRAINING || "TIME_UP".equals(x.reason()),
                         "a game past its global end can only end as TIME_UP");
+                LobbyModule.check(!"LAST_TEAM".equals(x.reason()) || s.game().team() != null
+                        && TeamModule.survivingTeams(s.game()) == 1, "last team end requires one surviving team");
+                LobbyModule.check(!"LAST_SURVIVOR".equals(x.reason()) || s.game().team() == null,
+                        "team games cannot end as an individual last survivor");
                 LobbyModule.check(x.result().gameNo() == x.gameNo() && x.result().reason().equals(x.reason())
                         && x.result().standings().equals(TurnModule.standings(s.game(), rules))
+                        && x.result().teamStandings().equals(TeamModule.standings(s.game(), rules))
                         && x.result().titles().equals(GameProgressModule.titles(s.game(), rules))
                         && x.result().metrics().equals(s.game().progress().metrics()), "game result does not follow the rules");
                 yield backToLobby(s, x.result());

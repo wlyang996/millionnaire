@@ -184,7 +184,7 @@ final class EconomyModule {
                     yield canUpgrade(config, board, g, player, o) ? LandingStep.UPGRADE : null;
                 }
                 // 持有免租卡时先问是否使用（响应先于费用成立与现金不足判定，O4）
-                yield o.mortgaged() || rent(config, board, g, o) == 0 ? null
+                yield !shouldChargeRent(config, g, player, o) ? null
                         : CardModule.rentResponseDue(config, g, tileIndex) ? LandingStep.RESPONSE : LandingStep.RENT;
             }
             // O16：全局到时后不允许银行常规抵押 / 赎回（阶段表 BANK.drainingAllowed = false），因此不开银行窗口
@@ -198,6 +198,13 @@ final class EconomyModule {
             case GAME_ZONE -> MinigameModule.eligible(config, g, tileIndex) ? LandingStep.MINIGAME : null;
             default -> null;
         };
+    }
+
+    /** All relocation paths and replay gates share this predicate; ally waiver precedes card responses. */
+    static boolean shouldChargeRent(RuleConfig config, GameState g, String payer, OwnableState o) {
+        return o != null && o.owner() != null && !o.owner().equals(payer) && !o.mortgaged()
+                && !TeamModule.rentWaived(config, g, payer, o.owner())
+                && rent(config, LobbyModule.board(config, g.settings()), g, o) > 0;
     }
 
     /** 按落点的"下一项必须步骤"推进：开决策窗口、缴租（可能进入债务），或结束落点。 */
@@ -757,12 +764,12 @@ final class EconomyModule {
                 || g.flow().frames().stream().anyMatch(f -> f.kind() != FlowKind.TURN);
     }
 
-    /** 结束原因（E5）：进入 DRAINING 后固定为到时结束；否则零存活 → 全员淘汰，一人 → 最后存活者。 */
+    /** DRAINING 固定到时；否则全员淘汰、最后一队或个人最后存活者。 */
     static String endReason(GameState g) {
         if (g.phase() == GamePhase.DRAINING) {
             return "TIME_UP";
         }
-        return g.alive().isEmpty() ? "ALL_ELIMINATED" : "LAST_SURVIVOR";
+        return g.alive().isEmpty() ? "ALL_ELIMINATED" : g.team() != null ? "LAST_TEAM" : "LAST_SURVIVOR";
     }
 
     /** 淘汰后的统一收尾（见 {@link #settle}）。 */
@@ -779,7 +786,7 @@ final class EconomyModule {
      * 淘汰或流程结束后的统一收尾（E2、E5）：
      * <ol>
      *   <li>存在已接受的延后认输：流程仍在进行 → 什么都不做（不判胜、不越过流程）；流程已全部结束 → 同一批按收到顺序清算；</li>
-     *   <li>存活 ≤ 1 → 结束对局（原因见 {@link #endReason}，DRAINING 后固定为到时结束）；</li>
+     *   <li>个人存活 ≤ 1，或组队存活队伍 ≤ 1 → 结束对局；组队先等覆盖流程完成；</li>
      *   <li>当前玩家已被淘汰：仍有流程 → 等流程返回；否则中止落点、结束其回合并轮转。</li>
      * </ol>
      * 返回 true 表示已接管后续推进（结束对局或结束当前回合）。
@@ -798,7 +805,9 @@ final class EconomyModule {
             ctx.emit(new SurrenderBatchEnded(batch));
             g = game(ctx);
         }
-        if (g.alive().size() <= 1) {
+        if (g.team() == null ? g.alive().size() <= 1 : TeamModule.survivingTeams(g) <= 1) {
+            // A team victory must not swallow another player's accepted transaction or response.
+            if (g.team() != null && flowsRunning(g)) return false;
             // 零存活时按最后一批的批次前净资产排名（O7/O8，规则补充 v1）
             TurnModule.finish(ctx, endReason(g));
             return true;
@@ -911,7 +920,7 @@ final class EconomyModule {
             case RentCharged e -> {
                 OwnableState o = g.board().ownable(e.tile()).orElse(null);
                 check(current(g, e.payer()) && l != null && l.next() == LandingStep.RENT && l.tile() == e.tile() && o != null
-                        && o.owner() != null && o.owner().equals(e.owner()) && !e.owner().equals(e.payer()) && !o.mortgaged()
+                        && o.owner() != null && o.owner().equals(e.owner()) && shouldChargeRent(rules, g, e.payer(), o)
                         && k.pendingCharge() == 0 && e.amount() == rent(rules, board, g, o), "rent charge mismatch");
                 FeeSource source = new FeeSource(FeeSource.Kind.RENT, l.landingId(), l.cursor(), e.tile(), e.owner(), e.amount());
                 yield g.withTurn(t.withLanding(l.withStep(null, e.amount()))

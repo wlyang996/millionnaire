@@ -13,8 +13,8 @@ final class FeeRules {
     record Rule(FeeSource.Kind kind, String cause, LandingStep task, Origin origin) { }
     static final List<Rule> RULES = List.of(
         new Rule(FeeSource.Kind.RENT, EconomyModule.RENT, LandingStep.RENT, (c, g, l, s) ->
-            g.board().ownable(l.tile()).map(o -> o.owner() != null && !o.mortgaged()
-                    && !o.owner().equals(g.turn().currentPlayer()) && Objects.equals(s.creditor(), o.owner())
+            g.board().ownable(l.tile()).map(o -> EconomyModule.shouldChargeRent(c, g, g.turn().currentPlayer(), o)
+                    && Objects.equals(s.creditor(), o.owner())
                     && s.amount() == EconomyModule.rent(c, LobbyModule.board(c, g.settings()), g, o)).orElse(false)),
         new Rule(FeeSource.Kind.FINE, "FINE", LandingStep.FINE, (c, g, l, s) ->
                 s.creditor() == null && EventModule.hasKind(l, com.millionnaire.engine.config.EventKind.CASH_FINE)

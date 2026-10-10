@@ -21,7 +21,7 @@ class SessionGoldenTest {
         assertEquals(raw, t.engine.encodeEvents(t.engine.decodeEvents(raw)));
         // 虎口拔牙接入（engine-0.11.0-m6a）不改变这段债务会话：换回 m3c 版本号后，以下历史黄金值逐字节不变
         // 开局道具数接入（engine-0.13.0-m6c）给房间设置加了 initialCards；旧局沿用配置（-1），去掉这个字段后与历史字节一致
-        String bytes = raw.replace(",\"bot\":false", "").replace(",\"series\":null", "").replace(",\"team\":null", "").replace(",\"teamSource\":null", "").replace(",\"titles\":[],\"metrics\":[]", "").replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
+        String bytes = raw.replace(",\"bot\":false", "").replace(",\"series\":null", "").replace(",\"team\":null", "").replace(",\"teamSource\":null", "").replace(",\"teamStandings\":[]", "").replace(",\"titles\":[],\"metrics\":[]", "").replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
                 .replace(",\"initialCards\":-1", "").replace(",\"fastMode\":false", "");
         assertEquals(1, raw.split(java.util.regex.Pattern.quote(com.millionnaire.engine.EngineVersion.VALUE), -1).length - 1, "only the version header changes");
         // Preserve the historical behavioral golden after removing only this revision's source metadata.
@@ -35,7 +35,7 @@ class SessionGoldenTest {
             return e;
         }).toList();
         // 配置新增正式服策略开关后（测试配置沿用旧规则），配置哈希从 f8524a62… 变为 15be5a0b…；其余字节必须不变
-        String historicalBytes = t.engine.encodeEvents(historicalEvents).replace(",\"bot\":false", "").replace(",\"series\":null", "").replace(",\"team\":null", "").replace(",\"teamSource\":null", "").replace(",\"titles\":[],\"metrics\":[]", "").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
+        String historicalBytes = t.engine.encodeEvents(historicalEvents).replace(",\"bot\":false", "").replace(",\"series\":null", "").replace(",\"team\":null", "").replace(",\"teamSource\":null", "").replace(",\"teamStandings\":[]", "").replace(",\"titles\":[],\"metrics\":[]", "").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
                 .replace(",\"initialCards\":-1", "").replace(",\"fastMode\":false", "")
                 .replaceAll(",\"plannedDistance\":\\d+,\"stoppedBy\":null", "")
                 .replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")
