@@ -1,11 +1,12 @@
 # 微信云托管：目标目录留空（仓库根目录），Dockerfile 名称 Dockerfile，端口 80
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
+COPY deploy/maven-settings.xml /build/maven-settings.xml
 COPY server ./server
 COPY persistence ./persistence
 COPY gateway ./gateway
-RUN cd server && mvn -B -q -Dmaven.test.skip=true install
-RUN cd gateway && mvn -B -q -Dmaven.test.skip=true package
+RUN cd server && mvn -B -q -U -s /build/maven-settings.xml -Dmaven.test.skip=true install
+RUN cd gateway && mvn -B -q -U -s /build/maven-settings.xml -Dmaven.test.skip=true package
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app

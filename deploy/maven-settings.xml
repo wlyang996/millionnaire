@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CloudRun image builds use one HTTPS mirror for dependencies and Maven plugins. -->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>cloudrun-tencent</id>
+      <mirrorOf>*</mirrorOf>
+      <name>Tencent HTTPS Maven mirror</name>
+      <url>https://mirrors.tencent.com/nexus/repository/maven-public/</url>
+    </mirror>
+  </mirrors>
+</settings>

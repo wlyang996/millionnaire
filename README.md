@@ -28,6 +28,10 @@ cd ../gateway && mvn -B test           # 网关测试
 
 后端镜像由根目录 `Dockerfile` 构建（微信云托管）。
 
+镜像构建的引擎和网关均显式使用 `deploy/maven-settings.xml` 中的腾讯 HTTPS Maven 镜像，避免云构建出口访问 Maven Central 时遇到429限流。`-U`允许重新检查此前下载失败的依赖；不修改Spring Boot版本、数据库迁移或本机Maven配置。腾讯镜像说明见[官方Java SDK文档](https://cloud.tencent.com/document/sdk/Java/)。
+
+2026-10-12修复验证：空临时Maven仓库成功重新下载Spring Boot 3.3.5父POM及BOM，使用相同镜像的引擎安装与网关打包成功。本轮仅改构建配置，打包按Dockerfile跳过测试；没有重跑游戏回归。本机未安装Docker，完整容器构建及云部署需执行流水线验证。
+
 ## 分支
 
 - `main`：基线。
