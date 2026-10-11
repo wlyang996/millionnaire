@@ -5,12 +5,13 @@
  * - 页面画到还没加载的图时先用代码绘制的占位，并把这张图插到队首立即加载，到达后通知界面重绘；
  * - 每张图 20 秒超时、失败重试一次，单张图卡住不会让整个游戏卡在加载页。
  */
-import { Node, resources, Sprite, SpriteFrame } from 'cc';
+import { Node, Rect, Size, Vec2, resources, Sprite, SpriteFrame } from 'cc';
 import { ART_PATHS } from './ArtCatalog';
 import { mk, setOpacity } from './Kit';
 
 const frames = new Map<string, SpriteFrame>();
 const capsuleFrames = new Map<string, SpriteFrame>();
+const regionFrames = new Map<string, SpriteFrame>();
 export const AVATAR_NAMES = ['糖糖', '可可', '阿杰', '奶茶', '阿凯', '圆圆', '豆豆', '毛毛'];
 const characters = ['tangtang', 'keke', 'ajie', 'naicha', 'akai', 'yuanyuan', 'doudou', 'maomao'];
 /** 原图宽高比（宽 / 高）；未加载时 null。 */
@@ -177,6 +178,47 @@ export interface ArtOpts {
     aspect?: number;
     /** contain 时贴底对齐（人物脚踩地面），默认居中。 */
     bottom?: boolean;
+}
+
+/** Read a cell from an independent sprite sheet; never cuts a whole UI design into runtime pages. */
+export function artRegion(parent: Node, key: string, index: number, columns: number, rows: number,
+    x: number, y: number, w: number, h: number, mirror = false,
+    region?: { x: number; y: number; w: number; h: number }): Node | null {
+    const source = frames.get(key);
+    if (!source) { want(key); return null; }
+    if (!Number.isInteger(index) || index < 0 || index >= columns * rows) return null;
+    const cacheKey = key + ':' + index;
+    let frame = regionFrames.get(cacheKey);
+    if (!frame) {
+        const size = source.originalSize;
+        const left = Math.round((index % columns) * size.width / columns);
+        const top = Math.round(Math.floor(index / columns) * size.height / rows);
+        const cw = Math.round((index % columns + 1) * size.width / columns) - left;
+        const ch = Math.round((Math.floor(index / columns) + 1) * size.height / rows) - top;
+        frame = new SpriteFrame();
+        frame.texture = source.texture;
+        const crop = region ?? { x: left, y: top, w: cw, h: ch };
+        frame.rect = new Rect(crop.x, crop.y, crop.w, crop.h);
+        frame.originalSize = new Size(crop.w, crop.h);
+        frame.offset = new Vec2(0, 0);
+        regionFrames.set(cacheKey, frame);
+    }
+    const box = mk(parent, 'ArtRegion:' + cacheKey, x, y, w, h);
+    // Keep each pose in its original logical cell, while excluding neighboring sprites' edge fragments.
+    const left = Math.round((index % columns) * source.originalSize.width / columns);
+    const top = Math.round(Math.floor(index / columns) * source.originalSize.height / rows);
+    const cw = Math.round((index % columns + 1) * source.originalSize.width / columns) - left;
+    const ch = Math.round((Math.floor(index / columns) + 1) * source.originalSize.height / rows) - top;
+    const scale = Math.min(w / cw, h / ch);
+    const sw = frame.originalSize.width * scale, sh = frame.originalSize.height * scale;
+    const offset = (frame.rect.x - left) * scale;
+    const imageX = (w - cw * scale) / 2 + (mirror ? cw * scale - offset : offset);
+    const image = mk(box, 'Image', imageX, (h - ch * scale) / 2 + (frame.rect.y - top) * scale, sw, sh);
+    if (mirror) image.setScale(-1, 1, 1);
+    const sprite = image.addComponent(Sprite);
+    sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+    sprite.spriteFrame = frame;
+    return box;
 }
 
 export function art(parent: Node, key: string, x: number, y: number, w: number, h: number,

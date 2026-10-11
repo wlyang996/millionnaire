@@ -1,0 +1,80 @@
+[
+  {
+    "key": "team_pose_give",
+    "mode": "RGBA",
+    "size": [
+      1254,
+      1254
+    ],
+    "transparentPixels": 546301,
+    "sha256": "cce7240e6996a52c9ec322fe783aaccba51107c79a507f088681ef2aa1567a7f",
+    "copiesMatch": true,
+    "packingDisabled": true,
+    "regions": 9
+  },
+  {
+    "key": "team_pose_receive",
+    "mode": "RGBA",
+    "size": [
+      1254,
+      1254
+    ],
+    "transparentPixels": 572480,
+    "sha256": "d28ad6b65029ca99331022981d4871563893332ad3b66139edb0b9970bcf289b",
+    "copiesMatch": true,
+    "packingDisabled": true,
+    "regions": 9
+  },
+  {
+    "key": "team_pose_worry",
+    "mode": "RGBA",
+    "size": [
+      1254,
+      1254
+    ],
+    "transparentPixels": 531349,
+    "sha256": "1b692fb2d0b65d38013163b0d0c1bb85778c8133e584d3c73f1c484be6a13eae",
+    "copiesMatch": true,
+    "packingDisabled": true,
+    "regions": 9
+  },
+  {
+    "key": "team_pose_celebrate",
+    "mode": "RGBA",
+    "size": [
+      1254,
+      1254
+    ],
+    "transparentPixels": 567213,
+    "sha256": "2395d9525ae01762e483c62d8e2c3a90f876f94b213351d28e00a7b44cb64301",
+    "copiesMatch": true,
+    "packingDisabled": true,
+    "regions": 9
+  },
+  {
+    "key": "team_trophy",
+    "mode": "RGBA",
+    "size": [
+      1263,
+      1246
+    ],
+    "transparentPixels": 874190,
+    "sha256": "9e333a26ac90c33fedcffb6a11d2a69bff016a44b57f249432e31c15bc96be9d",
+    "copiesMatch": true,
+    "packingDisabled": true,
+    "regions": 1
+  },
+  {
+    "key": "team_debt_thought",
+    "mode": "RGBA",
+    "size": [
+      1402,
+      1122
+    ],
+    "transparentPixels": 889172,
+    "sha256": "42eb102145df31836c480039b32893f2880219fca6255f6d7a309fff06a2f8fb",
+    "copiesMatch": true,
+    "packingDisabled": true,
+    "regions": 1
+  }
+]

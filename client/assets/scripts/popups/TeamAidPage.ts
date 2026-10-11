@@ -1,9 +1,9 @@
 import { Node } from 'cc';
 import { GLOBAL_RULES } from '../core/Rules';
-import { ROBOT_AVATAR } from '../core/Models';
 import { Theme } from '../core/Theme';
 import { sameTeam, activeAidAvailable, teamColor, teamName } from '../core/Teams';
-import { art, informationCharacterKey } from '../ui/Art';
+import { art } from '../ui/Art';
+import { teamPose } from '../ui/TeamPoses';
 import { Button, primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { text } from '../ui/Kit';
@@ -13,7 +13,7 @@ import { InformationPage, informationCard } from './InformationPage';
 import { DebtPopup } from './DebtPopup';
 import { ConfirmPopup } from './ConfirmPopup';
 
-/** Approved screens35/36; illustrations reuse supplied individual assets, all money is live. */
+/** Approved screens35–37; independent dynamic character poses, all money is live. */
 export class TeamAidPage extends InformationPage {
     private amount = '';
     private busy = false;
@@ -37,12 +37,14 @@ export class TeamAidPage extends InformationPage {
         const available=Math.max(0,me.cash-me.frozen), gap=this.debtMode ? d?.gap ?? 0 : 0;
         const max=Math.min(cfg.aidMaxAmount,available,this.debtMode ? gap : cfg.aidMaxAmount);
         const value=Number(this.amount || '0');
-        const portrait=(id:number,x:number,width:number)=>{
-            if(id===ROBOT_AVATAR)avatar(p,x+24,194,width-48,id,'机器人');
-            else art(p,informationCharacterKey(id),x,194,width,246);
-        };
-        if(this.debtMode)portrait(target.avatar,230,328);
-        else {portrait(me.avatar,64,250);portrait(target.avatar,390,250);art(p,'info_cash',326,288,66,72);}
+        if(this.debtMode){
+            teamPose(p,'worry',target.avatar,196,170,328,268);
+            art(p,'team_debt_thought',460,158,138,140);
+        }
+        else {
+            teamPose(p,'give',me.avatar,46,172,330,270);
+            teamPose(p,'receive',target.avatar,285,172,330,270);
+        }
         const team=g.team?.assignments[target.playerId];
         chip(p,232,398,teamName(team)+' · '+target.nickname,teamColor(team),'#FFFFFF',24,44);
         if (this.debtMode) {

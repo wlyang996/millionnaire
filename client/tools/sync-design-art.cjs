@@ -53,6 +53,11 @@ for (const key of ['reward_gift', 'city_construction']) {
     const file = path.join(globalSource, key + '.png');
     if (fs.existsSync(file)) copy(file, 'global_gameplay/' + key + '.png', key);
 }
+const teamSource = path.join(root, 'design/screens/assets-team-poses-v1/png');
+for (const key of ['team_pose_give','team_pose_receive','team_pose_worry','team_pose_celebrate','team_trophy','team_debt_thought']) {
+    const file = path.join(teamSource, key + '.png');
+    if (fs.existsSync(file)) copy(file, 'team_poses/' + key + '.png', key);
+}
 paths.set('scene_property_low', paths.get('shop_low'));
 const catalog = '/** Runtime copies of design/screens; event_art takes precedence for shared card backs. */\n'
     + 'export const ART_PATHS: Record<string, string> = {\n'

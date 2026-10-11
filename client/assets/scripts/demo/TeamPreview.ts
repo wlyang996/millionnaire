@@ -9,7 +9,7 @@ import { TeamAidPage } from '../popups/TeamAidPage';
 
 export function teamPreview(kind: string): ScreenId | null {
     const st=ctx.store;
-    if(st.online || !/^team-(room|board|assets|land|enemy|aid|debt|help|result)[468]$/.test(kind))return null;
+    if(st.online || !/^team-(room|board|assets|land|enemy|aid|debt|help|result)(?:-(robot|reverse|draw))?[468]$/.test(kind))return null;
     const n=Number(kind.slice(-1)); st.patchScenario({players:n,boardSize:n>4?50:30});
     st.autoplay=false;st.clock.pause();st.previewResult=null;
     GLOBAL_RULES.team={enabled:true,teamSizeOptions:[2,3,4],defaultTeamSize:2,allowBots:true,allyRentWaiver:true,
@@ -20,6 +20,10 @@ export function teamPreview(kind: string): ScreenId | null {
     g.windows=[{windowId:700,kind:'TURN',owner:st.myId,opensAt:st.clock.now(),deadline:st.clock.now()+20000,paused:false}];
     const ally=g.players.find(p=>p.playerId!==st.myId && team.assignments[p.playerId]===team.assignments[st.myId])!;
     const enemy=g.players.find(p=>team.assignments[p.playerId]!==team.assignments[st.myId])!;
+    if(kind.includes('-robot') || kind.includes('-reverse')){
+        const mine=st.me(); mine.avatar=kind.includes('-robot')?8:1; ally.avatar=kind.includes('-robot')?8:0;
+        st.session.members.forEach(m=>{const p=st.player(m.playerId);if(p)m.avatar=p.avatar;});
+    }
     const props=g.properties.slice(0,4);props.forEach((p,i)=>{p.owner=i<2?ally.playerId:enemy.playerId;p.level=i%3;});
     if(kind.includes('debt') || kind.includes('help')){
         const debtor=kind.includes('debt')?st.myId:ally.playerId;
@@ -28,6 +32,11 @@ export function teamPreview(kind: string): ScreenId | null {
         g.windows=[{windowId:700,kind:'DEBT',owner:debtor,opensAt:st.clock.now(),deadline:st.clock.now()+20000,paused:false}];
     }
     if(kind.includes('result')){
+        if(kind.includes('-draw')){
+            const total=(id:'BLUE'|'RED')=>g.players.filter(p=>team.assignments[p.playerId]===id).reduce((sum,p)=>sum+st.netWorthOf(p.playerId),0);
+            const difference=total('BLUE')-total('RED');
+            g.players.find(p=>team.assignments[p.playerId]===(difference>0?'RED':'BLUE'))!.cash+=Math.abs(difference);
+        }
         const r=st.buildResult();
         // Ordinary demo injects individual ties/elimination; team QA uses actual fixture balances instead.
         r.standings.forEach(p=>{const live=st.player(p.playerId)!;p.cash=live.cash;p.netWorth=st.netWorthOf(p.playerId);p.bankrupt=live.life!=='ALIVE';});

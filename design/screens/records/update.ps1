@@ -59,7 +59,7 @@ $entries = @(
     [pscustomobject]@{ File = '34-组队合作-分队-棋盘-队友资产-候选.png'; Source = (Join-Path $sourceUi 'team-coop-v1/分队-棋盘-队友资产-v1.png'); Role = '组队分队准备-个人现金与队伍净资产-队友个人资产'; Version = 1; Status = 'layout approved by user; implemented with existing character poses; not deployed' },
     [pscustomobject]@{ File = '35-组队合作-主动援助-欠款援助-队伍结算-候选.png'; Source = (Join-Path $sourceUi 'team-coop-v1/主动援助-欠款援助-队伍结算-v1.png'); Role = '主动援助-队友欠款出资-单局队伍结算'; Version = 1; Status = 'layout approved by user; implemented with existing character poses; not deployed' },
     [pscustomobject]@{ File = '36-组队合作-土地详情-欠款发起求助-候选.png'; Source = (Join-Path $sourceUi 'team-coop-v1/队友土地-敌方土地-欠款发起求助-v1.png'); Role = '队友与敌方土地-当前等级-欠款人发起求助'; Version = 1; Status = 'layout approved by user; implemented with existing character poses; not deployed' },
-    [pscustomobject]@{ File = '37-组队合作-递币接币-欠款求助-共同捧杯-待审阅.png'; Source = (Join-Path $sourceUi 'team-coop-poses-v1/援助递币-欠款求助-共同捧杯-v1.png'); Role = '主动援助递币接币-欠款人忧虑求助-队伍共同捧杯'; Version = 1; Status = 'pending user review; not implemented; not individual assets' }
+    [pscustomobject]@{ File = '37-组队合作-递币接币-欠款求助-共同捧杯-待审阅.png'; Source = (Join-Path $sourceUi 'team-coop-poses-v1/援助递币-欠款求助-共同捧杯-v1.png'); Role = '主动援助递币接币-欠款人忧虑求助-队伍共同捧杯'; Version = 1; Status = 'approved by user; character states integrated with independent assets; not deployed' }
 )
 
 # Check every source before copying any file.

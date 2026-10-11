@@ -16,10 +16,10 @@ import { avatar, roundedPanel } from '../ui/Widgets';
 import { titleMetric } from './board/GlobalNoticeView';
 import { renderSeriesScore } from './SeriesScreen';
 import { previewName } from '../net/Config';
-import { GameResult, ROBOT_AVATAR } from '../core/Models';
+import { GameResult } from '../core/Models';
 import { teamColor, teamName } from '../core/Teams';
 import { informationCard } from '../popups/InformationPage';
-import { informationCharacterKey } from '../ui/Art';
+import { teamPose } from '../ui/TeamPoses';
 
 const MEDAL = ['#F2B82E', '#B8C2CC', '#D98A4B'];
 
@@ -154,15 +154,14 @@ function renderTeamResult(root: import('cc').Node,res: GameResult): void {
     const rows=res.teamStandings!, winners=rows.filter(r=>r.rank===1),draw=winners.length>1;
     const winner=winners[0], people=draw ? winners.flatMap(r=>res.standings.filter(p=>r.members.includes(p.playerId)).slice(0,1))
         : res.standings.filter(p=>winner.members.includes(p.playerId));
-    people.slice(0,2).forEach((p,i)=>{
-        if(p.avatar===ROBOT_AVATAR)avatar(root,i?410:84,182,210,p.avatar,p.nickname ?? '机器人');
-        else art(root,informationCharacterKey(p.avatar ?? 0),i?390:64,168,250,268);
-    });
-    art(root,'result_trophy',258,132,204,182);
-    const plaque=informationCard(root,72,368,576,70,teamColor(winner.teamId));
-    text(plaque,draw?'两队并列冠军':teamName(winner.teamId)+'获胜',0,0,576,70,48,'#FFFFFF',{bold:true});
-    const panel=informationCard(root,32,454,656,660);
-    const list=new ScrollList(panel,16,8,624,642); let y=0;
+    text(root,'队伍结算',160,100,400,60,44,Theme.c.navy,{bold:true});
+    people.slice(0,2).forEach((p,i)=>teamPose(root,'celebrate',p.avatar ?? 0,i?338:76,152,306,306,i===1));
+    // One complete pedestal rests between both characters' supporting hands.
+    art(root,'team_trophy',264,194,192,212);
+    const plaque=informationCard(root,72,420,576,62,teamColor(winner.teamId));
+    text(plaque,draw?'两队并列冠军':teamName(winner.teamId)+'获胜',0,0,576,62,44,'#FFFFFF',{bold:true});
+    const panel=informationCard(root,32,494,656,620);
+    const list=new ScrollList(panel,16,8,624,602); let y=0;
     text(list.content,'队伍排名 · 净资产',0,y,624,54,36,Theme.c.navy,{bold:true});y+=62;
     rows.forEach(r=>{
         const n=informationCard(list.content,0,y,624,78,'#FFFEF9',22,false);

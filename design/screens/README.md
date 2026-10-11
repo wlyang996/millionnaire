@@ -120,5 +120,5 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 
 ## 组队人物动作补充（2026-10-11）
 
-- [37-递币接币、欠款求助、共同捧杯](37-组队合作-递币接币-欠款求助-共同捧杯-待审阅.png)：沿用35–36号布局，补充人物动作。待审阅，未接入游戏，不是独立素材。
-- [原稿与完整提示词](ui/team-coop-poses-v1/README.md)、[来源记录](records/team-coop-poses-ui-2026-10-11.md)。本批为糖糖/可可示例，其他角色和机器人待后续适配。
+- [37-递币接币、欠款求助、共同捧杯](37-组队合作-递币接币-欠款求助-共同捧杯-待审阅.png)：已批准并集成三类人物状态，历史待审阅文件名保留；整页原稿不是独立素材。
+- [原稿与完整提示词](ui/team-coop-poses-v1/README.md)、[来源记录](records/team-coop-poses-ui-2026-10-11.md)、[36个动作及2件独立道具](assets-team-poses-v1/README.md)、[集成与验证](records/team-poses-integration-2026-10-11.md)。覆盖8位角色、机器人和不同队友组合；未部署、微信真机待验收。

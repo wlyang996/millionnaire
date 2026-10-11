@@ -323,7 +323,7 @@
                       "source":  "screens/ui/team-coop-poses-v1/援助递币-欠款求助-共同捧杯-v1.png",
                       "version":  1,
                       "role":  "主动援助递币接币-欠款人忧虑求助-队伍共同捧杯",
-                      "status":  "pending user review; not implemented; not individual assets",
+                      "status":  "approved by user; character states integrated with independent assets; not deployed",
                       "sha256":  "0b804772c55d25e0dca6a5028093b88947a1dbfab5d47750da02d6bc79d2a0a3",
                       "bytes":  2336093
                   }

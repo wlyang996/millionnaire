@@ -206,4 +206,10 @@ export const ART_PATHS: Record<string, string> = {
     'reward_gift': 'art/global_gameplay/reward_gift',
     'city_construction': 'art/global_gameplay/city_construction',
     'scene_property_low': 'art/information/shop_low',
+    'team_pose_give': 'art/team_poses/team_pose_give',
+    'team_pose_receive': 'art/team_poses/team_pose_receive',
+    'team_pose_worry': 'art/team_poses/team_pose_worry',
+    'team_pose_celebrate': 'art/team_poses/team_pose_celebrate',
+    'team_trophy': 'art/team_poses/team_trophy',
+    'team_debt_thought': 'art/team_poses/team_debt_thought',
 };

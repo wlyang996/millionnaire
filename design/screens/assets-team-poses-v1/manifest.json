@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-11",
+  "status": "approved screen37; runtime integration",
+  "grid": {
+    "columns": 3,
+    "rows": 3,
+    "order": [
+      "tangtang",
+      "keke",
+      "ajie",
+      "naicha",
+      "akai",
+      "yuanyuan",
+      "doudou",
+      "maomao",
+      "robot"
+    ]
+  },
+  "entries": [
+    {
+      "key": "team_pose_give",
+      "source": "design/screens/assets-team-poses-v1/png/team_pose_give.png",
+      "runtime": "client/assets/resources/art/team_poses/team_pose_give.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "cce7240e6996a52c9ec322fe783aaccba51107c79a507f088681ef2aa1567a7f",
+      "cells": 9
+    },
+    {
+      "key": "team_pose_receive",
+      "source": "design/screens/assets-team-poses-v1/png/team_pose_receive.png",
+      "runtime": "client/assets/resources/art/team_poses/team_pose_receive.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "d28ad6b65029ca99331022981d4871563893332ad3b66139edb0b9970bcf289b",
+      "cells": 9
+    },
+    {
+      "key": "team_pose_worry",
+      "source": "design/screens/assets-team-poses-v1/png/team_pose_worry.png",
+      "runtime": "client/assets/resources/art/team_poses/team_pose_worry.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "1b692fb2d0b65d38013163b0d0c1bb85778c8133e584d3c73f1c484be6a13eae",
+      "cells": 9
+    },
+    {
+      "key": "team_pose_celebrate",
+      "source": "design/screens/assets-team-poses-v1/png/team_pose_celebrate.png",
+      "runtime": "client/assets/resources/art/team_poses/team_pose_celebrate.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "2395d9525ae01762e483c62d8e2c3a90f876f94b213351d28e00a7b44cb64301",
+      "cells": 9
+    },
+    {
+      "key": "team_trophy",
+      "source": "design/screens/assets-team-poses-v1/png/team_trophy.png",
+      "runtime": "client/assets/resources/art/team_poses/team_trophy.png",
+      "width": 1263,
+      "height": 1246,
+      "sha256": "9e333a26ac90c33fedcffb6a11d2a69bff016a44b57f249432e31c15bc96be9d",
+      "cells": 1
+    },
+    {
+      "key": "team_debt_thought",
+      "source": "design/screens/assets-team-poses-v1/png/team_debt_thought.png",
+      "runtime": "client/assets/resources/art/team_poses/team_debt_thought.png",
+      "width": 1402,
+      "height": 1122,
+      "sha256": "42eb102145df31836c480039b32893f2880219fca6255f6d7a309fff06a2f8fb",
+      "cells": 1
+    }
+  ]
+}
