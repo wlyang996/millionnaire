@@ -24,8 +24,7 @@ millionnaire:
   cos:
     bucket: ${COS_BUCKET:}
     region: ${COS_REGION:}
-    secret-id: ${COS_SECRET_ID:}
-    secret-key: ${COS_SECRET_KEY:}
+    # 微信云托管容器内通过 /_/cos/getauth 自动取得临时凭证，不配置长期密钥。
   auth:
     # 测试身份登录（POST /api/auth/test-login）。正式上线前在云托管环境变量里设 TEST_LOGIN_ENABLED=false
     test-login-enabled: ${TEST_LOGIN_ENABLED:true}

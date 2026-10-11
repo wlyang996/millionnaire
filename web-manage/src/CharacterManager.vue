@@ -16,6 +16,11 @@ const dirty = computed(() => {
   return !!c && (form.value.name !== c.name || form.value.sort !== c.sort || form.value.enabled !== c.enabled || form.value.fallback !== c.fallback)
 })
 function fail(e) { ElMessage.error(e.message || '人物素材操作失败') }
+async function checkStorage() {
+  busy.value = true
+  try { const r = await call('POST', '/admin-api/v1/characters/storage/check', {}); ElMessage.success(r.message) }
+  catch (e) { fail(e) } finally { busy.value = false }
+}
 function clearPreviews() { Object.values(previews.value).forEach(URL.revokeObjectURL); previews.value = {} }
 async function load() {
   busy.value = true
@@ -89,8 +94,10 @@ onBeforeUnmount(clearPreviews)
 
 <template>
   <div v-loading="busy">
-    <p>图片存放在私有 COS 桶；每位人物必须包含完整七项素材，统一发布。机器人编号 8 保留。</p>
-    <el-alert v-if="state && !state.storageReady" title="COS 尚未配置" description="在云托管配置 COS_BUCKET、COS_REGION、COS_SECRET_ID、COS_SECRET_KEY。密钥不在页面填写。" type="warning" :closable="false" />
+    <p>图片存放在微信云托管对象存储；每位人物必须包含完整七项素材，统一发布。机器人编号 8 保留。</p>
+    <el-alert v-if="state && !state.storageReady" title="对象存储尚未配置" description="在云托管配置 COS_BUCKET、COS_REGION，不需要长期密钥。" type="warning" :closable="false" />
+    <p>后台自动获取并刷新微信云托管临时凭证。请在“云调用”放行 /_/cos/getauth 和 /_/cos/metaid/encode。桶名、地域齐全只代表参数已配置，连接及读写还需验证。</p>
+    <el-button :disabled="!state?.storageReady || busy" @click="checkStorage">检查临时凭证</el-button>
     <el-alert v-if="state && !state.persistent" title="当前未连接数据库，素材目录仅存内存，重启会丢失；正式使用须启用 db 配置。" type="warning" :closable="false" />
     <h3>生效人物目录 · 版本 {{ state?.active.version ?? '—' }}</h3>
     <el-table :data="choices" border>

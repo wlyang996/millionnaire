@@ -121,6 +121,10 @@
 - 微信登录走 `wx.login` + `jscode2session`（需要 AppSecret），沿用现在客户端直连云托管域名的 HTTP / WebSocket。如果以后改用 `wx.cloud.callContainer` / `connectContainer`，可以改读云托管注入的 `X-WX-OPENID`（不需要 AppSecret），但必须确认公网请求无法伪造这个头。
 - 战绩写库（`game_record`）、聊天落库、房间号加入频率限制、空房间超时关闭。
 
+## 2026-10-12 微信云托管对象存储
+
+人物整套素材不再读取 COS_SECRET_ID/COS_SECRET_KEY。仅配置 COS_BUCKET/COS_REGION，容器内使用微信 `/_/cos/getauth` 取得临时凭证、提前刷新；上传附带 `/_/cos/metaid/encode` 返回的管理员文件元数据。需要在云托管“云调用”放行两个路径。后台新增认证接口 `POST /admin-api/v1/characters/storage/check`，只检查凭证，不上传文件。运行房间版本、整套发布与回滚不变，数据库迁移无改动。完整配置见 [整套人物与微信云托管存储](../web-manage/character-catalog.md)。云端读写仍需部署后验证。
+
 ## 2026-10-10 好友系列赛
 
 首局前发送WS `CONFIGURE_SERIES {requestId,totalGames}`，0切普通单局，其他值须在房间绑定series.gameOptions中；局间房主发送 `END_SERIES {requestId,seriesNo}`。actor始终取认证连接身份。START_GAME/READY沿用原协议；UPDATE.view.series含固定名册、规则、每局积分、累计积分及退出名单。

@@ -36,6 +36,10 @@ class CharacterApiDbTest {
     @Test void authenticatedMultipartUploadRequiresAllSevenAndDoesNotLeakDrafts() throws Exception {
         var login = http.postForObject("/admin-api/v1/auth/login",Map.of("password","character-test-secret"),Map.class);
         var h = new HttpHeaders(); h.setBearerAuth((String)login.get("token"));
+        assertThat(http.postForEntity("/admin-api/v1/characters/storage/check",Map.of(),Map.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        var check = http.exchange("/admin-api/v1/characters/storage/check",HttpMethod.POST,new HttpEntity<>(Map.of(),h),Map.class);
+        assertThat(check.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(check.getBody().get("ok")).isEqualTo(true);
         var created = http.exchange("/admin-api/v1/characters/packs",HttpMethod.POST,new HttpEntity<>(Map.of("name","HTTP上传角色","sort",9,"enabled",true,"fallback",0),h),CharacterCatalog.Pack.class).getBody();
         String id = created.packId(); int revision = created.revision();
         var partial = http.exchange("/admin-api/v1/characters/publish",HttpMethod.POST,new HttpEntity<>(Map.of("packId",id,"revision",revision,"expectedVersion",catalog.activeId()),h),Map.class);

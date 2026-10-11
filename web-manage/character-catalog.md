@@ -14,15 +14,18 @@
 
 图片实际存在腾讯云 COS 的私有桶，路径为 `characters/{人物ID}/{素材版本UUID}/{项目}-{SHA256}.png`。数据库保存图片路径、尺寸、校验值、草稿和人物目录版本，不保存图片二进制。后台 `resources` 只包含管理页构建文件和迁移脚本。
 
-客户端图片地址由网关提供，如 `/api/characters/assets/{UUID}/avatar.png`。网关用服务端密钥读取私有 COS，客户端不接触密钥或任意外部图片域名。该版本不需要另配图片访问域名或 COS 公网读权限；图片流量经过网关，暂未接 CDN。
+客户端图片地址由网关提供，如 `/api/characters/assets/{UUID}/avatar.png`。网关在微信云托管容器内取得临时凭证读取私有 COS，客户端不接触凭证或任意外部图片域名。该版本不需要另配图片访问域名或 COS 公网读权限；图片流量经过网关，暂未接 CDN。
 
 ## 微信云托管需要配置什么
 
-1. 在 [COS 控制台](https://console.cloud.tencent.com/cos/bucket) 查看或创建存储桶。在桶的基本信息中复制完整名称（包含 APPID 后缀）和地域，如 `character-art-1250000000`、`ap-guangzhou`。示例名称应替换为实际桶名。
-2. 在云托管服务的环境变量设置 `COS_BUCKET`、`COS_REGION`、`COS_SECRET_ID`、`COS_SECRET_KEY`。密钥直接配置到云托管，不发到聊天、不写进 Git。服务端身份须有这个桶 `characters/*` 前缀的 `PutObject` 和 `GetObject` 权限。参考 [COS Java SDK](https://cloud.tencent.com/document/product/436/50746)。
-3. 沿用已有数据库设置：`SPRING_PROFILES_ACTIVE=db` 及 `MYSQL_*`。启动时 Flyway 执行新迁移 `V5__character_catalog.sql`；原 V1～V4 不修改。不启用数据库时，目录仅用于本机演示，重启丢失。
-4. 配置 `ADMIN_PASSWORD`，登录 `/admin`。四个 COS 变量齐全才启用上传；页面的「已配置」只表示变量齐全，是否可访问需实际上传验证。
-5. 微信小游戏的图片下载沿用网关 HTTPS 域名，确保该域名在小游戏的下载合法域名中。H5 的图片与 API 也使用同一网关，不需要单独给 COS 配 CORS。
+1. 在微信云托管控制台「对象存储 → 存储配置」复制当前环境的存储桶与地域，不需要另开腾讯云账号或申请长期密钥。本项目用户提供的截图确认：`COS_BUCKET=7072-prod-d6gztvk354abc40f5-1501212143`、`COS_REGION=ap-shanghai`。它们仅为本环境配置值，不写死在源码中。
+2. 在实际运行 Java 网关的服务环境变量中设置 `COS_BUCKET`、`COS_REGION`。原 `COS_SECRET_ID` / `COS_SECRET_KEY` 已不再读取，不要再申请或填写它们。后台通过 `http://api.weixin.qq.com/_/cos/getauth` 获取临时凭证并在到期前刷新；上传通过 `/_/cos/metaid/encode` 获取管理员文件元数据，写入 `x-cos-meta-fileid`。参考 [微信官方 COS-SDK 服务端说明](https://developers.weixin.qq.com/minigame/dev/wxcloudrun/src/development/storage/service/cos-sdk.html)。
+3. 在微信云托管「云调用」中，为这个服务放行两个开放接口路径：`/_/cos/getauth`、`/_/cos/metaid/encode`。若控制台列出服务范围，选择实际运行网关的服务。无需放行删除文件或修改存储权限接口。这是平台权限配置，代码不能自行开通。
+4. 沿用已有数据库设置：`SPRING_PROFILES_ACTIVE=db` 及 `MYSQL_*`。启动时 Flyway 执行新迁移 `V5__character_catalog.sql`；原 V1～V4 不修改。本次临时凭证改造不增加迁移。不启用数据库时，目录仅用于本机演示，重启丢失。
+5. 配置 `ADMIN_PASSWORD`，部署本次代码后登录 `/admin` →「人物素材」，点击「检查临时凭证」。成功仅表示取得有效凭证，实际桶、地域和读写权限仍需上传素材并读取预览验证。两个变量齐全才启用上传；缺少云调用放行、接口拒绝、网络不通或响应过期会显示中文错误，不返回凭证内容。
+6. 微信小游戏的图片下载沿用网关 HTTPS 域名，确保该域名在小游戏的下载合法域名中。H5 的图片与 API 也使用同一网关，不需要单独给 COS 配 CORS。存储安全域名和缓存配置无需为此修改。
+
+临时凭证接口依赖云托管容器的开放接口服务，不能在普通本机环境直接验证。程序使用官方示例的 HTTP 内部访问方式，COS 对象上传/下载仍用 HTTPS；不会把长期密钥、临时密钥或 token 发给管理页，也不会将接口原始错误响应写入日志。刷新失败时不会退回旧凭证或长期密钥。服务保存配置/部署可能重启后台，应安排在没有进行中的对局时。
 
 ## 上传、发布与回滚
 
@@ -42,6 +45,8 @@
 
 ## 验证情况
 
-引擎 647 项测试、网关 49 项测试（包含 V1～V5 的 H2 迁移、认证 multipart 上传、完整发布、不可覆盖、版本回滚、房间绑定与并发保护）通过；客户端严格类型检查、221 项 SelfCheck、Cocos 3.8.8 web-mobile 构建和管理页生产构建通过。本机已验收人物目录、草稿及缺项禁用状态，截图位于 `design/screens/records/character-catalog-preview-2026-10-12/`。
+首次整套人物接入：引擎 647 项测试、网关 49 项测试（包含 V1～V5 的 H2 迁移、认证 multipart 上传、完整发布、不可覆盖、版本回滚、房间绑定与并发保护）通过；客户端严格类型检查、221 项 SelfCheck、Cocos 3.8.8 web-mobile 构建和管理页生产构建通过。本机已验收人物目录、草稿及缺项禁用状态，历史截图位于 `design/screens/records/character-catalog-preview-2026-10-12/`。
+
+随后修正为微信云托管临时凭证：网关57项测试和管理页生产构建通过。新增验证覆盖真实本机HTTP临时凭证接口、并发共享、到期前刷新、过期/缺字段/接口拒绝/超大响应、安全错误提示、认证检查接口、上传元数据，以及真实COS Java SDK上传时的签名和`x-cos-security-token` / `x-cos-meta-fileid`请求头。测试使用本机HTTP接口与COS替身，不访问实际云端存储；客户端未修改，本轮未重跑Cocos构建。无需长期密钥的配置说明为当前生效方案，历史截图里的旧密钥提示不再适用。
 
 上传/发布测试使用测试对象存储替身；尚未配置实际 COS、未连接实际 MySQL 5.7，微信真机下载未验证。本次只提交代码，不推送 `prod`、不部署。

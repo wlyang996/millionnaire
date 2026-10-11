@@ -33,6 +33,11 @@ public class CharacterController {
     public CharacterCatalog.Pack create(@RequestHeader(value="Authorization", required=false) String auth, @RequestBody Draft body) {
         admin.check(auth); return catalog.create(body.avatar(), body.name(), body.sort(), body.enabled(), body.fallback());
     }
+    @PostMapping("/admin-api/v1/characters/storage/check")
+    public Map<String,Object> checkStorage(@RequestHeader(value="Authorization", required=false) String auth) {
+        admin.check(auth); catalog.verifyStorage();
+        return Map.of("ok", true, "message", "已取得微信云托管临时凭证；实际读写权限请通过上传素材验证");
+    }
     @PostMapping("/admin-api/v1/characters/packs/{id}")
     public CharacterCatalog.Pack edit(@RequestHeader(value="Authorization", required=false) String auth, @PathVariable String id, @RequestBody Draft body) {
         admin.check(auth);

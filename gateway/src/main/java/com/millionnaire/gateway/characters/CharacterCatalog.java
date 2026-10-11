@@ -45,6 +45,7 @@ public class CharacterCatalog {
         return new Catalog(0, out);
     }
     public boolean storageReady() { return objects.ready(); }
+    public void verifyStorage() { objects.verify(); }
     public boolean persistent() { return jdbc.get() != null; }
     public synchronized long activeId() {
         var t = jdbc.get();
