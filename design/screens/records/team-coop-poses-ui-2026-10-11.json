@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-11",
+  "tool": "built-in image_gen",
+  "status": "pending user review; not implemented",
+  "source": "design/screens/ui/team-coop-poses-v1/援助递币-欠款求助-共同捧杯-v1.png",
+  "gallery": "design/screens/37-组队合作-递币接币-欠款求助-共同捧杯-待审阅.png",
+  "references": [
+    "design/screens/35-组队合作-主动援助-欠款援助-队伍结算-候选.png",
+    "design/screens/36-组队合作-土地详情-欠款发起求助-候选.png"
+  ],
+  "width": 1536,
+  "height": 1024,
+  "sha256": "0b804772c55d25e0dca6a5028093b88947a1dbfab5d47750da02d6bc79d2a0a3"
+}
