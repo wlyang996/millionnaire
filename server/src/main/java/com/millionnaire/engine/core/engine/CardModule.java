@@ -90,14 +90,15 @@ final class CardModule {
         }
         boolean property = tile.type() == TileType.PROPERTY;
         boolean mine = player.equals(o.owner());
+        boolean enemy = !mine && (g.team() == null || !g.team().sameTeam(player, o.owner()));
         return switch (card) {
             case BUILD -> mine && property && !o.mortgaged() && o.level() < config.economy().maxLevel()
                     && g.cards().boughtTile() != tileIndex ? null : RejectionCode.NO_TARGET;
-            case DOWNGRADE, DEMOLISH -> !mine && property && !o.mortgaged() && o.level() >= 1 && ownerAlive(g, o)
+            case DOWNGRADE, DEMOLISH -> enemy && property && !o.mortgaged() && o.level() >= 1 && ownerAlive(g, o)
                     ? null : RejectionCode.NO_TARGET;
-            case CLEAR_LAND -> !mine && property && !o.mortgaged() && ownerAlive(g, o) ? null : RejectionCode.NO_TARGET;
+            case CLEAR_LAND -> enemy && property && !o.mortgaged() && ownerAlive(g, o) ? null : RejectionCode.NO_TARGET;
             case FORCED_PURCHASE -> {
-                if (mine || o.mortgaged() || !ownerAlive(g, o) || !(property || tile.type() == TileType.STATION)) {
+                if (!enemy || o.mortgaged() || !ownerAlive(g, o) || !(property || tile.type() == TileType.STATION)) {
                     yield RejectionCode.NO_TARGET;
                 }
                 yield g.ledger().available(player) >= forcedPrice(config, g, tileIndex) ? null : RejectionCode.INSUFFICIENT_CASH;
@@ -121,7 +122,8 @@ final class CardModule {
         if (target == null || target.equals(player)) {
             return RejectionCode.INVALID_ARGUMENT;
         }
-        return g.player(target).map(PlayerState::alive).orElse(false) ? null : RejectionCode.NO_TARGET;
+        return g.player(target).map(PlayerState::alive).orElse(false)
+                && (g.team() == null || !g.team().sameTeam(player, target)) ? null : RejectionCode.NO_TARGET;
     }
 
     // ================================================================ 命令

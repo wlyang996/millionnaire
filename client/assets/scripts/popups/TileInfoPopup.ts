@@ -6,6 +6,8 @@ import { art } from '../ui/Art';
 import { ctx } from '../ui/Ctx';
 import { gfx, mk, text } from '../ui/Kit';
 import { drawHouse } from '../ui/Icons';
+import { sameTeam, teamName, teamColor } from '../core/Teams';
+import { GLOBAL_RULES } from '../core/Rules';
 import { avatar, chip } from '../ui/Widgets';
 import { InformationPage, informationCard, redeemOrClose, shopKey } from './InformationPage';
 import { buildSpecialLand, SpecialLandState } from './SpecialLandView';
@@ -33,6 +35,10 @@ export class TileInfoPopup extends InformationPage {
         const ownerBox = informationCard(p, 94, 222, 222, 66, '#FFFEF6', 32);
         text(ownerBox, owner?.nickname ?? '无主', 66, 8, 148, 48, 32, INK, { bold: true, align: 'l' });
         if (owner) avatar(p, 40, 190, 112, owner.avatar, owner.nickname);
+        const team=owner && st.game.team?.assignments[owner.playerId];
+        const mine=owner?.playerId===st.myId;
+        const ally=!!owner && !mine && sameTeam(st.myId,owner.playerId);
+        if(team)chip(p,346,230,teamName(team)+' · '+(mine?'我':ally?'队友':'对手'),teamColor(team),'#FFFFFF',24,40);
 
         const info = informationCard(p, 32, 552, w - 64, 152, '#FFFEF8', 32);
         art(info, shopKey(tile.type, tile.tier), 22, 18, 134, 116);
@@ -51,7 +57,7 @@ export class TileInfoPopup extends InformationPage {
                 96, 44, 204, 66, 44, INK, { bold: true, align: 'l' });
         });
 
-        const rentPanel = informationCard(p, 32, 846, w - 64, 290, '#FFF8E3', 30);
+        const rentPanel = informationCard(p, 32, 846, w - 64, team?266:290, '#FFF8E3', 30);
         drawHouse(gfx(mk(rentPanel, 'RentHome', 26, 14, 44, 44)), 22, 22, 40, '#D84128', '#FFF1CF');
         text(rentPanel, '租金表', 84, 10, 300, 50, 30, INK, { bold: true, align: 'l' });
         // 同组地产：标出同组的地；整组归同一人且未抵押时租金表按加成后显示
@@ -64,13 +70,14 @@ export class TileInfoPopup extends InformationPage {
         }
         TIERS[tile.tier ?? 'LOW'].rent.map((r) => inflateRent(complete ? applySet(r) : r)).forEach((rent, i) => {
             const current = i === level;
-            const row = informationCard(rentPanel, 26, 66 + i * 52, w - 116, 48,
+            const row = informationCard(rentPanel, 26, 66 + i * (team?46:52), w - 116, team?42:48,
                 current ? '#EFF8E9' : '#FFFCF4', 16, false);
             if (current) text(row, '当前', 16, 2, 74, 44, 20, '#277240', { bold: true });
             text(row, i ? i + '级' : '未升级', 98, 2, 180, 44, 26, INK, { bold: true });
             art(row, 'info_cash', 330, 6, 36, 36);
             text(row, String(rent), 388, 0, 178, 48, 30, INK, { bold: true, align: 'l' });
         });
+        if(team)text(p,mine?'个人产权，可按规则升级':ally && GLOBAL_RULES.team?.allyRentWaiver?'队友免租 · 本次应付 0 · 不能替队友升级':ally?'队友土地，按本局配置收租':'对手土地，按实际规则收租',36,mortgaged?1110:1116,w-72,mortgaged?24:40,mortgaged?21:23,mine||ally?'#126338':'#B73337',{bold:true});
         if (mortgaged) text(p, '抵押本金 ' + prop!.mortgagePaid + ' · 抵押期间不收租 · 不在银行赎回另收 10% 手续费', 50, 1136, w - 100, 24, 19, '#B73337', { align: 'l' });
         redeemOrClose(p, this.tileIndex, 44, h - 124, w - 88, () => this.close());
     }

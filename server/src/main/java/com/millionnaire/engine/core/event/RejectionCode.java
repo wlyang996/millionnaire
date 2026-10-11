@@ -21,6 +21,8 @@ public enum RejectionCode {
     TEAM_NOT_SELECTED,
     TEAM_FULL,
     TEAM_INCOMPLETE,
+    AID_LIMIT,
+    AID_EXCEEDS_GAP,
     NOT_ENOUGH_PLAYERS,
     NOT_ALLOWED,
     GAME_MISMATCH,

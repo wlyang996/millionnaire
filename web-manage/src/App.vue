@@ -587,9 +587,9 @@ onMounted(() => {
         </el-form>
       </el-tab-pane>
       <el-tab-pane label="组队合作" name="team">
-        <el-alert class="gap" type="info" :closable="false" title="组队布局已确认，玩法正在接入。此页先配置规则，游戏入口尚未开放；当前默认关闭。个人资金和产权独立，队友免租，可自愿援助。" />
+        <el-alert class="gap" type="info" :closable="false" title="个人资金和产权独立，队友免租，可自愿援助。发布参数后新建房间生效，进行中的房间继续使用原参数。默认个人对战。" />
         <el-form v-if="form.team" label-width="190px" class="narrow">
-          <el-form-item label="开放组队（尚未接通）"><el-switch v-model="form.team.enabled" disabled /><span class="hint">分队、免租、援助和客户端验证完成后开放</span></el-form-item>
+          <el-form-item label="开放组队"><el-switch v-model="form.team.enabled" /><span class="hint">房主建房后可选择组队，首局开始后队伍固定；与个人系列赛互斥</span></el-form-item>
           <el-form-item label="允许的组队形式"><el-select v-model="form.team.teamSizeOptions" multiple><el-option v-for="n in [2,3,4]" :key="n" :label="n+'v'+n" :value="n" /></el-select></el-form-item>
           <el-form-item label="默认组队形式"><el-select v-model="form.team.defaultTeamSize"><el-option v-for="n in form.team.teamSizeOptions" :key="n" :label="n+'v'+n" :value="n" /></el-select></el-form-item>
           <el-form-item label="允许机器人"><el-switch v-model="form.team.allowBots" /><span class="hint">同时遵守已有机器人总开关；首版机器人不自动援助</span></el-form-item>
@@ -597,7 +597,7 @@ onMounted(() => {
           <el-form-item label="队友通过路障"><el-switch v-model="form.team.allyRoadblockPass" /></el-form-item>
           <el-form-item label="开放资金援助"><el-switch v-model="form.team.aidEnabled" /></el-form-item>
           <el-form-item label="援助单笔上限"><el-input-number v-model="form.team.aidMaxAmount" :min="1" :max="1000000" /><span class="hint">还受本人未冻结的可用现金限制</span></el-form-item>
-          <el-form-item label="主动援助每回合次数"><el-input-number v-model="form.team.aidPerTurn" :min="1" :max="10" /><span class="hint">本人合法操作阶段；欠款求助另按缺口和债务窗口限制</span></el-form-item>
+          <el-form-item label="主动援助每回合次数"><el-input-number v-model="form.team.aidPerTurn" :min="1" :max="10" /><span class="hint">本人投骰前（含狱中判定）；不占用卡机会，欠款求助另按缺口和债务窗口限制</span></el-form-item>
           <el-form-item label="援助快捷金额"><el-input :model-value="drafts.teamQuickAmounts ?? form.team.aidQuickAmounts.join(', ')" @update:model-value="drafts.teamQuickAmounts=$event" @blur="commitTeamQuickAmounts" @keyup.enter="commitTeamQuickAmounts" /><span class="hint">1～6项，逗号分隔，不重复、不超过单笔上限</span></el-form-item>
           <el-form-item label="开放欠款援助"><el-switch v-model="form.team.debtAidEnabled" /><span class="hint">仅在资金援助开放时生效，队友自愿出资</span></el-form-item>
           <el-form-item label="欠款援助等待（毫秒）"><el-input-number v-model="form.team.debtAidWindowMs" :min="1000" :max="120000" :step="1000" /><span class="hint">求助不能延长倒计时，清算后不接受援助</span></el-form-item>

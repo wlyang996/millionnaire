@@ -10,6 +10,8 @@ import { drawCoin } from '../../ui/Icons';
 import { fillCircle, fillRR, gfx, mk, onTap, place, setOpacity, strokeRR, text } from '../../ui/Kit';
 import { playerColor, textWidth } from '../../core/Theme';
 import { avatar } from '../../ui/Widgets';
+import { ctx } from '../../ui/Ctx';
+import { teamColor, teamName } from '../../core/Teams';
 
 export interface StatusBadge { text: string; bg: string; fg: string }
 export interface CashChange { amount: number; until: number }
@@ -97,7 +99,9 @@ export function drawPlayerBar(parent: Node, x: number, y: number, players: Playe
         const color = playerColor(players, p.playerId);
         avatar(cell, 5, 6, 56, p.avatar, p.nickname, { dim: dead, ring: dead ? undefined : color ?? undefined });
         if (color && !dead) fillRR(g, 14, ch - 7, cw - 28, 5, 2.5, color);
-        if (p.playerId === myId) {
+        const team=ctx.store.game.team?.assignments[p.playerId];
+        if(team){const tw=p.playerId===myId?60:40;fillRR(g,2,2,tw,19,8,teamColor(team));text(cell,(p.playerId===myId?'我·':'')+teamName(team),2,2,tw,19,14,'#FFFFFF',{bold:true});}
+        if (p.playerId === myId && !team) {
             const badge = mk(cell, 'MeBadge', 2, 2, 24, 24);
             fillCircle(gfx(badge), 12, 12, 12, Theme.c.blue);
             text(badge, '我', 0, 0, 24, 24, 14, Theme.c.white, { bold: true });

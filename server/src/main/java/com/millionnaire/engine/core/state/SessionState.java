@@ -15,7 +15,7 @@ import com.millionnaire.engine.core.event.GameEvent.ControlChanged;
  */
 public record SessionState(RoomState lobby, GameState game, long gamesPlayed, long nextWindowId, GameResult lastResult,
                            AbortSource abortSource, ControlChanged controlSource, SeriesState series, TeamState team,
-                           com.millionnaire.engine.core.command.SessionCommand.TeamCommand teamSource)
+                           com.millionnaire.engine.core.command.Command teamSource)
         implements DomainState {
 
     public SessionState(RoomState lobby, GameState game, long gamesPlayed, long nextWindowId, GameResult lastResult,
@@ -25,7 +25,7 @@ public record SessionState(RoomState lobby, GameState game, long gamesPlayed, lo
     public SessionState withTeam(TeamState value) {
         return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series, value, teamSource);
     }
-    public SessionState withTeamSource(com.millionnaire.engine.core.command.SessionCommand.TeamCommand value) {
+    public SessionState withTeamSource(com.millionnaire.engine.core.command.Command value) {
         return new SessionState(lobby, game, gamesPlayed, nextWindowId, lastResult, abortSource, controlSource, series, team, value);
     }
 

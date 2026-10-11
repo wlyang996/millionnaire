@@ -5,6 +5,11 @@
 
 /** 服务端保留的机器人头像编号；真人可选头像仍为 0..7。 */
 export const ROBOT_AVATAR = 8;
+export type TeamId = 'BLUE' | 'RED';
+export interface TeamState {
+    teamSize: number; assignments: Record<string, TeamId>; lockedGameNo: number;
+    aidUsages?: Record<string, { turnNo: number; count: number }>;
+}
 
 export type ConnState = 'ONLINE' | 'SUSPECT' | 'OFFLINE';
 export type ControlMode = 'MANUAL' | 'AWAY' | 'HOSTED';
@@ -115,6 +120,7 @@ export interface ChatLine {
 
 /** 对局视图（GameView）；myHand 为 [私有]；tiles/properties/lastDice/chat 为 [待服务端]。 */
 export interface GameView {
+    team?: TeamState | null;
     progress?: PublicProgress | null;
     gameNo: number;
     phase: GamePhase;
@@ -264,6 +270,9 @@ export interface LandingInfo {
 
 /** [联机] 进行中的债务 */
 export interface DebtInfo {
+    mortgageAvailable?: boolean;
+    aidRequested?: boolean;
+    gap?: number;
     debtId: number;
     debtor: string;
     creditor: string | null;
@@ -306,6 +315,7 @@ export interface PublicProgress { metrics: Record<string, IncomeMetrics>; observ
 
 /** 会话视图（SessionView） */
 export interface SessionView {
+    team?: TeamState | null;
     series?: SeriesState | null;
     roomId: string;
     status: RoomStatus;

@@ -82,14 +82,16 @@ export function cardUsable(type: CardType): Usable {
     if (!pre && !jail) return no('投骰前才能用卡');
     const h = here();
     const tile = st.tile(h.index);
-    const other = !!h.prop && !!h.prop.owner && h.prop.owner !== st.myId && !h.prop.mortgaged;
+    const other = !!h.prop && !!h.prop.owner && h.prop.owner !== st.myId && !h.prop.mortgaged
+        && (!g.team || g.team.assignments[h.prop.owner] !== g.team.assignments[st.myId]);
     switch (type) {
         case 'FIXED_MOVE':
             return pre && !me.inJail ? yes : no('仅正常投骰前使用');
         case 'JAIL_RELEASE':
             return jail ? yes : no('被关押时才能使用');
         case 'QUERY':
-            return g.players.some((p) => p.life === 'ALIVE' && p.playerId !== st.myId) ? yes : no('没有可查询的玩家');
+            return g.players.some((p) => p.life === 'ALIVE' && p.playerId !== st.myId
+                && (!g.team || g.team.assignments[p.playerId] !== g.team.assignments[st.myId])) ? yes : no('没有可查询的对手');
         case 'ROADBLOCK':
             if (jail || tile.type === 'JAIL') return no('监狱里不能放路障');
             return (g.roadblocks ?? []).includes(h.index) ? no('这里已经有路障了') : yes;

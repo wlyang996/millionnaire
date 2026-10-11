@@ -48,6 +48,10 @@ export function describeEvent(e: SEvent, n: LogNames): { text: string; header?: 
             return { text: who(d.playerId) + '花 ' + money(d.cost) + ' 把' + n.tile(d.tile) + '升到 ' + Number(d.level) + ' 级', who: [String(d.playerId)] };
         case 'RentPaid':
             return { text: who(d.payer) + '向' + who(d.owner) + '支付' + n.tile(d.tile) + '的租金 ' + money(d.amount), who: [String(d.payer), String(d.owner)] };
+        case 'TeamAidTransferred':
+            return { text: who(d.actor) + '向队友' + who(d.recipient) + '援助 ' + money(d.amount), who: [String(d.actor), String(d.recipient)] };
+        case 'TeamAidRequested':
+            return { text: who(d.actor) + '向队友发起欠款求助', who: [String(d.actor)] };
         case 'RentWaived':
             return { text: who(d.payer) + '用免租卡免付' + n.tile(d.tile) + '的租金', who: [String(d.payer), String(d.owner)] };
         case 'EventDrawn': {

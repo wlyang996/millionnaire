@@ -2,6 +2,8 @@
 import { Node } from 'cc';
 import { Theme } from '../core/Theme';
 import { BAIL_COST, landPrice, START_BONUS, STATION, stationRent } from '../core/Rules';
+import { GLOBAL_RULES } from '../core/Rules';
+import { sameTeam, teamColor, teamName } from '../core/Teams';
 import { art } from '../ui/Art';
 import { Button } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -85,6 +87,8 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         const badge = informationPanel(p, 'info_asset_panel', 44, 192, 250, 76);
         if (owner) { avatar(badge, 12, 8, 58, owner.avatar, owner.nickname); caption(badge, owner.nickname, 84, 16, 154); }
         else caption(badge, '无主', 24, 16, 200);
+        const team=owner ? st.game.team?.assignments[owner.playerId] : undefined;
+        if(team)chip(p,318,210,teamName(team)+' · 个人产权',teamColor(team),'#FFFFFF',23,40);
         const info = informationPanel(p, 'info_asset_panel', 32, 590, 656, 194);
         art(info, 'scene_station', 18, 18, 186, 150);
         caption(info, tile.name, 228, 16, 400, 62, 42);
@@ -103,7 +107,8 @@ export function buildSpecialLand(p: Node, index: number, state: SpecialLandState
         }
         list.setContentHeight(total * 44);
         caption(panel, '基础 = 未抵押车站数 × ' + STATION.rentEach + '；已含本局租金倍率', 24, 248, 608, 38, 22);
-        caption(panel, prop?.mortgaged ? '抵押本金 ' + prop.mortgagePaid + ' · 抵押期间不收租' : '当前租金 ' + stationRent(count), 24, 286, 608, 38, 22);
+        const waived=owner && owner.playerId!==st.myId && sameTeam(st.myId,owner.playerId) && GLOBAL_RULES.team?.allyRentWaiver;
+        caption(panel, prop?.mortgaged ? '抵押本金 ' + prop.mortgagePaid + ' · 抵押期间不收租' : waived ? '队友车站 · 本次应付 0' : '当前租金 ' + stationRent(count), 24, 286, 608, 38, 22);
         redeemOrClose(p, index, 44, 1156, 632, close);
     } else if (tile.type === 'BANK') {
         // Screen20: cash, two tabs, selectable owned assets, totals, two footer actions.

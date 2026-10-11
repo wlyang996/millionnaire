@@ -29,6 +29,7 @@ import { Toast } from './ui/Toast';
 import { onlineEnabled, previewName } from './net/Config';
 import { globalPreview } from './demo/GlobalPreview';
 import { seriesPreview } from './demo/SeriesPreview';
+import { teamPreview, teamPreviewPopup } from './demo/TeamPreview';
 import { emptySession, OnlineSession } from './net/OnlineSession';
 
 export class App {
@@ -124,7 +125,8 @@ export class App {
         };
         void bootArt(progress).then((missing) => {
             loading.destroy();
-            s.go(seriesPreview(previewName() ?? '') ?? globalPreview(previewName() ?? '') ?? 'profile');
+            s.go(teamPreview(previewName() ?? '') ?? seriesPreview(previewName() ?? '') ?? globalPreview(previewName() ?? '') ?? 'profile');
+            teamPreviewPopup(previewName() ?? '');
             if (missing.length) Toast.show('部分美术加载失败，请刷新重试');
             // 页面用到、但当时还没加载的图到达后重绘当前页；正在输入时等输入结束再重绘
             let waiting = false;

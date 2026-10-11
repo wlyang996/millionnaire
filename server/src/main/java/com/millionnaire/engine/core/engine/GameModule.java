@@ -108,6 +108,8 @@ final class GameModule {
 
     static SessionState evolve(SessionState s, GameEvent event, Draws draws, RuleConfig rules) {
         return switch (event) {
+            case GameEvent.TeamAidTransferred x -> TeamAidModule.evolve(s, x, rules);
+            case GameEvent.TeamAidRequested x -> TeamAidModule.evolve(s, x, rules);
             case GameStarted x -> {
                 LobbyModule.check(!s.inGame() && x.gameNo() == s.gamesPlayed() + 1, "game number mismatch");
                 LobbyModule.check(TeamModule.beforeStart(s, rules) == null, "invalid team start");
@@ -362,7 +364,7 @@ final class GameModule {
     static String overlayBlocked(GameState g, FlowKind kind) {
         if (g.turn().track().liquidating() != null) { return kind + " cannot open inside a liquidation"; }
         if (kind == FlowKind.DEBT) {
-            return g.debt() != null && g.debt().path() == DebtPath.MANUAL && g.flow().frames().isEmpty() ? null
+            return g.debt() != null && (g.debt().path() == DebtPath.MANUAL || g.team() != null && g.debt().segment() == 0) && g.flow().frames().isEmpty() ? null
                     : "a debt window opens only for an established manual debt on an empty flow stack";
         }
         if (g.debt() != null) { return kind + " cannot open while a debt is open"; }
@@ -479,6 +481,7 @@ final class GameModule {
     private static GameView.PublicDebt publicDebt(GameState g) {
         var d = g.debt();
         return d == null ? null : new GameView.PublicDebt(d.debtId(), d.debtor(), d.creditor(), d.amount(), d.segment(),
-                d.continued(), d.segment() == 2 && !d.continued(), d.windowId());
+                d.continued(), d.segment() == 2 && !d.continued(), d.windowId(), d.aidRequested(),
+                g.team() == null ? 0 : Math.max(0, d.amount() - g.ledger().available(d.debtor())), d.path() == DebtPath.MANUAL);
     }
 }

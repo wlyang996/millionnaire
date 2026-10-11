@@ -34,6 +34,7 @@ export type Route = 'profile' | 'lobby' | 'room' | 'board' | 'spectator' | 'resu
 /** 常见错误码的中文说明（未列出的显示原码）。 */
 const MESSAGES: Record<string, string> = {
     TEAM_NOT_SELECTED: '请先选择队伍再准备', TEAM_FULL: '该队人数已满', TEAM_INCOMPLETE: '需两队人数相等且达到所选组队人数',
+    AID_LIMIT: '本回合主动援助次数已用完', AID_EXCEEDS_GAP: '援助金额超过当前欠款缺口，请重新选择',
     ROOM_NOT_FOUND: '房间不存在或已关闭', ROOM_FULL: '房间已满', ALREADY_IN_ROOM: '你已在其他房间，请先离开',
     GAME_IN_PROGRESS: '对局已开始，可以选择观战', NOT_IN_GAME: '房间还没开局，可以直接加入', WATCHERS_FULL: '观战人数已满', NOT_HOST: '只有房主可以操作', NOT_ALL_READY: '需全员准备后才能开局',
     NOT_ENOUGH_PLAYERS: '至少 2 人才能开局', CAPACITY_EXCEEDED: '人数超过该地图上限', INVALID_SETTINGS: '设置不合法',

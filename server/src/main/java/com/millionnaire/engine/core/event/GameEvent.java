@@ -24,6 +24,8 @@ import java.util.List;
  * 携带随机结果的事件（OrderNumberDrawn、DiceRolled、JailRolled）在演化时消费对应的 RandomDrawn 并核对。
  */
 public sealed interface GameEvent extends Event {
+    record TeamAidTransferred(String actor, long gameNo, long windowId, String recipient, long amount, long debtId, long at) implements GameEvent, PublicEvent { }
+    record TeamAidRequested(String actor, long gameNo, long windowId, long debtId, long at) implements GameEvent, PublicEvent { }
     sealed interface ProgressEvent extends GameEvent { }
     record RoundBoundaryProcessed(long completedRound, java.util.Map<String, Integer> observedRanks)
             implements ProgressEvent, PublicEvent { }

@@ -77,6 +77,7 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
     return {
         series: v.series ? { ...v.series, roster: v.series.roster.map(m => ({ ...m, avatar: m.bot ? ROBOT_AVATAR : avatarOf(m.playerId) })) } : null,
         roomId: v.roomId,
+        team: v.team ?? null,
         status: v.game ? 'PLAYING' : 'LOBBY',
         hostId: v.hostId ?? '',
         members,
@@ -106,6 +107,7 @@ function adaptGame(g: SGame, boards: BoardTemplate[] | null, lastDice: number, n
     const myHand: Card[] = g.myHand.map((type, i) => ({ id: type + '#' + i, type: type as CardType }));
     return {
         gameNo: g.gameNo,
+        team: g.team ?? null,
         progress: g.progress ?? null,
         phase: 'PLAYING',
         players,

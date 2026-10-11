@@ -207,6 +207,7 @@ public class ApiController {
         out.put("titles", result.titles());
         out.put("metrics", result.metrics());
         out.put("series", privateSeries(result.series()));
+        out.put("teamStandings", result.teamStandings()); // IDs and numbers only; names/avatars above are looked up from live accounts.
         Object events = null;
         if (d.events() != null) {
             try {

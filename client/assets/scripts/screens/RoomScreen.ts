@@ -17,6 +17,7 @@ import { avatar, chip, roundedPanel, Segmented } from '../ui/Widgets';
 import { art, informationCharacterKey } from '../ui/Art';
 import { GLOBAL_RULES } from '../core/Rules';
 import { seriesLocked } from '../core/Series';
+import { buildTeamRoom } from './TeamRoomView';
 
 export class RoomScreen extends Screen {
     readonly id = 'room' as const;
@@ -25,6 +26,7 @@ export class RoomScreen extends Screen {
     protected build(): void {
         const st = ctx.store;
         const s = st.session;
+        if(s.team && GLOBAL_RULES.team){buildTeamRoom(this.root);return;}
         const isHost = s.hostId === st.myId;
         const series = s.series;
         const lockedSeries = seriesLocked(series);
@@ -77,7 +79,7 @@ export class RoomScreen extends Screen {
         // 设置
         const set = roundedPanel(this.root, 24, 622, 672, 408);
         const rows = 7;
-        const rowH = GLOBAL_RULES.series?.enabled || series ? 49 : 56;
+        const rowH = GLOBAL_RULES.series?.enabled || series || GLOBAL_RULES.team?.enabled ? 49 : 56;
         const lockHint = lockedSeries ? '系列首局开始后规则已锁定' : '仅房主可修改设置';
         const mk1 = (label: string, i: number) => text(set, label, 24, 8 + i * rowH, 150, rowH - 8, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
         const segX = 180;
@@ -116,14 +118,16 @@ export class RoomScreen extends Screen {
             sg.lockHint = lockHint;
         }
         void rows;
-        if (GLOBAL_RULES.series?.enabled || series) {
-            const seriesLink = mk1('系列规则 ›', 7);
+        if (GLOBAL_RULES.series?.enabled || series || GLOBAL_RULES.team?.enabled) {
+            const seriesLink = mk1('对战方式 ›', 7);
             onTap(seriesLink.node, () => ctx.screens.go('series'));
             const selected = series?.status === 'SETUP' || lockedSeries ? 'series' : 'single';
             const sg = new Segmented(set, segX, 12 + rowH * 7, segW, 44,
-                [{ label: '普通单局', value: 'single' }, { label: selected === 'series' ? '系列 ' + series?.totalGames + '局 ›' : '好友系列赛 ›', value: 'series' }], selected,
+                [{ label: '普通单局', value: 'single' }, { label: selected === 'series' ? '系列 ' + series?.totalGames + '局 ›' : '好友系列赛 ›', value: 'series', disabled: !GLOBAL_RULES.series?.enabled },
+                    ...(GLOBAL_RULES.team?.enabled ? [{label:'组队合作',value:'team',disabled:!!series && !['FINISHED','ENDED'].includes(series.status),note:'请先结束个人系列赛'}] : [])], selected,
                 v => {
-                    if (v === 'single') void st.online?.configureSeries(0);
+                    if(v==='team')void st.online?.configureTeams(GLOBAL_RULES.team!.defaultTeamSize);
+                    else if (v === 'single') void st.online?.configureSeries(0);
                     else if (st.online && series?.status !== 'SETUP') {
                         void st.online.configureSeries(GLOBAL_RULES.series!.defaultGames).then(r => { if (r.ok) ctx.screens.go('series'); });
                     } else ctx.screens.go('series');

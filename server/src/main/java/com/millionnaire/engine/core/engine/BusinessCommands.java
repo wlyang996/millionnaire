@@ -13,6 +13,8 @@ final class BusinessCommands {
     static Kind kind(Command command) {
         if (!(command instanceof GameCommand game)) { return Kind.EXTERNAL; }
         return switch (game) {
+            case GameCommand.TeamAid ignored -> Kind.BUSINESS;
+            case GameCommand.RequestTeamAid ignored -> Kind.BUSINESS;
             case GameCommand.RollDice ignored -> Kind.BUSINESS;
             case GameCommand.PayBail ignored -> Kind.BUSINESS;
             case GameCommand.BuyProperty ignored -> Kind.BUSINESS;

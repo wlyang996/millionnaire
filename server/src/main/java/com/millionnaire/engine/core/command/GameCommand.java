@@ -11,6 +11,9 @@ import com.millionnaire.engine.core.state.ControlMode;
  * 已成立的债务路径与原窗口截止不因恢复控制而改变。
  */
 public sealed interface GameCommand extends Command {
+    /** debtId=0: active aid; otherwise a contribution to the requested debt, bound to its original window. */
+    record TeamAid(String actor, long gameNo, long windowId, String recipient, long amount, long debtId) implements GameCommand { }
+    record RequestTeamAid(String actor, long gameNo, long windowId, long debtId) implements GameCommand { }
     /** 起点三选一：点第 index 张（0～2）。 */
     record PickStartCard(String actor, long windowId, int index) implements GameCommand { }
     record DrawEventCard(String actor, long windowId) implements GameCommand { }

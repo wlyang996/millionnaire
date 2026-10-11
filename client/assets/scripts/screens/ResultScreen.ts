@@ -16,6 +16,10 @@ import { avatar, roundedPanel } from '../ui/Widgets';
 import { titleMetric } from './board/GlobalNoticeView';
 import { renderSeriesScore } from './SeriesScreen';
 import { previewName } from '../net/Config';
+import { GameResult, ROBOT_AVATAR } from '../core/Models';
+import { teamColor, teamName } from '../core/Teams';
+import { informationCard } from '../popups/InformationPage';
+import { informationCharacterKey } from '../ui/Art';
 
 const MEDAL = ['#F2B82E', '#B8C2CC', '#D98A4B'];
 
@@ -40,6 +44,7 @@ export class ResultScreen extends Screen {
         }
         this.backdrop('sky');
         art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
+        if(res.teamStandings?.length){renderTeamResult(this.root,res);return;}
 
         // 奖杯 + 绶带
         art(this.root, 'result_trophy', 245, 64, 230, 150);
@@ -142,6 +147,44 @@ export class ResultScreen extends Screen {
         drawCopy(gfx(room), 300, 28, 28, Theme.c.navy);
         onTap(room, () => void copyText(s.roomId).then((ok) => Toast.show(ok ? '房间号已复制：' + s.roomId : '复制失败，房间号：' + s.roomId)));
     }
+}
+
+/** Screen35: team placement first, personal net worth below, independent titles retained. */
+function renderTeamResult(root: import('cc').Node,res: GameResult): void {
+    const rows=res.teamStandings!, winners=rows.filter(r=>r.rank===1),draw=winners.length>1;
+    const winner=winners[0], people=draw ? winners.flatMap(r=>res.standings.filter(p=>r.members.includes(p.playerId)).slice(0,1))
+        : res.standings.filter(p=>winner.members.includes(p.playerId));
+    people.slice(0,2).forEach((p,i)=>{
+        if(p.avatar===ROBOT_AVATAR)avatar(root,i?410:84,182,210,p.avatar,p.nickname ?? '机器人');
+        else art(root,informationCharacterKey(p.avatar ?? 0),i?390:64,168,250,268);
+    });
+    art(root,'result_trophy',258,132,204,182);
+    const plaque=informationCard(root,72,368,576,70,teamColor(winner.teamId));
+    text(plaque,draw?'两队并列冠军':teamName(winner.teamId)+'获胜',0,0,576,70,48,'#FFFFFF',{bold:true});
+    const panel=informationCard(root,32,454,656,660);
+    const list=new ScrollList(panel,16,8,624,642); let y=0;
+    text(list.content,'队伍排名 · 净资产',0,y,624,54,36,Theme.c.navy,{bold:true});y+=62;
+    rows.forEach(r=>{
+        const n=informationCard(list.content,0,y,624,78,'#FFFEF9',22,false);
+        text(n,'第'+r.rank+'名',12,0,134,78,32,Theme.c.navy,{bold:true});
+        text(n,teamName(r.teamId),150,0,176,78,34,teamColor(r.teamId),{bold:true});
+        art(n,'info_cash',358,22,38,42); text(n,String(r.netWorth),406,0,200,78,40,Theme.c.navy,{bold:true,align:'l'});y+=86;
+    });
+    text(list.content,'成员个人净资产',0,y,624,50,32,Theme.c.navy,{bold:true});y+=58;
+    for(const team of rows)for(const pid of team.members){
+        const p=res.standings.find(r=>r.playerId===pid);if(!p)continue;
+        avatar(list.content,12,y,52,p.avatar ?? 0,p.nickname ?? '玩家',{dim:!team.survivors.includes(pid)});
+        text(list.content,p.nickname ?? '玩家',78,y,224,54,25,Theme.c.navy,{bold:true,align:'l'});
+        text(list.content,teamName(team.teamId),302,y,114,54,23,teamColor(team.teamId),{bold:true});
+        text(list.content,String(p.netWorth),434,y,178,54,31,Theme.c.navy,{bold:true,align:'l'});y+=60;
+    }
+    for(const award of res.titles ?? []){
+        const p=res.standings.find(r=>r.playerId===award.playerId);
+        text(list.content,award.name+' · '+(p?.nickname ?? '玩家'),12,y,600,44,24,Theme.c.navy,{bold:true,align:'l'});y+=48;
+    }
+    text(list.content,'资金和土地各自独立，按队伍净资产排名',0,y,624,44,23,Theme.c.navy);y+=50;
+    list.setContentHeight(y);
+    primaryButton(root,'返回房间',40,1146,640,94,()=>ctx.screens.go('room'),42);
 }
 
 /** 面板右上角标签：结束方式。 */

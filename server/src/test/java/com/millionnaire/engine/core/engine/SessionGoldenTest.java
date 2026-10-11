@@ -23,6 +23,7 @@ class SessionGoldenTest {
         // 开局道具数接入（engine-0.13.0-m6c）给房间设置加了 initialCards；旧局沿用配置（-1），去掉这个字段后与历史字节一致
         String bytes = raw.replace(",\"bot\":false", "").replace(",\"series\":null", "").replace(",\"team\":null", "").replace(",\"teamSource\":null", "").replace(",\"teamStandings\":[]", "").replace(",\"titles\":[],\"metrics\":[]", "").replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.10.0-m3c").replace(CARDS_CONFIG_HASH, CONFIG_HASH)
                 .replace(",\"initialCards\":-1", "").replace(",\"fastMode\":false", "");
+        bytes = bytes.replace(",\"aidRequested\":false", "");
         assertEquals(1, raw.split(java.util.regex.Pattern.quote(com.millionnaire.engine.EngineVersion.VALUE), -1).length - 1, "only the version header changes");
         // Preserve the historical behavioral golden after removing only this revision's source metadata.
         var historicalEvents = t.log.stream().map(e -> {
@@ -40,6 +41,7 @@ class SessionGoldenTest {
                 .replaceAll(",\"plannedDistance\":\\d+,\"stoppedBy\":null", "")
                 .replace(com.millionnaire.engine.EngineVersion.VALUE, "engine-0.8.1-m3a").replace(",\"controlSource\":null", "")
                 .replace(CONFIG_HASH, PREVIOUS_CONFIG_HASH);
+        historicalBytes = historicalBytes.replace(",\"aidRequested\":false", "");
         assertEquals("46953a081aa15740d69b5fbee5670e036bff181e77ac3130cd3e40e68135e5de",
                 Canonical.sha256Hex(historicalBytes.getBytes(StandardCharsets.UTF_8)),
                 "historical session behavior remains identical after removing the new source metadata");

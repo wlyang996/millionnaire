@@ -63,6 +63,9 @@ export interface SLanding {
 }
 
 export interface SDebt {
+    mortgageAvailable?: boolean;
+    aidRequested?: boolean;
+    gap?: number;
     debtId: number;
     debtor: string;
     creditor: string | null;
@@ -139,6 +142,7 @@ export interface SResult {
 }
 
 export interface STeam {
+    aidUsages?: Record<string, { turnNo: number; count: number }>;
     teamSize: number;
     assignments: Record<string, 'BLUE' | 'RED'>;
     lockedGameNo: number;
@@ -216,6 +220,7 @@ export interface SHistoryRow {
 
 /** 战绩详情（GET /api/me/games/{roomId}/{gameNo}）。players 按名次；events 与 UPDATE 消息的 events 同形，没存时为 null。 */
 export interface SGameDetail {
+    teamStandings?: SResult['teamStandings'];
     series?: SeriesState | null;
     titles?: TitleAward[];
     metrics?: Record<string, IncomeMetrics>;
@@ -246,7 +251,7 @@ export type GameCommandName =
     | 'RollDice' | 'PayBail' | 'DrawEventCard' | 'DiscardCard' | 'BuyProperty' | 'DeclinePurchase'
     | 'StartLandAuction' | 'UpgradeProperty' | 'SkipUpgrade' | 'BankMortgage' | 'Redeem' | 'EmergencyMortgage'
     | 'FinishBank' | 'ContinueDebt' | 'DeclareBankruptcy' | 'ResumeControl' | 'Surrender' | 'PickTooth'
-    | 'UseCard' | 'RespondCard' | 'RequestAuction' | 'Bid' | 'RequestTrade' | 'AnswerTrade' | 'PickStartCard';
+    | 'UseCard' | 'RespondCard' | 'RequestAuction' | 'Bid' | 'RequestTrade' | 'AnswerTrade' | 'PickStartCard' | 'TeamAid' | 'RequestTeamAid';
 
 /** GAME 命令参数（数字、玩家 ID、卡种或是否使用）。 */
 export type GameArgs = Record<string, number | string | boolean | null>;

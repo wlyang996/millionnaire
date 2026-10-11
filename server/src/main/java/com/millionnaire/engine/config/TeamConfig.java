@@ -9,7 +9,7 @@ public record TeamConfig(boolean enabled, List<Integer> teamSizeOptions, int def
                          boolean allowBots, boolean allyRentWaiver, boolean allyRoadblockPass,
                          boolean aidEnabled, long aidMaxAmount, int aidPerTurn,
                          List<Long> aidQuickAmounts, boolean debtAidEnabled, long debtAidWindowMs) {
-    /** Development gate stays closed until teams, aid and client flows are implemented and verified. */
+    /** Opt-in only: old snapshots and ordinary rooms never activate teams implicitly. */
     public static final TeamConfig DEFAULT = new TeamConfig(false, List.of(2, 3, 4), 2,
             true, true, true, true, 5000, 1, List.of(100L, 300L, 500L), true, 20_000);
     public static final TeamConfig NONE = DEFAULT;

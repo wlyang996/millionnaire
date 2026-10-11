@@ -99,7 +99,11 @@ public record GameView(long gameNo, GamePhase phase, List<PublicPlayer> players,
      * 继续按钮是否可用（第二段且尚未点）、对应窗口。
      */
     public record PublicDebt(long debtId, String debtor, String creditor, long amount, int segment, boolean continued,
-                             boolean continueAvailable, long windowId) {
+                             boolean continueAvailable, long windowId, boolean aidRequested, long gap, boolean mortgageAvailable) {
+        public PublicDebt(long debtId, String debtor, String creditor, long amount, int segment, boolean continued,
+                          boolean continueAvailable, long windowId) {
+            this(debtId, debtor, creditor, amount, segment, continued, continueAvailable, windowId, false, 0, true);
+        }
     }
 
     /** 进行中的交易：卖家、买家、地块、价格、交易窗口（所有者为卖家，买家答复）。 */

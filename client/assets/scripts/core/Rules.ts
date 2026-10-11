@@ -88,6 +88,7 @@ export interface ServerRules {
 /** 用房间绑定的参数版本覆盖价格、租金与固定费用（就地修改，已引用 TIERS / STATION 的地方随之生效）。 */
 export function applyServerRules(r: ServerRules): void {
     GLOBAL_RULES.series = r.series;
+    GLOBAL_RULES.team = r.team;
     GLOBAL_RULES.roundReward = r.roundReward;
     GLOBAL_RULES.funTitles = r.funTitles;
     GLOBAL_RULES.cityEvents = r.cityEvents;
@@ -171,7 +172,7 @@ export function landPrice(isStation: boolean, tier: Tier | undefined): number {
  * 联机以服务端视图的 rentPercent 为准，由 OnlineSession 写入；演示 / 限时模式为 100。
  */
 let rentPercentNow = 100;
-export const GLOBAL_RULES: Pick<ServerRules, 'roundReward' | 'funTitles' | 'cityEvents' | 'series'> = {};
+export const GLOBAL_RULES: Pick<ServerRules, 'roundReward' | 'funTitles' | 'cityEvents' | 'series' | 'team'> = {};
 let currentCity: CityEvent | null = null;
 let currentRound = 0;
 export function setCityEvent(event: CityEvent | null, round: number): void { currentCity = event; currentRound = round; }

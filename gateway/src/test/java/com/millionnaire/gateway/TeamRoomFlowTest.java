@@ -41,6 +41,10 @@ class TeamRoomFlowTest {
         // H2 LENGTH(VARBINARY) differs from MySQL byte length; adjust only the test database constraint.
         jdbc.execute("ALTER TABLE room DROP CONSTRAINT IF EXISTS ck_room_ids");
         jdbc.execute("ALTER TABLE room ADD CONSTRAINT ck_room_ids CHECK (OCTET_LENGTH(create_request_id) = 16 AND max_saved_game_no >= 0)");
+        jdbc.execute("ALTER TABLE game_record DROP CONSTRAINT IF EXISTS ck_game_record_values");
+        jdbc.execute("ALTER TABLE game_record ADD CONSTRAINT ck_game_record_values CHECK (game_no >= 1 AND player_count >= 1 AND player_count <= 8 AND initial_cash >= 0 AND ended_at >= started_at AND OCTET_LENGTH(draft_sha256) = 32)");
+        jdbc.execute("ALTER TABLE game_log DROP CONSTRAINT IF EXISTS ck_game_log_len");
+        jdbc.execute("ALTER TABLE game_log ADD CONSTRAINT ck_game_log_len CHECK (event_count >= 0 AND plain_len >= 0 AND plain_len <= 8388608 AND OCTET_LENGTH(plain_sha256) = 32 AND game_no >= 1)");
         var json = new ObjectMapper(); var settings = (ObjectNode) json.valueToTree(SettingsMapper.defaults());
         var d = TeamConfig.DEFAULT;
         ((ObjectNode) settings.get("timing")).put("autoActDelayMs", 10000);
@@ -107,6 +111,33 @@ class TeamRoomFlowTest {
             assertThat(room.view(aid).team().locked()).isFalse();
             assertThat(room.view(aid).team().assignments()).isEqualTo(frozen.assignments());
             assertThat(room.view(aid).members().stream().filter(m -> !m.bot())).allMatch(m -> !m.ready());
+            // History survives the live result and uses team ranks for wins without pooling personal assets.
+            var headers = new org.springframework.http.HttpHeaders();
+            headers.setBearerAuth((String) a.get("token"));
+            String detailUrl = "/api/me/games/" + room.roomId() + "/" + gameNo;
+            org.springframework.http.ResponseEntity<com.fasterxml.jackson.databind.JsonNode> saved = null;
+            for (int i = 0; i < 50; i++) {
+                saved = http.exchange(detailUrl, org.springframework.http.HttpMethod.GET,
+                        new org.springframework.http.HttpEntity<>(headers), com.fasterxml.jackson.databind.JsonNode.class);
+                if (saved.getStatusCode().is2xxSuccessful()) break;
+                Thread.sleep(100);
+            }
+            assertThat(saved.getStatusCode().value()).isEqualTo(200);
+            var history = saved.getBody();
+            assertThat(history.path("teamStandings").size()).isEqualTo(2);
+            assertThat(history.path("teamStandings").get(0).path("teamId").asText()).isEqualTo("BLUE");
+            assertThat(history.path("teamStandings").get(0).path("netWorth").asLong()).isEqualTo(6000);
+            for (var player : history.path("players")) {
+                boolean blue = frozen.assignments().get(player.path("playerId").asText()) == TeamId.BLUE;
+                assertThat(player.path("rank").asInt()).isEqualTo(blue ? 1 : 2);
+                assertThat(player.path("cash").asLong()).isEqualTo(blue ? 3000 : 0);
+            }
+            assertThat(http.getForEntity(detailUrl, String.class).getStatusCode().value()).isEqualTo(401);
+            var outsider = login("旁观战绩");
+            headers.setBearerAuth((String) outsider.get("token"));
+            assertThat(http.exchange(detailUrl, org.springframework.http.HttpMethod.GET,
+                    new org.springframework.http.HttpEntity<>(headers), String.class).getStatusCode().value()).isEqualTo(404);
+            assertThat(com.millionnaire.gateway.record.ResultSnapshot.decode("{\"titles\":[],\"metrics\":{},\"series\":null}").teamStandings()).isEmpty();
         }
     }
 }

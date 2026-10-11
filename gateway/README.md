@@ -56,7 +56,7 @@
 | `UPDATE_SETTINGS` | `settings` | 房主修改设置，全员重新准备 |
 | `KICK` | `target`（userId） | 房主开局前移除玩家 |
 | `START_GAME` | — | 房主开局（全员准备且人数够） |
-| `CONFIGURE_TEAMS` | `teamSize`: 0 / 服务端开放形式 | 房主选择个人模式（0）或每队人数；改模式清空分队和准备；组队与个人系列赛互斥。组队当前仍在开发，默认关闭 |
+| `CONFIGURE_TEAMS` | `teamSize`: 0 / 服务端开放形式 | 房主选择个人模式（0）或每队人数；改模式清空分队和准备；组队与个人系列赛互斥，后台开启后新房间可用 |
 | `CHOOSE_TEAM` | `teamId`: `BLUE` / `RED` | 真人选择自己的队伍，身份取连接令牌；不接受替他人选队，变动清除全部准备 |
 | `ASSIGN_BOT_TEAM` | `target`, `teamId`: `BLUE` / `RED` | 房主仅可分配服务端标识的机器人，不能把真人标作机器人来换队 |
 | `ADD_BOT` | — | 测试用：房主加一个机器人（新建测试用户"机器人N"）。机器人自动准备，开局后服务端把它转为托管、由引擎自动动作代打；对局结束回到大厅后自动重新准备；只剩机器人时它们自动离开、房间关闭。仅 `TEST_LOGIN_ENABLED=true` 时可用，否则 `BOTS_DISABLED`；对局中 `IN_GAME` |
@@ -101,7 +101,11 @@
 
 `view` 为引擎的 `SessionView`：`status`、`hostId`、`members[{playerId,nickname,ready}]`、`settings`、`game`（未开局为 null）、`gamesPlayed`、`lastResult`。
 `game` 含 `players`（位置、现金、手牌数、监狱、控制与连接状态）、`board.ownables`、`currentPlayer`、`stage`、`windows[{windowId,kind,owner,opensAt,deadline,paused}]`、`landing`、`debt`、`myHand`（只有自己的手牌）。
-组队局的`team`随大厅和`game`返回冻结分队；正常结算的`lastResult.teamStandings`包含`teamId`、`rank`、`netWorth`、`members`和`survivors`。队伍净资产只汇总存活成员，`lastResult.standings`仍为个人成绩；普通局队伍成绩为空列表。只剩一队以`LAST_TEAM`结束，队友免租受绑定配置`allyRentWaiver`控制。完整组队UI、援助和历史战绩尚未接入，入口仍关闭。
+组队局的`team`随大厅和`game`返回冻结分队及`aidUsages`；正常结算的`lastResult.teamStandings`包含`teamId`、`rank`、`netWorth`、`members`和`survivors`。队伍净资产只汇总存活成员，`lastResult.standings`仍为个人成绩；普通局队伍成绩为空列表。只剩一队以`LAST_TEAM`结束，队友免租受绑定配置`allyRentWaiver`控制。组队UI、援助和历史战绩已接入，管理后台可开启组队，总开关仍默认关闭。
+
+`GAME`新增`TeamAid`（`gameNo,windowId,recipient,amount,debtId`）及`RequestTeamAid`（`gameNo,windowId,debtId`）。身份始终由连接令牌写入。`debtId=0`只在本人的投骰前窗口主动转款，次数受配置限制；欠款援助需匹配正在求助的队友、债务和窗口，只能补足当前缺口。系统/托管欠款人自动发起求助，机器人不自动出资。转款不占主动用卡机会、不算月度收入；不允许援助自己、敌人或出局成员。
+
+欠款`segment=0`为配置的援助等待窗口，`aidRequested,gap,mortgageAvailable`由服务端投影。求助及部分转款不延长窗口；补足后先付款，再继续落地；超时进入原抵押流程或清算。`/api/me/games/{roomId}/{gameNo}`返回已保存的`teamStandings`，历史个人行使用队伍名次统计胜场，现金及净资产仍为个人值；旧结果缺字段按空列表处理。不需要新增数据库迁移。
 倒计时请用 `deadline - serverTime` 结合本地时钟偏差计算，不要只靠本地计时器。
 
 ### 挂机判定

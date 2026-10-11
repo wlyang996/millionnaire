@@ -143,6 +143,8 @@ final class TurnModule {
         }
         GameState g = game(ctx);
         return switch (command) {
+            case GameCommand.TeamAid c -> TeamAidModule.decide(ctx, c);
+            case GameCommand.RequestTeamAid c -> TeamAidModule.decide(ctx, c);
             case GameCommand.DrawEventCard c -> EventModule.decide(ctx, c);
             case GameCommand.PickStartCard c -> EventModule.decide(ctx, c);
             case GameCommand.DiscardCard c -> EventModule.decide(ctx, c);
@@ -481,7 +483,7 @@ final class TurnModule {
     static void moveAndLand(DecisionContext<SessionState> ctx, MoveSegment segment, long carriedLeadMs) {
         String player = game(ctx).turn().currentPlayer();
         BoardTemplate board = board(ctx);
-        MoveSegment actual = MovementRules.resolve(segment, game(ctx).board(), player, board.size(), ctx.config().startPick().enabled());
+        MoveSegment actual = MovementRules.resolve(segment, game(ctx), ctx.config(), player, board.size());
         int to = actual.to();
         ctx.emit(new PlayerMoved(player, actual.from(), to, actual.distance(), game(ctx).turn().chain().chainId(), actual.number(), actual.kind(), actual.plannedDistance(), actual.stoppedBy()));
         if (actual.stoppedBy() != null) {
@@ -945,7 +947,7 @@ final class TurnModule {
                 MoveSegment plan = e.kind() == MoveKind.TO_JAIL
                         ? MovementRules.jailJump(e.segmentNo(), e.from(), jailIndex(board), board.size())
                         : MovementRules.segment(e.segmentNo(), e.kind(), e.from(), planned, board.size());
-                MoveSegment segment = MovementRules.resolve(plan, g.board(), e.playerId(), board.size(), rules.startPick().enabled());
+                MoveSegment segment = MovementRules.resolve(plan, g, rules, e.playerId(), board.size());
                 check(e.steps() == segment.distance(), "move does not follow the committed source/chain: actual distance mismatch");
                 check(e.to() == segment.to(), "move endpoint mismatch");
                 check(java.util.Objects.equals(e.stoppedBy(), segment.stoppedBy()), "movement stop source mismatch");

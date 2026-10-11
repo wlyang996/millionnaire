@@ -11,6 +11,9 @@ import { GameView, PlayerView } from '../core/Models';
 import { animMs, Theme } from '../core/Theme';
 import { TileInfoPopup } from '../popups/TileInfoPopup';
 import { AssetsPopup } from '../popups/AssetsPopup';
+import { TeamAidPage } from '../popups/TeamAidPage';
+import { teamTotal, sameTeam } from '../core/Teams';
+import { previewName } from '../net/Config';
 import { GameLogPopup } from '../popups/GameLogPopup';
 import { RulesPopup } from '../popups/RulesPopup';
 import { ghostButton, IconButton, primaryButton } from '../ui/Buttons';
@@ -151,6 +154,15 @@ export class BoardScreen extends Screen {
             liveRanks(game.players, (id) => st.netWorthOf(id) - (st.player(id)?.cash ?? 0) + (game.players.find((p) => p.playerId === id)?.cash ?? 0)));
 
         // 棋盘视口
+        if(game.team){
+            const strip=mk(this.root,'TeamTotals',44,226,632,28);
+            fillRR(gfx(strip),0,0,632,28,14,'#FFF8E6');
+            const d=game.debt;
+            const help=!!d?.aidRequested && d.segment===0 && d.debtor!==this.myId && sameTeam(this.myId,d.debtor);
+            const ownDebt=d?.segment===0 && d.debtor===this.myId;
+            text(strip,ownDebt?'处理欠款 · 点击继续':help?'队友求助 · 点击援助':'队伍净资产 · 蓝队 '+teamTotal(game,'BLUE')+' · 红队 '+teamTotal(game,'RED'),0,0,632,28,20,help||ownDebt?Theme.c.redDark:Theme.c.navy,{bold:true});
+            if(help||ownDebt)onTap(strip,()=>ctx.popups.open(new TeamAidPage(d!.debtor,true)));
+        }
         this.view = new BoardView(this.root, 0, VP_Y, Theme.W, VP_H, this.cam);
         const evActor = ev.actor ? st.player(ev.actor) : undefined;
         const flash = this.flash && this.flash.until > Date.now() ? this.flash.tile : null;
@@ -177,7 +189,7 @@ export class BoardScreen extends Screen {
         this.buildAwayOverlay();
         this.jailOv = this.jail ? new JailOverlay(this.root, this.jail.name, this.jail.start) : null;
         // 新手引导：按当时情形提示一次（有弹窗时先不提示，免得叠在一起）
-        const step = ctx.popups.count === 0 && !this.jail ? currentStep(game, st.me(), this.myId, st.eventDraw, this.spectator) : null;
+        const step = ctx.popups.count === 0 && !this.jail && !previewName()?.startsWith('team-') ? currentStep(game, st.me(), this.myId, st.eventDraw, this.spectator) : null;
         if (step) drawGuide(this.root, step, () => this.refresh());
         this.tickTexts();
         this.tickGlobalNotice();
@@ -799,7 +811,8 @@ export class BoardScreen extends Screen {
             // 应急抵押（设计稿 05）：首段勾选资产抵押；第二段先问"继续抵押 / 确认破产"（不选默认继续）
             const od = { debtId: d.debtId, windowId: id, deadline: w.deadline };
             const creditor = d.creditor ?? null;
-            if (d.segment >= 2 && !d.continued) ctx.popups.open(new DebtSecondPopup(d.amount, creditor, od));
+            if(d.segment===0 && g.team)ctx.popups.open(new TeamAidPage(this.myId,true));
+            else if (d.segment >= 2 && !d.continued) ctx.popups.open(new DebtSecondPopup(d.amount, creditor, od));
             else ctx.popups.open(new DebtPopup(d.amount, creditor, d.segment >= 2 ? 2 : 1, 0, od));
         } else if (w.kind === 'RESPONSE' && g.cards?.response && g.cards.response.owner === this.myId) {
             // 有人对我的地产用了降级 / 拆楼 / 清地 / 强购，我持有房屋保护 / 拒绝购买

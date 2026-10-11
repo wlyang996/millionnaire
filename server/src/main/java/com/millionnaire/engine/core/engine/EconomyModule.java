@@ -412,22 +412,25 @@ final class EconomyModule {
         String debtor = g.turn().currentPlayer();
         LandingState l = g.turn().landing();
         DebtState debt = new DebtState(Math.addExact(g.turn().lastDebtId(), 1), debtor, creditor, amount, cause,
-                0, false, 0, g.turn().track().feeSource(), g.turn().track().debtPath());
+                0, false, 0, g.turn().track().feeSource(), g.turn().track().debtPath(),
+                TeamAidModule.rescueAvailable(ctx.config(), g, debtor)
+                    && g.player(debtor).orElseThrow().automated());
         ctx.emit(new DebtCreated(debt));
-        if (debt.path() == DebtPath.DIRECT_BANKRUPTCY) {
+        boolean rescue = TeamAidModule.rescueAvailable(ctx.config(), g, debtor);
+        if (debt.path() == DebtPath.DIRECT_BANKRUPTCY && !rescue) {
             bankrupt(ctx, debtor, leadMs);
             return;
         }
         ctx.emit(new LandingStepEntered(l.landingId(), LandingStep.DEBT, amount, l.cursor()));
         ctx.emit(new TurnStageEntered(TurnStage.AWAITING_FLOW, 0,
                 new Continuation.ResumeLanding(g.turn().turnNo(), l.landingId()), Math.addExact(ctx.now(), leadMs)));
-        openDebtSegment(ctx, 1, leadMs);
+        openDebtSegment(ctx, rescue ? 0 : 1, leadMs);
     }
 
     private static void openDebtSegment(DecisionContext<SessionState> ctx, int segment, long leadMs) {
         DebtState d = game(ctx).debt();
         FlowCoordinator.Opened opened = GameModule.openOverlay(ctx, FlowKind.DEBT, d.debtor(), leadMs,
-                ctx.config().timing().debtSegmentMs(), DEBT_TAG);
+                segment == 0 ? ctx.config().team().debtAidWindowMs() : ctx.config().timing().debtSegmentMs(), DEBT_TAG);
         if (!(opened instanceof FlowCoordinator.Opened.Window w)) {
             throw new IllegalStateException("debt segments always have a positive duration");
         }
@@ -441,7 +444,9 @@ final class EconomyModule {
             throw new IllegalStateException("debt window without a debt");
         }
         FlowCoordinator.close(ctx, GameModule.FLOW, frame.windowId(), CloseReason.EXPIRED);
-        if (d.segment() == 1) {
+        if (d.segment() == 0 && d.path() == DebtPath.MANUAL) {
+            openDebtSegment(ctx, 1, 0);
+        } else if (d.segment() == 1) {
             openDebtSegment(ctx, 2, 0);
         } else {
             bankrupt(ctx, d.debtor(), 0);
@@ -616,6 +621,7 @@ final class EconomyModule {
     /** 应急抵押：按应急比例（有债务时即使在银行也如此，D#8）；筹足即付（一次付清，O6）。 */
     private static RejectionCode emergencyMortgage(DecisionContext<SessionState> ctx, GameCommand.EmergencyMortgage c) {
         GameState g = game(ctx);
+        if (g.debt().path() != DebtPath.MANUAL) return RejectionCode.NOT_ALLOWED;
         BoardTemplate board = board(ctx);
         RejectionCode why = ownAsset(g, board, c.actor(), c.tile());
         if (why != null) {
@@ -625,13 +631,18 @@ final class EconomyModule {
             return RejectionCode.MORTGAGED;
         }
         ctx.emit(new AssetMortgaged(c.actor(), c.tile(), emergencyValue(ctx.config(), board.tiles().get(c.tile())), true));
+        payDebtIfReady(ctx);
+        return null;
+    }
+
+    static void payDebtIfReady(DecisionContext<SessionState> ctx) {
         DebtState d = game(ctx).debt();
+        if (d == null) return;
         if (game(ctx).ledger().available(d.debtor()) >= d.amount()) {
             ctx.emit(new DebtPaid(d.debtId(), d.amount()));
             // 关闭债务窗口：统一收尾（延后认输批次 → 续接 ResumeLanding）
             GameModule.closeOverlay(ctx, d.windowId(), CloseReason.ACTED);
         }
-        return null;
     }
 
     // ================================================================ 破产、认输与淘汰
@@ -943,7 +954,7 @@ final class EconomyModule {
                         && g.player(e.playerId()).orElseThrow().alive(), "mortgage of a foreign or mortgaged asset");
                 Tile tile = board.tiles().get(e.tile());
                 if (e.emergency()) {
-                    check(g.debt() != null && g.debt().debtor().equals(e.playerId()) && g.debt().segment() >= 1
+                    check(g.debt() != null && g.debt().debtor().equals(e.playerId()) && g.debt().path() == DebtPath.MANUAL
                             && e.principal() == emergencyValue(rules, tile), "emergency mortgage mismatch");
                 } else {
                     PlayerState p = g.player(e.playerId()).orElseThrow();
@@ -979,14 +990,18 @@ final class EconomyModule {
                         && java.util.Objects.equals(d.source(), k.feeSource()) && d.source() != null
                         && d.source().landingId() == l.landingId() && d.source().cursor() == l.cursor()
                         && d.path() != null && d.path() == k.debtPath()
-                        && d.segment() == 0 && !d.continued() && d.windowId() == 0, "debt creation mismatch");
+                        && d.segment() == 0 && !d.continued() && d.windowId() == 0
+                        && d.aidRequested() == (TeamAidModule.rescueAvailable(rules, g, d.debtor())
+                            && g.player(d.debtor()).orElseThrow().automated()), "debt creation mismatch");
                 yield g.withDebt(d).withTurn(t.debtAllocated(d.debtId()).withTrack(k.charge(0)
-                        .bankruptcy(d.path() == DebtPath.DIRECT_BANKRUPTCY ? d.debtId() : 0)));
+                        .bankruptcy(d.path() == DebtPath.DIRECT_BANKRUPTCY && !TeamAidModule.rescueAvailable(rules, g, d.debtor()) ? d.debtId() : 0)));
             }
             case DebtSegmentStarted e -> {
                 DebtState d = g.debt();
                 FlowFrame top = g.flow().top().orElse(null);
-                check(d != null && d.path() == DebtPath.MANUAL && d.debtId() == e.debtId() && e.segment() == d.segment() + 1 && e.segment() <= 2
+                check(d != null && d.debtId() == e.debtId()
+                        && (e.segment() == 0 && d.windowId() == 0 && TeamAidModule.rescueAvailable(rules, g, d.debtor())
+                            || d.path() == DebtPath.MANUAL && e.segment() == d.segment() + 1 && e.segment() <= 2)
                         && top != null && top.windowId() == e.windowId() && top.kind() == FlowKind.DEBT
                         && d.debtor().equals(top.owner()), "debt segment mismatch");
                 yield g.withDebt(d.segment(e.segment(), e.windowId()));
@@ -998,7 +1013,7 @@ final class EconomyModule {
             }
             case DebtPaid e -> {
                 DebtState d = g.debt();
-                check(d != null && d.path() == DebtPath.MANUAL && d.debtId() == e.debtId() && d.amount() == e.amount() && d.segment() >= 1
+                check(d != null && d.windowId() != 0 && d.debtId() == e.debtId() && d.amount() == e.amount()
                         && g.ledger().available(d.debtor()) >= e.amount(), "debt payment mismatch");
                 String to = d.creditor() == null ? Ledger.SYSTEM : d.creditor();
                 Ledger ledger = g.ledger().transfer(d.debtor(), to, e.amount(), DEBT_PAYMENT, "debt-" + d.debtId());
@@ -1013,8 +1028,8 @@ final class EconomyModule {
                             && e.outcome() == LifeState.BANKRUPT;
                     DebtState d = g.debt();
                     ok &= d != null && k.bankruptcyDebtId() == e.debtId() && g.flow().frames().isEmpty()
-                            && (d.path() == DebtPath.DIRECT_BANKRUPTCY ? d.segment() == 0 && d.windowId() == 0
-                                : d.path() == DebtPath.MANUAL && (d.segment() == 1 || d.segment() == 2) && d.windowId() != 0);
+                            && (d.path() == DebtPath.DIRECT_BANKRUPTCY ? d.segment() == 0
+                                : d.path() == DebtPath.MANUAL && d.windowId() != 0);
                 } else {
                     ok &= e.outcome() == LifeState.SURRENDERED
                             && (g.debt() == null || !e.playerId().equals(g.debt().debtor()));
@@ -1170,12 +1185,13 @@ final class EconomyModule {
             FlowFrame top = g.flow().top().orElse(null);
             expect(d.debtor().equals(t.currentPlayer()) && g.player(d.debtor()).orElseThrow().alive()
                     && (d.creditor() == null || g.player(d.creditor()).map(PlayerState::alive).orElse(false))
-                    && d.debtId() == t.lastDebtId() && d.debtId() >= 1 && d.path() == DebtPath.MANUAL
+                    && d.debtId() == t.lastDebtId() && d.debtId() >= 1
+                    && (d.path() == DebtPath.MANUAL || d.segment() == 0 && TeamAidModule.rescueAvailable(config, g, d.debtor()))
                     && d.source() != null && FeeRules.rule(d.source().kind()).cause().equals(d.cause())
                     && d.source().amount() == d.amount() && java.util.Objects.equals(d.source().creditor(), d.creditor())
                     && FeeRules.valid(config, g, l, d.source())
                     && d.amount() > 0 && g.ledger().available(d.debtor()) < d.amount()
-                    && (d.segment() == 1 || d.segment() == 2) && (!d.continued() || d.segment() == 2)
+                    && (d.segment() == 1 || d.segment() == 2 || d.segment() == 0 && TeamAidModule.rescueAvailable(config, g, d.debtor())) && (!d.continued() || d.segment() == 2)
                     && top != null && top.kind() == FlowKind.DEBT && top.windowId() == d.windowId()
                     && d.debtor().equals(top.owner()) && l != null && l.step() == LandingStep.DEBT, "debt invalid");
         } else {

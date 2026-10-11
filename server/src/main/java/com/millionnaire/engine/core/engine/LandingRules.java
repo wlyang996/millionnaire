@@ -119,7 +119,7 @@ final class LandingRules {
             var d = g.debt();
             return l.step() == null && d != null && d.source() != null && l.currentTask() == FeeRules.rule(d.source().kind()).task()
                     && d.source().landingId() == l.landingId() && d.source().cursor() == l.cursor()
-                    && d.path() == com.millionnaire.engine.core.state.DebtPath.MANUAL && d.amount() == payment && d.segment() == 0;
+                    && (d.path() == com.millionnaire.engine.core.state.DebtPath.MANUAL || TeamAidModule.rescueAvailable(c, g, d.debtor())) && d.amount() == payment && d.segment() == 0;
         }
         Rule r = rule(step);
         return (r.execution() == Execution.WINDOW || r.execution() == Execution.FLOW) && l.next() == step && payment == 0

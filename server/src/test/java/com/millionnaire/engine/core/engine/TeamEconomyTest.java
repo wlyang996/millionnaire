@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TeamEconomyTest {
-    private static RuleConfig rules(boolean production, boolean waiver) {
+    static RuleConfig rules(boolean production, boolean waiver) {
         var c = production ? RuleConfigs.defaultV1() : RuleConfigs.v1(TestBoards.LEGACY_30, TestBoards.LEGACY_50, true);
         var t = TeamConfig.DEFAULT;
         return new RuleConfig(c.ruleVersion(), c.boards(), c.tiers(), c.station(), c.economy(), c.ratios(),
@@ -24,7 +24,7 @@ class TeamEconomyTest {
                         t.aidEnabled(), t.aidMaxAmount(), t.aidPerTurn(), t.aidQuickAmounts(), t.debtAidEnabled(), t.debtAidWindowMs()));
     }
     @SafeVarargs
-    private static Table table(boolean production, boolean waiver, List<ScriptedRandom.Step>... steps) {
+    static Table table(boolean production, boolean waiver, List<ScriptedRandom.Step>... steps) {
         var all = new ArrayList<>(Table.order(90, 80, 70, 60));
         for (var part : steps) all.addAll(part);
         var t = new Table(rules(production, waiver), new ScriptedRandom(all), 1);
@@ -38,10 +38,10 @@ class TeamEconomyTest {
         assertEquals("p1", t.current());
         return t;
     }
-    private static void craft(Table t, UnaryOperator<GameState> f) {
+    static void craft(Table t, UnaryOperator<GameState> f) {
         t.state = t.engine.restore(t.engine.snapshot(t.state.withDomain(t.session().withGame(f.apply(t.game())))));
     }
-    private static GameState own(GameState g, int tile, String owner, int level) {
+    static GameState own(GameState g, int tile, String owner, int level) {
         return g.withBoard(g.board().with(new OwnableState(tile, owner, level, false, 0, null)));
     }
     private static void restore(Table t) { assertEquals(t.state, t.engine.restore(t.engine.snapshot(t.state))); }

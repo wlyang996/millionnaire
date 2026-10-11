@@ -81,6 +81,12 @@ export function runSelfCheck(): CheckResult {
         ], names);
         eq('对局记录', log.map((l) => [l.seq, l.text, !!l.header, !!l.mine]),
             [[1, '第 3 回合 · 小明', true, false], [2, '你向小明支付东湖路的租金 150', false, true]]);
+        appendLog(log, [
+            { kind: 'TeamAidTransferred', data: { actor: 'me', recipient: 'p2', amount: 300 } },
+            { kind: 'TeamAidRequested', data: { actor: 'p2' } },
+        ], names);
+        eq('组队援助记录', log.slice(-2).map(l=>[l.text,!!l.mine]),
+            [['你向队友小明援助 300',true],['小明向队友发起欠款求助',false]]);
     }
     // 同组地产默认分组（与服务端 SetBonus.bySides 一致）：30 格 8 组、50 格 14 组，每组 2～3 块且只含普通地产
     const g30 = defaultGroups(buildBoard(30));

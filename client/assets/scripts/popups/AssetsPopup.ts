@@ -11,6 +11,10 @@ import { avatar, chip } from '../ui/Widgets';
 import { InformationPage, informationClose, informationPanel, shopKey } from './InformationPage';
 import { TileInfoPopup } from './TileInfoPopup';
 import { tierName } from './Common';
+import { sameTeam, teamName, teamColor, activeAidAvailable } from '../core/Teams';
+import { GLOBAL_RULES } from '../core/Rules';
+import { primaryButton } from '../ui/Buttons';
+import { TeamAidPage } from './TeamAidPage';
 
 export class AssetsPopup extends InformationPage {
     constructor(private readonly playerId: string = ctx.store.myId) {
@@ -20,6 +24,9 @@ export class AssetsPopup extends InformationPage {
     protected buildBody(p: Node, w: number, h: number): void {
         const st = ctx.store;
         const me = st.player(this.playerId) ?? st.me();
+        const team=st.game.team?.assignments[me.playerId];
+        const ally=me.playerId!==st.myId && sameTeam(st.myId,me.playerId);
+        if(team)chip(p,220,198,teamName(team)+' · '+(me.playerId===st.myId?'我':ally?'队友':'对手'),teamColor(team),'#FFFFFF',24,42);
         if (me.avatar === ROBOT_AVATAR) avatar(p, 380, 244, 200, me.avatar, me.nickname);
         else art(p, informationCharacterKey(me.avatar), 310, 184, 345, 310);
         const sum = informationPanel(p, 'info_summary_panel', 32, 452, w - 64, 146);
@@ -33,13 +40,13 @@ export class AssetsPopup extends InformationPage {
             text(sum, label, x + 62, 24, 138, 34, 22, Theme.c.inkSoft, { align: 'l' });
             text(sum, String(value), x + 62, 60, 138, 52, 36, Theme.c.ink, { bold: true, align: 'l' });
         });
-        const area = informationPanel(p, 'info_rent_panel', 32, 614, w - 64, 510);
+        const area = informationPanel(p, 'info_rent_panel', 32, 614, w - 64, team?438:510);
         const assets = st.assetsOf(me.playerId);
         art(area, 'info_properties', 22, 12, 38, 40);
         const landCount = assets.filter(a => a.tile.type === 'PROPERTY').length;
         text(area, '房产 ' + assets.length + ' · 地产 ' + landCount + ' · 车站 ' + (assets.length - landCount),
             72, 12, 540, 46, 26, Theme.c.ink, { bold: true, align: 'l' });
-        const list = new ScrollList(area, 18, 72, w - 100, 416);
+        const list = new ScrollList(area, 18, 72, w - 100, team?344:416);
         const rowH = 182;
         assets.forEach((a, i) => {
             const rw = w - 100;
@@ -65,6 +72,12 @@ export class AssetsPopup extends InformationPage {
             text(list.content, '暂无资产', 0, 218, w - 100, 42, 30, Theme.c.inkSoft);
         }
         list.setContentHeight(Math.max(300, assets.length * rowH));
-        informationClose(p, 44, h - 124, w - 88, () => this.close());
+        if(team)text(p,ally && GLOBAL_RULES.team?.allyRentWaiver?'走到队友土地免租 · 土地仍归队友个人所有':'个人资金与土地独立，按队伍净资产排名',32,1058,w-64,54,25,Theme.c.navy,{bold:true});
+        if(ally && me.life==='ALIVE' && GLOBAL_RULES.team?.aidEnabled){
+            const debt=st.game.debt, rescue=!!debt?.aidRequested && debt.debtor===me.playerId && debt.segment===0;
+            const aid=primaryButton(p,rescue?'援助欠款':'援助队友',44,h-124,420,86,()=>{this.close();ctx.popups.open(new TeamAidPage(me.playerId,rescue));},34);
+            aid.setEnabled(rescue || activeAidAvailable(),'仅在自己投骰前，或队友正在求助时可援助');
+            informationClose(p,480,h-124,196,()=>this.close());
+        }else informationClose(p, 44, h - 124, w - 88, () => this.close());
     }
 }

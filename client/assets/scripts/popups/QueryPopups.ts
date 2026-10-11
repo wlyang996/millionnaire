@@ -41,7 +41,8 @@ export class QueryTargetPopup extends Popup {
             const x = 24 + (i % 4) * cell;
             const y = 92 + Math.floor(i / 4) * 170;
             const self = pl.playerId === st.myId;
-            const ok = !self && pl.life === 'ALIVE';
+            const ally=!!st.game.team && st.game.team.assignments[pl.playerId]===st.game.team.assignments[st.myId];
+            const ok = !self && !ally && pl.life === 'ALIVE';
             const n = mk(p, 'P' + i, x + 4, y, cell - 8, 160);
             const g = gfx(n);
             fillRR(g, 0, 0, cell - 8, 160, 18, ok ? Theme.c.white : '#E6E9EE');
@@ -49,6 +50,7 @@ export class QueryTargetPopup extends Popup {
             avatar(n, (cell - 8 - 100) / 2, 10, 100, pl.avatar, pl.nickname, { dim: !ok });
             text(n, pl.nickname, 0, 112, cell - 8, 30, 24, Theme.c.navy, { bold: true });
             if (self) text(n, '自己', 0, 138, cell - 8, 20, 16, Theme.c.noteGray);
+            else if(ally)text(n,'队友',0,138,cell-8,20,16,Theme.c.noteGray);
             if (ok) onTap(n, () => {
                 this.sel = pl.playerId;
                 this.rebuildBody();

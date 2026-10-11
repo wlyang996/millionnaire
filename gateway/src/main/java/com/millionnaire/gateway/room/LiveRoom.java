@@ -526,7 +526,9 @@ public final class LiveRoom {
                     continue;
                 }
                 Standing st = standings.get(pid);
-                seats.add(new GameRecords.Seat(i, uid, st == null ? null : st.rank(), st == null ? null : st.netWorth(),
+                Integer rank = ended.result().teamStandings().stream().filter(team -> team.members().contains(pid))
+                        .map(com.millionnaire.engine.core.state.TeamStanding::rank).findFirst().orElse(st == null ? null : st.rank());
+                seats.add(new GameRecords.Seat(i, uid, rank, st == null ? null : st.netWorth(),
                         st == null ? null : st.cash(), life.get(pid)));
             }
             var set = g.settings();

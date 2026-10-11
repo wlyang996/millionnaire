@@ -125,6 +125,14 @@ demo/    DemoPanel LayoutCheck
 
 严格TypeScript检查、214项SelfCheck、Cocos3.8.8 web-mobile构建通过；实际画面见 `design/screens/records/friend-series-preview-2026-10-10/`。普通550ms移动未改。微信真机未验证；完整方案/边界见friend-series-implementation-2026-10-10.md。
 
+## 2026-10-11 组队合作
+
+接入34–36号布局：分队房间、棋盘阵营与总额、动态身份资产/土地/车站、主动援助、欠款求助/出资、队伍结算和历史详情。本人资金和土地独立，队友免租，不允许攻击/查询队友；投骰前主动援助及欠款补款均由服务端校验，不消耗主动用卡机会。机器人在房间、援助和结算显示机器人头像。组队与个人系列赛互斥。
+
+总开关默认关闭，后台发布开启配置后新房间显示入口；金额、次数、快捷项和等待时长只用服务端配置。欠款期间不启动下一人投骰计时，关闭欠款页可从棋盘重新进入。所有详情遮住地图，普通模式移动速度未改。
+
+离线视觉验收入口`?demo=1&preview=team-{room|board|assets|land|enemy|aid|debt|help|result}{4|6|8}`，不发送真实命令或保存战绩。严格类型检查、215项纯逻辑自检、Cocos网页构建及关键页面截图通过，微信真机未验收。素材复用与完整记录见[组队实施记录](../design/screens/records/team-coop-complete-2026-10-11.md)。
+
 ## 2026-10-06 资产与格子详情
 
 特殊土地后续已按20银行、21监狱/游戏中心、22事件/休息区、23车站、25起点分别接入独立布局，使用90件补充素材。银行可切换标签及选择资产查看金额；银行和出狱结算按钮因尚未接服务端明确禁用。事件仍在棋盘中央点击卡背，小游戏保持既有演示交互；查看起点不领奖。TypeScript、202项自检、官方web-mobile构建通过。完整状态与截图见 `design/screens/records/special-land-implementation-2026-10-06.md` 和 `special-land-preview-2026-10-06/`。

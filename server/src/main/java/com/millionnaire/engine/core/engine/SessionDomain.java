@@ -87,6 +87,8 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     @Override
     public SessionState acceptSystemInput(SessionState state, Input input) {
         if (input.command() instanceof SessionCommand.TeamCommand c) return state.withTeamSource(c);
+        if (input.command() instanceof GameCommand.TeamAid || input.command() instanceof GameCommand.RequestTeamAid)
+            state = state.withTeamSource(input.command());
         if (input.command() instanceof SessionCommand.EndGame c) {
             return state.withAbortSource(new SessionState.AbortSource(input.seq(), c));
         }
@@ -98,7 +100,6 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
             var g = state.game();
             var d = g.debt();
             boolean confirmed = input.command() instanceof GameCommand.DeclareBankruptcy c
-                    && d.path() == com.millionnaire.engine.core.state.DebtPath.MANUAL
                     && FlowCoordinator.checkWindow(g.flow(), c.windowId(), c.actor(), input.serverTime()) == null
                     && d.debtor().equals(c.actor());
             confirmed |= input.command() instanceof GameCommand.Surrender c
@@ -124,7 +125,8 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
             var g = state.game();
             var d = g.debt();
             var frame = FlowCoordinator.expiredFrame(g.flow(), task).orElse(null);
-            if (d.path() == com.millionnaire.engine.core.state.DebtPath.MANUAL && d.segment() == 2
+            if ((d.path() == com.millionnaire.engine.core.state.DebtPath.MANUAL && d.segment() == 2
+                    || d.path() == com.millionnaire.engine.core.state.DebtPath.DIRECT_BANKRUPTCY && d.segment() == 0)
                     && frame != null && frame.kind() == com.millionnaire.engine.core.state.FlowKind.DEBT
                     && frame.windowId() == d.windowId()) {
                 return state.withGame(g.withTurn(g.turn().withTrack(g.turn().track().bankruptcy(d.debtId()))));
@@ -175,8 +177,10 @@ public final class SessionDomain implements Domain<SessionState>, View<SessionVi
     @Override
     public void checkEvent(EngineState engine, Event event, RuleConfig rules) {
         SessionState current = (SessionState) engine.domain();
-        if (current.teamSource() != null && !(event instanceof com.millionnaire.engine.core.event.TeamEvent))
+        if (current.teamSource() instanceof SessionCommand.TeamCommand && !(event instanceof com.millionnaire.engine.core.event.TeamEvent))
             throw new IllegalStateException("team selection must immediately consume its input source");
+        if (event instanceof GameEvent.TeamAidTransferred e) LobbyModule.check(e.at() == engine.now(), "aid time mismatch");
+        if (event instanceof GameEvent.TeamAidRequested e) LobbyModule.check(e.at() == engine.now(), "aid request time mismatch");
         if (event instanceof GameEvent.MovementEffectCommitted e) {
             LobbyModule.check(e.source() != null && e.source().at() == engine.now(), "internal movement source time mismatch");
         }

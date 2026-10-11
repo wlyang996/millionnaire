@@ -50,11 +50,20 @@ final class MovementRules {
     }
 
     static MoveSegment resolve(MoveSegment plan, BoardState board, String player, int size, boolean startPick) {
+        return resolve(plan, board, player, size, startPick, owner -> false);
+    }
+    static MoveSegment resolve(MoveSegment plan, com.millionnaire.engine.core.state.GameState game,
+                               com.millionnaire.engine.config.RuleConfig rules, String player, int size) {
+        return resolve(plan, game.board(), player, size, rules.startPick().enabled(), owner -> game.team() != null
+                && rules.team().allyRoadblockPass() && game.team().sameTeam(player, owner));
+    }
+    private static MoveSegment resolve(MoveSegment plan, BoardState board, String player, int size, boolean startPick,
+                                       java.util.function.Predicate<String> allyPass) {
         if (plan.kind() == MoveKind.TO_JAIL) { return jailJump(plan.number(), plan.from(), plan.to(), size); }
         MoveSegment expected = segment(plan.number(), plan.kind(), plan.from(), plan.plannedDistance(), size);
         for (int i = 0; i < expected.walked().size(); i++) {
             var block = board.roadblock(expected.walked().get(i)).orElse(null);
-            if (block != null && !block.owner().equals(player)) { return stopAt(expected, i + 1, size, block); }
+            if (block != null && !block.owner().equals(player) && !allyPass.test(block.owner())) { return stopAt(expected, i + 1, size, block); }
             if (startPick && expected.walked().get(i) == 0
                     && (plan.kind() == MoveKind.DICE || plan.kind() == MoveKind.EVENT_FORWARD)) {
                 return stopAt(expected, i + 1, size);

@@ -15,6 +15,7 @@ import { ScrollList } from '../ui/ScrollList';
 import { avatar } from '../ui/Widgets';
 import { titleMetric } from '../screens/board/GlobalNoticeView';
 import { SeriesHistoryPopup } from './SeriesHistoryPopup';
+import { teamName, teamColor } from '../core/Teams';
 
 const W = 680;
 const H = 1180;
@@ -88,6 +89,12 @@ export class GameDetailPopup extends Popup {
         text(info, '结束：' + (REASONS[d.endReason] ?? d.endReason) + ' · 初始现金 ' + d.initialCash, 20, 98, lw - 40, 36, 22,
             Theme.c.inkSoft, { align: 'l' });
         y += 166;
+        if(d.teamStandings?.length){
+            text(c,'组队对局 · 队伍排名',0,y,lw,46,32,Theme.c.navy,{bold:true});y+=54;
+            d.teamStandings.forEach(t=>{
+                text(c,'第'+t.rank+'名 · '+teamName(t.teamId)+' · 净资产 '+t.netWorth,16,y,lw-32,48,28,teamColor(t.teamId),{bold:true,align:'l'});y+=56;
+            });
+        }
         if (d.series) {
             const series = d.series;
             const game = series.games.find(g => g.gameNo === d.gameNo);

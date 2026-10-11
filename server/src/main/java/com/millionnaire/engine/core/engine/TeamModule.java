@@ -96,7 +96,7 @@ final class TeamModule {
                 : new TeamEvent.TeamSelected(target(c), selected(c));
     }
     static SessionState evolve(SessionState s, TeamEvent e, RuleConfig rules) {
-        var c = s.teamSource();
+        var c = s.teamSource() instanceof TeamCommand source ? source : null;
         LobbyModule.check(c != null && rejection(s, c, rules) == null && fact(c).equals(e),
                 "team event requires its matching accepted command");
         TeamState next;
@@ -168,5 +168,8 @@ final class TeamModule {
         if (!s.inGame()) LobbyModule.expect(s.lobby().members().stream().allMatch(m -> !m.ready() || t.assignments().containsKey(m.playerId())), "ready member has not selected a team");
         if (s.inGame()) LobbyModule.expect(t.equals(s.game().team()) && t.lockedGameNo() == s.game().gameNo()
                 && t.assignments().keySet().equals(new TreeSet<>(ids)) && ids.size() == t.teamSize() * 2, "frozen team roster mismatch");
+        LobbyModule.expect(t.aidUsages().entrySet().stream().allMatch(e -> s.inGame() && ids.contains(e.getKey())
+                && e.getValue().turnNo() > 0 && e.getValue().turnNo() <= s.game().turn().turnNo()
+                && e.getValue().count() > 0 && e.getValue().count() <= rules.team().aidPerTurn()), "invalid aid usage");
     }
 }
