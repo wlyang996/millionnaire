@@ -19,7 +19,7 @@ public class UserStore {
             this(id, nickname, 0);
         }
 
-        /** 头像序号 0～7；没选时为 -1。 */
+        /** 稳定人物 ID（0～998，8 为机器人）；没选时为 -1。 */
         public int avatar() {
             return avatarId > 0 ? avatarId - 1 : -1;
         }
@@ -30,29 +30,43 @@ public class UserStore {
         }
     }
 
-    /** 客户端可选的头像数。 */
+    /** 没有目录服务的旧测试实例使用八位内置人物。 */
     public static final int AVATARS = 8;
 
     private final ObjectProvider<JdbcTemplate> jdbc;
     private final Clock clock;
+    private final com.millionnaire.gateway.characters.CharacterCatalog characters;
     private final Map<Long, User> cache = new ConcurrentHashMap<>();
     /** 没连库时的微信身份表。 */
     private final Map<String, Long> identities = new ConcurrentHashMap<>();
 
     public UserStore(ObjectProvider<JdbcTemplate> jdbc, Clock clock) {
+        this(jdbc, clock, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public UserStore(ObjectProvider<JdbcTemplate> jdbc, Clock clock, com.millionnaire.gateway.characters.CharacterCatalog characters) {
         this.jdbc = jdbc;
         this.clock = clock;
+        this.characters = characters;
+    }
+
+    private boolean validAvatar(int avatar) {
+        if (avatar < 0) return false;
+        if (characters == null) return avatar < AVATARS;
+        if (!characters.selectable(avatar)) throw new com.millionnaire.gateway.room.ClientException("INVALID_AVATAR", "该人物已停用或尚未发布，请重新选择");
+        return true;
     }
 
     public User create(String nickname) {
         return create(nickname, -1);
     }
 
-    /** @param avatar 头像序号 0～7；其他值视为没选。 */
+    /** @param avatar 已发布且启用的人物 ID；负数表示没选。 */
     public User create(String nickname, int avatar) {
         JdbcTemplate t = jdbc.getIfAvailable();
         long now = clock.millis();
-        int avatarId = avatar >= 0 && avatar < AVATARS ? avatar + 1 : 0;
+        int avatarId = validAvatar(avatar) ? avatar + 1 : 0;
         for (int attempt = 1; ; attempt++) {
             User u = new User(Ids.nextId(), nickname, avatarId);
             if (t == null) {
@@ -118,9 +132,9 @@ public class UserStore {
         }
     }
 
-    /** 改昵称 / 头像（avatar 为 0～7，其他值不改头像）。 */
+    /** 改昵称 / 人物（负数保留原人物，非负 ID 须已发布且启用）。 */
     public User updateProfile(User u, String nickname, int avatar) {
-        int avatarId = avatar >= 0 && avatar < AVATARS ? avatar + 1 : u.avatarId();
+        int avatarId = validAvatar(avatar) ? avatar + 1 : u.avatarId();
         User next = new User(u.id(), nickname, avatarId);
         JdbcTemplate t = jdbc.getIfAvailable();
         if (t != null) {

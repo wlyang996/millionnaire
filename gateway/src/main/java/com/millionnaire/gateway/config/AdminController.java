@@ -164,7 +164,7 @@ public class AdminController {
     }
 
     /** 令牌无效时抛出，由 {@link #onClient} 转为 401。 */
-    private void check(String auth) {
+    public void check(String auth) {
         String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7).strip() : null;
         Long exp = token == null ? null : tokens.get(token);
         if (exp == null || exp < clock.millis()) {
@@ -175,7 +175,7 @@ public class AdminController {
         }
     }
 
-    static final class Unauthorized extends RuntimeException {
+    public static final class Unauthorized extends RuntimeException {
         Unauthorized() {
             super(null, null, false, false);
         }

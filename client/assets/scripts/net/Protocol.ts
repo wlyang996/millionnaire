@@ -176,6 +176,8 @@ export interface UpdateMsg {
     view: SView;
     /** 玩家所选头像（玩家 ID → 序号 0～7）；没选的不在表里，按玩家 ID 取默认头像。旧后台没有这个字段。 */
     avatars?: Record<string, number>;
+    /** Immutable whole-character catalog bound to this room. */
+    characterVersion?: number;
     /** 房间绑定的游戏参数版本（0 = 内置默认）；客户端按它拉取地名与价格表。旧后台没有这个字段。 */
     configId?: number;
 }

@@ -40,6 +40,15 @@ public class RoomService {
 
     /** 游戏参数发布版本：建房时取当前生效版本，房间整局沿用（对局中途发布不影响已开的房间）。 */
     private final GameConfigs configs;
+    @Autowired private com.millionnaire.gateway.characters.CharacterCatalog characters;
+
+    long characterVersion() { return characters == null ? 0 : characters.activeId(); }
+
+    Map<String, Integer> roomAvatars(java.util.Collection<String> players, long version) {
+        var values = new java.util.HashMap<>(avatarsOf(players));
+        if (characters != null) values.replaceAll((id, avatar) -> characters.forRoom(avatar, version));
+        return values;
+    }
     /** 昵称校验用的引擎（加入规则与参数无关）。 */
     private final Engine<SessionState> engine;
     private final EngineState nicknameProbe;

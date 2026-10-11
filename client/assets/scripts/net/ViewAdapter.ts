@@ -49,7 +49,7 @@ export function adaptSession(v: SView, boards: BoardTemplate[] | null, lastDice:
     // 玩家所选头像优先（服务端随推送下发），没选的按玩家 ID 取默认头像
     const avatarOf = (id: string): number => {
         const a = chosen[id];
-        return typeof a === 'number' && a >= 0 && a <= ROBOT_AVATAR ? a : defaultAvatar(id);
+        return typeof a === 'number' && Number.isInteger(a) && a >= 0 && a <= 998 ? a : defaultAvatar(id);
     };
     const members: Member[] = v.members.map((m) => ({
         playerId: m.playerId, nickname: m.nickname, ready: m.ready, bot: m.bot, avatar: m.bot ? ROBOT_AVATAR : avatarOf(m.playerId),

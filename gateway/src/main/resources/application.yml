@@ -7,6 +7,10 @@ server:
     use-relative-redirects: true
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   # 默认不连库：数据源与 Flyway 都关闭，服务照常启动。
   # 在云托管环境变量里设置 SPRING_PROFILES_ACTIVE=db（并配好 MYSQL_*）后才启用，见 application-db.yml。
   autoconfigure:
@@ -17,6 +21,11 @@ spring:
       - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
 
 millionnaire:
+  cos:
+    bucket: ${COS_BUCKET:}
+    region: ${COS_REGION:}
+    secret-id: ${COS_SECRET_ID:}
+    secret-key: ${COS_SECRET_KEY:}
   auth:
     # 测试身份登录（POST /api/auth/test-login）。正式上线前在云托管环境变量里设 TEST_LOGIN_ENABLED=false
     test-login-enabled: ${TEST_LOGIN_ENABLED:true}

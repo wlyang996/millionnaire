@@ -97,7 +97,7 @@
 
 注意：一步的 `UPDATE` 会先于该命令的 `RESULT` 到达。
 
-`avatars` 是房间里选过头像的玩家：`{"玩家ID": 头像序号 0～7}`，没选的不在表里（客户端按玩家 ID 取默认头像）。头像只在网关保存（`app_user.avatar_id` = 序号 + 1），不进引擎状态。
+`avatars` 是房间里选过人物的玩家：`{"玩家ID": 稳定人物ID}`，0～7为内置、8为机器人、9～998为后台新增。没选的不在表里（客户端按玩家 ID 取默认头像）。人物只在网关保存（`app_user.avatar_id` = 人物ID + 1），不进引擎状态。UPDATE同时包含`characterVersion`，绑定房间创建时的人物目录；图片和发布流程见 [整套人物与COS](../web-manage/character-catalog.md)。V5保存素材元数据和目录版本，已执行的V1～V4未修改。
 
 `view` 为引擎的 `SessionView`：`status`、`hostId`、`members[{playerId,nickname,ready}]`、`settings`、`game`（未开局为 null）、`gamesPlayed`、`lastResult`。
 `game` 含 `players`（位置、现金、手牌数、监狱、控制与连接状态）、`board.ownables`、`currentPlayer`、`stage`、`windows[{windowId,kind,owner,opensAt,deadline,paused}]`、`landing`、`debt`、`myHand`（只有自己的手牌）。

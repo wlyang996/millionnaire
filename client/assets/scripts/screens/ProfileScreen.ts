@@ -10,7 +10,7 @@ import { fillCircle, fillPoly, fillRR, gfx, line, mk, onTap, setText, strokeRR, 
 import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
-import { art, AVATAR_NAMES, informationCharacterKey } from '../ui/Art';
+import { art, characterChoices, characterArtRevision, informationCharacterKey } from '../ui/Art';
 import { isWechat } from '../net/Wx';
 
 export class ProfileScreen extends Screen {
@@ -24,8 +24,11 @@ export class ProfileScreen extends Screen {
     private enter!: Button;
     private field!: EditField;
     private busy = false;
+    private characterPage = 0;
+    private catalogVersion = -1;
 
     protected build(): void {
+        this.catalogVersion = characterArtRevision();
         const st = ctx.store;
         this.backdrop('sky');
         art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
@@ -37,8 +40,9 @@ export class ProfileScreen extends Screen {
         // 设计稿 03：品牌 Logo（好友桌游 + 骰子）
         art(this.root, 'brand_logo', 100, 112, 520, 331);
 
-        const card = mk(this.root, 'ProfilePanel', 36, 612, 648, 646);
-        art(card, 'info_asset_panel', 0, 0, 648, 646, 'panel');
+        const panelHeight = characterChoices().length > 8 ? 704 : 646;
+        const card = mk(this.root, 'ProfilePanel', 36, 612, 648, panelHeight);
+        art(card, 'info_asset_panel', 0, 0, 648, panelHeight, 'panel');
         text(card, '登录资料', 28, 12, 592, 56, 38, '#613C24', { bold: true });
         // 标题两侧的绿叶
         const leaves = gfx(mk(card, 'Leaves', 0, 0, 648, 70));
@@ -60,17 +64,21 @@ export class ProfileScreen extends Screen {
 
         // 头像
         text(card, '内置头像', 28, 222, 400, 36, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
-        for (let i = 0; i < 8; i++) {
-            const cx = 28 + (i % 4) * 150;
-            const cy = 260 + Math.floor(i / 4) * 128;
+        const choices = characterChoices();
+        const pages = Math.max(1, Math.ceil(choices.length / 8));
+        this.characterPage = Math.min(this.characterPage, pages - 1);
+        choices.slice(this.characterPage * 8, this.characterPage * 8 + 8).forEach((choice, cellIndex) => {
+            const i = choice.id;
+            const cx = 28 + (cellIndex % 4) * 150;
+            const cy = 260 + Math.floor(cellIndex / 4) * 128;
             const cell = mk(card, 'AvatarCell', cx, cy, 138, 120);
             const sel = i === this.avatarIdx;
             // 设计稿 03：圆角方形人物卡（头像底色的浅色 + 半身人物图），下方名字
             fillRR(gfx(cell), 0, 0, 138, 120, 18, sel ? Theme.c.white : '#F2E9D6');
             const tile = mk(cell, 'Tile', 22, 4, 94, 88);
             fillRR(gfx(tile), 0, 0, 94, 88, 16, Theme.avatarColors[i % 8] + '55');
-            if (!art(tile, informationCharacterKey(i), 4, 2, 86, 86)) avatar(cell, 24, 4, 90, i, AVATAR_NAMES[i]);
-            text(cell, AVATAR_NAMES[i], 0, 94, 138, 26, Theme.font.xs, sel ? Theme.c.blueDark : Theme.c.ink, { bold: sel });
+            if (!art(tile, informationCharacterKey(i), 4, 2, 86, 86)) avatar(cell, 24, 4, 90, i, choice.name);
+            text(cell, choice.name, 0, 94, 138, 26, Theme.font.xs, sel ? Theme.c.blueDark : Theme.c.ink, { bold: sel });
             if (sel) {
                 const gg = gfx(mk(cell, 'Sel', 0, 0, 138, 120));
                 strokeRR(gg, 0, 0, 138, 120, 18, Theme.c.blue, 4);
@@ -81,6 +89,11 @@ export class ProfileScreen extends Screen {
                 this.avatarIdx = i;
                 this.rebuild();
             }, false);
+        });
+        if (pages > 1) {
+            new Button(card, '上一页', 28, 516, 150, 40, 'ghost', () => { this.characterPage = (this.characterPage + pages - 1) % pages; this.rebuild(); }, 22);
+            text(card, (this.characterPage + 1) + ' / ' + pages, 220, 516, 180, 40, 22, Theme.c.ink);
+            new Button(card, '下一页', 470, 516, 150, 40, 'ghost', () => { this.characterPage = (this.characterPage + 1) % pages; this.rebuild(); }, 22);
         }
 
         // 昵称
@@ -94,10 +107,11 @@ export class ProfileScreen extends Screen {
         this.hint = text(card, '', 64, 180, 556, 36, 21, Theme.c.inkSoft, { align: 'l' });
 
 
-        this.enter = primaryButton(card, '保存资料', 28, 520, 592, 96, () => {
+        this.enter = primaryButton(card, '保存资料', 28, pages > 1 ? 570 : 520, 592, pages > 1 ? 88 : 96, () => {
             const r = checkNickname(this.nick);
             if (!st.profile.loggedIn) return Toast.show('请先微信登录');
             if (!r.ok) return Toast.show(r.reason);
+            if (!characterChoices().some(c => c.id === this.avatarIdx)) return Toast.show('该人物已停用，请重新选择');
             st.setProfile({ nickname: this.nick.trim(), avatar: this.avatarIdx });
             if (!st.online) return ctx.screens.go('lobby');
             // 联机：微信里用 wx.login（带上昵称与头像），其他环境用测试身份，然后连接服务器
@@ -150,6 +164,7 @@ export class ProfileScreen extends Screen {
 
     /** store 变化时不整页重建，避免打断输入。 */
     refresh(): void {
+        if (this.catalogVersion !== characterArtRevision() && EditField.editing === 0) { this.rebuild(); return; }
         this.checkNow();
     }
 }

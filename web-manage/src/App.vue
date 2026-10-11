@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { call, setToken, token } from './api.js'
+import CharacterManager from './CharacterManager.vue'
 
 const TIER_LABEL = { LOW: '低价地产', MID: '中价地产', HIGH: '高价地产' }
 const LEVELS = ['未升级', '一级', '二级', '三级']
@@ -349,26 +350,29 @@ onMounted(() => {
     <header class="bar">
       <div class="title">
         <strong>大富翁参数管理</strong>
-        <span v-if="active" class="muted">
+        <span v-if="active && tab !== 'characters'" class="muted">
           当前生效：{{ active.configId === 0 ? '内置默认配置' : '版本 #' + active.configId }}
           <span v-if="active.createdAt">（{{ time(active.createdAt) }}）</span>
         </span>
-        <el-tag v-if="dirty" type="warning" size="small">有未发布的修改</el-tag>
+        <el-tag v-if="dirty && tab !== 'characters'" type="warning" size="small">有未发布的修改</el-tag>
       </div>
       <div class="actions">
-        <el-button @click="useDefaults">填入默认值</el-button>
-        <el-button @click="discard">放弃修改</el-button>
-        <el-button @click="validate">校验</el-button>
-        <el-button type="primary" @click="publish">发布</el-button>
+        <template v-if="tab !== 'characters'">
+          <el-button @click="useDefaults">填入默认值</el-button>
+          <el-button @click="discard">放弃修改</el-button>
+          <el-button @click="validate">校验</el-button>
+          <el-button type="primary" @click="publish">发布</el-button>
+        </template>
         <el-button text @click="logout">退出</el-button>
       </div>
     </header>
 
-    <el-alert v-if="errors.length" type="error" :closable="false" class="errors" title="需要修改后才能发布">
+    <el-alert v-if="errors.length && tab !== 'characters'" type="error" :closable="false" class="errors" title="需要修改后才能发布">
       <ul><li v-for="e in errors" :key="e">{{ e }}</li></ul>
     </el-alert>
 
     <el-tabs v-if="form" v-model="tab" class="tabs">
+      <el-tab-pane label="人物素材" name="characters"><CharacterManager v-if="tab === 'characters'" /></el-tab-pane>
       <el-tab-pane label="土地命名" name="names">
         <el-radio-group v-model="boardId" class="gap">
           <el-radio-button v-for="(_, id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button>

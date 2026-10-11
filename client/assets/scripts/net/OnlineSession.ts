@@ -15,6 +15,7 @@ import { serverUrl } from './Config';
 import { GameClient, LinkState } from './GameClient';
 import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, SGameDetail, UpdateMsg } from './Protocol';
 import { adaptSession, lastDiceFrom } from './ViewAdapter';
+import { activateCharacterCatalog, resetCharacterCatalog } from '../ui/Art';
 import { isWechat, wxLoginCode } from './Wx';
 
 export type Cue =
@@ -78,10 +79,27 @@ export class OnlineSession {
     watching: string | null = null;
     private configLoading = -1;
     private lastUpdate: UpdateMsg | null = null;
+    private charactersWanted = '';
+    private charactersGeneration = 0;
+
+    private useCharacters(version?: number, force = false): void {
+        const wanted = version === undefined ? 'active' : String(version);
+        if (!force && wanted === this.charactersWanted) return;
+        this.charactersWanted = wanted;
+        const generation = ++this.charactersGeneration;
+        resetCharacterCatalog();
+        this.client.characters(version).then(c => {
+            if (generation !== this.charactersGeneration) return;
+            if (version !== undefined && c.version !== version) throw new Error('wrong character catalog version');
+            activateCharacterCatalog(c, this.client.baseUrl);
+            this.store.emit();
+        }).catch(() => { if (generation === this.charactersGeneration) this.store.emit(); });
+    }
 
     constructor(private readonly store: MockStore, baseUrl: string = serverUrl()) {
         this.client = new GameClient(baseUrl);
         this.client.onUpdate = (u) => this.update(u);
+        this.useCharacters();
         this.client.onState = (s) => {
             this.link = s;
             this.store.emit();
@@ -367,6 +385,7 @@ export class OnlineSession {
         this.trackMinigame(u);
         this.lastDice = lastDiceFrom(u.events, this.lastDice);
         this.lastUpdate = u;
+        this.useCharacters(u.characterVersion ?? 0);
         this.useConfig(u.configId);
         const s = adaptSession(u.view, this.boards, this.lastDice, u.avatars ?? {});
         s.roomId = u.roomCode; // 界面上的"房间号"是六位房间号
@@ -602,6 +621,7 @@ export class OnlineSession {
     }
 
     private leaveLocally(): void {
+        this.useCharacters(undefined, true);
         this.hadGame = false;
         this.chat = [];
         this.store.roomChat = this.chat;

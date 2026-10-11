@@ -5,7 +5,8 @@
  * - 页面画到还没加载的图时先用代码绘制的占位，并把这张图插到队首立即加载，到达后通知界面重绘；
  * - 每张图 20 秒超时、失败重试一次，单张图卡住不会让整个游戏卡在加载页。
  */
-import { Node, Rect, Size, Vec2, resources, Sprite, SpriteFrame } from 'cc';
+import { Node, Rect, Size, Vec2, resources, Sprite, SpriteFrame, assetManager, ImageAsset, Texture2D } from 'cc';
+import { CHARACTER_SLOTS, CharacterCatalog, CharacterEntry, CharacterSlot, defaultCharacterCatalog, validateCharacterCatalog } from '../core/CharacterCatalog';
 import { ART_PATHS } from './ArtCatalog';
 import { mk, setOpacity } from './Kit';
 
@@ -14,6 +15,81 @@ const capsuleFrames = new Map<string, SpriteFrame>();
 const regionFrames = new Map<string, SpriteFrame>();
 export const AVATAR_NAMES = ['糖糖', '可可', '阿杰', '奶茶', '阿凯', '圆圆', '豆豆', '毛毛'];
 const characters = ['tangtang', 'keke', 'ajie', 'naicha', 'akai', 'yuanyuan', 'doudou', 'maomao'];
+let characterCatalog = defaultCharacterCatalog();
+let characterBaseUrl = '';
+let characterRevision = 0;
+const remotePacks = new Map<string, Record<CharacterSlot, string>>();
+const remotePending = new Set<string>();
+const remoteFailures = new Set<string>();
+const remoteQueue: CharacterEntry[] = [];
+let remoteBusy = false;
+
+export function activateCharacterCatalog(catalog: CharacterCatalog, baseUrl: string): void {
+    if (!validateCharacterCatalog(catalog)) throw new Error('invalid character catalog');
+    characterCatalog = catalog;
+    characterRevision++;
+    characterBaseUrl = baseUrl.replace(/\/$/, '');
+    onArrived?.();
+}
+export function resetCharacterCatalog(): void { activateCharacterCatalog(defaultCharacterCatalog(), characterBaseUrl); }
+export function characterChoices(): CharacterEntry[] {
+    return characterCatalog.characters.filter(c => c.enabled).sort((a, b) => a.sort - b.sort || a.id - b.id);
+}
+export function characterCatalogVersion(): number { return characterCatalog.version; }
+export function characterArtRevision(): number { return characterRevision; }
+export function characterFallback(idx: number): number {
+    return characterCatalog.characters.find(c => c.id === idx)?.fallback ?? (idx >= 0 && idx < 8 ? idx : 0);
+}
+/** Demand-load one whole pack at a time. No frame is exposed until all seven images arrive. */
+export function managedCharacterKey(idx: number, slot: CharacterSlot): string | null {
+    const entry = characterCatalog.characters.find(c => c.id === idx);
+    if (!entry || entry.bundled) return null;
+    const identity = characterBaseUrl + ':' + CHARACTER_SLOTS.map(s => entry.images[s]!.url).join('|');
+    const ready = remotePacks.get(identity);
+    if (ready) return ready[slot];
+    if (!remotePending.has(identity) && !remoteFailures.has(identity)) {
+        remotePending.add(identity);
+        remoteQueue.push(entry);
+        void pumpCharacters();
+    }
+    return null;
+}
+async function pumpCharacters(): Promise<void> {
+    if (remoteBusy || !remoteQueue.length) return;
+    remoteBusy = true;
+    const entry = remoteQueue.shift()!;
+    const base = characterBaseUrl;
+    const identity = base + ':' + CHARACTER_SLOTS.map(s => entry.images[s]!.url).join('|');
+    const pending: { key: string; frame: SpriteFrame }[] = [];
+    try {
+        for (const slot of CHARACTER_SLOTS) {
+            const a = entry.images[slot]!;
+            const image = await new Promise<ImageAsset>((resolve, reject) => {
+                let expired = false;
+                const timer = setTimeout(() => { expired = true; reject(new Error('character image timeout')); }, 20000);
+                assetManager.loadRemote<ImageAsset>(base + a.url, { ext: '.png', cacheEnabled: true }, (err, value) => {
+                    clearTimeout(timer);
+                    if (expired) return;
+                    if (err || !value || value.width !== a.width || value.height !== a.height) reject(new Error('character image failed'));
+                    else resolve(value);
+                });
+            });
+            const texture = new Texture2D(); texture.image = image;
+            const frame = new SpriteFrame(); frame.texture = texture;
+            pending.push({ key: 'managed_' + a.sha256 + '_' + slot, frame });
+        }
+        const keys = {} as Record<CharacterSlot, string>;
+        CHARACTER_SLOTS.forEach((slot, i) => { keys[slot] = pending[i].key; frames.set(pending[i].key, pending[i].frame); });
+        remotePacks.set(identity, keys);
+        characterRevision++;
+        onArrived?.();
+    } catch {
+        pending.forEach(p => { const texture = p.frame.texture; p.frame.destroy(); texture?.destroy(); });
+        remoteFailures.add(identity); // entire character stays on its bundled fallback
+    } finally {
+        remotePending.delete(identity); remoteBusy = false; void pumpCharacters();
+    }
+}
 /** 原图宽高比（宽 / 高）；未加载时 null。 */
 export function artRatio(key: string): number | null {
     const frame = frames.get(key);
@@ -25,10 +101,10 @@ export function artRatio(key: string): number | null {
 }
 
 export function characterKey(idx: number, pawn = false): string {
-    return (pawn ? 'pawn_' : 'avatar_') + characters[((idx % 8) + 8) % 8];
+    return managedCharacterKey(idx, pawn ? 'pawn' : 'avatar') ?? (pawn ? 'pawn_' : 'avatar_') + characters[characterFallback(idx)];
 }
 export function informationCharacterKey(idx: number): string {
-    return 'information_host_' + characters[((idx % 8) + 8) % 8];
+    return managedCharacterKey(idx, 'portrait') ?? 'information_host_' + characters[characterFallback(idx)];
 }
 export const CARD_ART: Record<string, string> = {
     ROADBLOCK: 'card_roadblock', RENT_WAIVER: 'card_free_rent', BUILD: 'card_build', DOWNGRADE: 'card_downgrade',

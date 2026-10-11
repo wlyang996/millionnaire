@@ -95,6 +95,7 @@ public final class LiveRoom {
     private final Engine<SessionState> engine;
     /** 建房时绑定的游戏参数版本（0 = 内置默认）；客户端按它拉取地名与价格表。 */
     private final long configId;
+    private final long characterVersion;
     private final RoomRunner<SessionState> runner;
     private final long roomId;
     private final int code;
@@ -136,6 +137,7 @@ public final class LiveRoom {
         this.service = service;
         this.engine = engine;
         this.configId = configId;
+        this.characterVersion = service.characterVersion();
         this.roomId = roomId;
         this.code = code;
         this.createdBy = createdBy;
@@ -316,7 +318,7 @@ public final class LiveRoom {
     public synchronized String snapshot(String playerId) {
         EngineState s = runner.committed();
         return service.wire().update(code(), s.lastSeq(), service.now(), List.of(),
-                SessionDomain.INSTANCE.project(s, playerId), service.avatarsOf(avatarPlayers(s)), configId);
+                SessionDomain.INSTANCE.project(s, playerId), service.roomAvatars(avatarPlayers(s), characterVersion), configId, characterVersion);
     }
 
     public synchronized boolean isMember(String playerId) {
@@ -368,12 +370,12 @@ public final class LiveRoom {
             Set<String> audience = new LinkedHashSet<>(membersBefore);
             audience.addAll(membersAfter);
             audience.addAll(watchers); // 观战者按非玩家视角投影
-            Map<String, Integer> avatars = service.avatarsOf(avatarPlayers(after));
+            Map<String, Integer> avatars = service.roomAvatars(avatarPlayers(after), characterVersion);
             for (String p : audience) {
                 try {
                     List<Event> visible = EventProjector.project(r.events(), p);
                     service.outbox().send(p, service.wire().update(code(), after.lastSeq(), at, visible,
-                            SessionDomain.INSTANCE.project(after, p), avatars, configId));
+                            SessionDomain.INSTANCE.project(after, p), avatars, configId, characterVersion));
                 } catch (RuntimeException e) {
                     log.error("room {} cannot push seq {} to {}", code(), after.lastSeq(), p, e);
                 }

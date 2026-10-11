@@ -48,7 +48,7 @@ public class ApiController {
         this.testLoginEnabled = testLoginEnabled;
     }
 
-    /** avatar：所选头像序号 0～7（可省略，省略时按玩家 ID 取默认头像）。 */
+    /** avatar：已发布且启用的人物 ID（可省略，沿用旧默认规则）。 */
     public record TestLogin(String nickname, Integer avatar) {
     }
 
@@ -235,7 +235,7 @@ public class ApiController {
             Optional<User> u;
             try { u = users.find(Long.parseLong(m.playerId())); } catch (NumberFormatException e) { u = Optional.empty(); }
             return Map.of("playerId", m.playerId(), "nickname", u.map(User::nickname).orElse("已注销玩家"),
-                    "ready", false, "bot", m.bot(), "avatar", m.bot() ? 8 : u.map(User::avatar).filter(a -> a >= 0 && a < 8).orElse(0));
+                    "ready", false, "bot", m.bot(), "avatar", m.bot() ? 8 : u.map(User::avatar).filter(a -> a >= 0 && a <= 998 && a != 8).orElse(0));
         }).toList();
         return Map.of("seriesNo", s.seriesNo(), "totalGames", s.totalGames(), "status", s.status(), "roster", roster,
                 "settings", s.settings(), "rules", s.rules(), "games", s.games(), "points", s.points(), "withdrawn", s.withdrawn());

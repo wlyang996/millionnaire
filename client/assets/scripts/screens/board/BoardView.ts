@@ -707,7 +707,7 @@ export class BoardView {
 
     /** 切换姿态帧：按站立立绘的人物高度缩放画布，脚底对齐支点；素材未到时保持站立立绘。 */
     private showPose(tk: Token, pose: Pose | null): void {
-        if (tk.avatar === ROBOT_AVATAR || tk.pose === pose) return;
+        if (tk.avatar === ROBOT_AVATAR || tk.avatar >= 9 || characterKey(tk.avatar, true).startsWith('managed_') || tk.pose === pose) return;
         if (pose && !tk.poses) {
             const name = characterKey(tk.avatar, true);
             const poses = new Map<Pose, Node>();

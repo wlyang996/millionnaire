@@ -28,7 +28,7 @@ class DbProfileTest {
     void migrationAppliedAndDiagnosticsUp() {
         Map<String, Object> r = controller.db();
         assertThat(r.get("db")).isEqualTo("UP");
-        assertThat(r.get("flywayVersion")).isEqualTo("4");
+        assertThat(r.get("flywayVersion")).isEqualTo("5");
         assertThat(r.get("appUserRows")).isEqualTo(0L);
 
         // V2 参数表：发布写入 game_config 与当前指针，按 ID 读回

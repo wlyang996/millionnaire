@@ -20,6 +20,7 @@ import {
 } from './Rules';
 import { textWidth } from './Theme';
 import { seriesRows, seriesLocked } from './Series';
+import { CHARACTER_SLOTS, CharacterCatalog, defaultCharacterCatalog, validateCharacterCatalog } from './CharacterCatalog';
 
 export interface CheckResult { passed: number; failures: string[] }
 
@@ -33,6 +34,19 @@ export function runSelfCheck(): CheckResult {
         else fails.push(name + '：期望 ' + e + '，实际 ' + a);
     };
     const ok = (name: string, cond: boolean): void => eq(name, cond, true);
+    ok('内置人物目录兼容旧后台', validateCharacterCatalog(defaultCharacterCatalog()));
+    const managed: CharacterCatalog = { version: 1, characters: [{ id: 9, name: '新人物', sort: 0, enabled: true, fallback: 1, bundled: false, images: {} }] };
+    ok('不完整人物目录拒绝接入', !validateCharacterCatalog(managed));
+    for (const slot of CHARACTER_SLOTS) managed.characters[0].images[slot] = { url: '/api/characters/assets/12345678-1234-1234-1234-123456789abc/' + slot + '.png', sha256: 'a'.repeat(64), width: 64, height: 64 };
+    ok('完整新人物保留固定编号', validateCharacterCatalog(managed) && managed.characters[0].id === 9);
+    managed.characters[0].id = 8;
+    ok('机器人不能成为普通人物目录项', !validateCharacterCatalog(managed));
+    managed.characters[0].id = 9;
+    managed.characters.push({ ...managed.characters[0] });
+    ok('重复人物编号拒绝', !validateCharacterCatalog(managed));
+    managed.characters.pop();
+    managed.characters[0].images.avatar!.url = 'https://untrusted.example/portrait.png';
+    ok('人物图片不能改成任意第三方地址', !validateCharacterCatalog(managed));
     for (const size of [30, 50] as const) {
         const grid = gridFor(size);
         const xs = boardAxis(grid.cols, grid.tile);
