@@ -1,0 +1,50 @@
+[
+  {
+    "id": "morning-town",
+    "file": "01-晨光小镇-试听.mp3",
+    "bpm": 112,
+    "bars": 16,
+    "seconds": 34.286,
+    "peak_dbfs": -6.79,
+    "rms_dbfs": -20.5,
+    "sha256": "7c8870fe3ceffd7486322dec2cb246a952e73afaa5be9740756144d1aed55316",
+    "bytes": 549659,
+    "channels": 1,
+    "sample_rate": 44100,
+    "mood": "轻快明亮；弹拨和弦、木琴旋律、轻打击；大厅/普通棋盘候选",
+    "status": "awaiting-review",
+    "source": "original-note-score-procedural-synthesis-no-external-samples"
+  },
+  {
+    "id": "riverside-afternoon",
+    "file": "02-河畔午后-试听.mp3",
+    "bpm": 84,
+    "bars": 12,
+    "seconds": 34.286,
+    "peak_dbfs": -7.55,
+    "rms_dbfs": -20.49,
+    "sha256": "1f4d88a25a4b5a63a5ccfb6320c9d960c3f669903173531ac0fb7cbc232d21d6",
+    "bytes": 549659,
+    "channels": 1,
+    "sample_rate": 44100,
+    "mood": "温暖悠闲；柔和电钢琴、气息感旋律、稀疏节奏；大厅/长局候选",
+    "status": "awaiting-review",
+    "source": "original-note-score-procedural-synthesis-no-external-samples"
+  },
+  {
+    "id": "friends-play",
+    "file": "03-好友开局-试听.mp3",
+    "bpm": 108,
+    "bars": 12,
+    "seconds": 26.667,
+    "peak_dbfs": -5.9,
+    "rms_dbfs": -20.53,
+    "sha256": "43f54189fe4f29603f66e2a77fa2e623be8533620cc88a89ad2ec6fa997262f9",
+    "bytes": 427615,
+    "channels": 1,
+    "sample_rate": 44100,
+    "mood": "俏皮活泼；玩具木琴、拨弦、轻柔沙锤；好友桌游候选",
+    "status": "awaiting-review",
+    "source": "original-note-score-procedural-synthesis-no-external-samples"
+  }
+]

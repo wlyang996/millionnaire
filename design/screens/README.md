@@ -130,3 +130,8 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 
 - [37-递币接币、欠款求助、共同捧杯](37-组队合作-递币接币-欠款求助-共同捧杯-待审阅.png)：已批准并集成三类人物状态，历史待审阅文件名保留；整页原稿不是独立素材。
 - [原稿与完整提示词](ui/team-coop-poses-v1/README.md)、[来源记录](records/team-coop-poses-ui-2026-10-11.md)、[36个动作及2件独立道具](assets-team-poses-v1/README.md)、[集成与验证](records/team-poses-integration-2026-10-11.md)。覆盖8位角色、机器人和不同队友组合；未部署、微信真机待验收。
+
+## 背景音乐试听候选（2026-10-12）
+
+- [三首试听与来源](audio/background-candidates-v1/README.md)：晨光小镇、河畔午后、好友开局；原创音符编排与程序合成音色，不是AI音乐模型生成。全部待用户试听，未接入游戏。
+- [来源及技术检查](records/background-music-candidates-2026-10-12.md)、[后台音频配置接入计划](../../web-manage/audio-management-plan.md)。后台计划尚未实施，旧混音与失败的背景抑制稿不采用。
