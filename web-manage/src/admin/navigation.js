@@ -1,0 +1,36 @@
+export const groups = [
+  { id: 'overview', label: '运营总览', icon: 'Orbit', pages: [['dashboard', '数据看板', '看见每一局的精彩', '对局趋势、参与玩家与玩法分布，全部来自后台真实统计。']] },
+  { id: 'economy', label: '地图与经济', icon: 'Map', pages: [
+    ['names', '土地命名', '给小镇里的每一格起个名字', '点选地图，修改名称；格子类型和顺序始终与游戏一致。'],
+    ['sets', '同组地产', '让每一组土地，都有自己的连线', '分组、集齐倍率与真实地图同步预览。'],
+    ['prices', '价格与租金', '设定小镇的经济节奏', '购买、建造与收租，在等级阶梯里一眼看清。'],
+    ['money', '金额与固定费用', '每一笔奖励，都有清晰的规则', '现金事件、起点奖励与固定费用集中配置。'],
+    ['rentRise', '租金上涨', '轮次向前，租金跟着生长', '破产模式下的倍率阶梯随配置实时更新。'],
+  ] },
+  { id: 'rules', label: '玩法规则', icon: 'SlidersHorizontal', pages: [
+    ['room', '建房选项', '下一局，从这里开始', '房间模式、初始现金和机器人选项集中管理。'],
+    ['events', '事件与道具概率', '把惊喜，调到刚刚好', '事件、道具、幸运与不幸各自独立，合计实时反馈。'],
+    ['startPick', '起点三选一', '每次出发，都有新的选择', '三选一的金额、类型和权重保留服务端配置。'],
+    ['roundReward', '轮次奖励', '给每一段成长，一份奖励', '收入来源、轮次与奖励金额同步预览。'],
+    ['cityEvents', '城市事件', '让整座小镇一起热闹起来', '预告、生效与持续轮次，在时间线上清晰呈现。'],
+    ['funTitles', '结算称号', '给精彩的一局，留下一个名字', '称号名称、启停与门槛统一配置。'],
+    ['series', '好友系列赛', '精彩不止一局', '局数、计分和并列规则随设置即时预览。'],
+    ['team', '组队合作', '和队友一起，把优势连起来', '队伍模式、免租、资金与欠款援助独立配置。'],
+    ['timing', '操作时限', '让每一次操作，都有合适的节奏', '选择窗口、动画留时与托管设置保留原有单位。'],
+  ] },
+  { id: 'characters', label: '人物工作室', icon: 'UsersRound', pages: [['characters', '人物素材', '每一位角色，都有自己的舞台', '七项素材、姿态预览和整套版本，统一发布。']] },
+  { id: 'announcement', label: '公告管理', icon: 'Megaphone', pages: [['announcement', '公告', '把下一份惊喜，告诉大家', '公告内容实时预览，发布后由游戏大厅读取。']] },
+  { id: 'versions', label: '版本中心', icon: 'History', pages: [['history', '发布记录', '每次发布，都有清晰的落点', '查看历史配置、载入编辑或确认后回滚。']] },
+]
+export const pages = groups.flatMap(group => group.pages.map(([id, label, title, description]) => ({ id, label, title, description, group: group.label, icon: group.icon })))
+export const pageById = Object.fromEntries(pages.map(page => [page.id, page]))
+
+export function diffSettings(before, after, prefix = '') {
+  if (JSON.stringify(before) === JSON.stringify(after)) return []
+  if (before && after && typeof before === 'object' && typeof after === 'object') {
+    return [...new Set([...Object.keys(before), ...Object.keys(after)])].flatMap(key => diffSettings(before[key], after[key], prefix ? `${prefix}.${key}` : key))
+  }
+  return [{ path: prefix, before, after }]
+}
+const sectionByField = { tileNames: 'names', sets: 'sets', tiers: 'prices', station: 'prices', fees: 'money', eventCash: 'money', rentRise: 'rentRise', eventWeights: 'events', cardWeights: 'events', lucky: 'events', handLimit: 'events', room: 'room', startPick: 'startPick', roundReward: 'roundReward', cityEvents: 'cityEvents', funTitles: 'funTitles', series: 'series', team: 'team', timing: 'timing', announcement: 'announcement' }
+export function sectionForField(path) { return sectionByField[String(path).split(/[.\[]/)[0]] }

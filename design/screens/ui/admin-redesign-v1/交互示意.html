@@ -1,0 +1,138 @@
+<div id="millionnaire-proposal" class="viz-carousel" aria-label="管理后台视觉方向" data-previous-label="上一个方向" data-next-label="下一个方向">
+  <section data-variant="彩光游戏控制台" aria-label="彩光游戏控制台">
+    <div class="mp-app" data-layout="sidebar">
+      <aside class="mp-nav">
+        <div class="mp-brand"><span class="mp-logo">M</span><div>大富翁<small>CONTROL CENTER</small></div></div>
+        <div class="mp-nav-label">运营工作区</div>
+        <nav aria-label="示意页面"><button type="button" class="mp-nav-item cursor-interaction" data-page="overview" aria-pressed="true"><i data-lucide="orbit" aria-hidden="true"></i>运营总览</button><button type="button" class="mp-nav-item cursor-interaction" data-page="rules" aria-pressed="false"><i data-lucide="sliders-horizontal" aria-hidden="true"></i>地图与玩法</button><button type="button" class="mp-nav-item cursor-interaction" data-page="characters" aria-pressed="false"><i data-lucide="users-round" aria-hidden="true"></i>人物工作室</button><button type="button" class="mp-nav-item cursor-interaction" data-page="release" aria-pressed="false"><i data-lucide="rocket" aria-hidden="true"></i>版本中心</button></nav>
+        <div class="mp-nav-bottom">紫色主视觉<br>角色 · 光轨 · 弹簧交互</div>
+      </aside>
+      <main class="mp-main">
+        <header class="mp-top"><span>管理后台 / <b data-page-name>运营总览</b></span><span class="mp-demo">方案示意 · 非线上数据</span></header>
+        <div class="mp-content" aria-live="polite"></div>
+        <footer class="mp-footer"><span data-feedback>切换页面、悬浮卡片，或点击“播放动效”</span><button type="button" class="mp-action cursor-interaction" data-play><i data-lucide="sparkles" aria-hidden="true"></i>播放动效</button></footer>
+      </main>
+    </div>
+  </section>
+  <section data-variant="角色创作工作室" aria-label="角色创作工作室" hidden><div class="mp-alt-target"></div></section>
+</div>
+<style>
+#millionnaire-proposal { --mp-bg:light-dark(#f2f1f8,#11121c); --mp-card:light-dark(#fff,#1c1e2d); --mp-text:light-dark(#2c2a40,#f2efff); --mp-sub:light-dark(#77748c,#aaa6bf); --mp-stroke:light-dark(#e4e1ed,#343247); --mp-brand:#7651ee; --mp-orange:#ec9851; --mp-radius:18px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif; color:var(--mp-text); }
+#millionnaire-proposal * { box-sizing:border-box; }
+#millionnaire-proposal [hidden] { display:none!important; }
+#millionnaire-proposal .mp-app { display:grid; grid-template-columns:180px minmax(0,1fr); background:var(--mp-bg); min-height:660px; border:1px solid var(--mp-stroke); border-radius:22px; overflow:hidden; }
+#millionnaire-proposal .mp-nav { display:flex; flex-direction:column; padding:24px 15px; background:var(--mp-card); border-right:1px solid var(--mp-stroke); }
+#millionnaire-proposal .mp-brand { display:flex; gap:10px; align-items:center; font-weight:600; }
+#millionnaire-proposal .mp-brand small { display:block; font-size:9px; letter-spacing:1px; margin-top:5px; color:var(--mp-sub); }
+#millionnaire-proposal .mp-logo { display:grid; place-items:center; width:36px; height:36px; color:#fff; background:var(--mp-brand); border-radius:12px; transform:rotate(-8deg); }
+#millionnaire-proposal .mp-nav-label { color:var(--mp-sub); font-size:11px; margin:36px 8px 12px; }
+#millionnaire-proposal nav { display:grid; gap:7px; }
+#millionnaire-proposal .mp-nav-item { display:flex; align-items:center; gap:10px; min-height:44px; padding:11px 12px; border:0; background:transparent; color:var(--mp-sub); border-radius:12px; font:inherit; font-size:12px; transition:background .25s,transform .25s,color .25s; text-align:left; }
+#millionnaire-proposal .mp-nav-item[aria-pressed=true] { background:color-mix(in srgb,var(--mp-brand) 12%,var(--mp-card)); color:var(--mp-brand); }
+#millionnaire-proposal .mp-nav-item:hover { transform:translateX(3px); color:var(--mp-brand); }
+#millionnaire-proposal .mp-nav-bottom { color:var(--mp-sub); font-size:11px; line-height:1.9; margin-top:auto; padding-top:30px; }
+#millionnaire-proposal .mp-main { padding:24px; min-width:0; }
+#millionnaire-proposal .mp-top { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; color:var(--mp-sub); font-size:11px; margin-bottom:24px; padding-right:75px; }
+#millionnaire-proposal .mp-top b { font-weight:500; color:var(--mp-text); }
+#millionnaire-proposal .mp-demo { font-size:11px; }
+#millionnaire-proposal h2 { font-size:23px; line-height:1.35; font-weight:600; margin:6px 0 10px; }
+#millionnaire-proposal h3 { font-size:15px; font-weight:600; margin:0 0 16px; }
+#millionnaire-proposal p { font-size:12px; line-height:1.8; margin:0; }
+#millionnaire-proposal .mp-eyebrow { font-size:10px; letter-spacing:2px; opacity:.7; }
+#millionnaire-proposal .mp-hero { position:relative; display:flex; justify-content:space-between; align-items:center; gap:20px; padding:27px; min-height:176px; border-radius:var(--mp-radius); color:#fff; background:radial-gradient(ellipse at var(--mx,80%) var(--my,30%),#b097fd70,transparent 65%),linear-gradient(115deg,#48329d,#8060e3); overflow:hidden; }
+#millionnaire-proposal .mp-orb { height:120px; width:120px; flex-shrink:0; border-radius:50%; background:radial-gradient(circle at 32% 27%,#fff9 0%,#cbb9fe 16%,#ae80ee 40%,#582daf 65%,transparent 72%); position:relative; }
+#millionnaire-proposal .mp-orb:before,.mp-orb:after { content:''; position:absolute; inset:10px -18px; border:1px solid #e4d6ff70; border-radius:50%; transform:rotate(-35deg); }
+#millionnaire-proposal .mp-orb:after { transform:rotate(45deg); }
+#millionnaire-proposal .mp-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:18px 0 26px; }
+#millionnaire-proposal .mp-stat { background:var(--mp-card); padding:18px; border-radius:var(--mp-radius); position:relative; transition:transform .25s,box-shadow .25s; }
+#millionnaire-proposal .mp-stat:hover { transform:translateY(-5px); box-shadow:0 12px 26px #7651ee18; }
+#millionnaire-proposal .mp-stat span { font-size:11px; color:var(--mp-sub); }
+#millionnaire-proposal .mp-stat b { display:block; font-size:26px; font-weight:600; margin:10px 0 6px; font-variant-numeric:tabular-nums; }
+#millionnaire-proposal .mp-columns { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:24px; }
+#millionnaire-proposal .mp-list { display:grid; gap:14px; }
+#millionnaire-proposal .mp-row { display:flex; align-items:center; justify-content:space-between; gap:16px; font-size:12px; padding:10px 0; border-bottom:1px solid var(--mp-stroke); }
+#millionnaire-proposal .mp-row small { color:var(--mp-sub); font-size:11px; }
+#millionnaire-proposal .mp-pill { display:inline-block; color:var(--mp-brand); background:color-mix(in srgb,var(--mp-brand) 10%,var(--mp-card)); font-size:11px; padding:5px 9px; border-radius:20px; }
+#millionnaire-proposal .mp-shortcut { width:100%; border:0; background:var(--mp-card); color:var(--mp-text); border-radius:12px; padding:13px 14px; display:flex; align-items:center; justify-content:space-between; font:inherit; font-size:12px; text-align:left; transition:transform .2s; }
+#millionnaire-proposal .mp-shortcut:hover { transform:translateX(4px); }
+#millionnaire-proposal .mp-action { display:inline-flex; gap:8px; align-items:center; padding:10px 14px; border:1px solid var(--mp-stroke); background:var(--mp-card); color:var(--mp-text); border-radius:12px; font:inherit; font-size:12px; min-height:42px; }
+#millionnaire-proposal .mp-action-primary { background:var(--mp-brand); color:#fff; border-color:var(--mp-brand); }
+#millionnaire-proposal .mp-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; margin-top:28px; color:var(--mp-sub); font-size:11px; }
+#millionnaire-proposal .mp-field { display:grid; gap:10px; margin:20px 0; font-size:12px; }
+#millionnaire-proposal input[type=range] { width:100%; accent-color:var(--mp-brand); }
+#millionnaire-proposal .mp-preview { background:var(--mp-card); padding:24px; border-radius:var(--mp-radius); margin-top:20px; }
+#millionnaire-proposal .mp-rent { height:90px; display:flex; gap:12px; align-items:flex-end; }
+#millionnaire-proposal .mp-rent span { flex:1; background:var(--mp-brand); border-radius:7px 7px 0 0; transition:height .4s; opacity:.75; }
+#millionnaire-proposal .mp-cast { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:20px; }
+#millionnaire-proposal .mp-person { position:relative; display:grid; text-align:left; gap:10px; padding:20px; border:1px solid var(--mp-stroke); border-radius:var(--mp-radius); background:var(--mp-card); color:var(--mp-text); font:inherit; transition:transform .3s,box-shadow .3s; }
+#millionnaire-proposal .mp-person:hover { transform:perspective(600px) rotateY(-7deg) translateY(-6px); box-shadow:12px 12px 30px #7651ee20; }
+#millionnaire-proposal .mp-person[aria-pressed=true] { border-color:var(--mp-brand); }
+#millionnaire-proposal .mp-portrait { height:90px; display:grid; place-items:center; border-radius:14px; background:color-mix(in srgb,var(--mp-brand) 12%,var(--mp-card)); color:var(--mp-brand); font-size:32px; }
+#millionnaire-proposal .mp-person small { font-size:11px; color:var(--mp-sub); }
+#millionnaire-proposal .mp-state-grid { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+#millionnaire-proposal .mp-step { display:grid; grid-template-columns:30px minmax(0,1fr); gap:14px; align-items:start; padding:16px 0; border-bottom:1px solid var(--mp-stroke); }
+#millionnaire-proposal .mp-step-number { width:28px; height:28px; border-radius:50%; background:color-mix(in srgb,var(--mp-brand) 15%,var(--mp-card)); color:var(--mp-brand); display:grid; place-items:center; font-size:12px; }
+#millionnaire-proposal .mp-step strong { font-size:13px; font-weight:500; }
+#millionnaire-proposal .mp-step p { color:var(--mp-sub); }
+#millionnaire-proposal .mp-play .mp-orb { animation:mp-orbit 2.4s ease-in-out; }
+#millionnaire-proposal .mp-play .mp-stat,#millionnaire-proposal .mp-play .mp-person { animation:mp-lift .8s cubic-bezier(.2,.8,.3,1.3); }
+#millionnaire-proposal .mp-play .mp-stat:nth-child(2),#millionnaire-proposal .mp-play .mp-person:nth-child(2) { animation-delay:.1s; }
+#millionnaire-proposal .mp-play .mp-stat:nth-child(3),#millionnaire-proposal .mp-play .mp-person:nth-child(3) { animation-delay:.2s; }
+#millionnaire-proposal .mp-play .mp-step-number { animation:mp-pulse 1.4s ease; }
+#millionnaire-proposal .mp-app[data-layout=studio] { grid-template-columns:1fr; }
+#millionnaire-proposal [data-layout=studio] .mp-nav { display:flex; flex-direction:row; gap:22px; align-items:center; flex-wrap:wrap; padding:18px 24px; border-right:0; border-bottom:1px solid var(--mp-stroke); }
+#millionnaire-proposal [data-layout=studio] nav { display:flex; flex-wrap:wrap; }
+#millionnaire-proposal [data-layout=studio] .mp-nav-label,#millionnaire-proposal [data-layout=studio] .mp-nav-bottom { display:none; }
+#millionnaire-proposal [data-layout=studio] .mp-hero { flex-direction:row-reverse; background:linear-gradient(110deg,#684aaf,#df9b68); padding:35px; }
+#millionnaire-proposal [data-layout=studio] .mp-columns { grid-template-columns:1fr 1fr; }
+@keyframes mp-orbit { 35% { transform:translateY(-12px) rotate(25deg) scale(1.12); } 70% { transform:rotate(-12deg); } }
+@keyframes mp-lift { 40% { transform:translateY(-10px); } }
+@keyframes mp-pulse { 50% { transform:scale(1.3); background:var(--mp-brand); color:#fff; } }
+@media(max-width:700px) { #millionnaire-proposal .mp-app { grid-template-columns:1fr; min-height:660px; } #millionnaire-proposal .mp-nav { padding:16px; border-right:0; border-bottom:1px solid var(--mp-stroke); } #millionnaire-proposal nav { display:flex; flex-wrap:wrap; margin-top:14px; } #millionnaire-proposal .mp-nav-label,#millionnaire-proposal .mp-nav-bottom { display:none; } #millionnaire-proposal .mp-main { padding:18px; } #millionnaire-proposal .mp-top { padding-right:0; } #millionnaire-proposal .mp-columns { grid-template-columns:1fr!important; } #millionnaire-proposal .mp-orb { width:70px; height:70px; } #millionnaire-proposal .mp-hero { padding:20px; } #millionnaire-proposal h2 { font-size:20px; } #millionnaire-proposal .mp-cast { gap:8px; } #millionnaire-proposal .mp-person { padding:12px; } }
+@media(max-width:400px) { #millionnaire-proposal .mp-stats { grid-template-columns:1fr; } #millionnaire-proposal .mp-stat b { display:inline-block; margin:0 14px; font-size:23px; } #millionnaire-proposal .mp-hero { flex-wrap:wrap; } #millionnaire-proposal .mp-orb { display:none; } #millionnaire-proposal .mp-cast { grid-template-columns:1fr; } }
+@media(prefers-reduced-motion:reduce) { #millionnaire-proposal *,#millionnaire-proposal *:before,#millionnaire-proposal *:after { transition:none!important; animation:none!important; } }
+</style>
+<script>
+(() => {
+  const root = document.getElementById('millionnaire-proposal');
+  const first = root.querySelector('.mp-app');
+  const second = first.cloneNode(true);
+  second.dataset.layout = 'studio';
+  root.querySelector('.mp-alt-target').replaceWith(second);
+  const names = {overview:'运营总览',rules:'地图与玩法',characters:'人物工作室',release:'版本中心'};
+  const state = {page:'overview',motion:true,radius:18};
+  const hero = (eyebrow,title,subtitle) => `<div class="mp-hero"><div><div class="mp-eyebrow">${eyebrow}</div><h2>${title}</h2><p>${subtitle}</p></div><div class="mp-orb" aria-hidden="true"></div></div>`;
+  const pages = {
+    overview:() => `${hero('YOUR TOWN, YOUR RULES','小镇的精彩，由你设定','用数据看见每一局，用规则创造下一局。')}<div class="mp-stats"><div class="mp-stat"><span>近 7 天对局 · 示意</span><b>128</b><span>数字滚动与刷新反馈</span></div><div class="mp-stat"><span>参与玩家 · 示意</span><b>936</b><span>卡片跟随光与悬浮</span></div><div class="mp-stat"><span>平均时长 · 示意</span><b>24.6</b><span>分钟</span></div></div><div class="mp-columns"><section><h3>运营快照</h3><div class="mp-row"><span>规则配置版本</span><span class="mp-pill">示意 #12 · 生效中</span></div><div class="mp-row"><span>人物素材目录</span><small>整套素材与发布版本</small></div><div class="mp-row"><span>公告</span><small>实时预览 · 按需发布</small></div></section><section><h3>快捷入口</h3><div class="mp-list"><button class="mp-shortcut cursor-interaction" type="button" data-jump="characters">人物工作室 <span>→</span></button><button class="mp-shortcut cursor-interaction" type="button" data-jump="rules">调整地图与玩法 <span>→</span></button><button class="mp-shortcut cursor-interaction" type="button" data-jump="release">查看发布记录 <span>→</span></button></div></section></div>`,
+    rules:() => `${hero('RULE DESIGNER','规则会变，预览跟着动','价格、租金、概率和操作时限，按场景分组编辑。')}<div class="mp-columns"><section><div class="mp-field"><label>低价地产购买价 · 示意 <b data-price-label>1,000</b></label><input type="range" min="500" max="3000" step="100" value="1000" aria-label="示意地产购买价" data-price></div><div class="mp-row"><span>同组地产</span><span class="mp-pill">棋盘分组着色</span></div><div class="mp-row"><span>事件概率</span><span class="mp-pill">权重与合计联动</span></div><div class="mp-row"><span>建房与时限</span><small>折叠分组 · 校验定位</small></div></section><section class="mp-preview"><h3>修改前后</h3><div class="mp-row"><span>购买价 · 示意</span><b>1,000 → <span data-price-value>1,000</span></b></div><div class="mp-row"><span>操作</span><small>预览 → 校验 → 发布</small></div><p>预览只改变本地示意值</p></section></div>`,
+    characters:() => `${hero('CHARACTER STUDIO','每一位角色，都有自己的舞台','人物卡片选择、姿态切换和七项素材完整度。')}<div class="mp-cast">${['糖糖','可可','阿杰'].map((name,i)=>`<button type="button" class="mp-person cursor-interaction" data-character="${name}" aria-pressed="${i===0}"><span class="mp-portrait">${name.slice(0,1)}</span><strong>${name}</strong><small>示意人物卡 · 7 / 7 素材</small></button>`).join('')}</div><section class="mp-preview"><h3><span data-character-name>糖糖</span> · 姿态预览</h3><div class="mp-state-grid">${['普通头像','棋盘棋子','半身人物','递币','接币','欠款忧虑','托杯庆祝'].map(name=>`<span class="mp-pill">${name}</span>`).join('')}</div><p>正式设计使用项目现有人物原图；此处为布局示意。</p></section>`,
+    release:() => `${hero('RELEASE CENTER','每次发布，都有清晰的落点','变更摘要、校验状态与版本时间线。')}<div class="mp-step"><span class="mp-step-number">1</span><div><strong>检查变更</strong><p>按页面归类显示旧值与新值</p></div></div><div class="mp-step"><span class="mp-step-number">2</span><div><strong>校验配置</strong><p>进度反馈；错误自动定位对应字段</p></div></div><div class="mp-step"><span class="mp-step-number">3</span><div><strong>确认并发布</strong><p>接口成功后显示完成动画，更新生效版本</p></div></div><div class="mp-step"><span class="mp-step-number">4</span><div><strong>查看历史 / 回滚</strong><p>展开版本详情，确认后调用既有回滚接口</p></div></div>`
+  };
+  function save() { window.openai?.setWidgetState?.({modelContent:{page:state.page,motion:state.motion,radius:state.radius},privateContent:null}).catch(()=>{}); }
+  function render(app,page) {
+    app.dataset.page=page;
+    app.querySelector('[data-page-name]').textContent=names[page];
+    app.querySelectorAll('[data-page]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.page===page)));
+    app.querySelector('.mp-content').innerHTML=pages[page]();
+    app.querySelector('[data-feedback]').textContent='方案交互示意 · 不连接管理接口';
+    if (globalThis.lucide) lucide.createIcons({attrs:{width:16,height:16}});
+  }
+  [first,second].forEach(app=>{
+    render(app,'overview');
+    app.addEventListener('click',event=>{
+      const pageButton=event.target.closest('button[data-page],button[data-jump]');
+      if(pageButton) { const page=pageButton.dataset.page||pageButton.dataset.jump; state.page=page; render(app,page); save(); }
+      const person=event.target.closest('[data-character]');
+      if(person) { app.querySelectorAll('[data-character]').forEach(el=>el.setAttribute('aria-pressed',String(el===person))); app.querySelector('[data-character-name]').textContent=person.dataset.character; }
+      if(event.target.closest('[data-play]')) { app.classList.remove('mp-play'); void app.offsetWidth; if(state.motion) app.classList.add('mp-play'); app.querySelector('[data-feedback]').textContent=state.motion?'光球回弹 · 卡片弹簧 · 发布步骤反馈':'动效已关闭'; }
+    });
+    app.addEventListener('input',event=>{ if(event.target.matches('[data-price]')) { const value=Number(event.target.value).toLocaleString('zh-CN'); app.querySelector('[data-price-label]').textContent=value; app.querySelector('[data-price-value]').textContent=value; } });
+    app.addEventListener('pointermove',event=>{ const heroEl=event.target.closest('.mp-hero'); if(heroEl && state.motion) { const rect=heroEl.getBoundingClientRect(); heroEl.style.setProperty('--mx',`${(event.clientX-rect.left)/rect.width*100}%`); heroEl.style.setProperty('--my',`${(event.clientY-rect.top)/rect.height*100}%`); } });
+  });
+  function applySettings(){ root.style.setProperty('--mp-radius',`${state.radius}px`); if(!state.motion) root.querySelectorAll('.mp-play').forEach(el=>el.classList.remove('mp-play')); }
+  const saved=window.openai?.widgetState?.modelContent;
+  if(saved){ if(names[saved.page]) {state.page=saved.page; [first,second].forEach(app=>render(app,state.page));} if(typeof saved.motion==='boolean')state.motion=saved.motion; if(Number.isFinite(saved.radius))state.radius=Math.min(28,Math.max(8,saved.radius)); applySettings(); }
+  window.addEventListener('openai:set_globals',event=>{const incoming=event.detail?.globals?.widgetState?.modelContent; if(incoming && names[incoming.page]){state.page=incoming.page; [first,second].forEach(app=>render(app,state.page));} });
+  if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{applySettings();save();}}); tweak.addSlider(state,'radius',{label:'卡片圆角',min:8,max:28,unit:'px'}); tweak.addToggle(state,'motion',{label:'启用演示动效'});}
+})();
+</script>

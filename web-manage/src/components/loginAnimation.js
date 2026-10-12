@@ -4,7 +4,7 @@
  * Vue lifecycle adapter: all animation frames, timers and listeners are owned
  * by one mounted login scene and released on disposal.
  */
-export function createLoginAnimation(root, { reducedMotion = false } = {}) {
+export function createLoginAnimation(root, { reducedMotion = false, celebrateConfetti = true } = {}) {
   const frames = new Set(), timeouts = new Set(), intervals = new Set()
   const listeners = []
   let disposed = false
@@ -447,7 +447,7 @@ function _success(){
    CONFETTI
 ═══════════════════════════════════════════════════ */
 function launchConfetti(){
-  if (reducedMotion) return;
+  if (reducedMotion || !celebrateConfetti) return;
   const cc=$('confettiCanvas');
   const W=window.innerWidth,H=window.innerHeight;
   cc.width=W;cc.height=H;cc.style.display='block';

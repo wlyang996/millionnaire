@@ -1,9 +1,17 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { call, setToken, token } from './api.js'
 import CharacterManager from './CharacterManager.vue'
 import LoginPage from './components/LoginPage.vue'
+import AdminShell from './components/AdminShell.vue'
+import DashboardOverview from './components/DashboardOverview.vue'
+import RulePreview from './components/RulePreview.vue'
+import BoardPreview from './components/BoardPreview.vue'
+import BorderBeam from './components/effects/BorderBeam.vue'
+import { diffSettings, pageById, sectionForField } from './admin/navigation.js'
+import { fieldLabels, searchIndex } from './admin/fields.js'
+import { motionEnabled } from './admin/preferences.js'
 
 const TIER_LABEL = { LOW: '低价地产', MID: '中价地产', HIGH: '高价地产' }
 const LEVELS = ['未升级', '一级', '二级', '三级']
@@ -25,7 +33,7 @@ const loggedIn = ref(!!token())
 const loginError = ref('')
 const loginSuccess = ref(false)
 const loading = ref(false)
-const tab = ref('names')
+const tab = ref('dashboard')
 const boards = ref([])
 const boardId = ref('classic-30')
 const active = ref(null)       // 当前生效版本 {configId, note, createdAt}
@@ -34,7 +42,7 @@ const saved = ref('')          // 载入时的 JSON，用于判断是否有未�
 const errors = ref([])
 const history = ref([])
 
-const dirty = computed(() => form.value && (drafts.teamQuickAmounts !== undefined || JSON.stringify(form.value) !== saved.value))
+const dirty = computed(() => !!form.value && (Object.keys(drafts).length > 0 || JSON.stringify(form.value) !== saved.value))
 const eventTotal = computed(() => sum(form.value?.eventWeights))
 const cardTotal = computed(() => sum(form.value?.cardWeights))
 function poolTotal(unlucky) {
@@ -114,6 +122,7 @@ function time(ms) {
 
 function fail(e) {
   if (e.status === 401) {
+    setToken(null)
     loggedIn.value = false
     ElMessage.error('登录已过期，请重新登录')
     return
@@ -143,9 +152,14 @@ async function enterAdmin() {
   try { await load() } catch (e) { fail(e) }
 }
 
-function logout() {
+async function logout() {
+  if (dirty.value || characterDirty.value) {
+    try { await ElMessageBox.confirm('还有未保存或未发布的修改，确认退出？', '退出登录', { type: 'warning' }) } catch { return }
+  }
   setToken(null)
   loggedIn.value = false
+  form.value = null; active.value = null; history.value = []; dash.value = null; characterDirty.value = false
+  Object.keys(drafts).forEach(key => delete drafts[key])
 }
 
 const startPickHint = computed(() => {
@@ -235,11 +249,12 @@ async function load() {
     if (!boards.value.length) boards.value = await call('GET', '/api/boards')
     const a = await call('GET', '/admin-api/v1/config/active')
     active.value = a
-    form.value = fill(a.settings)
-    delete drafts.teamQuickAmounts
-    saved.value = JSON.stringify(a.settings)
+    form.value = fill(structuredClone(a.settings))
+    Object.keys(drafts).forEach(key => delete drafts[key])
+    saved.value = JSON.stringify(form.value)
     errors.value = []
     history.value = await call('GET', '/admin-api/v1/config/history')
+    if (tab.value === 'dashboard' && !dash.value) await loadDash()
   } catch (e) {
     fail(e)
   } finally {
@@ -258,7 +273,7 @@ async function useDefaults() {
   await ElMessageBox.confirm('把编辑区填成内置默认值（发布后才生效）？', '填入默认值', { type: 'warning' })
   try {
     form.value = fill(await call('GET', '/admin-api/v1/config/defaults'))
-    delete drafts.teamQuickAmounts
+    Object.keys(drafts).forEach(key => delete drafts[key])
     errors.value = []
   } catch (e) {
     fail(e)
@@ -266,11 +281,13 @@ async function useDefaults() {
 }
 
 async function validate() {
+  Object.keys(drafts).filter(key => key !== 'teamQuickAmounts').forEach(commit)
   commitTeamQuickAmounts()
   try {
     const r = await call('POST', '/admin-api/v1/config/validate', form.value)
     errors.value = r.errors
     if (!r.errors.length) ElMessage.success('校验通过')
+    else await focusValidation(r.errors[0])
     return r.errors.length === 0
   } catch (e) {
     fail(e)
@@ -279,31 +296,23 @@ async function validate() {
 }
 
 async function publish() {
-  if (!(await validate())) {
-    ElMessage.error('有 ' + errors.value.length + ' 处需要修改，见页面顶部')
-    return
-  }
-  let note
+  if (releaseBusy.value || !(await validate())) return
+  releaseNote.value = ''; releaseChanges.value=changes.value.map(change=>({...change})); releaseStage.value = 'review'; releaseOpen.value = true
+}
+async function confirmPublish() {
+  if (releaseBusy.value) return
+  releaseBusy.value = true; releaseStage.value = 'validating'
   try {
-    const r = await ElMessageBox.prompt('发布后新开的房间立即使用这套参数，进行中的对局不受影响。', '发布', {
-      inputPlaceholder: '这次改了什么（选填，最多 200 字）',
-      confirmButtonText: '发布',
-      inputValidator: (v) => !v || v.length <= 200 || '最多 200 字',
-    })
-    note = r.value || ''
-  } catch {
-    return
-  }
-  try {
-    const r = await call('POST', '/admin-api/v1/config/publish', {
-      settings: form.value, note, expectedActiveId: active.value.configId,
-    })
-    ElMessage.success('已发布版本 #' + r.configId)
+    if (!(await validate())) { releaseStage.value = 'invalid'; return }
+    releaseStage.value = 'publishing'
+    const r = await call('POST', '/admin-api/v1/config/publish', { settings: form.value, note: releaseNote.value, expectedActiveId: active.value.configId })
+    releaseStage.value = 'success'; celebrate(); ElMessage.success('已发布版本 #' + r.configId)
     await load()
   } catch (e) {
-    if (e.status === 409) ElMessage.error(e.message + '（你的修改还在编辑区，可以先记下再刷新）')
+    releaseStage.value = 'failed'
+    if (e.status === 409) ElMessage.error(e.message + '（你的修改仍在编辑区）')
     else fail(e)
-  }
+  } finally { releaseBusy.value = false }
 }
 
 async function rollback(row) {
@@ -328,7 +337,9 @@ async function rollback(row) {
 async function view(row) {
   try {
     const r = await call('GET', '/admin-api/v1/config/' + row.configId)
-    form.value = fill(r.settings)
+    if (dirty.value) { try { await ElMessageBox.confirm('载入历史版本会替换当前编辑内容，确认继续？', '载入版本', { type: 'warning' }) } catch { return } }
+    form.value = fill(structuredClone(r.settings))
+    Object.keys(drafts).forEach(key => delete drafts[key])
     errors.value = []
     tab.value = 'prices'
     ElMessage.info('编辑区已载入版本 #' + row.configId + ' 的内容（未发布）')
@@ -337,57 +348,75 @@ async function view(row) {
   }
 }
 
+const selectedTile = ref(0)
+const characterDirty = ref(false)
+const celebration = ref(0)
+const releaseOpen = ref(false), releaseBusy = ref(false), releaseNote = ref(''), releaseStage = ref('review'), releaseChanges = ref([])
+let celebrationTimer, validationTimer
+function celebrate() { celebration.value = Date.now(); clearTimeout(celebrationTimer); celebrationTimer = setTimeout(() => { celebration.value = 0 }, 1800) }
+const originalSettings = computed(() => { try { return JSON.parse(saved.value || '{}') } catch { return {} } })
+const changes = computed(() => diffSettings(originalSettings.value, form.value || {}))
+function changeName(change) {
+  const section = sectionForField(change.path)
+  const match = Object.entries(fieldLabels).find(([path]) => new RegExp('^' + path.replaceAll('.', '\\.').replaceAll('*', '[^.]+') + '$').test(change.path))
+  const label = match?.[1] || '配置项'
+  if (section === 'names') return '土地名称 · 第 ' + change.path.split('.').at(-1) + ' 格'
+  if (section === 'prices') { const index = Number(change.path.split('.')[1]); return (TIER_LABEL[form.value?.tiers?.[index]?.tier] || '车站') + ' · ' + label }
+  return (pageById[section]?.label || '配置') + ' · ' + label
+}
+function valueText(value) { return value === undefined ? '未设置' : typeof value === 'boolean' ? value ? '启用' : '关闭' : value === null ? '无' : String(value) }
+const isConfigPage = computed(() => !['dashboard','characters','history'].includes(tab.value))
+const isBoardPage = computed(() => ['names','sets'].includes(tab.value))
+const parameterSearchIndex = computed(() => ({ ...searchIndex, events:searchIndex.events+' '+Object.values(EVENT_LABEL).join(' ')+' '+Object.values(CARD_LABEL).join(' '),timing:searchIndex.timing+' '+TIMING_FIELDS.map(field=>field[1]).join(' '),funTitles:searchIndex.funTitles+' '+Object.values(TITLE_LABEL).join(' '),cityEvents:searchIndex.cityEvents+' '+CITY_FIELDS.map(field=>field[1]).join(' ')+' '+Object.values(CITY_LABEL).join(' ') }))
+async function navigate(id) { tab.value = id; await nextTick(); window.scrollTo({ top:0, behavior:motionEnabled.value?'smooth':'auto' }) }
+async function focusTile(index) {
+  selectedTile.value = index
+  await nextTick()
+  const row = document.querySelector('[data-rule-page="' + tab.value + '"] [data-tile-row="' + index + '"]')
+  row?.scrollIntoView({ block: 'center', behavior: motionEnabled.value ? 'smooth' : 'auto' }); row?.querySelector('input')?.focus({ preventScroll: true })
+}
+async function focusValidation(error) {
+  const routes = [['startPick',/起点三选一|起点抽卡/],['roundReward',/轮次奖励|月度荣耀|收入来源/],['cityEvents',/城市事件|预告|建设节|旅游旺季|安居日/],['funTitles',/称号/],['series',/系列赛|积分/],['team',/组队|援助|队友/],['rentRise',/租金上涨/],['sets',/同组|分组|组号/],['names',/地名|命名|逐格名称/],['events',/事件概率|道具概率|权重|道具上限|手牌上限|幸运|不幸/],['money',/事件金额|固定费|起点奖励|出狱费用|小游戏.*奖励/],['prices',/低价|中价|高价|车站|档位|地产.*租金/],['announcement',/公告/],['timing',/操作时限|动画留时|动画展示|托管|拍卖.*秒/],['room',/房间|快速模式|初始现金|投骰/]]
+  const id = sectionForField(String(error).split(/[ ：:]/)[0]) || routes.find(([,expression]) => expression.test(error))?.[0]
+  if (!id) return
+  tab.value = id; await nextTick()
+  const section = document.querySelector(`[data-rule-page="${id}"]`)
+  const fields = [...(section?.querySelectorAll('.el-form-item') || [])]
+  const target = fields.find(field => { const label = field.querySelector('.el-form-item__label')?.textContent?.trim(); return label && error.includes(label) }) || fields[0] || section
+  document.querySelectorAll('.validation-focus').forEach(field => field.classList.remove('validation-focus'))
+  target?.classList.add('validation-focus'); target?.scrollIntoView({ block:'center',behavior:motionEnabled.value?'smooth':'auto' }); target?.querySelector('input,textarea,button')?.focus({preventScroll:true})
+  clearTimeout(validationTimer); validationTimer=setTimeout(()=>target?.classList.remove('validation-focus'),3000)
+}
+watch(boardId, () => { selectedTile.value = 0 })
+function beforeLeave(event) { if (dirty.value || characterDirty.value) { event.preventDefault(); event.returnValue = '' } }
+onMounted(() => window.addEventListener('beforeunload', beforeLeave))
+onBeforeUnmount(() => { window.removeEventListener('beforeunload', beforeLeave); clearTimeout(celebrationTimer); clearTimeout(validationTimer) })
+
 onMounted(() => {
   if (loggedIn.value) load()
 })
 </script>
 
 <template>
-  <LoginPage v-if="!loggedIn" :loading="loading" :error="loginError" :success="loginSuccess"
-    @submit="login" @enter="enterAdmin" @clear-error="loginError = ''" />
-
-  <div v-else class="page" v-loading="loading">
-    <header class="bar">
-      <div class="title">
-        <strong>大富翁参数管理</strong>
-        <span v-if="active && tab !== 'characters'" class="muted">
-          当前生效：{{ active.configId === 0 ? '内置默认配置' : '版本 #' + active.configId }}
-          <span v-if="active.createdAt">（{{ time(active.createdAt) }}）</span>
-        </span>
-        <el-tag v-if="dirty && tab !== 'characters'" type="warning" size="small">有未发布的修改</el-tag>
-      </div>
-      <div class="actions">
-        <template v-if="tab !== 'characters'">
-          <el-button @click="useDefaults">填入默认值</el-button>
-          <el-button @click="discard">放弃修改</el-button>
-          <el-button @click="validate">校验</el-button>
-          <el-button type="primary" @click="publish">发布</el-button>
-        </template>
-        <el-button text @click="logout">退出</el-button>
-      </div>
-    </header>
-
-    <el-alert v-if="errors.length && tab !== 'characters'" type="error" :closable="false" class="errors" title="需要修改后才能发布">
-      <ul><li v-for="e in errors" :key="e">{{ e }}</li></ul>
-    </el-alert>
-
-    <el-tabs v-if="form" v-model="tab" class="tabs">
-      <el-tab-pane label="人物素材" name="characters"><CharacterManager v-if="tab === 'characters'" /></el-tab-pane>
-      <el-tab-pane label="土地命名" name="names">
+  <LoginPage v-if="!loggedIn" :loading="loading" :error="loginError" :success="loginSuccess" @submit="login" @enter="enterAdmin" @clear-error="loginError=''" />
+  <AdminShell v-else :active-page="tab" :version="active?.configId" :dirty="dirty || characterDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @logout="logout">
+    <el-alert v-if="errors.length && tab !== 'characters'" class="validation-alert" type="error" :closable="false" title="请修改后再发布"><ul><li v-for="error in errors" :key="error"><button type="button" class="error-link" @click="focusValidation(error)">{{ error }}</button></li></ul></el-alert>
+    <div v-if="form" class="editor-grid" :class="{ 'has-board': isBoardPage }" v-loading="loading">
+      <div class="editor-content"><section v-show="tab === 'characters'" data-rule-page="characters" class="special-page"><KeepAlive><CharacterManager v-if="tab === 'characters'" @update:dirty="characterDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
+<section v-show="tab === 'names'" data-rule-page="names" class="surface field-panel"><div class="field-panel-title"><span>土地命名</span><small>修改只在发布后生效</small></div>
         <el-radio-group v-model="boardId" class="gap">
           <el-radio-button v-for="(_, id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button>
         </el-radio-group>
         <p class="muted">每格最多 8 个字。格子类型与顺序由地图决定，这里只改显示名称。</p>
         <div class="names">
-          <div v-for="t in tiles" :key="boardId + t.index" class="name-row">
+          <div v-for="t in tiles" :key="boardId + t.index" class="name-row" :class="{ highlighted: selectedTile === t.index }" :data-tile-row="t.index">
             <span class="idx">{{ t.index }}</span>
             <span class="type">{{ tileType(t.tile) }}</span>
             <el-input v-model="form.tileNames[boardId][t.index]" maxlength="8" />
           </div>
         </div>
-      </el-tab-pane>
-
-      <el-tab-pane label="同组地产" name="sets">
+      </section>
+<section v-show="tab === 'sets'" data-rule-page="sets" class="surface field-panel"><div class="field-panel-title"><span>同组地产</span><small>修改只在发布后生效</small></div>
         <el-form v-if="form.sets" label-width="160px" class="narrow">
           <p class="muted">同一组的普通地产全部归同一个人、且都没有抵押时，组内每块地的租金按倍率上涨（填 100% 即关闭）。组号填 0 表示不分组；同一组号的地就是一组，每组至少 2 块。车站与功能格不能分组。</p>
           <el-form-item label="集齐后租金倍率（%）"><el-input-number v-model="form.sets.rentPercent" :min="100" :max="500" :step="10" /></el-form-item>
@@ -396,16 +425,15 @@ onMounted(() => {
           <el-radio-button v-for="(_, id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button>
         </el-radio-group>
         <div v-if="form.sets && form.sets.groups[boardId]" class="names">
-          <div v-for="t in tiles.filter((x) => x.tile && x.tile.type === 'PROPERTY')" :key="'g' + boardId + t.index" class="name-row">
+          <div v-for="t in tiles.filter((x) => x.tile && x.tile.type === 'PROPERTY')" :key="'g' + boardId + t.index" class="name-row" :class="{ highlighted: selectedTile === t.index }" :data-tile-row="t.index">
             <span class="idx">{{ t.index }}</span>
             <span class="type">{{ form.tileNames[boardId][t.index] }}</span>
             <el-input-number v-model="form.sets.groups[boardId][t.index]" :min="0" :max="99" size="small" />
             <span class="muted">{{ groupMates(t.index) }}</span>
           </div>
         </div>
-      </el-tab-pane>
-
-      <el-tab-pane label="价格与租金" name="prices">
+      </section>
+<section v-show="tab === 'prices'" data-rule-page="prices" class="surface field-panel"><div class="field-panel-title"><span>价格与租金</span><small>修改只在发布后生效</small></div>
         <el-table :data="form.tiers" border class="gap">
           <el-table-column label="档位" width="110">
             <template #default="{ row }">{{ TIER_LABEL[row.tier] }}</template>
@@ -428,9 +456,8 @@ onMounted(() => {
             <span class="hint">落到别人车站时：租金 × 对方拥有的车站数</span>
           </el-form-item>
         </el-form>
-      </el-tab-pane>
-
-      <el-tab-pane label="事件概率" name="events">
+      </section>
+<section v-show="tab === 'events'" data-rule-page="events" class="surface field-panel"><div class="field-panel-title"><span>事件概率</span><small>修改只在发布后生效</small></div>
         <h3>事件格结果（合计 100）<el-tag :type="eventTotal === 100 ? 'success' : 'danger'" size="small">当前 {{ eventTotal }}</el-tag></h3>
         <el-form label-width="140px" class="narrow">
           <el-form-item v-for="(label, k) in EVENT_LABEL" :key="k" :label="label">
@@ -468,9 +495,8 @@ onMounted(() => {
           </el-form>
         </template>
         <p class="muted">两张地图共用。按权重抽取（概率 = 本项 ÷ 本组合计），填 0 表示不出现。奖励 / 罚款金额须在「金额与固定费用」里事件现金的范围内、并符合步长。"迷路倒退"后退 1～3 格。</p>
-      </el-tab-pane>
-
-      <el-tab-pane label="金额与固定费用" name="money">
+      </section>
+<section v-show="tab === 'money'" data-rule-page="money" class="surface field-panel"><div class="field-panel-title"><span>金额与固定费用</span><small>修改只在发布后生效</small></div>
         <el-form label-width="160px" class="narrow">
           <h3>事件格现金</h3>
           <p class="muted">"现金奖励"和"现金罚款"共用这个范围：从最小值到最大值按步长等概率取一个数。</p>
@@ -486,9 +512,8 @@ onMounted(() => {
           <el-form-item label="小游戏获胜奖励"><el-input-number v-model="form.fees.miniGameWinReward" :min="1" :step="50" /></el-form-item>
           <el-form-item label="出狱费用"><el-input-number v-model="form.fees.bailCost" :min="1" :step="50" /></el-form-item>
         </el-form>
-      </el-tab-pane>
-
-      <el-tab-pane label="建房选项" name="room">
+      </section>
+<section v-show="tab === 'room'" data-rule-page="room" class="surface field-panel"><div class="field-panel-title"><span>建房选项</span><small>修改只在发布后生效</small></div>
         <el-form v-if="form.room" label-width="160px" class="narrow">
           <p class="muted">房主建房时能选的项与默认值。每组 1～5 个，用逗号分隔，保存时按从小到大排列；默认值必须是其中一个。只影响发布之后新建的房间。</p>
           <h3>动画模式</h3>
@@ -507,9 +532,8 @@ onMounted(() => {
           <el-form-item label="可选（秒）"><el-input :model-value="draft('rollSecondsOptions')" @update:model-value="(v) => (drafts['rollSecondsOptions'] = v)" @change="commit('rollSecondsOptions')" placeholder="如 15, 30, 45, 60（5～120）" /></el-form-item>
           <el-form-item label="默认"><el-select v-model="form.room.defaultRollSeconds"><el-option v-for="v in form.room.rollSecondsOptions" :key="v" :label="v + ' 秒'" :value="v" /></el-select></el-form-item>
         </el-form>
-      </el-tab-pane>
-
-      <el-tab-pane label="租金上涨" name="rentRise">
+      </section>
+<section v-show="tab === 'rentRise'" data-rule-page="rentRise" class="surface field-panel"><div class="field-panel-title"><span>租金上涨</span><small>修改只在发布后生效</small></div>
         <el-form v-if="form.rentRise" label-width="160px" class="narrow">
           <p class="muted">只在破产模式生效，防止对局拖太久：所有存活玩家各走一次算一轮，前几轮按原价，之后每隔几轮租金倍率上涨一次，到封顶为止。地产和车站租金都涨，按基础租金乘倍率、向下取整到 10；买地、升级、抵押价与起点奖励不变。</p>
           <el-form-item label="原价轮数"><el-input-number v-model="form.rentRise.freeRounds" :min="0" :max="1000" /><span class="hint">轮内不涨价</span></el-form-item>
@@ -521,9 +545,8 @@ onMounted(() => {
             <span v-else class="muted">租金不上涨</span>
           </el-form-item>
         </el-form>
-      </el-tab-pane>
-
-      <el-tab-pane label="起点三选一" name="startPick">
+      </section>
+<section v-show="tab === 'startPick'" data-rule-page="startPick" class="surface field-panel"><div class="field-panel-title"><span>起点三选一</span><small>修改只在发布后生效</small></div>
         <el-form v-if="form.startPick" label-width="160px" class="narrow">
           <p class="muted">玩家前进经过或停在起点时，先在起点暂停，从三张背面朝上的牌里选一张，抽完再继续剩余步数。每张牌按权重决定是现金还是道具，现金在范围内按步长随机，道具按「道具概率」抽取。两个权重都为 0 时关闭；关闭时经过起点只发起点奖励。后退经过起点不抽卡。</p>
           <el-form-item label="现金权重"><el-input-number v-model="form.startPick.cashWeight" :min="0" :max="1000" /></el-form-item>
@@ -532,9 +555,8 @@ onMounted(() => {
           <el-form-item label="现金最大值"><el-input-number v-model="form.startPick.cashMax" :min="1" :max="1000000" :step="100" /></el-form-item>
           <el-form-item label="现金步长"><el-input-number v-model="form.startPick.cashStep" :min="1" :max="1000000" :step="50" /><span class="hint">须整除（最大值 − 最小值）</span></el-form-item>
         </el-form>
-      </el-tab-pane>
-
-      <el-tab-pane label="轮次奖励" name="roundReward">
+      </section>
+<section v-show="tab === 'roundReward'" data-rule-page="roundReward" class="surface field-panel"><div class="field-panel-title"><span>轮次奖励</span><small>修改只在发布后生效</small></div>
         <el-alert class="gap" :closable="false" title="第 N 整轮完成后一次性发放。累计实际玩法收入，排除开局资金、抵押借款、资产买卖和奖励本身；只给存活玩家，提醒结束后开始下一位投骰。" />
         <el-form label-width="220px" class="narrow">
           <el-form-item label="启用收入奖励"><el-switch v-model="form.roundReward.enabled" /></el-form-item>
@@ -548,8 +570,8 @@ onMounted(() => {
           <el-form-item label="提醒展示（毫秒）"><el-input-number v-model="form.roundReward.presentationMs" :min="1000" :max="10000" /></el-form-item>
           <el-form-item label="计算预览：累计收入"><el-input-number v-model="rewardIncome" :min="0" :max="100000000" /><span class="hint">奖励 +{{ rewardPreview }}</span></el-form-item>
         </el-form>
-      </el-tab-pane>
-      <el-tab-pane label="城市事件" name="cityEvents">
+      </section>
+<section v-show="tab === 'cityEvents'" data-rule-page="cityEvents" class="surface field-panel"><div class="field-panel-title"><span>城市事件</span><small>修改只在发布后生效</small></div>
         <el-alert class="gap" :closable="false" title="整轮交界随机触发，至多一个事件，不叠加。有事件时跳过新抽取。租金顺序：基础→同组→轮次上涨→城市倍率（向下取整到10）；建设折扣不改变资产标准价值。" />
         <el-form label-width="240px" class="narrow">
           <el-form-item label="启用城市事件"><el-switch v-model="form.cityEvents.enabled" /></el-form-item>
@@ -566,8 +588,8 @@ onMounted(() => {
           <el-table-column label="持续整轮数"><template #default="{row}"><el-input-number class="cell-num" v-model="row.durationRounds" :min="1" :max="20" /></template></el-table-column>
           <el-table-column label="插画"><template #default="{row}"><el-select v-model="row.artworkKey"><el-option v-for="(key,kind) in CITY_ART" :key="key" :value="key" :label="CITY_LABEL[kind]" /></el-select></template></el-table-column>
         </el-table>
-      </el-tab-pane>
-      <el-tab-pane label="结算称号" name="funTitles">
+      </section>
+<section v-show="tab === 'funTitles'" data-rule-page="funTitles" class="surface field-panel"><div class="field-panel-title"><span>结算称号</span><small>修改只在发布后生效</small></div>
         <el-alert class="gap" :closable="false" title="称号只作展示，不发现金。收租王按实际收租，地产大亨按同时持有峰值，幸运之星按事件与小游戏收入，逆风翻盘比较奖励轮次前的名次与最终名次；并列共同获奖。" />
         <el-switch v-model="form.funTitles.enabled" active-text="启用趣味称号" />
         <el-table :data="form.funTitles.titles">
@@ -576,8 +598,8 @@ onMounted(() => {
           <el-table-column label="显示名称"><template #default="{row}"><el-input v-model="row.name" maxlength="12" /></template></el-table-column>
           <el-table-column label="最低有效金额/数量/名次提升"><template #default="{row}"><el-input-number v-model="row.minimum" :min="1" :max="row.kind === 'COMEBACK' ? 7 : 1000000" /></template></el-table-column>
         </el-table>
-      </el-tab-pane>
-      <el-tab-pane label="好友系列赛" name="series">
+      </section>
+<section v-show="tab === 'series'" data-rule-page="series" class="surface field-panel"><div class="field-panel-title"><span>好友系列赛</span><small>修改只在发布后生效</small></div>
         <el-alert class="gap" :closable="false" title="首局开始时锁定成员与房间规则；每局现金、土地、手牌重置。积分只决定系列名次，不发现金。中止局不计分，退出保留已有积分。" />
         <el-form label-width="160px" class="narrow">
           <el-form-item label="开放系列赛"><el-switch v-model="form.series.enabled" /></el-form-item>
@@ -589,8 +611,8 @@ onMounted(() => {
           <el-form-item label="下一局最少人数"><el-input-number v-model="form.series.minPlayers" :min="2" :max="8" /></el-form-item>
           <p class="hint">累计积分相同即并列冠军，不额外比较胜场或净资产。普通单局仍是建房默认选项。</p>
         </el-form>
-      </el-tab-pane>
-      <el-tab-pane label="组队合作" name="team">
+      </section>
+<section v-show="tab === 'team'" data-rule-page="team" class="surface field-panel"><div class="field-panel-title"><span>组队合作</span><small>修改只在发布后生效</small></div>
         <el-alert class="gap" type="info" :closable="false" title="个人资金和产权独立，队友免租，可自愿援助。发布参数后新建房间生效，进行中的房间继续使用原参数。默认个人对战。" />
         <el-form v-if="form.team" label-width="190px" class="narrow">
           <el-form-item label="开放组队"><el-switch v-model="form.team.enabled" /><span class="hint">房主建房后可选择组队，首局开始后队伍固定；与个人系列赛互斥</span></el-form-item>
@@ -608,8 +630,8 @@ onMounted(() => {
           <p class="hint">30格只容纳2v2；50格可容纳2v2/3v3/4v4。按队伍净资产结算，个人破产后队友继续。援助不计累计玩法收入与月度奖励。</p>
         </el-form>
         <p v-else class="muted">当前服务端未下发组队参数，请升级服务端后配置；不使用浏览器自设默认金额。</p>
-      </el-tab-pane>
-      <el-tab-pane label="操作时限" name="timing">
+      </section>
+<section v-show="tab === 'timing'" data-rule-page="timing" class="surface field-panel"><div class="field-panel-title"><span>操作时限</span><small>修改只在发布后生效</small></div>
         <el-form v-if="form.timing" label-width="170px" class="narrow">
           <p class="muted">各类弹窗的倒计时与动画留时。投骰时间在「建房选项」里配置。只影响发布之后新建的房间。</p>
           <el-form-item v-for="f in TIMING_FIELDS" :key="f[0]" :label="f[1]">
@@ -617,141 +639,31 @@ onMounted(() => {
             <span class="hint">{{ f[4] }}{{ f[5] ? ' · ' + f[5] : '' }}</span>
           </el-form-item>
         </el-form>
-      </el-tab-pane>
-
-      <el-tab-pane label="公告" name="announcement">
+      </section>
+<section v-show="tab === 'announcement'" data-rule-page="announcement" class="surface field-panel"><div class="field-panel-title"><span>公告</span><small>修改只在发布后生效</small></div>
         <el-form v-if="form.announcement" label-width="120px" class="narrow">
           <p class="muted">发布后，大厅顶部显示这条公告（玩家可以关掉，本次打开不再显示）。用于维护通知、活动说明等。</p>
           <el-form-item label="显示公告"><el-switch v-model="form.announcement.enabled" /></el-form-item>
           <el-form-item label="标题"><el-input v-model="form.announcement.title" maxlength="20" show-word-limit placeholder="如：周末活动" /></el-form-item>
           <el-form-item label="内容"><el-input v-model="form.announcement.text" type="textarea" :rows="4" maxlength="200" show-word-limit placeholder="如：本周末经过起点奖励翻倍！" /></el-form-item>
         </el-form>
-      </el-tab-pane>
-
-      <el-tab-pane label="数据看板" name="dashboard">
-        <div class="dash-bar">
-          <el-radio-group v-model="dashDays" @change="loadDash">
-            <el-radio-button :value="7">近 7 天</el-radio-button>
-            <el-radio-button :value="14">近 14 天</el-radio-button>
-            <el-radio-button :value="30">近 30 天</el-radio-button>
-          </el-radio-group>
-          <el-button :loading="dashLoading" @click="loadDash">刷新</el-button>
-          <span v-if="dash" class="muted">{{ dash.from }} ～ {{ dash.to }}（北京时间）</span>
-        </div>
-        <p v-if="dash && !dash.dbEnabled" class="danger">后台没有连接数据库，没有可统计的数据。</p>
-        <template v-if="dash && dash.dbEnabled">
-          <div class="tiles">
-            <div class="tile"><div class="tile-v">{{ dash.totals.games }}</div><div class="tile-k">对局数</div></div>
-            <div class="tile"><div class="tile-v">{{ dash.totals.players }}</div><div class="tile-k">参与玩家</div></div>
-            <div class="tile"><div class="tile-v">{{ dash.totals.newUsers }}</div><div class="tile-k">新用户</div></div>
-            <div class="tile"><div class="tile-v">{{ dash.totals.avgMinutes ?? '—' }}</div><div class="tile-k">平均时长（分钟）</div></div>
-            <div class="tile"><div class="tile-v">{{ dash.totals.avgPlayers ?? '—' }}</div><div class="tile-k">平均人数</div></div>
-          </div>
-          <h3>每天对局数</h3>
-          <div class="chart" role="img" :aria-label="'每天对局数，最多 ' + dashMax + ' 局'">
-            <div v-for="d in dash.daily" :key="d.date" class="col" :title="d.date + '：' + d.games + ' 局，' + d.players + ' 人参与，新用户 ' + d.newUsers + (d.avgMinutes != null ? '，平均 ' + d.avgMinutes + ' 分钟' : '')">
-              <div class="col-v">{{ d.games || '' }}</div>
-              <div class="col-bar" :style="{ height: (d.games / dashMax) * 140 + 'px' }"></div>
-              <div class="col-k">{{ d.date.slice(5) }}</div>
-            </div>
-          </div>
-          <el-table :data="dash.daily" border size="small" class="gap" max-height="320">
-            <el-table-column prop="date" label="日期" width="120" />
-            <el-table-column prop="games" label="对局数" />
-            <el-table-column prop="players" label="参与玩家" />
-            <el-table-column prop="newUsers" label="新用户" />
-            <el-table-column label="平均时长（分钟）"><template #default="{ row }">{{ row.avgMinutes ?? '—' }}</template></el-table-column>
-          </el-table>
-          <div class="dists">
-            <div v-for="blk in [
-              { t: '结束方式', rows: dist(dash.endModes, MODE_LABEL) },
-              { t: '结束原因', rows: dist(dash.reasons, REASON_LABEL) },
-              { t: '地图', rows: dist(dash.boards, BOARD_LABEL) },
-              { t: '人数', rows: dist(dash.playerCounts) },
-              { t: '抽卡事件结果', rows: dist(dash.events.drawnEvents, EVENT_NAMES) },
-              { t: '幸运 / 不幸格结果', rows: dist(dash.events.luckyEvents, EVENT_NAMES) },
-              { t: '道具使用', rows: dist(dash.events.cardsUsed, CARD_LABEL) },
-            ]" :key="blk.t" class="dist">
-              <h3>{{ blk.t }}</h3>
-              <p v-if="!blk.rows.length" class="muted">暂无数据</p>
-              <div v-for="r in blk.rows" :key="r.name" class="dist-row" :title="r.name + '：' + r.n + ' 次（' + r.pct + '%）'">
-                <span class="dist-k">{{ r.name }}</span>
-                <span class="dist-track"><span class="dist-fill" :style="{ width: r.pct + '%' }"></span></span>
-                <span class="dist-v">{{ r.n }}</span>
-              </div>
-            </div>
-            <div class="dist">
-              <h3>其他次数</h3>
-              <div v-for="m in MISC_LABEL" :key="m[0]" class="dist-row"><span class="dist-k">{{ m[1] }}</span><span class="dist-v">{{ dash.events[m[0]] }}</span></div>
-              <p class="muted">事件类统计来自最近 {{ dash.events.logsScanned }} 局的对局日志（最多 500 局）。</p>
-            </div>
-          </div>
-        </template>
-      </el-tab-pane>
-
-      <el-tab-pane label="发布记录" name="history">
-        <el-table :data="history" border>
-          <el-table-column label="版本" width="110">
-            <template #default="{ row }">{{ row.configId === 0 ? '内置默认' : '#' + row.configId }}</template>
-          </el-table-column>
-          <el-table-column label="发布时间" width="190">
-            <template #default="{ row }">{{ time(row.createdAt) }}</template>
-          </el-table-column>
-          <el-table-column prop="note" label="说明" min-width="200" />
-          <el-table-column label="状态" width="90">
-            <template #default="{ row }"><el-tag v-if="row.active" type="success" size="small">生效中</el-tag></template>
-          </el-table-column>
-          <el-table-column label="操作" width="200">
-            <template #default="{ row }">
-              <el-button size="small" @click="view(row)">载入编辑</el-button>
-              <el-button v-if="!row.active" size="small" type="warning" @click="rollback(row)">回滚到此</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-tab-pane>
-    </el-tabs>
-  </div>
+      </section>
+<section v-show="tab === 'dashboard'" data-rule-page="dashboard" class="special-page"><DashboardOverview v-if="tab === 'dashboard'" :data="dash" :loading="dashLoading" :days="dashDays" :labels="{modes:MODE_LABEL,reasons:REASON_LABEL,boards:BOARD_LABEL,events:EVENT_NAMES,cards:CARD_LABEL}" :misc-labels="MISC_LABEL" @update:days="dashDays=$event; loadDash()" @refresh="loadDash" /></section>
+<section v-show="tab === 'history'" data-rule-page="history" class="surface field-panel"><el-timeline class="version-timeline"><el-timeline-item v-for="row in history" :key="row.configId" :timestamp="time(row.createdAt)" placement="top" :type="row.active ? 'primary' : 'info'"><div class="version-card"><div class="surface-heading"><h3>{{ row.configId === 0 ? '内置默认配置' : '版本 #' + row.configId }}</h3><el-tag v-if="row.active" type="success">生效中</el-tag></div><p>{{ row.note || '暂无版本说明' }}</p><div class="section-toolbar"><el-button @click="view(row)">载入编辑</el-button><el-button v-if="!row.active" type="warning" @click="rollback(row)">回滚到此</el-button></div><BorderBeam v-if="row.active" /></div></el-timeline-item></el-timeline><el-empty v-if="!history.length" description="还没有发布记录" /></section></div>
+      <BoardPreview v-if="isBoardPage" :tiles="boards.find(board=>board.id===boardId)?.tiles || []" :names="form.tileNames?.[boardId]" :groups="form.sets?.groups?.[boardId]" :selected="selectedTile" :group-mode="tab==='sets'" :board-id="boardId" @select="focusTile" />
+    </div>
+    <el-empty v-else-if="!loading" description="无法读取管理配置"><el-button @click="load">重新加载</el-button></el-empty>
+    <RulePreview v-if="form && isConfigPage && !isBoardPage" :section="tab" :settings="form" :original="originalSettings" :labels="{ tiers:TIER_LABEL,events:EVENT_LABEL }" :rent-steps="rentSteps" />
+    <section v-if="form && tab==='announcement'" class="announcement-preview surface"><span class="eyebrow">游戏大厅 · 公告预览</span><div class="notice-card" :class="{ muted: !form.announcement.enabled }"><strong>{{ form.announcement.title || '公告标题' }}</strong><p>{{ form.announcement.text || '编辑公告后，在这里预览游戏内展示内容。' }}</p><el-tag>{{ form.announcement.enabled ? '发布后展示' : '公告已关闭' }}</el-tag></div></section>
+    <div v-if="form && isConfigPage" class="config-dock"><div><span class="status-dot" :class="{ clean: !dirty }" /><strong>{{ dirty ? '有未发布修改' : '配置与生效版本一致' }}</strong><small>{{ changes.length }} 项变更</small></div><div class="dock-actions"><el-button @click="useDefaults">填入默认值</el-button><el-button @click="discard">放弃修改</el-button><el-button @click="validate">校验</el-button><el-button type="primary" :disabled="loading" @click="publish">查看变更并发布</el-button></div><BorderBeam v-if="dirty" /></div>
+    <el-dialog v-model="releaseOpen" title="发布配置" width="min(720px, 94vw)" :close-on-click-modal="!releaseBusy" :close-on-press-escape="!releaseBusy" :show-close="!releaseBusy" append-to-body>
+      <el-steps :active="releaseStage==='review' ? 0 : releaseStage==='validating' || releaseStage==='invalid' ? 1 : releaseStage==='publishing' ? 2 : 3" align-center finish-status="success"><el-step title="检查变更" /><el-step title="校验配置" /><el-step title="发布" /><el-step title="结果" /></el-steps>
+      <p class="muted">新开的房间使用本次参数，进行中的对局保持原版本。</p>
+      <el-table v-if="releaseChanges.length" :data="releaseChanges" max-height="300"><el-table-column label="修改项" min-width="180"><template #default="{row}">{{ changeName(row) }}</template></el-table-column><el-table-column label="原值" min-width="120"><template #default="{row}">{{ valueText(row.before) }}</template></el-table-column><el-table-column label="新值" min-width="120"><template #default="{row}">{{ valueText(row.after) }}</template></el-table-column></el-table>
+      <p v-else>当前没有参数变化，发布将生成一个新的配置版本。</p>
+      <el-input v-model="releaseNote" type="textarea" :rows="2" maxlength="200" show-word-limit placeholder="这次改了什么（选填）" :disabled="releaseBusy || releaseStage==='success'" />
+      <el-alert v-if="releaseStage==='invalid'" type="error" title="校验未通过，关闭此窗口后修改页面上的错误" :closable="false" /><el-alert v-if="releaseStage==='failed'" type="error" title="发布失败，修改仍保留在编辑区，可重试" :closable="false" /><el-alert v-if="releaseStage==='success'" type="success" title="发布成功，生效版本已更新" :closable="false" />
+      <template #footer><el-button :disabled="releaseBusy" @click="releaseOpen=false">{{ releaseStage==='success'?'完成':'返回编辑' }}</el-button><el-button v-if="releaseStage!=='success'" type="primary" :loading="releaseBusy" @click="confirmPublish">{{ releaseStage==='validating'?'正在校验':releaseStage==='publishing'?'正在发布':'确认发布' }}</el-button></template>
+    </el-dialog>
+  </AdminShell>
 </template>
-
-<style>
-body { margin: 0; background: #f5f7fa; font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-.page { max-width: 1200px; margin: 0 auto; padding: 16px; }
-.bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: #fff;
-  padding: 12px 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.title { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-.actions { display: flex; flex-wrap: wrap; gap: 4px; }
-.muted { color: #909399; font-size: 13px; }
-.hint { color: #909399; font-size: 13px; margin-left: 10px; }
-.danger { color: #f56c6c; }
-.errors { margin-top: 12px; }
-.errors ul { margin: 4px 0 0; padding-left: 18px; }
-.tabs { margin-top: 12px; background: #fff; padding: 8px 16px 16px; border-radius: 8px; }
-.gap { margin-bottom: 12px; }
-.cell-num { width: 100% !important; }
-.narrow { max-width: 640px; }
-h3 { font-size: 15px; margin: 18px 0 10px; display: flex; gap: 8px; align-items: center; }
-.names { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px 16px; }
-.name-row { display: flex; align-items: center; gap: 8px; }
-.name-row .idx { width: 24px; text-align: right; color: #909399; font-size: 12px; }
-.name-row .type { width: 96px; font-size: 12px; color: #606266; flex-shrink: 0; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px 16px; max-width: 900px; }
-.card-row { display: flex; align-items: center; gap: 8px; }
-.card-row > span:first-child { width: 64px; }
-.dash-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-.tile { background: #f5f7fa; border-radius: 8px; padding: 12px 16px; }
-.tile-v { font-size: 26px; font-weight: 600; color: #303133; }
-.tile-k { font-size: 13px; color: #909399; margin-top: 4px; }
-.chart { display: flex; align-items: flex-end; gap: 2px; height: 190px; overflow-x: auto; border-bottom: 1px solid #dcdfe6; margin-bottom: 12px; }
-.col { flex: 1 0 22px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; cursor: default; }
-.col:hover .col-bar { background: #337ecc; }
-.col-v { font-size: 11px; color: #606266; min-height: 14px; }
-.col-bar { width: 70%; max-width: 28px; background: #409eff; border-radius: 4px 4px 0 0; min-height: 0; }
-.col-k { font-size: 11px; color: #909399; padding: 4px 0; white-space: nowrap; }
-.dists { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0 24px; }
-.dist-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; }
-.dist-k { width: 96px; color: #606266; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dist-track { flex: 1; height: 10px; background: #f0f2f5; border-radius: 5px; overflow: hidden; }
-.dist-fill { display: block; height: 100%; background: #409eff; border-radius: 5px; }
-.dist-v { width: 56px; text-align: right; color: #303133; }
-</style>
