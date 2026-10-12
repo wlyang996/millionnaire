@@ -1,0 +1,130 @@
+<script setup>
+// SVG adapted from Y-jtt/westud-login-animation (MIT).
+</script>
+
+<template>
+<svg id="sceneSVG" viewBox="0 0 560 480"
+           xmlns="http://www.w3.org/2000/svg" overflow="visible">
+
+        <defs>
+          <!-- Clip pupils inside eye-whites -->
+          <clipPath id="cpPL"><circle cx="163" cy="175" r="14"/></clipPath>
+          <clipPath id="cpPR"><circle cx="233" cy="175" r="14"/></clipPath>
+          <clipPath id="cpBL"><circle cx="302" cy="270" r="12"/></clipPath>
+          <clipPath id="cpBR"><circle cx="350" cy="270" r="12"/></clipPath>
+          <clipPath id="cpY" ><circle cx="400" cy="318" r="10"/></clipPath>
+          <clipPath id="cpOL"><circle cx="80"  cy="358" r="9"/></clipPath>
+          <clipPath id="cpOR"><circle cx="130" cy="358" r="9"/></clipPath>
+        </defs>
+
+        <g id="gOrange">
+          <!-- Semicircle body: arc from (-50,480) to (270,480) -->
+          <path d="M -50,480 A160,160 0 0,1 270,480 Z" fill="#F4782A"/>
+          <!-- Left eye white -->
+          <circle cx="80"  cy="358" r="11" fill="white"/>
+          <!-- Right eye white -->
+          <circle cx="130" cy="358" r="11" fill="white"/>
+          <!-- Pupils -->
+          <circle id="oPupilL" cx="80"  cy="358" r="6" fill="#1A1A1A" clip-path="url(#cpOL)"/>
+          <circle id="oPupilR" cx="130" cy="358" r="6" fill="#1A1A1A" clip-path="url(#cpOR)"/>
+          <!-- Happy mouth -->
+          <path id="oMouth"
+                d="M 65,385 Q 105,408 145,385"
+                stroke="#1A1A1A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <!-- Sad brows (hidden by default) -->
+          <path id="oBrowL"
+                d="M 68,344 Q 80,337 92,341"
+                stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
+          <path id="oBrowR"
+                d="M 118,341 Q 130,337 142,344"
+                stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
+        </g>
+
+        <!-- ════════════════════════════════════════
+             PURPLE BLOCK  (tallest, left-center)
+             x=130 y=100 w=155 h=380  → top visible above orange
+        ═════════════════════════════════════════ -->
+        <g id="gPurple">
+          <rect x="130" y="100" width="155" height="380" rx="14" fill="#6B4EFF"/>
+          <!-- Eye whites -->
+          <circle cx="163" cy="175" r="14" fill="white"/>
+          <circle cx="233" cy="175" r="14" fill="white"/>
+          <!-- Pupils -->
+          <circle id="pPupilL" cx="163" cy="175" r="8" fill="#1A1A1A" clip-path="url(#cpPL)"/>
+          <circle id="pPupilR" cx="233" cy="175" r="8" fill="#1A1A1A" clip-path="url(#cpPR)"/>
+          <!-- Sad brows -->
+          <path id="pBrowL"
+                d="M 149,156 Q 163,148 177,153"
+                stroke="#1A1A1A" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0"/>
+          <path id="pBrowR"
+                d="M 219,153 Q 233,148 247,156"
+                stroke="#1A1A1A" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0"/>
+          <!-- Sad mouth -->
+          <path id="pMouthSad"
+                d="M 163,215 Q 198,202 233,215"
+                stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round" opacity="0"/>
+        </g>
+
+        <!-- ════════════════════════════════════════
+             BLACK BLOCK  (medium, center)
+             x=258 y=210 w=120 h=270
+        ═════════════════════════════════════════ -->
+        <g id="gBlack">
+          <rect x="258" y="210" width="120" height="270" rx="10" fill="#1E1E1E"/>
+          <!-- Eye whites -->
+          <circle cx="302" cy="270" r="12" fill="white"/>
+          <circle cx="350" cy="270" r="12" fill="white"/>
+          <!-- Pupils -->
+          <circle id="bPupilL" cx="302" cy="270" r="6.5" fill="#1E1E1E" clip-path="url(#cpBL)"/>
+          <circle id="bPupilR" cx="350" cy="270" r="6.5" fill="#1E1E1E" clip-path="url(#cpBR)"/>
+          <!-- Half-lids (password state) -->
+          <rect id="bLidL" x="290" y="258" width="24" height="0" rx="4" fill="#1E1E1E"/>
+          <rect id="bLidR" x="338" y="258" width="24" height="0" rx="4" fill="#1E1E1E"/>
+          <!-- Sad brows -->
+          <path id="bBrowL"
+                d="M 291,254 Q 302,246 313,250"
+                stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"/>
+          <path id="bBrowR"
+                d="M 339,250 Q 350,246 361,254"
+                stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"/>
+          <!-- Sad mouth -->
+          <path id="bMouthSad"
+                d="M 302,298 Q 326,287 350,298"
+                stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"/>
+        </g>
+
+        <!-- ════════════════════════════════════════
+             YELLOW DUCK  (shortest, right, fully visible)
+             x=355 y=270 w=110 h=210 rx=55
+        ═════════════════════════════════════════ -->
+        <g id="gYellow">
+          <rect x="355" y="270" width="110" height="210" rx="55" fill="#F5C518"/>
+          <!-- Single eye -->
+          <circle cx="400" cy="318" r="12" fill="white"/>
+          <circle id="yPupil" cx="400" cy="318" r="6" fill="#1A1A1A" clip-path="url(#cpY)"/>
+          <!-- Beak (two halves) -->
+          <rect id="beakU"  x="454" y="328" width="40" height="11" rx="5.5" fill="#F5C518"/>
+          <rect id="beakLo" x="454" y="340" width="40" height="11" rx="5.5" fill="#F5C518"/>
+          <line x1="456" y1="340" x2="492" y2="340" stroke="#1A1A1A" stroke-width="2"/>
+          <!-- Sad brow -->
+          <path id="yBrow"
+                d="M 391,303 Q 400,297 409,301"
+                stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"/>
+          <!-- Sad mouth -->
+          <path id="yMouth"
+                d="M 388,350 Q 394,343 400,347 Q 406,351 412,344"
+                stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"/>
+        </g>
+
+        <!-- Success celebration arms -->
+        <g id="purpleArms" opacity="0">
+          <rect x="90"  y="118" width="42" height="100" rx="21" fill="#6B4EFF" transform="rotate(38,111,168)"/>
+          <rect x="283" y="118" width="42" height="100" rx="21" fill="#6B4EFF" transform="rotate(-38,304,168)"/>
+        </g>
+        <g id="blackArms" opacity="0">
+          <rect x="222" y="226" width="36" height="82" rx="18" fill="#1E1E1E" transform="rotate(32,240,267)"/>
+          <rect x="378" y="226" width="36" height="82" rx="18" fill="#1E1E1E" transform="rotate(-32,396,267)"/>
+        </g>
+
+      </svg>
+</template>

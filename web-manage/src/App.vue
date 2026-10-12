@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { call, setToken, token } from './api.js'
 import CharacterManager from './CharacterManager.vue'
+import LoginPage from './components/LoginPage.vue'
 
 const TIER_LABEL = { LOW: '低价地产', MID: '中价地产', HIGH: '高价地产' }
 const LEVELS = ['未升级', '一级', '二级', '三级']
@@ -21,7 +22,8 @@ const TILE_LABEL = {
 const BOARD_LABEL = { 'classic-30': '30 格地图', 'classic-50': '50 格地图' }
 
 const loggedIn = ref(!!token())
-const password = ref('')
+const loginError = ref('')
+const loginSuccess = ref(false)
 const loading = ref(false)
 const tab = ref('names')
 const boards = ref([])
@@ -119,19 +121,26 @@ function fail(e) {
   ElMessage.error(e.message || '请求失败')
 }
 
-async function login() {
+async function login(password) {
+  if (loading.value || loginSuccess.value) return
+  loginError.value = ''
   loading.value = true
   try {
-    const r = await call('POST', '/admin-api/v1/auth/login', { password: password.value })
+    const r = await call('POST', '/admin-api/v1/auth/login', { password })
     setToken(r.token)
-    password.value = ''
-    loggedIn.value = true
-    await load()
+    loginSuccess.value = true
   } catch (e) {
-    ElMessage.error(e.message || '登录失败')
+    loginError.value = !e.status ? '暂时无法连接后台，请稍后重试'
+      : !e.message || e.message.startsWith('HTTP ') ? '后台暂时不可用，请稍后重试' : e.message
   } finally {
     loading.value = false
   }
+}
+
+async function enterAdmin() {
+  loggedIn.value = true
+  loginSuccess.value = false
+  try { await load() } catch (e) { fail(e) }
 }
 
 function logout() {
@@ -334,17 +343,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="!loggedIn" class="login">
-    <el-card class="login-card">
-      <h2>大富翁参数管理</h2>
-      <el-form @submit.prevent="login">
-        <el-form-item>
-          <el-input v-model="password" type="password" placeholder="管理员密码" show-password autofocus />
-        </el-form-item>
-        <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%">登录</el-button>
-      </el-form>
-    </el-card>
-  </div>
+  <LoginPage v-if="!loggedIn" :loading="loading" :error="loginError" :success="loginSuccess"
+    @submit="login" @enter="enterAdmin" @clear-error="loginError = ''" />
 
   <div v-else class="page" v-loading="loading">
     <header class="bar">
@@ -715,9 +715,6 @@ onMounted(() => {
 
 <style>
 body { margin: 0; background: #f5f7fa; font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-.login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; }
-.login-card { width: 340px; max-width: 100%; }
-.login-card h2 { margin: 0 0 20px; text-align: center; font-weight: 600; }
 .page { max-width: 1200px; margin: 0 auto; padding: 16px; }
 .bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: #fff;
   padding: 12px 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
