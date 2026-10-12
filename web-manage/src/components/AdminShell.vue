@@ -6,11 +6,14 @@ import { groups, pageById } from '../admin/navigation.js'
 import { useAdminPreferences } from '../admin/preferences.js'
 import BorderBeam from './effects/BorderBeam.vue'
 import AdminMascot from './AdminMascot.vue'
+import { usePageMotion } from '../admin/usePageMotion.js'
 const OrbEffect = defineAsyncComponent(() => import('./effects/Orb.vue'))
 const props = defineProps({ activePage: String, version: Number, dirty: Boolean, searchIndex: Object, celebration: Number, busy: Boolean, hasError: Boolean })
 const emit = defineEmits(['navigate', 'logout'])
 const icons = { Orbit, Map, SlidersHorizontal, UsersRound, Megaphone, History }
 const { theme, motionLevel, motionEnabled, richMotion } = useAdminPreferences()
+const pageContent = ref(null)
+usePageMotion(pageContent, () => props.activePage)
 const query = ref(''), mobileOpen = ref(false), collapsed = ref({}), paused = ref(document.hidden)
 const isMobile = ref(false)
 let mobileMedia
@@ -55,7 +58,7 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', visibil
       <main class="admin-workspace">
         <div class="admin-hero"><div class="hero-aurora" aria-hidden="true" /><div class="hero-copy"><span class="eyebrow">MILLIONNAIRE / {{ page.group }}</span><Transition name="hero-title" mode="out-in"><div :key="page.id"><h1>{{ page.title }}</h1><p>{{ page.description }}</p></div></Transition><span class="hero-caption"><span class="status-dot" />{{ dirty ? '编辑中的修改，发布后才会生效' : '每一个小调整，都是下一局的新惊喜' }}</span></div><div class="hero-orb" aria-hidden="true"><OrbEffect v-if="richMotion" :enabled="!paused" :hue="18" background-color="#000000" /><div v-else class="orb-static" /></div><AdminMascot v-if="activePage === 'dashboard'" :busy="busy" :error="hasError" :success="celebration" /><BorderBeam /></div>
         <Transition name="page-enter" mode="out-in"><div :key="page.id" class="page-heading"><h2>{{ page.label }}</h2><span>{{ page.group }}</span></div></Transition>
-        <slot />
+        <div ref="pageContent" class="admin-page-content"><slot /></div>
       </main>
       <footer class="admin-footer"><span>大富翁 · 管理控制台</span><span>LET THE GOOD TIMES ROLL.</span></footer>
     </div>

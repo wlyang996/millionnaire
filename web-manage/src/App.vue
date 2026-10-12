@@ -12,6 +12,7 @@ import BorderBeam from './components/effects/BorderBeam.vue'
 import { diffSettings, pageById, sectionForField } from './admin/navigation.js'
 import { fieldLabels, searchIndex } from './admin/fields.js'
 import { motionEnabled } from './admin/preferences.js'
+import { rewardAmount } from './admin/ruleVisuals.js'
 
 const TIER_LABEL = { LOW: '低价地产', MID: '中价地产', HIGH: '高价地产' }
 const LEVELS = ['未升级', '一级', '二级', '三级']
@@ -183,10 +184,7 @@ const TITLE_LABEL = { RENT_KING: '收租王', PROPERTY_TYCOON: '地产大亨', L
 const CITY_LABEL = { UPGRADE_DISCOUNT: '建设节', STATION_RENT: '旅游旺季', PROPERTY_RENT: '安居日' }
 const CITY_ART = { UPGRADE_DISCOUNT: 'city_construction', STATION_RENT: 'scene_station', PROPERTY_RENT: 'scene_property_low' }
 const rewardIncome = ref(8000)
-const rewardPreview = computed(() => {
-  const r = form.value?.roundReward
-  return r && r.roundingUnit > 0 ? Math.floor(Math.min(Math.floor(rewardIncome.value * r.rewardPercent / 100), r.perPlayerCap) / r.roundingUnit) * r.roundingUnit : 0
-})
+const rewardPreview = computed(() => rewardAmount(form.value?.roundReward, rewardIncome.value))
 const CITY_FIELDS = [
   ['firstCheckRound', '首次检查：完成第几轮', 1, 1000], ['checkEveryRounds', '后续每几轮检查', 1, 100],
   ['triggerPercent', '触发概率（%）', 0, 100], ['advanceRounds', '提前轮数', 1, 10],
@@ -401,6 +399,7 @@ onMounted(() => {
   <LoginPage v-if="!loggedIn" :loading="loading" :error="loginError" :success="loginSuccess" @submit="login" @enter="enterAdmin" @clear-error="loginError=''" />
   <AdminShell v-else :active-page="tab" :version="active?.configId" :dirty="dirty || characterDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @logout="logout">
     <el-alert v-if="errors.length && tab !== 'characters'" class="validation-alert" type="error" :closable="false" title="请修改后再发布"><ul><li v-for="error in errors" :key="error"><button type="button" class="error-link" @click="focusValidation(error)">{{ error }}</button></li></ul></el-alert>
+    <div class="rule-workspace" :class="{ 'with-live-preview': form && isConfigPage && !isBoardPage && tab!=='announcement' }">
     <div v-if="form" class="editor-grid" :class="{ 'has-board': isBoardPage }" v-loading="loading">
       <div class="editor-content"><section v-show="tab === 'characters'" data-rule-page="characters" class="special-page"><KeepAlive><CharacterManager v-if="tab === 'characters'" @update:dirty="characterDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
 <section v-show="tab === 'names'" data-rule-page="names" class="surface field-panel"><div class="field-panel-title"><span>土地命名</span><small>修改只在发布后生效</small></div>
@@ -653,7 +652,8 @@ onMounted(() => {
       <BoardPreview v-if="isBoardPage" :tiles="boards.find(board=>board.id===boardId)?.tiles || []" :names="form.tileNames?.[boardId]" :groups="form.sets?.groups?.[boardId]" :selected="selectedTile" :group-mode="tab==='sets'" :board-id="boardId" @select="focusTile" />
     </div>
     <el-empty v-else-if="!loading" description="无法读取管理配置"><el-button @click="load">重新加载</el-button></el-empty>
-    <RulePreview v-if="form && isConfigPage && !isBoardPage" :section="tab" :settings="form" :original="originalSettings" :labels="{ tiers:TIER_LABEL,events:EVENT_LABEL }" :rent-steps="rentSteps" />
+    <RulePreview v-if="form && isConfigPage && !isBoardPage" :section="tab" :settings="form" :original="originalSettings" :labels="{ tiers:TIER_LABEL,events:EVENT_LABEL,cards:CARD_LABEL,income:INCOME_LABEL,city:CITY_LABEL,titles:TITLE_LABEL }" :rent-steps="rentSteps" :reward-income="rewardIncome" :timing-fields="TIMING_FIELDS" />
+    </div>
     <section v-if="form && tab==='announcement'" class="announcement-preview surface"><span class="eyebrow">游戏大厅 · 公告预览</span><div class="notice-card" :class="{ muted: !form.announcement.enabled }"><strong>{{ form.announcement.title || '公告标题' }}</strong><p>{{ form.announcement.text || '编辑公告后，在这里预览游戏内展示内容。' }}</p><el-tag>{{ form.announcement.enabled ? '发布后展示' : '公告已关闭' }}</el-tag></div></section>
     <div v-if="form && isConfigPage" class="config-dock"><div><span class="status-dot" :class="{ clean: !dirty }" /><strong>{{ dirty ? '有未发布修改' : '配置与生效版本一致' }}</strong><small>{{ changes.length }} 项变更</small></div><div class="dock-actions"><el-button @click="useDefaults">填入默认值</el-button><el-button @click="discard">放弃修改</el-button><el-button @click="validate">校验</el-button><el-button type="primary" :disabled="loading" @click="publish">查看变更并发布</el-button></div><BorderBeam v-if="dirty" /></div>
     <el-dialog v-model="releaseOpen" title="发布配置" width="min(720px, 94vw)" :close-on-click-modal="!releaseBusy" :close-on-press-escape="!releaseBusy" :show-close="!releaseBusy" append-to-body>

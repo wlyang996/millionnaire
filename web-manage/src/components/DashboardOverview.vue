@@ -4,13 +4,14 @@ import { RefreshCw, ArrowUpRight, Gamepad2, UsersRound, UserPlus, Timer, Users }
 const AdminChart = defineAsyncComponent(() => import('./AdminChart.vue'))
 import SpotlightCard from './effects/SpotlightCard.vue'
 import NumberTicker from './effects/NumberTicker.vue'
+import { distributionRows } from '../admin/chartColors.js'
 const props = defineProps({ data: Object, loading: Boolean, days: Number, labels: Object, miscLabels: Array })
 const emit = defineEmits(['refresh', 'update:days'])
 const metrics = [{ key: 'games', label: '对局数', unit: '局', icon: Gamepad2 }, { key: 'players', label: '参与玩家', unit: '人次', icon: UsersRound }, { key: 'newUsers', label: '新用户', unit: '人', icon: UserPlus }, { key: 'avgMinutes', label: '平均时长', unit: '分钟', icon: Timer, decimals: 1 }, { key: 'avgPlayers', label: '平均人数', unit: '人 / 局', icon: Users, decimals: 1 }]
 const dailyOption = computed(() => ({ legend: { data: ['对局数', '参与玩家'], bottom: 0 }, grid: { top: 35, left: 50, right: 55, bottom: 55 }, xAxis: { type: 'category', name: '日期', data: (props.data?.daily || []).map(row => row.date.slice(5)) }, yAxis: [{ type: 'value', name: '对局（局）' }, { type: 'value', name: '参与（人次）', splitLine: { show: false } }], series: [{ name: '对局数', type: 'bar', barMaxWidth: 24, itemStyle: { borderRadius: [7,7,0,0] }, data: (props.data?.daily || []).map(row => row.games) }, { name: '参与玩家', type: 'line', smooth: true, yAxisIndex: 1, symbolSize: 7, data: (props.data?.daily || []).map(row => row.players) }] }))
 const distributions = computed(() => [
-  ['结束方式', props.data?.endModes, props.labels?.modes], ['结束原因', props.data?.reasons, props.labels?.reasons], ['地图', props.data?.boards, props.labels?.boards], ['人数', props.data?.playerCounts], ['抽卡事件结果', props.data?.events?.drawnEvents, props.labels?.events], ['幸运 / 不幸格结果', props.data?.events?.luckyEvents, props.labels?.events], ['道具使用', props.data?.events?.cardsUsed, props.labels?.cards],
-].map(([title, values, labels]) => ({ title, rows: Object.entries(values || {}).map(([key, value]) => ({ name: labels?.[key] || key, value })).sort((a,b) => b.value-a.value) })))
+  ['结束方式', 'modes', props.data?.endModes, props.labels?.modes], ['结束原因', 'reasons', props.data?.reasons, props.labels?.reasons], ['地图', 'boards', props.data?.boards, props.labels?.boards], ['人数', 'players', props.data?.playerCounts], ['抽卡事件结果', 'events', props.data?.events?.drawnEvents, props.labels?.events], ['幸运 / 不幸格结果', 'events', props.data?.events?.luckyEvents, props.labels?.events], ['道具使用', 'cards', props.data?.events?.cardsUsed, props.labels?.cards],
+].map(([title, domain, values, labels]) => ({ title, rows: distributionRows(domain, values, labels) })))
 function distributionOption(rows) { return { legend: { type: 'scroll', bottom: 0 }, series: [{ type: 'pie', radius: ['45%', '68%'], center: ['50%', '43%'], label: { show: false }, emphasis: { label: { show: true, formatter: '{b}\n{d}%' } }, data: rows }] } }
 </script>
 <template>
