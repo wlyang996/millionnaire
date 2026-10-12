@@ -1,0 +1,119 @@
+{
+  "date": "2026-10-12",
+  "regionSource": "client/assets/scripts/ui/TeamPoseRegions.ts",
+  "regionSha256": "433ba91a4673be517f3419f38dfb1f386fc8c60d04c7746f6c77602079cbb5ca",
+  "assets": [
+    {
+      "source": "client/assets/resources/art/completion/information_host_tangtang.png",
+      "target": "web-manage/public/art/portraits/information_host_tangtang.png",
+      "width": 406,
+      "height": 457,
+      "bytes": 232047,
+      "sha256": "636d62c7969746a24ea252105474e754656c393f67d3e4f70eafccbcff53ae28"
+    },
+    {
+      "source": "client/assets/resources/art/completion/information_host_keke.png",
+      "target": "web-manage/public/art/portraits/information_host_keke.png",
+      "width": 420,
+      "height": 437,
+      "bytes": 247148,
+      "sha256": "f8954f38ccf92e04c096a8e38d062d0f9bc02cf0c1157c93a2642e2abeeeb2ca"
+    },
+    {
+      "source": "client/assets/resources/art/completion/information_host_ajie.png",
+      "target": "web-manage/public/art/portraits/information_host_ajie.png",
+      "width": 395,
+      "height": 437,
+      "bytes": 250435,
+      "sha256": "88cb188c8840f7e0b239f0003f82ee4371026f18ee51ca8644c0404c3da5f6b7"
+    },
+    {
+      "source": "client/assets/resources/art/completion/information_host_naicha.png",
+      "target": "web-manage/public/art/portraits/information_host_naicha.png",
+      "width": 413,
+      "height": 458,
+      "bytes": 262891,
+      "sha256": "0ae5fb7fbb6162fa5b41c910aa94ed612dd1f146f22f05441b3abd49737cb5f7"
+    },
+    {
+      "source": "client/assets/resources/art/completion/information_host_akai.png",
+      "target": "web-manage/public/art/portraits/information_host_akai.png",
+      "width": 394,
+      "height": 456,
+      "bytes": 233853,
+      "sha256": "aef6b68510bbcf64e6c17346e35028700c27d060fa5ac7d77bfefd47403ac735"
+    },
+    {
+      "source": "client/assets/resources/art/completion/information_host_yuanyuan.png",
+      "target": "web-manage/public/art/portraits/information_host_yuanyuan.png",
+      "width": 434,
+      "height": 434,
+      "bytes": 282615,
+      "sha256": "85be6f16dc5ecf02ccacf6664f803c2fe2d5878b695a768ee0620f0f58ab0d35"
+    },
+    {
+      "source": "client/assets/resources/art/completion/information_host_doudou.png",
+      "target": "web-manage/public/art/portraits/information_host_doudou.png",
+      "width": 403,
+      "height": 440,
+      "bytes": 238214,
+      "sha256": "fd66569e3275a44b5092d671acec6a42363293ebb45cee1672954214ecafd92a"
+    },
+    {
+      "source": "client/assets/resources/art/completion/information_host_maomao.png",
+      "target": "web-manage/public/art/portraits/information_host_maomao.png",
+      "width": 426,
+      "height": 439,
+      "bytes": 262149,
+      "sha256": "6432f7c029d36a6c27d15a9b97dabe9737ace2bb3cd5bd544b981c6ad4521dc2"
+    },
+    {
+      "source": "client/assets/resources/art/team_poses/team_pose_give.png",
+      "target": "web-manage/public/art/team_poses/team_pose_give.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2148413,
+      "sha256": "cce7240e6996a52c9ec322fe783aaccba51107c79a507f088681ef2aa1567a7f"
+    },
+    {
+      "source": "client/assets/resources/art/team_poses/team_pose_receive.png",
+      "target": "web-manage/public/art/team_poses/team_pose_receive.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2151263,
+      "sha256": "d28ad6b65029ca99331022981d4871563893332ad3b66139edb0b9970bcf289b"
+    },
+    {
+      "source": "client/assets/resources/art/team_poses/team_pose_worry.png",
+      "target": "web-manage/public/art/team_poses/team_pose_worry.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2167990,
+      "sha256": "1b692fb2d0b65d38013163b0d0c1bb85778c8133e584d3c73f1c484be6a13eae"
+    },
+    {
+      "source": "client/assets/resources/art/team_poses/team_pose_celebrate.png",
+      "target": "web-manage/public/art/team_poses/team_pose_celebrate.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2075213,
+      "sha256": "2395d9525ae01762e483c62d8e2c3a90f876f94b213351d28e00a7b44cb64301"
+    },
+    {
+      "source": "client/assets/resources/art/team_poses/team_trophy.png",
+      "target": "web-manage/public/art/team_poses/team_trophy.png",
+      "width": 1263,
+      "height": 1246,
+      "bytes": 1077730,
+      "sha256": "9e333a26ac90c33fedcffb6a11d2a69bff016a44b57f249432e31c15bc96be9d"
+    },
+    {
+      "source": "client/assets/resources/art/team_poses/team_debt_thought.png",
+      "target": "web-manage/public/art/team_poses/team_debt_thought.png",
+      "width": 1402,
+      "height": 1122,
+      "bytes": 996998,
+      "sha256": "42eb102145df31836c480039b32893f2880219fca6255f6d7a309fff06a2f8fb"
+    }
+  ]
+}

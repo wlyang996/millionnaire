@@ -1,0 +1,754 @@
+[
+  {
+    "id": 0,
+    "name": "糖糖",
+    "pose": "普通头像",
+    "images": [
+      {
+        "label": "普通头像",
+        "loaded": true,
+        "src": "/admin/art/avatars/01-avatar_tangtang.png"
+      }
+    ]
+  },
+  {
+    "id": 0,
+    "name": "糖糖",
+    "pose": "棋盘棋子",
+    "images": [
+      {
+        "label": "棋盘棋子",
+        "loaded": true,
+        "src": "/admin/art/pawns/01-pawn_tangtang.png"
+      }
+    ]
+  },
+  {
+    "id": 0,
+    "name": "糖糖",
+    "pose": "半身人物",
+    "images": [
+      {
+        "label": "半身人物",
+        "loaded": true,
+        "src": "/admin/art/portraits/information_host_tangtang.png"
+      }
+    ]
+  },
+  {
+    "id": 0,
+    "name": "糖糖",
+    "pose": "递币",
+    "images": [
+      {
+        "label": "递币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_give.png"
+      }
+    ]
+  },
+  {
+    "id": 0,
+    "name": "糖糖",
+    "pose": "接币",
+    "images": [
+      {
+        "label": "接币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_receive.png"
+      }
+    ]
+  },
+  {
+    "id": 0,
+    "name": "糖糖",
+    "pose": "欠款忧虑",
+    "images": [
+      {
+        "label": "欠款忧虑",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_worry.png"
+      },
+      {
+        "label": "欠款思考气泡",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_debt_thought.png"
+      }
+    ]
+  },
+  {
+    "id": 0,
+    "name": "糖糖",
+    "pose": "托杯庆祝",
+    "images": [
+      {
+        "label": "托杯庆祝",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_celebrate.png"
+      },
+      {
+        "label": "共用奖杯",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_trophy.png"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "可可",
+    "pose": "普通头像",
+    "images": [
+      {
+        "label": "普通头像",
+        "loaded": true,
+        "src": "/admin/art/avatars/02-avatar_keke.png"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "可可",
+    "pose": "棋盘棋子",
+    "images": [
+      {
+        "label": "棋盘棋子",
+        "loaded": true,
+        "src": "/admin/art/pawns/02-pawn_keke.png"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "可可",
+    "pose": "半身人物",
+    "images": [
+      {
+        "label": "半身人物",
+        "loaded": true,
+        "src": "/admin/art/portraits/information_host_keke.png"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "可可",
+    "pose": "递币",
+    "images": [
+      {
+        "label": "递币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_give.png"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "可可",
+    "pose": "接币",
+    "images": [
+      {
+        "label": "接币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_receive.png"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "可可",
+    "pose": "欠款忧虑",
+    "images": [
+      {
+        "label": "欠款忧虑",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_worry.png"
+      },
+      {
+        "label": "欠款思考气泡",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_debt_thought.png"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "可可",
+    "pose": "托杯庆祝",
+    "images": [
+      {
+        "label": "托杯庆祝",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_celebrate.png"
+      },
+      {
+        "label": "共用奖杯",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_trophy.png"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "阿杰",
+    "pose": "普通头像",
+    "images": [
+      {
+        "label": "普通头像",
+        "loaded": true,
+        "src": "/admin/art/avatars/03-avatar_ajie.png"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "阿杰",
+    "pose": "棋盘棋子",
+    "images": [
+      {
+        "label": "棋盘棋子",
+        "loaded": true,
+        "src": "/admin/art/pawns/03-pawn_ajie.png"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "阿杰",
+    "pose": "半身人物",
+    "images": [
+      {
+        "label": "半身人物",
+        "loaded": true,
+        "src": "/admin/art/portraits/information_host_ajie.png"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "阿杰",
+    "pose": "递币",
+    "images": [
+      {
+        "label": "递币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_give.png"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "阿杰",
+    "pose": "接币",
+    "images": [
+      {
+        "label": "接币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_receive.png"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "阿杰",
+    "pose": "欠款忧虑",
+    "images": [
+      {
+        "label": "欠款忧虑",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_worry.png"
+      },
+      {
+        "label": "欠款思考气泡",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_debt_thought.png"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "阿杰",
+    "pose": "托杯庆祝",
+    "images": [
+      {
+        "label": "托杯庆祝",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_celebrate.png"
+      },
+      {
+        "label": "共用奖杯",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_trophy.png"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "奶茶",
+    "pose": "普通头像",
+    "images": [
+      {
+        "label": "普通头像",
+        "loaded": true,
+        "src": "/admin/art/avatars/04-avatar_naicha.png"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "奶茶",
+    "pose": "棋盘棋子",
+    "images": [
+      {
+        "label": "棋盘棋子",
+        "loaded": true,
+        "src": "/admin/art/pawns/04-pawn_naicha.png"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "奶茶",
+    "pose": "半身人物",
+    "images": [
+      {
+        "label": "半身人物",
+        "loaded": true,
+        "src": "/admin/art/portraits/information_host_naicha.png"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "奶茶",
+    "pose": "递币",
+    "images": [
+      {
+        "label": "递币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_give.png"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "奶茶",
+    "pose": "接币",
+    "images": [
+      {
+        "label": "接币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_receive.png"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "奶茶",
+    "pose": "欠款忧虑",
+    "images": [
+      {
+        "label": "欠款忧虑",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_worry.png"
+      },
+      {
+        "label": "欠款思考气泡",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_debt_thought.png"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "奶茶",
+    "pose": "托杯庆祝",
+    "images": [
+      {
+        "label": "托杯庆祝",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_celebrate.png"
+      },
+      {
+        "label": "共用奖杯",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_trophy.png"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "阿凯",
+    "pose": "普通头像",
+    "images": [
+      {
+        "label": "普通头像",
+        "loaded": true,
+        "src": "/admin/art/avatars/05-avatar_akai.png"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "阿凯",
+    "pose": "棋盘棋子",
+    "images": [
+      {
+        "label": "棋盘棋子",
+        "loaded": true,
+        "src": "/admin/art/pawns/05-pawn_akai.png"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "阿凯",
+    "pose": "半身人物",
+    "images": [
+      {
+        "label": "半身人物",
+        "loaded": true,
+        "src": "/admin/art/portraits/information_host_akai.png"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "阿凯",
+    "pose": "递币",
+    "images": [
+      {
+        "label": "递币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_give.png"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "阿凯",
+    "pose": "接币",
+    "images": [
+      {
+        "label": "接币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_receive.png"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "阿凯",
+    "pose": "欠款忧虑",
+    "images": [
+      {
+        "label": "欠款忧虑",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_worry.png"
+      },
+      {
+        "label": "欠款思考气泡",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_debt_thought.png"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "阿凯",
+    "pose": "托杯庆祝",
+    "images": [
+      {
+        "label": "托杯庆祝",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_celebrate.png"
+      },
+      {
+        "label": "共用奖杯",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_trophy.png"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "圆圆",
+    "pose": "普通头像",
+    "images": [
+      {
+        "label": "普通头像",
+        "loaded": true,
+        "src": "/admin/art/avatars/06-avatar_yuanyuan.png"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "圆圆",
+    "pose": "棋盘棋子",
+    "images": [
+      {
+        "label": "棋盘棋子",
+        "loaded": true,
+        "src": "/admin/art/pawns/06-pawn_yuanyuan.png"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "圆圆",
+    "pose": "半身人物",
+    "images": [
+      {
+        "label": "半身人物",
+        "loaded": true,
+        "src": "/admin/art/portraits/information_host_yuanyuan.png"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "圆圆",
+    "pose": "递币",
+    "images": [
+      {
+        "label": "递币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_give.png"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "圆圆",
+    "pose": "接币",
+    "images": [
+      {
+        "label": "接币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_receive.png"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "圆圆",
+    "pose": "欠款忧虑",
+    "images": [
+      {
+        "label": "欠款忧虑",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_worry.png"
+      },
+      {
+        "label": "欠款思考气泡",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_debt_thought.png"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "圆圆",
+    "pose": "托杯庆祝",
+    "images": [
+      {
+        "label": "托杯庆祝",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_celebrate.png"
+      },
+      {
+        "label": "共用奖杯",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_trophy.png"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "豆豆",
+    "pose": "普通头像",
+    "images": [
+      {
+        "label": "普通头像",
+        "loaded": true,
+        "src": "/admin/art/avatars/07-avatar_doudou.png"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "豆豆",
+    "pose": "棋盘棋子",
+    "images": [
+      {
+        "label": "棋盘棋子",
+        "loaded": true,
+        "src": "/admin/art/pawns/07-pawn_doudou.png"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "豆豆",
+    "pose": "半身人物",
+    "images": [
+      {
+        "label": "半身人物",
+        "loaded": true,
+        "src": "/admin/art/portraits/information_host_doudou.png"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "豆豆",
+    "pose": "递币",
+    "images": [
+      {
+        "label": "递币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_give.png"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "豆豆",
+    "pose": "接币",
+    "images": [
+      {
+        "label": "接币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_receive.png"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "豆豆",
+    "pose": "欠款忧虑",
+    "images": [
+      {
+        "label": "欠款忧虑",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_worry.png"
+      },
+      {
+        "label": "欠款思考气泡",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_debt_thought.png"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "豆豆",
+    "pose": "托杯庆祝",
+    "images": [
+      {
+        "label": "托杯庆祝",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_celebrate.png"
+      },
+      {
+        "label": "共用奖杯",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_trophy.png"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "毛毛",
+    "pose": "普通头像",
+    "images": [
+      {
+        "label": "普通头像",
+        "loaded": true,
+        "src": "/admin/art/avatars/08-avatar_maomao.png"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "毛毛",
+    "pose": "棋盘棋子",
+    "images": [
+      {
+        "label": "棋盘棋子",
+        "loaded": true,
+        "src": "/admin/art/pawns/08-pawn_maomao.png"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "毛毛",
+    "pose": "半身人物",
+    "images": [
+      {
+        "label": "半身人物",
+        "loaded": true,
+        "src": "/admin/art/portraits/information_host_maomao.png"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "毛毛",
+    "pose": "递币",
+    "images": [
+      {
+        "label": "递币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_give.png"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "毛毛",
+    "pose": "接币",
+    "images": [
+      {
+        "label": "接币",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_receive.png"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "毛毛",
+    "pose": "欠款忧虑",
+    "images": [
+      {
+        "label": "欠款忧虑",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_worry.png"
+      },
+      {
+        "label": "欠款思考气泡",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_debt_thought.png"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "毛毛",
+    "pose": "托杯庆祝",
+    "images": [
+      {
+        "label": "托杯庆祝",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_pose_celebrate.png"
+      },
+      {
+        "label": "共用奖杯",
+        "loaded": true,
+        "src": "/admin/art/team_poses/team_trophy.png"
+      }
+    ]
+  }
+]

@@ -5,7 +5,9 @@ import { call, token, ApiError } from './api.js'
 import { Plus, RefreshCw, ArrowUpRight, Upload, Check, Image, ChevronRight } from '@lucide/vue'
 import { motion } from 'motion-v'
 import { motionEnabled } from './admin/preferences.js'
-import { characterImage, bundledImage } from './admin/characterAssets.js'
+import { characterImage, characterVisual } from './admin/characterAssets.js'
+import CharacterVisual from './components/CharacterVisual.vue'
+import { characterMetadata } from './admin/characterMetadata.js'
 import SpotlightCard from './components/effects/SpotlightCard.vue'
 import BorderBeam from './components/effects/BorderBeam.vue'
 const emit = defineEmits(['update:dirty','published','unauthorized'])
@@ -13,7 +15,9 @@ const selectedSlot = ref('portrait'), selectedCharacter = ref(null), uploadSlot 
 const originalMetadata = ref('')
 let pendingUpload = null
 const isUnsaved = computed(() => !pack.value?.published && JSON.stringify(form.value) !== originalMetadata.value)
-const stageImage = computed(() => pack.value ? previews.value[selectedSlot.value] : characterImage(selectedCharacter.value, selectedSlot.value))
+function slotVisual(slot) { return pack.value ? previews.value[slot] ? { src: previews.value[slot] } : null : characterVisual(selectedCharacter.value, slot) }
+const stageVisual = computed(() => slotVisual(selectedSlot.value))
+const displayedName = computed(() => form.value.name || pack.value?.character.name || selectedCharacter.value?.name || '人物预览')
 function markSaved() { originalMetadata.value = JSON.stringify(form.value) }
 function uploadRequest(url, body) {
   return new Promise((resolve,reject) => {
@@ -28,7 +32,7 @@ function uploadRequest(url, body) {
 }
 async function chooseCharacter(c) {
   if(isUnsaved.value) {try {await ElMessageBox.confirm('切换人物将放弃未保存的资料，继续？','切换人物',{type:'warning'})} catch{return}}
-  reset(); selectedCharacter.value=c; form.value={avatar:c.id,name:c.name,sort:c.sort,enabled:c.enabled,fallback:c.fallback}; markSaved(); selectedSlot.value='portrait'
+  reset(); selectedCharacter.value=c; form.value=characterMetadata(c); markSaved(); selectedSlot.value='portrait'
 }
 async function newCharacter() { if(isUnsaved.value){try {await ElMessageBox.confirm('新建人物将放弃未保存的资料，继续？','新建人物',{type:'warning'})}catch{return}} reset(); selectedCharacter.value=null }
 async function choosePack(p) {if(isUnsaved.value){try{await ElMessageBox.confirm('切换草稿将放弃未保存的资料，继续？','切换草稿',{type:'warning'})}catch{return}} selectedCharacter.value=null; await select(p)}
@@ -61,7 +65,7 @@ async function load() {
 function reset() { clearPreviews(); pack.value = null; form.value = fresh(); markSaved() }
 async function select(p) {
   clearPreviews(); pack.value = p
-  form.value = { avatar: p.character.id, name: p.character.name, sort: p.character.sort, enabled: p.character.enabled, fallback: p.character.fallback }
+  form.value = characterMetadata(p.character)
   markSaved()
   for (const slot of slots) if (p.character.images[slot]) {
     try {
@@ -74,10 +78,12 @@ async function select(p) {
   }
 }
 async function save() {
+  if (busy.value) return
   busy.value = true
   try {
     const path = '/admin-api/v1/characters/packs' + (pack.value ? '/' + pack.value.packId : '')
     pack.value = await call('POST', path, { ...form.value, revision: pack.value?.revision })
+    form.value = characterMetadata(pack.value.character)
     markSaved(); await load(); ElMessage.success('整套素材草稿已保存')
   } catch (e) { fail(e) } finally { busy.value = false }
 }
@@ -114,8 +120,14 @@ async function rollback(version) {
 }
 function replace(c) { reset(); form.value = { avatar: c.id, name: c.name, sort: c.sort, enabled: c.enabled, fallback: c.fallback } }
 async function configure() {
+  if (busy.value) return
   busy.value = true
-  try { await call('POST', '/admin-api/v1/characters/configure', { id: form.value.avatar, name: form.value.name, sort: form.value.sort, enabled: form.value.enabled, expectedVersion: state.value.active.version }); markSaved(); await load(); emit('published'); ElMessage.success('名称、排序和选择状态已发布，整套图片保持原版本') }
+  try {
+    const catalog = await call('POST', '/admin-api/v1/characters/configure', { id: form.value.avatar, name: form.value.name, sort: form.value.sort, enabled: form.value.enabled, expectedVersion: state.value.active.version })
+    const canonical = catalog.characters.find(character => character.id === form.value.avatar)
+    if (canonical) { form.value = characterMetadata(canonical); selectedCharacter.value = canonical }
+    markSaved(); await load(); emit('published'); ElMessage.success('名称、排序和选择状态已发布，整套图片保持原版本')
+  }
   catch (e) { fail(e) } finally { busy.value = false }
 }
 markSaved()
@@ -131,17 +143,17 @@ onBeforeUnmount(()=>{pendingUpload?.abort();clearPreviews();emit('update:dirty',
     <el-alert v-if="state && !state.persistent" class="gap" title="当前目录仅存内存，后台重启后会丢失；正式使用需要数据库。" type="warning" :closable="false" />
     <div class="character-gallery"><SpotlightCard v-for="c in choices" :key="c.id" tilt><motion.button type="button" class="character-card" :class="{ selected: selectedCharacter?.id===c.id }" :aria-pressed="selectedCharacter?.id===c.id" :while-press="motionEnabled ? {scale:.97}:undefined" @click="chooseCharacter(c)"><div class="character-avatar"><img v-if="characterImage(c)" :src="characterImage(c)" :alt="c.name" loading="lazy" /><span v-else>{{ c.name.slice(0,1) }}</span></div><div><strong>{{ c.name }}</strong><small>{{ c.bundled?'客户端默认':'整套云素材' }}</small></div><span class="character-status" :class="{ disabled: !c.enabled }">{{ c.enabled?'可选':'停用' }}</span><ArrowUpRight :size="15" /></motion.button></SpotlightCard></div>
     <div class="character-editor-grid">
-      <section class="character-stage surface"><div class="surface-heading"><h3>{{ pack?.character.name || selectedCharacter?.name || form.name || '人物预览' }}</h3><span class="muted">{{ labels[selectedSlot] }}</span></div><div class="character-display"><div class="character-stage-glow" aria-hidden="true" /><Transition name="pose" mode="out-in"><img v-if="stageImage" :key="stageImage" :src="stageImage" :alt="labels[selectedSlot]" /><div v-else :key="selectedSlot" class="empty-pose"><Image :size="36" /><span>{{ pack || selectedCharacter ? '此姿态暂无素材' : '选择人物，或创建一个新角色' }}</span></div></Transition></div><div class="pose-picker"><button v-for="slot in slots" :key="slot" type="button" :class="{ selected: selectedSlot===slot }" :aria-pressed="selectedSlot===slot" @click="selectedSlot=slot">{{ labels[slot] }}</button></div><BorderBeam /></section>
+      <section class="character-stage surface"><div class="surface-heading"><h3>{{ displayedName }}</h3><span class="muted">{{ labels[selectedSlot] }}</span></div><div class="character-display"><div class="character-stage-glow" aria-hidden="true" /><Transition name="pose" mode="out-in"><CharacterVisual v-if="stageVisual" :key="`${selectedSlot}:${stageVisual.src}:${stageVisual.region?.x}:${stageVisual.region?.y}`" :asset="stageVisual" :label="labels[selectedSlot]" /><div v-else :key="selectedSlot" class="empty-pose"><Image :size="36" /><span>{{ pack || selectedCharacter ? '此姿态暂无素材' : '选择人物，或创建一个新角色' }}</span></div></Transition></div><div class="pose-picker"><button v-for="slot in slots" :key="slot" type="button" :class="{ selected: selectedSlot===slot }" :aria-pressed="selectedSlot===slot" @click="selectedSlot=slot">{{ labels[slot] }}</button></div><BorderBeam /></section>
       <section class="surface character-metadata"><div class="surface-heading"><h3>{{ pack ? '编辑整套草稿' : form.avatar!==null ? '配置人物资料' : '新建人物' }}</h3><el-tag v-if="pack?.published" type="success">已发布 · 只读</el-tag><el-tag v-else-if="isUnsaved" type="warning">未保存</el-tag></div><el-form label-width="120px" class="character-form">
       <el-form-item label="人物 ID"><span>{{ pack?.character.id ?? form.avatar ?? '保存草稿后自动分配' }}</span></el-form-item>
-      <el-form-item label="名称"><el-input v-model="form.name" maxlength="20" :disabled="pack?.published" /></el-form-item>
-      <el-form-item label="排序"><el-input-number v-model="form.sort" :min="0" :max="9999" :disabled="pack?.published" /></el-form-item>
-      <el-form-item label="可供选择"><el-switch v-model="form.enabled" :disabled="pack?.published" /><span class="character-note">停用仅隐藏新选择，不改变已有账号人物。</span></el-form-item>
-      <el-form-item label="本地备用人物"><el-select v-model="form.fallback" :disabled="pack?.published"><el-option v-for="(name,id) in ['糖糖','可可','阿杰','奶茶','阿凯','圆圆','豆豆','毛毛']" :key="id" :value="id" :label="name" /></el-select><span class="character-note">下载失败时整套回退，避免混用人物。</span></el-form-item>
-      <el-form-item><el-button type="primary" :disabled="pack?.published" @click="save">{{ pack ? '保存资料' : '创建整套草稿' }}</el-button><el-button v-if="!pack && form.avatar !== null" @click="configure">仅发布名称、排序、启停</el-button></el-form-item>
+      <el-form-item label="名称"><el-input v-model="form.name" maxlength="20" :disabled="pack?.published || busy" /></el-form-item>
+      <el-form-item label="排序"><el-input-number v-model="form.sort" :min="0" :max="9999" :disabled="pack?.published || busy" /></el-form-item>
+      <el-form-item label="可供选择"><el-switch v-model="form.enabled" :disabled="pack?.published || busy" /><span class="character-note">停用仅隐藏新选择，不改变已有账号人物。</span></el-form-item>
+      <el-form-item label="本地备用人物"><el-select v-model="form.fallback" :disabled="pack?.published || busy"><el-option v-for="(name,id) in ['糖糖','可可','阿杰','奶茶','阿凯','圆圆','豆豆','毛毛']" :key="id" :value="id" :label="name" /></el-select><span class="character-note">下载失败时整套回退，避免混用人物。</span></el-form-item>
+      <el-form-item><el-button type="primary" :disabled="pack?.published || busy" @click="save">{{ pack ? '保存资料' : '创建整套草稿' }}</el-button><el-button v-if="!pack && form.avatar !== null" @click="configure">仅发布名称、排序、启停</el-button></el-form-item>
     </el-form></section>
     </div>
-    <section class="surface"><div class="surface-heading"><h3>七项素材</h3><span class="muted">单张 PNG ≤ 5MB · 64～2048px</span></div><el-progress :percentage="Math.round(progress/7*100)" :format="()=>progress+' / 7 已上传'" :status="complete?'success':undefined" /><div class="character-images"><label v-for="slot in slots" :key="slot" class="character-image" :class="{ complete: previews[slot], uploading: uploadSlot===slot }"><span class="asset-label">{{ labels[slot] }}<Check v-if="previews[slot]" :size="14" /></span><div class="character-preview"><img v-if="previews[slot]" :src="previews[slot]" :alt="labels[slot]" /><div v-else class="asset-empty"><Upload :size="22" /><span>{{ !pack?'先创建或选择草稿':'选择 PNG 上传' }}</span></div></div><small v-if="pack?.character.images[slot]">{{ pack.character.images[slot].width }} × {{ pack.character.images[slot].height }}</small><el-progress v-if="uploadSlot===slot" :percentage="uploadPercent" :stroke-width="4" /><input type="file" accept="image/png" :aria-label="'上传'+labels[slot]" :disabled="busy || !pack || pack.published || !state?.storageReady" @change="upload(slot,$event)" /></label></div><div class="section-toolbar"><el-button type="primary" :disabled="!complete || !pack || pack.published || dirty || !state?.storageReady || busy" @click="publish">发布完整七项素材</el-button><span class="muted">{{ pack?.published ? '已发布，不可覆盖' : dirty ? '资料有未保存修改，请先保存' : '头像为正方形，其余图须透明背景且只含一位人物' }}</span></div></section>
+    <section class="surface"><div class="surface-heading"><h3>七项素材</h3><span class="muted">单张 PNG ≤ 5MB · 64～2048px</span></div><el-progress :percentage="Math.round(progress/7*100)" :format="()=>progress+' / 7 已上传'" :status="complete?'success':undefined" /><div class="character-images"><div v-for="slot in slots" :key="slot" class="character-image" :class="{ complete: previews[slot], uploading: uploadSlot===slot }"><span class="asset-label">{{ labels[slot] }}<Check v-if="previews[slot]" :size="14" /></span><button type="button" class="character-preview asset-preview-button" :aria-label="'预览'+labels[slot]" :disabled="!slotVisual(slot)" @click="selectedSlot=slot"><CharacterVisual v-if="slotVisual(slot)" :asset="slotVisual(slot)" :label="labels[slot]" :height="140" /><div v-else class="asset-empty"><Upload :size="22" /><span>{{ !pack?'先创建或选择草稿':'选择 PNG 上传' }}</span></div></button><small v-if="!pack && selectedCharacter?.bundled">客户端内置参考 · 未上传</small><small v-if="pack?.character.images[slot]">{{ pack.character.images[slot].width }} × {{ pack.character.images[slot].height }}</small><el-progress v-if="uploadSlot===slot" :percentage="uploadPercent" :stroke-width="4" /><input type="file" accept="image/png" :aria-label="'上传'+labels[slot]" :disabled="busy || !pack || pack.published || !state?.storageReady" @change="upload(slot,$event)" /></div></div><div class="section-toolbar"><el-button type="primary" :disabled="!complete || !pack || pack.published || dirty || !state?.storageReady || busy" @click="publish">发布完整七项素材</el-button><span class="muted">{{ pack?.published ? '已发布，不可覆盖' : dirty ? '资料有未保存修改，请先保存' : '头像为正方形，其余图须透明背景且只含一位人物' }}</span></div></section>
     <section class="surface"><h3>素材草稿与版本</h3><el-table :data="state?.packs || []"><el-table-column label="人物"><template #default="{row}">{{ row.character.name }} · ID {{ row.character.id }}</template></el-table-column><el-table-column label="完整度" min-width="100"><template #default="{row}">{{ Object.keys(row.character.images).length }} / 7</template></el-table-column><el-table-column label="状态" min-width="100"><template #default="{row}"><el-tag :type="row.published?'success':'info'">{{ row.published?'已发布':'草稿' }}</el-tag></template></el-table-column><el-table-column label="操作" min-width="130"><template #default="{row}"><el-button @click="choosePack(row)">查看 / 编辑</el-button></template></el-table-column></el-table></section>
     <section class="surface"><h3>人物目录发布历史</h3><div class="section-toolbar"><el-button v-for="v in state?.history || []" :key="v" :disabled="v===state?.active.version || busy" @click="rollback(v)">回滚到 {{ v===0?'内置默认':'#'+v }}</el-button></div><el-collapse><el-collapse-item title="存储状态与接入说明" name="storage"><p class="muted">图片存放在微信云托管对象存储，后台自动刷新临时凭证。COS_BUCKET 与 COS_REGION 配齐只代表参数已配置，实际读写仍需检查。云调用需放行 /_/cos/getauth 和 /_/cos/metaid/encode。机器人编号 8 保留。</p><el-button :disabled="!state?.storageReady || busy" @click="checkStorage">检查临时凭证</el-button></el-collapse-item></el-collapse></section>
   </div>
