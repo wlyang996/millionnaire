@@ -20,7 +20,7 @@ export const groups = [
   ] },
   { id: 'characters', label: '人物工作室', icon: 'UsersRound', pages: [['characters', '人物素材', '每一位角色，都有自己的舞台', '七项素材、姿态预览和整套版本，统一发布。']] },
   { id: 'announcement', label: '公告管理', icon: 'Megaphone', pages: [['announcement', '公告', '把下一份惊喜，告诉大家', '公告内容实时预览，发布后由游戏大厅读取。']] },
-  { id: 'versions', label: '版本中心', icon: 'History', pages: [['history', '发布记录', '每次发布，都有清晰的落点', '查看历史配置、载入编辑或确认后回滚。']] },
+  { id: 'versions', label: '版本中心', icon: 'History', pages: [['history', '发布记录', '每次发布，都有清晰的落点', '按玩法对比历史差异，查看回滚摘要或载入编辑。']] },
 ]
 export const pages = groups.flatMap(group => group.pages.map(([id, label, title, description]) => ({ id, label, title, description, group: group.label, icon: group.icon })))
 export const pageById = Object.fromEntries(pages.map(page => [page.id, page]))

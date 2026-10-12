@@ -8,6 +8,7 @@ import AdminShell from './components/AdminShell.vue'
 import DashboardOverview from './components/DashboardOverview.vue'
 import RulePreview from './components/RulePreview.vue'
 import BoardPreview from './components/BoardPreview.vue'
+import VersionCenter from './components/VersionCenter.vue'
 import BorderBeam from './components/effects/BorderBeam.vue'
 import { diffSettings, pageById, sectionForField } from './admin/navigation.js'
 import { fieldLabels, searchIndex } from './admin/fields.js'
@@ -311,25 +312,6 @@ async function confirmPublish() {
     if (e.status === 409) ElMessage.error(e.message + '（你的修改仍在编辑区）')
     else fail(e)
   } finally { releaseBusy.value = false }
-}
-
-async function rollback(row) {
-  const label = row.configId === 0 ? '内置默认配置' : '版本 #' + row.configId
-  try {
-    await ElMessageBox.confirm('以「' + label + '」的内容发布一个新版本？新开的房间立即生效。'
-      + (dirty.value ? '编辑区未发布的修改会丢失。' : ''), '回滚', { type: 'warning' })
-  } catch {
-    return
-  }
-  try {
-    const r = await call('POST', '/admin-api/v1/config/rollback', {
-      configId: row.configId, expectedActiveId: active.value.configId,
-    })
-    ElMessage.success('已回滚，生效版本 #' + r.configId)
-    await load()
-  } catch (e) {
-    fail(e)
-  }
 }
 
 async function view(row) {
@@ -648,7 +630,7 @@ onMounted(() => {
         </el-form>
       </section>
 <section v-show="tab === 'dashboard'" data-rule-page="dashboard" class="special-page"><DashboardOverview v-if="tab === 'dashboard'" :data="dash" :loading="dashLoading" :days="dashDays" :labels="{modes:MODE_LABEL,reasons:REASON_LABEL,boards:BOARD_LABEL,events:EVENT_NAMES,cards:CARD_LABEL}" :misc-labels="MISC_LABEL" @update:days="dashDays=$event; loadDash()" @refresh="loadDash" /></section>
-<section v-show="tab === 'history'" data-rule-page="history" class="surface field-panel"><el-timeline class="version-timeline"><el-timeline-item v-for="row in history" :key="row.configId" :timestamp="time(row.createdAt)" placement="top" :type="row.active ? 'primary' : 'info'"><div class="version-card"><div class="surface-heading"><h3>{{ row.configId === 0 ? '内置默认配置' : '版本 #' + row.configId }}</h3><el-tag v-if="row.active" type="success">生效中</el-tag></div><p>{{ row.note || '暂无版本说明' }}</p><div class="section-toolbar"><el-button @click="view(row)">载入编辑</el-button><el-button v-if="!row.active" type="warning" @click="rollback(row)">回滚到此</el-button></div><BorderBeam v-if="row.active" /></div></el-timeline-item></el-timeline><el-empty v-if="!history.length" description="还没有发布记录" /></section></div>
+<section v-show="tab === 'history'" data-rule-page="history" class="surface field-panel"><KeepAlive><VersionCenter v-if="tab==='history'" :active="active" :history="history" :dirty="dirty" @view="view" @rolledback="load" @error="fail" /></KeepAlive></section></div>
       <BoardPreview v-if="isBoardPage" :tiles="boards.find(board=>board.id===boardId)?.tiles || []" :names="form.tileNames?.[boardId]" :groups="form.sets?.groups?.[boardId]" :selected="selectedTile" :group-mode="tab==='sets'" :board-id="boardId" @select="focusTile" />
     </div>
     <el-empty v-else-if="!loading" description="无法读取管理配置"><el-button @click="load">重新加载</el-button></el-empty>

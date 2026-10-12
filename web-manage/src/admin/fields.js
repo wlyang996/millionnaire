@@ -91,5 +91,5 @@ export const searchIndex = {
   "timing": "操作时限 f[1]",
   "announcement": "公告 显示公告 标题 内容",
   "dashboard": "数据看板 '每天对局数，最多 ' + dashMax + ' 局' 日期 对局数 参与玩家 新用户 平均时长（分钟）",
-  "history": "发布记录 版本 发布时间 说明 状态 操作"
+  "history": "发布记录 版本 发布时间 说明 状态 操作 历史版本对比 差异 回滚摘要"
 }
