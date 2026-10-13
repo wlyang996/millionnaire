@@ -144,6 +144,14 @@ public class AudioCatalog {
     public synchronized Map<String, Object> admin() {
         return Map.of("current", current(), "draft", draft(), "assets", assets(), "history", history(), "storageReady", storageReady(), "persistent", persistent());
     }
+    /** Management read permission exposes the active release, never unpublished resources or drafts. */
+    public synchronized Map<String, Object> published() {
+        Release release = current();
+        return Map.of("current", release, "history", history(), "assets", referenced(release.settings()).stream().map(id -> {
+            Asset asset = asset(id);
+            return Map.of("id",asset.id(),"name",asset.name(),"kind",asset.kind(),"info",asset.info(),"builtin",asset.builtin());
+        }).toList());
+    }
     public synchronized Map<String, Object> client() {
         Release r = current();
         return Map.of("version", r.version(), "settings", r.settings(), "assets", referenced(r.settings()).stream().map(id -> {

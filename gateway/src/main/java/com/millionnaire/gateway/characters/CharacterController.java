@@ -1,6 +1,7 @@
 package com.millionnaire.gateway.characters;
 
 import com.millionnaire.gateway.config.AdminController;
+import com.millionnaire.gateway.admin.*;
 import com.millionnaire.gateway.room.ClientException;
 import java.io.IOException;
 import java.util.Map;
@@ -12,7 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class CharacterController {
     private final CharacterCatalog catalog;
     private final AdminController admin;
-    public CharacterController(CharacterCatalog catalog, AdminController admin) { this.catalog = catalog; this.admin = admin; }
+    private final AdminAuth authentication;
+    public CharacterController(CharacterCatalog catalog, AdminController admin, AdminAuth authentication) { this.catalog = catalog; this.admin = admin; this.authentication=authentication; }
     public record Draft(Integer avatar, String name, int sort, boolean enabled, int fallback, Integer revision) {}
     public record Publish(String packId, int revision, long expectedVersion) {}
     public record Rollback(long version, long expectedVersion) {}
@@ -23,49 +25,62 @@ public class CharacterController {
     @GetMapping("/api/characters/assets/{packId}/{slot}.png")
     public ResponseEntity<byte[]> image(@PathVariable String packId, @PathVariable String slot) { return png(catalog.image(packId, slot, false), true); }
 
+    @AdminAccess("character:read") @GetMapping("/admin-api/v1/characters/published")
+    public Map<String,Object> published() { return Map.of("active",catalog.client(catalog.current()),"history",catalog.history().stream().map(CharacterCatalog.Catalog::version).toList(),"publishers",authentication.publishers("characters")); }
+
+    @AdminAccess("character:draft")
     @GetMapping("/admin-api/v1/characters")
     public Map<String,Object> list(@RequestHeader(value="Authorization", required=false) String auth) {
         admin.check(auth);
         return Map.of("active", catalog.client(catalog.current()), "packs", catalog.packs(), "history", catalog.history().stream().map(CharacterCatalog.Catalog::version).toList(),
-                "storageReady", catalog.storageReady(), "persistent", catalog.persistent(), "slots", CharacterImages.SLOTS);
+                "storageReady", catalog.storageReady(), "persistent", catalog.persistent(), "slots", CharacterImages.SLOTS, "publishers", authentication.publishers("characters"));
     }
+    @AdminAccess("character:write")
     @PostMapping("/admin-api/v1/characters/packs")
     public CharacterCatalog.Pack create(@RequestHeader(value="Authorization", required=false) String auth, @RequestBody Draft body) {
-        admin.check(auth); return catalog.create(body.avatar(), body.name(), body.sort(), body.enabled(), body.fallback());
+        admin.check(auth); return authentication.mutation(authentication.authenticate(auth),"character:write","characters","draft-create","",()->catalog.create(body.avatar(), body.name(), body.sort(), body.enabled(), body.fallback()),p->p.packId(),"创建人物草稿",AdminWeb.currentRequestId());
     }
+    @AdminAccess("character:write")
     @PostMapping("/admin-api/v1/characters/storage/check")
     public Map<String,Object> checkStorage(@RequestHeader(value="Authorization", required=false) String auth) {
         admin.check(auth); catalog.verifyStorage();
         return Map.of("ok", true, "message", "已取得微信云托管临时凭证；实际读写权限请通过上传素材验证");
     }
+    @AdminAccess("character:write")
     @PostMapping("/admin-api/v1/characters/packs/{id}")
     public CharacterCatalog.Pack edit(@RequestHeader(value="Authorization", required=false) String auth, @PathVariable String id, @RequestBody Draft body) {
         admin.check(auth);
         if (body.revision() == null) throw new ClientException("INVALID_CHARACTER", "缺少草稿版本");
-        return catalog.edit(id, body.revision(), body.name(), body.sort(), body.enabled(), body.fallback());
+        return authentication.mutation(authentication.authenticate(auth),"character:write","characters","draft-edit",id,()->catalog.edit(id, body.revision(), body.name(), body.sort(), body.enabled(), body.fallback()),null,"修改草稿资料",AdminWeb.currentRequestId());
     }
+    @AdminAccess("character:write")
     @PostMapping(value="/admin-api/v1/characters/packs/{id}/assets/{slot}", consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     public CharacterCatalog.Pack upload(@RequestHeader(value="Authorization", required=false) String auth, @PathVariable String id,
                                         @PathVariable String slot, @RequestParam int revision, @RequestParam MultipartFile file) throws IOException {
         admin.check(auth);
         if (file.getSize() > CharacterImages.MAX_BYTES) throw new ClientException("INVALID_IMAGE", "图片不可超过 5MB");
-        return catalog.upload(id, slot, revision, file.getBytes());
+        byte[] bytes=file.getBytes();
+        return authentication.mutation(authentication.authenticate(auth),"character:write","characters","upload",id,()->catalog.upload(id, slot, revision, bytes),null,"上传素材槽位："+slot,AdminWeb.currentRequestId());
     }
+    @AdminAccess("character:draft")
     @GetMapping("/admin-api/v1/characters/packs/{id}/assets/{slot}.png")
     public ResponseEntity<byte[]> preview(@RequestHeader(value="Authorization", required=false) String auth, @PathVariable String id, @PathVariable String slot) {
         admin.check(auth); return png(catalog.image(id, slot, true), false);
     }
+    @AdminAccess("character:publish")
     @PostMapping("/admin-api/v1/characters/publish")
     public Map<String,Object> publish(@RequestHeader(value="Authorization", required=false) String auth, @RequestBody Publish body) {
-        admin.check(auth); return catalog.client(catalog.publish(body.packId(), body.revision(), body.expectedVersion()));
+        admin.check(auth); return catalog.client(authentication.mutation(authentication.authenticate(auth),"character:publish","characters","publish",body.packId(),()->catalog.publish(body.packId(), body.revision(), body.expectedVersion()),c->Long.toString(c.version()),"发布人物目录",AdminWeb.currentRequestId()));
     }
+    @AdminAccess("character:rollback")
     @PostMapping("/admin-api/v1/characters/rollback")
     public Map<String,Object> rollback(@RequestHeader(value="Authorization", required=false) String auth, @RequestBody Rollback body) {
-        admin.check(auth); return catalog.client(catalog.rollback(body.version(), body.expectedVersion()));
+        admin.check(auth); return catalog.client(authentication.mutation(authentication.authenticate(auth),"character:rollback","characters","rollback","",()->catalog.rollback(body.version(), body.expectedVersion()),c->Long.toString(c.version()),"回滚来源 #"+body.version(),AdminWeb.currentRequestId()));
     }
+    @AdminAccess("character:publish")
     @PostMapping("/admin-api/v1/characters/configure")
     public Map<String,Object> configure(@RequestHeader(value="Authorization", required=false) String auth, @RequestBody Configure body) {
-        admin.check(auth); return catalog.client(catalog.configure(body.id(),body.name(),body.sort(),body.enabled(),body.expectedVersion()));
+        admin.check(auth); return catalog.client(authentication.mutation(authentication.authenticate(auth),"character:publish","characters","configure",Integer.toString(body.id()),()->catalog.configure(body.id(),body.name(),body.sort(),body.enabled(),body.expectedVersion()),c->Long.toString(c.version()),"发布人物资料与状态",AdminWeb.currentRequestId()));
     }
     private static ResponseEntity<byte[]> png(byte[] bytes, boolean published) {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).header("X-Content-Type-Options", "nosniff")

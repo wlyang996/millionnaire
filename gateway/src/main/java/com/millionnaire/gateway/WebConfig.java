@@ -4,6 +4,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.http.CacheControl;
+import java.util.concurrent.TimeUnit;
 
 /**
  * H5 客户端与联机测试台可能不在同一站点：/api 允许跨域（只用 Authorization 头里的令牌，不用 Cookie）。
@@ -11,6 +14,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // The stable entry URL must receive the current bundle after an authentication upgrade.
+        registry.addResourceHandler("/admin/**").addResourceLocations("classpath:/static/admin/")
+                .setCacheControl(CacheControl.noStore()).setUseLastModified(false);
+        // Vite names these files by content; retain efficient caching for large chart/motion bundles.
+        registry.addResourceHandler("/admin/assets/**").addResourceLocations("classpath:/static/admin/assets/")
+                .setCacheControl(CacheControl.maxAge(365,TimeUnit.DAYS).cachePublic().immutable());
+    }
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**").allowedOriginPatterns("*").allowedMethods("GET", "POST")

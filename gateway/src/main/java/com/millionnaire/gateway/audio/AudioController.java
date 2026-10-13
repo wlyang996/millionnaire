@@ -1,6 +1,7 @@
 package com.millionnaire.gateway.audio;
 
 import com.millionnaire.gateway.config.AdminController;
+import com.millionnaire.gateway.admin.*;
 import com.millionnaire.gateway.room.ClientException;
 import java.io.IOException;
 import java.util.Map;
@@ -15,22 +16,40 @@ import org.springframework.web.multipart.MultipartFile;
 public class AudioController {
     private final AudioCatalog catalog;
     private final AdminController admin;
-    public AudioController(AudioCatalog catalog, AdminController admin) { this.catalog = catalog; this.admin = admin; }
+    private final AdminAuth authentication;
+    public AudioController(AudioCatalog catalog, AdminController admin, AdminAuth authentication) { this.catalog = catalog; this.admin = admin; this.authentication = authentication; }
     public record Save(AudioCatalog.Settings settings, int revision, long expectedVersion) {}
     public record Publish(int revision, long expectedVersion) {}
     public record Rollback(long version, int revision, long expectedVersion) {}
     @GetMapping("/api/audio") public ResponseEntity<?> client() { return ResponseEntity.ok().header("Cache-Control", "no-store").body(catalog.client()); }
     @GetMapping("/api/audio/assets/{id}.wav") public ResponseEntity<Resource> file(@PathVariable String id) { return wav(catalog.bytes(id, false), true); }
-    @GetMapping("/admin-api/v1/audio") public Map<String,Object> state(@RequestHeader(value="Authorization",required=false) String auth) { admin.check(auth); return catalog.admin(); }
-    @GetMapping("/admin-api/v1/audio/assets/{id}.wav") public ResponseEntity<Resource> preview(@RequestHeader(value="Authorization",required=false) String auth, @PathVariable String id) { admin.check(auth); return wav(catalog.bytes(id, true), false); }
+    private Map<String,Object> state(boolean published) {
+        var result = new java.util.LinkedHashMap<>(published ? catalog.published() : catalog.admin());
+        result.put("publishers", authentication.publishers("audio"));
+        return result;
+    }
+    @AdminAccess("audio:read") @GetMapping("/admin-api/v1/audio/published") public Map<String,Object> published() { return state(true); }
+    @AdminAccess("audio:read") @GetMapping("/admin-api/v1/audio/published/assets/{id}.wav") public ResponseEntity<Resource> publishedPreview(@PathVariable String id) { return wav(catalog.bytes(id, false), false); }
+    @AdminAccess("audio:draft") @GetMapping("/admin-api/v1/audio") public Map<String,Object> state(@RequestHeader(value="Authorization",required=false) String auth) { admin.check(auth); return state(false); }
+    @AdminAccess("audio:draft") @GetMapping("/admin-api/v1/audio/assets/{id}.wav") public ResponseEntity<Resource> preview(@RequestHeader(value="Authorization",required=false) String auth, @PathVariable String id) { admin.check(auth); return wav(catalog.bytes(id, true), false); }
+    @AdminAccess("audio:write")
     @PostMapping(value="/admin-api/v1/audio/assets", consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     public AudioCatalog.Asset upload(@RequestHeader(value="Authorization",required=false) String auth, @RequestParam String name, @RequestParam String kind, @RequestParam MultipartFile file) throws IOException {
         admin.check(auth); if (file.getSize() > AudioFiles.MAX_BYTES) throw AudioFiles.bad("音频不可超过 10MB");
-        return catalog.upload(name,kind,file.getBytes());
+        byte[] bytes=file.getBytes();
+        return authentication.mutation(authentication.authenticate(auth),"audio:write","audio","upload","",()->catalog.upload(name,kind,bytes),AudioCatalog.Asset::id,"上传音频资源",AdminWeb.currentRequestId());
     }
-    @PostMapping("/admin-api/v1/audio/draft") public AudioCatalog.Draft save(@RequestHeader(value="Authorization",required=false) String auth, @RequestBody Save body) { admin.check(auth); return catalog.save(body.settings(),body.revision(),body.expectedVersion()); }
-    @PostMapping("/admin-api/v1/audio/publish") public Map<String,Object> publish(@RequestHeader(value="Authorization",required=false) String auth, @RequestBody Publish body) { admin.check(auth); catalog.publish(body.revision(),body.expectedVersion()); return catalog.admin(); }
-    @PostMapping("/admin-api/v1/audio/rollback") public Map<String,Object> rollback(@RequestHeader(value="Authorization",required=false) String auth, @RequestBody Rollback body) { admin.check(auth); catalog.rollback(body.version(),body.expectedVersion(),body.revision()); return catalog.admin(); }
+    @AdminAccess("audio:write") @PostMapping("/admin-api/v1/audio/draft") public AudioCatalog.Draft save(@RequestHeader(value="Authorization",required=false) String auth, @RequestBody Save body) {
+        return authentication.mutation(authentication.authenticate(auth),"audio:write","audio","draft-edit","",()->catalog.save(body.settings(),body.revision(),body.expectedVersion()),d->Integer.toString(d.revision()),"保存音频草稿；参考版本 #"+body.expectedVersion(),AdminWeb.currentRequestId());
+    }
+    @AdminAccess("audio:publish") @PostMapping("/admin-api/v1/audio/publish") public Map<String,Object> publish(@RequestHeader(value="Authorization",required=false) String auth, @RequestBody Publish body) {
+        authentication.mutation(authentication.authenticate(auth),"audio:publish","audio","publish","",()->catalog.publish(body.revision(),body.expectedVersion()),r->Long.toString(r.version()),"发布音频；参考版本 #"+body.expectedVersion(),AdminWeb.currentRequestId());
+        return state(false);
+    }
+    @AdminAccess("audio:rollback") @PostMapping("/admin-api/v1/audio/rollback") public Map<String,Object> rollback(@RequestHeader(value="Authorization",required=false) String auth, @RequestBody Rollback body) {
+        authentication.mutation(authentication.authenticate(auth),"audio:rollback","audio","rollback","",()->catalog.rollback(body.version(),body.expectedVersion(),body.revision()),r->Long.toString(r.version()),"回滚音频来源 #"+body.version(),AdminWeb.currentRequestId());
+        return state(false);
+    }
     private static ResponseEntity<Resource> wav(byte[] data, boolean published) {
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("audio/wav")).contentLength(data.length)
                 .header("X-Content-Type-Options", "nosniff").header("Cache-Control",published ? "public, max-age=31536000, immutable" : "no-store")

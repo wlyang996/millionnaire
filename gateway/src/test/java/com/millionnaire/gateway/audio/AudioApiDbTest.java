@@ -17,7 +17,7 @@ import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties="millionnaire.admin.password=audio-test-secret")
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties={"millionnaire.admin.bootstrap-username=root.audio","millionnaire.admin.bootstrap-password=audio-test-secret","millionnaire.admin.bcrypt-strength=4"})
 @ActiveProfiles("db")
 @TestPropertySource(properties={"spring.datasource.url=jdbc:h2:mem:audio;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE", "spring.datasource.username=sa", "spring.datasource.password=", "spring.flyway.placeholders.table_options="})
 class AudioApiDbTest {
@@ -29,7 +29,7 @@ class AudioApiDbTest {
     @Autowired TestRestTemplate http;
     @Test void persistentDraftAuthenticatedUploadPublishRollbackAndHttpRange() {
         assertThat(http.getForEntity("/admin-api/v1/audio",Map.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        var login = http.postForObject("/admin-api/v1/auth/login",Map.of("password","audio-test-secret"),Map.class);
+        var login = com.millionnaire.gateway.admin.AdminTestLogin.login(http,"root.audio","audio-test-secret");
         var headers = new HttpHeaders(); headers.setBearerAuth((String) login.get("token")); headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         var fields = new org.springframework.util.LinkedMultiValueMap<String,Object>(); fields.add("name","后台测试"); fields.add("kind","music");
         fields.add("file",new org.springframework.core.io.ByteArrayResource(AudioCatalogTest.wav()) { @Override public String getFilename() { return "music.wav"; } });

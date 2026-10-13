@@ -4,6 +4,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { call, setToken, token } from './api.js'
 import CharacterManager from './CharacterManager.vue'
 import AudioManager from './AudioManager.vue'
+import AdminAccessManager from './components/AdminAccessManager.vue'
+import PasswordChange from './components/PasswordChange.vue'
+import ReadOnlyConfig from './components/ReadOnlyConfig.vue'
+import { adminIdentity as identity,setIdentity } from './admin/accessSession.js'
+import { can, pageVisible, accessPages } from './admin/accessPolicy.js'
+import './admin/access.css'
 import LoginPage from './components/LoginPage.vue'
 import AdminShell from './components/AdminShell.vue'
 import DashboardOverview from './components/DashboardOverview.vue'
@@ -136,17 +142,19 @@ function fail(e) {
   ElMessage.error(e.message || '请求失败')
 }
 
-async function login(password) {
+async function login(credentials) {
   if (loading.value || loginSuccess.value) return
   loginError.value = ''
   loading.value = true
   try {
-    const r = await call('POST', '/admin-api/v1/auth/login', { password })
+    const r = await call('POST', '/admin-api/v1/auth/login', credentials)
     setToken(r.token)
+    setIdentity(r)
     loginSuccess.value = true
   } catch (e) {
     loginError.value = !e.status ? '暂时无法连接后台，请稍后重试'
       : !e.message || e.message.startsWith('HTTP ') ? '后台暂时不可用，请稍后重试' : e.message
+    if(e.retryAt)loginError.value+='（可重试时间：'+new Date(e.retryAt).toLocaleTimeString('zh-CN',{hour12:false})+'）'
   } finally {
     loading.value = false
   }
@@ -155,19 +163,29 @@ async function login(password) {
 async function enterAdmin() {
   loggedIn.value = true
   loginSuccess.value = false
-  try { await load() } catch (e) { fail(e) }
+  try { await refreshIdentity(); if(!identity.value.mustChangePassword) await load() } catch (e) { fail(e) }
 }
 
 async function logout() {
   if (dirty.value || characterDirty.value || audioDirty.value) {
     try { await ElMessageBox.confirm('还有未保存或未发布的修改，确认退出？', '退出登录', { type: 'warning' }) } catch { return }
   }
-  setToken(null)
-  loggedIn.value = false
+  try { await call('POST','/admin-api/v1/auth/logout',{}) } catch(e) { if(e.status!==401){fail(e);return} }
+  clearLogin()
   form.value = null; active.value = null; history.value = []; dash.value = null; characterDirty.value = false; audioDirty.value = false
   Object.keys(drafts).forEach(key => delete drafts[key])
 }
 
+function clearLogin() { setToken(null);setIdentity(null);loggedIn.value=false;loginSuccess.value=false }
+async function refreshIdentity(){ const result=await call('GET','/admin-api/v1/auth/me');setIdentity(result);if(!result.mustChangePassword&&!pageVisible(result,tab.value))tab.value='dashboard' }
+let identityRefresh
+function handleAccessError(event){if(event.detail.status===401){clearLogin();return}if(!identityRefresh)identityRefresh=refreshIdentity().catch(fail).finally(()=>identityRefresh=null)}
+function resumed(){if(!document.hidden&&loggedIn.value)refreshIdentity().catch(fail)}
+const canEdit=computed(()=>can(identity.value,'config:write'))
+const isAccessPage=computed(()=>accessPages.includes(tab.value))
+const auditVersion=ref(null)
+function signedout(){clearLogin();ElMessage.success('会话已撤销，请重新登录')}
+function openAuditVersion(id){auditVersion.value=id;tab.value='history';ElMessage.info('已打开版本中心，可选择版本 #'+id+' 对比')}
 const startPickHint = computed(() => {
   const p = form.value?.startPick
   if (!p) return ''
@@ -355,10 +373,10 @@ let celebrationTimer, validationTimer
 function celebrate() { celebration.value = Date.now(); clearTimeout(celebrationTimer); celebrationTimer = setTimeout(() => { celebration.value = 0 }, 1800) }
 const originalSettings = computed(() => { try { return JSON.parse(saved.value || '{}') } catch { return {} } })
 const changes = computed(() => compareVersions(originalSettings.value, form.value || {}).flatMap(group=>group.rows))
-const isConfigPage = computed(() => !['dashboard','characters','audio','history'].includes(tab.value))
+const isConfigPage = computed(() => !isAccessPage.value && !['dashboard','characters','audio','history'].includes(tab.value))
 const isBoardPage = computed(() => ['names','sets'].includes(tab.value))
 const parameterSearchIndex = computed(() => ({ ...searchIndex, events:searchIndex.events+' '+Object.values(EVENT_LABEL).join(' ')+' '+Object.values(CARD_LABEL).join(' '),timing:searchIndex.timing+' '+TIMING_FIELDS.map(field=>field[1]).join(' '),funTitles:searchIndex.funTitles+' '+Object.values(TITLE_LABEL).join(' '),cityEvents:searchIndex.cityEvents+' '+CITY_FIELDS.map(field=>field[1]).join(' ')+' '+Object.values(CITY_LABEL).join(' ') }))
-async function navigate(id) { tab.value = id; await nextTick(); window.scrollTo({ top:0, behavior:motionEnabled.value?'smooth':'auto' }) }
+async function navigate(id) { if(!pageVisible(identity.value,id))return; auditVersion.value=null;tab.value = id; await nextTick(); window.scrollTo({ top:0, behavior:motionEnabled.value?'smooth':'auto' }) }
 async function focusTile(index) {
   selectedTile.value = index
   await nextTick()
@@ -380,21 +398,26 @@ async function focusValidation(error) {
 watch(boardId, () => { selectedTile.value = 0 })
 function beforeLeave(event) { if (dirty.value || characterDirty.value || audioDirty.value) { event.preventDefault(); event.returnValue = '' } }
 onMounted(() => window.addEventListener('beforeunload', beforeLeave))
-onBeforeUnmount(() => { window.removeEventListener('beforeunload', beforeLeave); clearTimeout(celebrationTimer); clearTimeout(validationTimer) })
+onBeforeUnmount(() => { window.removeEventListener('admin-access-error',handleAccessError);document.removeEventListener('visibilitychange',resumed);window.removeEventListener('beforeunload', beforeLeave); clearTimeout(celebrationTimer); clearTimeout(validationTimer) })
 
 onMounted(() => {
-  if (loggedIn.value) load()
+  window.addEventListener('admin-access-error',handleAccessError);document.addEventListener('visibilitychange',resumed)
+  if (loggedIn.value) enterAdmin()
 })
 </script>
 
 <template>
   <LoginPage v-if="!loggedIn" :loading="loading" :error="loginError" :success="loginSuccess" @submit="login" @enter="enterAdmin" @clear-error="loginError=''" />
-  <AdminShell v-else :active-page="tab" :version="tab==='audio'?audioVersion:active?.configId" :dirty="dirty || characterDirty || audioDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @logout="logout">
+  <PasswordChange v-else-if="identity?.mustChangePassword" mandatory @changed="signedout" @error="fail" @cancel="logout" />
+  <AdminShell v-else :identity="identity" :active-page="tab" :version="tab==='audio'?audioVersion:active?.configId" :dirty="dirty || characterDirty || audioDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @logout="logout">
+    <AdminAccessManager v-if="isAccessPage && identity" :page="tab" :identity="identity" @error="fail" @signedout="signedout" @compare="openAuditVersion" />
+    <div v-show="!isAccessPage">
     <el-alert v-if="errors.length && !['characters','audio'].includes(tab)" class="validation-alert" type="error" :closable="false" title="请修改后再发布"><ul><li v-for="error in errors" :key="error"><button type="button" class="error-link" @click="focusValidation(error)">{{ error }}</button></li></ul></el-alert>
     <div class="rule-workspace" :class="{ 'with-live-preview': form && isConfigPage && !isBoardPage && tab!=='announcement' }">
-    <div v-if="form" class="editor-grid" :class="{ 'has-board': isBoardPage }" v-loading="loading">
-      <div class="editor-content"><section v-show="tab === 'characters'" data-rule-page="characters" class="special-page"><KeepAlive><CharacterManager v-if="tab === 'characters'" @update:dirty="characterDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
-      <section v-show="tab === 'audio'" data-rule-page="audio" class="special-page"><KeepAlive><AudioManager v-if="tab === 'audio'" @version="audioVersion=$event" @update:dirty="audioDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
+    <div v-if="form && isConfigPage && !canEdit"><ReadOnlyConfig :section="tab" :settings="form" /><template v-if="isBoardPage"><el-radio-group v-model="boardId" class="gap"><el-radio-button v-for="(_,id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button></el-radio-group><BoardPreview :tiles="boards.find(board=>board.id===boardId)?.tiles || []" :names="form.tileNames?.[boardId]" :groups="form.sets?.groups?.[boardId]" :selected="selectedTile" :group-mode="tab==='sets'" :board-id="boardId" @select="selectedTile=$event" /></template></div>
+    <div v-if="form && (!isConfigPage || canEdit)" class="editor-grid" :class="{ 'has-board': isBoardPage }" v-loading="loading">
+      <div class="editor-content"><section v-show="tab === 'characters'" data-rule-page="characters" class="special-page"><KeepAlive><CharacterManager :read-only="!can(identity,'character:write')" :can-rollback="can(identity,'character:rollback')" v-if="tab === 'characters'" @update:dirty="characterDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
+      <section v-show="tab === 'audio'" data-rule-page="audio" class="special-page"><KeepAlive><AudioManager v-if="tab === 'audio'" :read-only="!can(identity,'audio:write')" :can-publish="can(identity,'audio:publish')" :can-rollback="can(identity,'audio:rollback')" @version="audioVersion=$event" @update:dirty="audioDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
 <section v-show="tab === 'names'" data-rule-page="names" class="surface field-panel"><div class="field-panel-title"><span>土地命名</span><small>修改只在发布后生效</small></div>
         <el-radio-group v-model="boardId" class="gap">
           <el-radio-button v-for="(_, id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button>
@@ -641,14 +664,14 @@ onMounted(() => {
         </el-form>
       </section>
 <section v-show="tab === 'dashboard'" data-rule-page="dashboard" class="special-page"><DashboardOverview v-if="tab === 'dashboard'" :data="dash" :loading="dashLoading" :days="dashDays" :labels="{modes:MODE_LABEL,reasons:REASON_LABEL,boards:BOARD_LABEL,events:EVENT_NAMES,cards:CARD_LABEL}" :misc-labels="MISC_LABEL" @update:days="dashDays=$event; loadDash()" @refresh="loadDash" /></section>
-<section v-show="tab === 'history'" data-rule-page="history" class="surface field-panel"><KeepAlive><VersionCenter v-if="tab==='history'" :active="active" :history="history" :dirty="dirty" @view="view" @rolledback="load" @error="fail" /></KeepAlive></section></div>
+<section v-show="tab === 'history'" data-rule-page="history" class="surface field-panel"><KeepAlive><VersionCenter :focus-version="auditVersion" :can-edit="canEdit" :can-rollback="can(identity,'config:rollback')" v-if="tab==='history'" :active="active" :history="history" :dirty="dirty" @view="view" @rolledback="load" @error="fail" /></KeepAlive></section></div>
       <BoardPreview v-if="isBoardPage" :tiles="boards.find(board=>board.id===boardId)?.tiles || []" :names="form.tileNames?.[boardId]" :groups="form.sets?.groups?.[boardId]" :selected="selectedTile" :group-mode="tab==='sets'" :board-id="boardId" @select="focusTile" />
     </div>
-    <el-empty v-else-if="!loading" description="无法读取管理配置"><el-button @click="load">重新加载</el-button></el-empty>
+    <el-empty v-else-if="!form && !loading" description="无法读取管理配置"><el-button @click="load">重新加载</el-button></el-empty>
     <RulePreview v-if="form && isConfigPage && !isBoardPage" :section="tab" :settings="form" :original="originalSettings" :labels="{ tiers:TIER_LABEL,events:EVENT_LABEL,cards:CARD_LABEL,income:INCOME_LABEL,city:CITY_LABEL,titles:TITLE_LABEL }" :rent-steps="rentSteps" :reward-income="rewardIncome" :timing-fields="TIMING_FIELDS" />
     </div>
     <section v-if="form && tab==='announcement'" class="announcement-preview surface"><span class="eyebrow">游戏大厅 · 公告预览</span><div class="notice-card" :class="{ muted: !form.announcement.enabled }"><strong>{{ form.announcement.title || '公告标题' }}</strong><p>{{ form.announcement.text || '编辑公告后，在这里预览游戏内展示内容。' }}</p><el-tag>{{ form.announcement.enabled ? '发布后展示' : '公告已关闭' }}</el-tag></div></section>
-    <div v-if="form && isConfigPage" class="config-dock"><div><span class="status-dot" :class="{ clean: !dirty }" /><strong>{{ dirty ? '有未发布修改' : '配置与生效版本一致' }}</strong><small>{{ changes.length }} 项变更</small></div><div class="dock-actions"><el-button @click="useDefaults">填入默认值</el-button><el-button @click="discard">放弃修改</el-button><el-button @click="validate">校验</el-button><el-button type="primary" :disabled="loading" @click="publish">查看变更并发布</el-button></div><BorderBeam v-if="dirty" /></div>
+    <div v-if="form && isConfigPage && canEdit" class="config-dock"><div><span class="status-dot" :class="{ clean: !dirty }" /><strong>{{ dirty ? '有未发布修改' : '配置与生效版本一致' }}</strong><small>{{ changes.length }} 项变更</small></div><div class="dock-actions"><el-button @click="useDefaults">填入默认值</el-button><el-button @click="discard">放弃修改</el-button><el-button @click="validate">校验</el-button><el-button type="primary" :disabled="loading" @click="publish">查看变更并发布</el-button></div><BorderBeam v-if="dirty" /></div>
     <el-dialog v-model="releaseOpen" title="发布配置" width="min(960px, 94vw)" class="version-dialog release-review-dialog" :close-on-click-modal="!releaseBusy" :close-on-press-escape="!releaseBusy" :show-close="!releaseBusy" append-to-body>
       <el-steps :active="releaseStage==='review' ? 0 : releaseStage==='validating' || releaseStage==='invalid' ? 1 : releaseStage==='publishing' ? 2 : 3" align-center finish-status="success"><el-step title="检查变更" /><el-step title="校验配置" /><el-step title="发布" /><el-step title="结果" /></el-steps>
       <p class="muted">新开的房间使用本次参数，进行中的对局保持原版本。</p>
@@ -657,5 +680,6 @@ onMounted(() => {
       <el-alert v-if="releaseStage==='invalid'" type="error" title="校验未通过，关闭此窗口后修改页面上的错误" :closable="false" /><el-alert v-if="releaseStage==='failed'" type="error" :title="releaseStale?'生效版本已更新，草稿仍保留。请重新核对生效版本，查看整份草稿相对新版本的差异后再确认。':'发布失败，修改仍保留在编辑区，可重试'" :closable="false" /><el-alert v-if="releaseStage==='success'" type="success" title="发布成功，生效版本已更新" :closable="false" />
       <template #footer><el-button :disabled="releaseBusy" @click="releaseOpen=false">{{ releaseStage==='success'?'完成':'返回编辑' }}</el-button><el-button v-if="releaseStale" :loading="releaseBusy" @click="recheckRelease">重新核对生效版本</el-button><el-button v-if="releaseStage!=='success'" type="primary" :disabled="releaseStale" :loading="releaseBusy" @click="confirmPublish">{{ releaseStage==='validating'?'正在校验':releaseStage==='publishing'?'正在发布':'确认发布' }}</el-button></template>
     </el-dialog>
+    </div>
   </AdminShell>
 </template>
