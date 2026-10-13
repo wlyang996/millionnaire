@@ -1,0 +1,56 @@
+[
+  {
+    "level": "debug",
+    "message": "[sound] music started {\"playing\":true,\"seconds\":34.28570833333333,\"loop\":true}",
+    "timestamp": "2026-10-13T01:07:42.764Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.3d933.js"
+  },
+  {
+    "level": "debug",
+    "message": "[sound] scene profile {\"active\":\"\",\"wanted\":\"\",\"loading\":\"\",\"failed\":\"\",\"visible\":true,\"unlocked\":false,\"paused\":false,\"volume\":0}",
+    "timestamp": "2026-10-13T01:19:50.094Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.8566c.js"
+  },
+  {
+    "level": "debug",
+    "message": "[sound] scene lobby {\"active\":\"\",\"wanted\":\"http://127.0.0.1:18080/api/audio/assets/morning-town.wav:true\",\"loading\":\"http://127.0.0.1:18080/api/audio/assets/morning-town.wav:true\",\"failed\":\"\",\"visible\":true,\"unlocked\":true,\"paused\":false,\"volume\":0}",
+    "timestamp": "2026-10-13T01:21:59.170Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.8566c.js"
+  },
+  {
+    "level": "debug",
+    "message": "[sound] loaded http://127.0.0.1:18080/api/audio/assets/morning-town.wav [object]",
+    "timestamp": "2026-10-13T01:21:59.375Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.8566c.js"
+  },
+  {
+    "level": "debug",
+    "message": "[sound] music started {\"playing\":true,\"seconds\":34.28570833333333,\"loop\":true}",
+    "timestamp": "2026-10-13T01:21:59.517Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.8566c.js"
+  },
+  {
+    "level": "debug",
+    "message": "[sound] scene room {\"active\":\"http://127.0.0.1:18080/api/audio/assets/morning-town.wav:true\",\"wanted\":\"http://127.0.0.1:18080/api/audio/assets/friends-play.wav:true\",\"loading\":\"http://127.0.0.1:18080/api/audio/assets/friends-play.wav:true\",\"failed\":\"\",\"visible\":true,\"unlocked\":true,\"paused\":false,\"volume\":0.3}",
+    "timestamp": "2026-10-13T01:23:33.094Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.8566c.js"
+  },
+  {
+    "level": "debug",
+    "message": "[sound] load failed http://127.0.0.1:18080/api/audio/assets/friends-play.wav",
+    "timestamp": "2026-10-13T01:26:36.208Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.8566c.js"
+  },
+  {
+    "level": "debug",
+    "message": "[sound] loaded http://127.0.0.1:18080/api/audio/assets/friends-play.wav [object]",
+    "timestamp": "2026-10-13T01:28:46.965Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.8566c.js"
+  },
+  {
+    "level": "debug",
+    "message": "[sound] music started {\"playing\":true,\"seconds\":26.666666666666668,\"loop\":true}",
+    "timestamp": "2026-10-13T01:28:46.966Z",
+    "url": "http://127.0.0.1:18765/assets/main/index.8566c.js"
+  }
+]

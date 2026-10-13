@@ -19,6 +19,7 @@ import { RulesPopup } from '../popups/RulesPopup';
 import { ghostButton, IconButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { DiceView } from '../ui/DiceView';
+import { Sound } from '../audio/Sound';
 import { drawBack, drawClock } from '../ui/Icons';
 import { fillCircle, fillRR, gfx, mk, onTap, setOpacity, setText, strokeRR, text } from '../ui/Kit';
 import { Screen, ScreenId } from '../ui/Screen';
@@ -379,6 +380,7 @@ export class BoardScreen extends Screen {
         while (m.done < Math.min(step, count)) {
             m.done++;
             this.view.dust(at(m.done));
+            Sound.effect('move');
         }
         if (step >= count) {
             this.move = null;
@@ -476,8 +478,10 @@ export class BoardScreen extends Screen {
         }
         for (const p of game.players) {
             const previous = this.cashSnapshot.get(p.playerId);
-            if (previous !== undefined && previous !== p.cash)
+            if (previous !== undefined && previous !== p.cash) {
                 this.cashChanges.set(p.playerId, { amount: p.cash - previous, until: now + CASH_DELTA_MS });
+                Sound.effect(p.cash > previous ? 'cashGain' : 'cashLoss');
+            }
             this.cashSnapshot.set(p.playerId, p.cash);
         }
         for (const [id, change] of this.cashChanges) if (change.until <= now) this.cashChanges.delete(id);
@@ -644,6 +648,7 @@ export class BoardScreen extends Screen {
             || ctx.store.eventDraw.phase === 'FLIPPING' || ctx.store.eventDraw.phase === 'RESULT' || this.jailOv;
         if (full && !this.globalOv && !animationPending) {
             ctx.popups.closeAll();
+            if (full.kind === 'ROUND_REWARD') Sound.effect('reward',`reward:${ctx.store.session.roomId}:${g.gameNo}:${full.id}`);
             this.globalOv = new GlobalNoticeView(this.root, full, g);
         }
         this.globalOv?.tick();
@@ -702,6 +707,7 @@ export class BoardScreen extends Screen {
         if (head && head.kind === 'event' && !head.waiting && st.eventDraw.phase === 'FLIPPING' && !st.eventDraw.result) {
             online.cues.shift();
             st.eventDraw = { phase: 'FLIPPING', actor: head.actor, since: Date.now(), result: head.result, settled: st.eventDraw.settled + 1 };
+            Sound.effect('card');
             st.emit();
             return;
         }
@@ -744,6 +750,7 @@ export class BoardScreen extends Screen {
         }
         const cue = online.cues.shift();
         if (cue) {
+            if (cue.kind === 'sound') { Sound.effect(cue.effect,cue.identity); return; }
             const who = st.player(cue.playerId);
             if (cue.kind === 'dice') {
                 if (this.dice) this.dice.play(cue.value, () => undefined);
@@ -757,12 +764,14 @@ export class BoardScreen extends Screen {
                     return;
                 }
                 this.jail = { name: '你', start: Date.now() };
+                Sound.effect('jail');
                 this.jailOv = new JailOverlay(this.root, this.jail.name, this.jail.start);
             } else if (cue.kind === 'event') {
                 // 事件卡（等待抽卡 / 翻牌结果）按顺序排在走棋动画之后：人物落到事件格后才出现
                 st.eventDraw = cue.waiting
                     ? { phase: 'WAITING', actor: cue.actor, since: Date.now(), result: null, settled: st.eventDraw.settled }
                     : { phase: 'FLIPPING', actor: cue.actor, since: Date.now(), result: cue.result, settled: st.eventDraw.settled + 1 };
+                if (!cue.waiting) Sound.effect('card');
                 st.emit();
             } else if (cue.teleport) {
                 // 回到起点 / 搭乘快车：直接出现在目标格

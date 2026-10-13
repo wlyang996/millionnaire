@@ -117,6 +117,12 @@ demo/    DemoPanel LayoutCheck
 本地预览通过后，在 Cocos 的"构建发布"选择微信小游戏、竖屏，填写自己的 AppID，并配置微信开发者工具路径。AppSecret 不进入客户端或 Git。微信构建和真机联调尚未执行。
 引擎生成的 library、temp、build、local、profiles 不提交；保留 assets、settings、package.json、tsconfig.json、元数据及本说明。
 
+## 背景音乐与声音设置（2026-10-13）
+
+38号声音设置布局已批准并接入。大厅音符或对局自己头像菜单打开；音乐/音效开关与音量本机保存，恢复默认取当前后台目录。两首已选音乐通过`/api/audio`和网关不可变WAV地址读取，不计入小游戏首包；新版本在进页面、打开声音弹窗或回前台时刷新。音效已接实际动作，但默认没有已采用素材，不播放旧混音。
+
+音频状态测试：先用Creator自带tsc编译`core/AudioState.ts`到`client/temp/audio-tests`（target ES2020、module commonjs、strict），再运行`node --test client/tests/audio-state.test.cjs`。详见`design/screens/records/audio-integration-2026-10-13.md`。云存储读写与微信真机播放待验收。
+
 ## 2026-10-12 整套人物目录
 
 从网关读取人物目录和房间绑定版本，稳定ID对应完整七项远程PNG；下载完整后统一接入，失败整套回退已有美术。资料页超过八位分页。新人物保持既有移动时间，使用上传的静态棋子，避免混用旧人物动作帧。221项自检、严格类型检查和Cocos网页构建通过，COS及微信真机待验证。配置流程见 [整套人物说明](../web-manage/character-catalog.md)。

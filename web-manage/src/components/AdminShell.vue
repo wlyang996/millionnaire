@@ -1,7 +1,7 @@
 <script setup>
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
-import { Orbit, Map, SlidersHorizontal, UsersRound, Megaphone, History, Search, Menu, X, Sun, Moon, LogOut, Sparkles, ChevronDown, ChevronRight, Check, Gamepad2 } from '@lucide/vue'
+import { Orbit, Map, SlidersHorizontal, UsersRound, Music2, Megaphone, History, Search, Menu, X, Sun, Moon, LogOut, Sparkles, ChevronDown, ChevronRight, Check, Gamepad2 } from '@lucide/vue'
 import { groups, pageById } from '../admin/navigation.js'
 import { useAdminPreferences } from '../admin/preferences.js'
 import BorderBeam from './effects/BorderBeam.vue'
@@ -10,7 +10,7 @@ import { usePageMotion } from '../admin/usePageMotion.js'
 const OrbEffect = defineAsyncComponent(() => import('./effects/Orb.vue'))
 const props = defineProps({ activePage: String, version: Number, dirty: Boolean, searchIndex: Object, celebration: Number, busy: Boolean, hasError: Boolean })
 const emit = defineEmits(['navigate', 'logout'])
-const icons = { Orbit, Map, SlidersHorizontal, UsersRound, Megaphone, History }
+const icons = { Orbit, Map, SlidersHorizontal, UsersRound, Music2, Megaphone, History }
 const { theme, motionLevel, motionEnabled, richMotion } = useAdminPreferences()
 const pageContent = ref(null)
 usePageMotion(pageContent, () => props.activePage)

@@ -1,6 +1,6 @@
 /**
  * 点击底栏自己头像弹出的小菜单（用户 2026-10-07 要求：头像不再打开详情，详情只在顶部玩家条查看；认输移到这里）。
- * 四项：对局记录、游戏规则（用户 2026-10-09 从棋盘右侧移到这里）、主动托管（系统代为投骰，现金够就买 / 升级；全屏"托管中"遮罩里点"取消托管"恢复）、认输（二次确认）。
+ * 对局记录、游戏规则、声音设置、主动托管、认输（二次确认）。
  * 菜单贴在头像上方，点菜单外任意处关闭。
  */
 import { Node } from 'cc';
@@ -11,10 +11,11 @@ import { Popup } from '../ui/Popup';
 import { surrenderConfirm } from './ConfirmPopup';
 import { GameLogPopup } from './GameLogPopup';
 import { RulesPopup } from './RulesPopup';
+import { SoundSettingsPopup } from './SoundSettingsPopup';
 
 const W = 300;
 const ROW_H = 84;
-const H = ROW_H * 4 + 16;
+const H = ROW_H * 5 + 16;
 
 export class SelfMenuPopup extends Popup {
     constructor() {
@@ -36,6 +37,7 @@ export class SelfMenuPopup extends Popup {
         const rows: [string, string, string, () => void][] = [
             ['对局记录', '每一步买地、租金、事件', Theme.c.navy, () => this.open(new GameLogPopup())],
             ['游戏规则', '价格、租金与玩法说明', Theme.c.navy, () => this.open(new RulesPopup())],
+            ['声音设置', '音乐和音效的本机音量', Theme.c.navy, () => this.open(new SoundSettingsPopup())],
             ['主动托管', '系统代为投骰、买地和升级', Theme.c.navy, () => this.host()],
             ['认输', '现金与资产由系统回收', Theme.c.payRed, () => this.surrender()],
         ];

@@ -1,0 +1,26 @@
+[
+  {
+    "file": "friends-play-v1.wav",
+    "sha256": "1c2014c9cbc2fcbbe70508a1ec714c377582176dca7930ce9778eb7b6f82c22f",
+    "bytes": 2352044,
+    "seconds": 26.666666666666668,
+    "sample_rate": 44100,
+    "channels": 1,
+    "peak_dbfs": -5.41,
+    "rms_dbfs": -20.0,
+    "seam_jump": 0.00128173828125,
+    "status": "user-approved-source-runtime-loop"
+  },
+  {
+    "file": "morning-town-v1.wav",
+    "sha256": "8a3ab1c01d8ccc8151029c916bf903192a91afada8868c2f5e9791c0338e553b",
+    "bytes": 3024044,
+    "seconds": 34.285714285714285,
+    "sample_rate": 44100,
+    "channels": 1,
+    "peak_dbfs": -6.36,
+    "rms_dbfs": -20.0,
+    "seam_jump": 0.00177001953125,
+    "status": "user-approved-source-runtime-loop"
+  }
+]

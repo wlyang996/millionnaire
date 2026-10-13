@@ -8,6 +8,7 @@ import { Theme } from '../core/Theme';
 import { drawPips } from './Icons';
 import { col, fillCircle, gfx, mk } from './Kit';
 import { art } from './Art';
+import { Sound } from '../audio/Sound';
 
 const S = 108; // 容器边长
 const HALF = 46; // 骰子半边长
@@ -60,6 +61,7 @@ export class DiceView {
 
     /** 开始一次翻滚，结束时停在 value 并回调。 */
     play(value: number, onDone?: () => void): void {
+        Sound.effect('dice');
         this.anim = { start: Date.now(), value, flipAt: 0, shown: this.value, onDone: onDone ?? null };
         this.last = 0;
     }

@@ -9,8 +9,8 @@ server:
 spring:
   servlet:
     multipart:
-      max-file-size: 5MB
-      max-request-size: 6MB
+      max-file-size: 10MB
+      max-request-size: 11MB
   # 默认不连库：数据源与 Flyway 都关闭，服务照常启动。
   # 在云托管环境变量里设置 SPRING_PROFILES_ACTIVE=db（并配好 MYSQL_*）后才启用，见 application-db.yml。
   autoconfigure:

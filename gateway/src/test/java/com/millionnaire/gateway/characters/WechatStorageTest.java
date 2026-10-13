@@ -151,10 +151,33 @@ class WechatStorageTest {
         try {
             store.put("characters/9/avatar.png",png);
             assertThat(uploaded.get()).isEqualTo(png);
+            assertThat(headers.get().getFirst("Content-Type")).isEqualTo("image/png");
             assertThat(headers.get().getFirst("x-cos-security-token")).isEqualTo("private-test-token");
             assertThat(headers.get().getFirst("x-cos-meta-fileid")).isEqualTo("signed-metadata");
             assertThat(headers.get().getFirst("Authorization")).contains("temporary-id").doesNotContain("private-test-key");
             assertThat(authCalls).hasValue(1);
+            // Real SDK PUT confirms the transport does not label WAV as image/png.
+            byte[] audio = new byte[]{'R','I','F','F'};
+            server.createContext("/audio/", exchange -> {
+                uploaded.set(exchange.getRequestBody().readAllBytes()); headers.set(exchange.getRequestHeaders()); exchange.sendResponseHeaders(200,-1);
+                exchange.close();
+            });
+            store.put("audio/test.wav",audio,"audio/wav");
+            assertThat(uploaded.get()).isEqualTo(audio);
+            assertThat(headers.get().getFirst("Content-Type")).isEqualTo("audio/wav");
+            assertThat(headers.get().getFirst("x-cos-meta-fileid")).isEqualTo("signed-metadata");
+        } finally { store.close(); }
+    }
+    @Test void audioReadsHaveSeparateLimitWithoutWeakeningCharacterLimit() {
+        byte[] audio = new byte[CharacterImages.MAX_BYTES + 1];
+        var store = new CosCharacterStore("bucket-123","ap-shanghai",api,new TestClock(),(provider,config) -> new COSClient(provider,config) {
+            @Override public COSObject getObject(String bucket,String key) {
+                provider.getCredentials();var result=new COSObject();result.setObjectContent(new COSObjectInputStream(new ByteArrayInputStream(audio),new org.apache.http.client.methods.HttpGet()));return result;
+            }
+        });
+        try {
+            assertThat(store.get("audio/test.wav",com.millionnaire.gateway.audio.AudioFiles.MAX_BYTES)).isEqualTo(audio);
+            assertThatThrownBy(() -> store.get("audio/test.wav")).hasMessageContaining("读取失败");
         } finally { store.close(); }
     }
     @Test void oversizedResponsesAndMissingMetadataAreRejected() {

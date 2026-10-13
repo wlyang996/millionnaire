@@ -31,6 +31,7 @@ import { globalPreview } from './demo/GlobalPreview';
 import { seriesPreview } from './demo/SeriesPreview';
 import { teamPreview, teamPreviewPopup } from './demo/TeamPreview';
 import { emptySession, OnlineSession } from './net/OnlineSession';
+import { Sound } from './audio/Sound';
 
 export class App {
     start(host: Node): void {
@@ -81,7 +82,8 @@ export class App {
         ctx.store = store;
         ctx.clock = store.clock;
         ctx.root = root;
-        ctx.screens = new ScreenManager(root);
+        Sound.init(root);
+        ctx.screens = new ScreenManager(root, id => Sound.scene(id));
         const demo = new DemoPanel(root, !store.online); // 先建，使胶囊占位位于页面之上、弹窗之下；联机不显示"☰"演示菜单
         ctx.popups = new PopupManager(root);
         demo.bringToFront();
@@ -150,12 +152,15 @@ export class App {
     private resync: ResyncPopup | null = null;
 
     update(dt: number): void {
+        Sound.update(dt);
         if (!ctx.screens) return;
         ctx.screens.update(dt);
         this.updateResync();
         ctx.popups.update();
         Toast.update();
     }
+
+    destroy(): void { Sound.dispose(); }
 
     /** 联机对局中断线重连：显示"正在同步最新状态…"遮罩（设计稿 06 右），连上后关闭。 */
     private updateResync(): void {

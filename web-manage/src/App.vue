@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { call, setToken, token } from './api.js'
 import CharacterManager from './CharacterManager.vue'
+import AudioManager from './AudioManager.vue'
 import LoginPage from './components/LoginPage.vue'
 import AdminShell from './components/AdminShell.vue'
 import DashboardOverview from './components/DashboardOverview.vue'
@@ -158,12 +159,12 @@ async function enterAdmin() {
 }
 
 async function logout() {
-  if (dirty.value || characterDirty.value) {
+  if (dirty.value || characterDirty.value || audioDirty.value) {
     try { await ElMessageBox.confirm('还有未保存或未发布的修改，确认退出？', '退出登录', { type: 'warning' }) } catch { return }
   }
   setToken(null)
   loggedIn.value = false
-  form.value = null; active.value = null; history.value = []; dash.value = null; characterDirty.value = false
+  form.value = null; active.value = null; history.value = []; dash.value = null; characterDirty.value = false; audioDirty.value = false
   Object.keys(drafts).forEach(key => delete drafts[key])
 }
 
@@ -346,13 +347,15 @@ async function view(row) {
 
 const selectedTile = ref(0)
 const characterDirty = ref(false)
+const audioDirty = ref(false)
+const audioVersion = ref(undefined)
 const celebration = ref(0)
 const releaseOpen = ref(false), releaseBusy = ref(false), releaseNote = ref(''), releaseStage = ref('review'), releaseReview = ref(null), releaseReviewKey = ref(0), releaseStale = ref(false)
 let celebrationTimer, validationTimer
 function celebrate() { celebration.value = Date.now(); clearTimeout(celebrationTimer); celebrationTimer = setTimeout(() => { celebration.value = 0 }, 1800) }
 const originalSettings = computed(() => { try { return JSON.parse(saved.value || '{}') } catch { return {} } })
 const changes = computed(() => compareVersions(originalSettings.value, form.value || {}).flatMap(group=>group.rows))
-const isConfigPage = computed(() => !['dashboard','characters','history'].includes(tab.value))
+const isConfigPage = computed(() => !['dashboard','characters','audio','history'].includes(tab.value))
 const isBoardPage = computed(() => ['names','sets'].includes(tab.value))
 const parameterSearchIndex = computed(() => ({ ...searchIndex, events:searchIndex.events+' '+Object.values(EVENT_LABEL).join(' ')+' '+Object.values(CARD_LABEL).join(' '),timing:searchIndex.timing+' '+TIMING_FIELDS.map(field=>field[1]).join(' '),funTitles:searchIndex.funTitles+' '+Object.values(TITLE_LABEL).join(' '),cityEvents:searchIndex.cityEvents+' '+CITY_FIELDS.map(field=>field[1]).join(' ')+' '+Object.values(CITY_LABEL).join(' ') }))
 async function navigate(id) { tab.value = id; await nextTick(); window.scrollTo({ top:0, behavior:motionEnabled.value?'smooth':'auto' }) }
@@ -375,7 +378,7 @@ async function focusValidation(error) {
   clearTimeout(validationTimer); validationTimer=setTimeout(()=>target?.classList.remove('validation-focus'),3000)
 }
 watch(boardId, () => { selectedTile.value = 0 })
-function beforeLeave(event) { if (dirty.value || characterDirty.value) { event.preventDefault(); event.returnValue = '' } }
+function beforeLeave(event) { if (dirty.value || characterDirty.value || audioDirty.value) { event.preventDefault(); event.returnValue = '' } }
 onMounted(() => window.addEventListener('beforeunload', beforeLeave))
 onBeforeUnmount(() => { window.removeEventListener('beforeunload', beforeLeave); clearTimeout(celebrationTimer); clearTimeout(validationTimer) })
 
@@ -386,11 +389,12 @@ onMounted(() => {
 
 <template>
   <LoginPage v-if="!loggedIn" :loading="loading" :error="loginError" :success="loginSuccess" @submit="login" @enter="enterAdmin" @clear-error="loginError=''" />
-  <AdminShell v-else :active-page="tab" :version="active?.configId" :dirty="dirty || characterDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @logout="logout">
-    <el-alert v-if="errors.length && tab !== 'characters'" class="validation-alert" type="error" :closable="false" title="请修改后再发布"><ul><li v-for="error in errors" :key="error"><button type="button" class="error-link" @click="focusValidation(error)">{{ error }}</button></li></ul></el-alert>
+  <AdminShell v-else :active-page="tab" :version="tab==='audio'?audioVersion:active?.configId" :dirty="dirty || characterDirty || audioDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @logout="logout">
+    <el-alert v-if="errors.length && !['characters','audio'].includes(tab)" class="validation-alert" type="error" :closable="false" title="请修改后再发布"><ul><li v-for="error in errors" :key="error"><button type="button" class="error-link" @click="focusValidation(error)">{{ error }}</button></li></ul></el-alert>
     <div class="rule-workspace" :class="{ 'with-live-preview': form && isConfigPage && !isBoardPage && tab!=='announcement' }">
     <div v-if="form" class="editor-grid" :class="{ 'has-board': isBoardPage }" v-loading="loading">
       <div class="editor-content"><section v-show="tab === 'characters'" data-rule-page="characters" class="special-page"><KeepAlive><CharacterManager v-if="tab === 'characters'" @update:dirty="characterDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
+      <section v-show="tab === 'audio'" data-rule-page="audio" class="special-page"><KeepAlive><AudioManager v-if="tab === 'audio'" @version="audioVersion=$event" @update:dirty="audioDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
 <section v-show="tab === 'names'" data-rule-page="names" class="surface field-panel"><div class="field-panel-title"><span>土地命名</span><small>修改只在发布后生效</small></div>
         <el-radio-group v-model="boardId" class="gap">
           <el-radio-button v-for="(_, id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button>

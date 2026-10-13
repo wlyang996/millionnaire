@@ -12,8 +12,9 @@
     "channels": 1,
     "sample_rate": 44100,
     "mood": "轻快明亮；弹拨和弦、木琴旋律、轻打击；大厅/普通棋盘候选",
-    "status": "awaiting-review",
-    "source": "original-note-score-procedural-synthesis-no-external-samples"
+    "status": "approved-and-integrated",
+    "source": "original-note-score-procedural-synthesis-no-external-samples",
+    "review": "user-selected-1-and-3"
   },
   {
     "id": "riverside-afternoon",
@@ -28,8 +29,9 @@
     "channels": 1,
     "sample_rate": 44100,
     "mood": "温暖悠闲；柔和电钢琴、气息感旋律、稀疏节奏；大厅/长局候选",
-    "status": "awaiting-review",
-    "source": "original-note-score-procedural-synthesis-no-external-samples"
+    "status": "not-selected-historical",
+    "source": "original-note-score-procedural-synthesis-no-external-samples",
+    "review": "user-selected-1-and-3"
   },
   {
     "id": "friends-play",
@@ -44,7 +46,8 @@
     "channels": 1,
     "sample_rate": 44100,
     "mood": "俏皮活泼；玩具木琴、拨弦、轻柔沙锤；好友桌游候选",
-    "status": "awaiting-review",
-    "source": "original-note-score-procedural-synthesis-no-external-samples"
+    "status": "approved-and-integrated",
+    "source": "original-note-score-procedural-synthesis-no-external-samples",
+    "review": "user-selected-1-and-3"
   }
 ]

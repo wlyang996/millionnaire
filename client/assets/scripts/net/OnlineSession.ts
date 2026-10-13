@@ -17,8 +17,10 @@ import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, SGameDetail, Updat
 import { adaptSession, lastDiceFrom } from './ViewAdapter';
 import { activateCharacterCatalog, resetCharacterCatalog } from '../ui/Art';
 import { isWechat, wxLoginCode } from './Wx';
+import type { AudioEffect } from '../core/AudioState';
 
 export type Cue =
+    | { kind: 'sound'; effect: AudioEffect; identity: string; playerId: string }
     | { kind: 'dice'; playerId: string; value: number }
     | { kind: 'move'; playerId: string; from: number; steps: number; teleport?: boolean }
     | { kind: 'jail'; playerId: string }
@@ -345,7 +347,7 @@ export class OnlineSession {
     // ------------------------------------------------------------ 内部
     private update(u: UpdateMsg): void {
         this.eventCueAt = -1;
-        for (const e of u.events) {
+        for (const [index, e] of u.events.entries()) {
             const d = e.data ?? {};
             if (e.kind === 'DiceRolled' || e.kind === 'JailRolled') {
                 // 狱中判定骰（JailRolled）同样播骰子动画
@@ -381,6 +383,9 @@ export class OnlineSession {
             } else if (e.kind === 'PlayerJailed') {
                 this.cues.push({ kind: 'jail', playerId: String(d.playerId) });
             }
+            const sounds: Record<string,AudioEffect> = { PropertyBought:'purchase',PropertyForceBought:'purchase',PropertyUpgraded:'upgrade',PropertyBuilt:'upgrade',JailReleased:'release',AuctionSettled:'auction',AuctionPassed:'auction' };
+            const effect = sounds[e.kind];
+            if (effect) this.cues.push({kind:'sound',effect,identity:`${u.roomCode}:${u.view.game?.gameNo ?? 0}:${u.version}:${index}`,playerId:String(d.playerId ?? '')});
         }
         this.trackMinigame(u);
         this.lastDice = lastDiceFrom(u.events, this.lastDice);

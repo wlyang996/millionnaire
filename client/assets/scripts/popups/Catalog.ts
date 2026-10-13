@@ -24,6 +24,7 @@ import { SelfMenuPopup } from './SelfMenuPopup';
 import { TradePopup } from './TradePopup';
 import { TileInfoPopup } from './TileInfoPopup';
 import { UpgradePopup } from './UpgradePopup';
+import { SoundSettingsPopup } from './SoundSettingsPopup';
 
 export interface PopupEntry {
     id: string;
@@ -40,6 +41,7 @@ function pick(pred: (t: BoardTile, p: PropertyState | undefined) => boolean, fal
 const mineProp = (t: BoardTile, p: PropertyState | undefined) => t.type === 'PROPERTY' && !!p && p.owner === 'p1' && !p.mortgaged;
 
 export const POPUP_CATALOG: PopupEntry[] = [
+    { id: 'sound-settings', label: '声音设置', make: () => new SoundSettingsPopup() },
     { id: 'buy', label: '买地 15秒', make: () => new BuyPopup(pick((t, p) => t.type === 'PROPERTY' && !t.auctionLot && !(p && p.owner), 1)) },
     { id: 'buy-lot', label: '买地(拍卖地)', make: () => new BuyPopup(pick((t, p) => !!t.auctionLot && !(p && p.owner), 1)) },
     { id: 'buy-station', label: '买地(车站)', make: () => new BuyPopup(pick((t, p) => t.type === 'STATION' && !(p && p.owner), 4)) },

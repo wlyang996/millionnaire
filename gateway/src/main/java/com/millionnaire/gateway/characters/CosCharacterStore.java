@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-/** Private COS bucket. Published PNGs are delivered by the gateway, never exposing credentials. */
+/** Shared private COS transport; callers validate their own image/audio formats and size limits. */
 @Component
 public class CosCharacterStore implements CharacterObjectStore {
     private final String bucket;
@@ -44,24 +44,30 @@ public class CosCharacterStore implements CharacterObjectStore {
     public boolean ready() { return client != null; }
     @Override public void verify() { require(); credentials.getCredentials(); }
     public void put(String key, byte[] png) {
+        put(key, png, "image/png");
+    }
+    public void put(String key, byte[] data, String contentType) {
         require();
         try {
             var meta = new ObjectMetadata();
-            meta.setContentLength(png.length);
-            meta.setContentType("image/png");
+            meta.setContentLength(data.length);
+            meta.setContentType(contentType);
             meta.setCacheControl("public, max-age=31536000, immutable");
             // Admin uploads use an empty openid, as specified by the CloudRun COS SDK guide.
             meta.addUserMetadata("fileid", api.metadata(bucket, key));
-            execute(c -> c.putObject(bucket, key, new ByteArrayInputStream(png), meta));
+            execute(c -> c.putObject(bucket, key, new ByteArrayInputStream(data), meta));
         } catch (RuntimeException e) { throw failure(e, "COS 上传失败，请检查桶名、地域及微信云托管云调用配置"); }
     }
     public byte[] get(String key) {
+        return get(key, CharacterImages.MAX_BYTES);
+    }
+    public byte[] get(String key, int maxBytes) {
         require();
         try (var in = execute(c -> c.getObject(bucket, key)).getObjectContent()) {
-            byte[] bytes = in.readNBytes(CharacterImages.MAX_BYTES + 1);
-            if (bytes.length > CharacterImages.MAX_BYTES) throw new IllegalStateException("oversized object");
+            byte[] bytes = in.readNBytes(maxBytes + 1);
+            if (bytes.length > maxBytes) throw new IllegalStateException("oversized object");
             return bytes;
-        } catch (Exception e) { throw failure(e, "COS 图片读取失败，请检查桶名、地域及微信云托管云调用配置"); }
+        } catch (Exception e) { throw failure(e, "COS 资源读取失败，请检查桶名、地域及微信云托管云调用配置"); }
     }
     private void require() {
         if (!ready()) throw new ClientException("COS_NOT_CONFIGURED", "请配置 COS_BUCKET、COS_REGION；无需配置长期密钥");

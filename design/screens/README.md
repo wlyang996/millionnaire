@@ -136,5 +136,10 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 
 ## 背景音乐试听候选（2026-10-12）
 
-- [三首试听与来源](audio/background-candidates-v1/README.md)：晨光小镇、河畔午后、好友开局；原创音符编排与程序合成音色，不是AI音乐模型生成。全部待用户试听，未接入游戏。
-- [来源及技术检查](records/background-music-candidates-2026-10-12.md)、[后台音频配置接入计划](../../web-manage/audio-management-plan.md)。后台计划尚未实施，旧混音与失败的背景抑制稿不采用。
+- [三首试听与来源](audio/background-candidates-v1/README.md)：原创音符编排与程序合成音色，不是AI音乐模型生成。用户已采用①晨光小镇、③好友开局；②河畔午后作为历史候选保留。
+- [采用的循环母版](audio/background-approved-v1/README.md)、[来源及原始技术检查](records/background-music-candidates-2026-10-12.md)、[后台音频配置接入计划与现状](../../web-manage/audio-management-plan.md)。旧混音与失败的背景抑制稿不采用。
+
+## 声音设置与后台音频配置（2026-10-13）
+
+- [38-声音设置-开关与音量.png](38-声音设置-开关与音量.png)：用户已批准布局，接入音乐/音效独立开关与音量、本机自动保存和恢复默认。
+- [原稿与提示词](ui/audio-settings-v1/README.md)、[实施与验证](records/audio-integration-2026-10-13.md)。后台可上传 PCM WAV、试听、保存草稿、场景绑定、发布及历史回滚；独立音效尚无采用素材，默认不播放。未部署，微信真机待验收。

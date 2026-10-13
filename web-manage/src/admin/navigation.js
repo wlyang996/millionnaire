@@ -19,6 +19,7 @@ export const groups = [
     ['timing', '操作时限', '让每一次操作，都有合适的节奏', '选择窗口、动画留时与托管设置保留原有单位。'],
   ] },
   { id: 'characters', label: '人物工作室', icon: 'UsersRound', pages: [['characters', '人物素材', '每一位角色，都有自己的舞台', '七项素材、姿态预览和整套版本，统一发布。']] },
+  { id: 'audio', label: '声音工作室', icon: 'Music2', pages: [['audio', '音频管理', '让小镇的声音，恰到好处', '上传试听、场景选曲、音量与独立音效，审核后统一发布。']] },
   { id: 'announcement', label: '公告管理', icon: 'Megaphone', pages: [['announcement', '公告', '把下一份惊喜，告诉大家', '公告内容实时预览，发布后由游戏大厅读取。']] },
   { id: 'versions', label: '版本中心', icon: 'History', pages: [['history', '发布记录', '每次发布，都有清晰的落点', '按玩法对比历史差异，查看回滚摘要或载入编辑。']] },
 ]

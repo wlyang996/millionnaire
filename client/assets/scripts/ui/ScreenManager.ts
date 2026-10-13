@@ -12,7 +12,7 @@ export class ScreenManager {
     private fading: { screen: Screen; old: Screen | null; t: number } | null = null;
     readonly layer: Node;
 
-    constructor(parent: Node) {
+    constructor(parent: Node, private onScene: (id: ScreenId) => void = () => undefined) {
         this.layer = mk(parent, 'ScreenLayer', 0, 0, Theme.W, Theme.H);
     }
 
@@ -51,6 +51,7 @@ export class ScreenManager {
         const root = mk(this.layer, 'Screen:' + prev.id, 0, 0, Theme.W, Theme.H);
         prev.attach(root);
         prev.onShow();
+        this.onScene(prev.id);
         this.startFade(prev, null);
     }
 
@@ -71,6 +72,7 @@ export class ScreenManager {
         const root = mk(this.layer, 'Screen:' + id, 0, 0, Theme.W, Theme.H);
         s.attach(root);
         s.onShow();
+        this.onScene(id);
         this.startFade(s, null);
     }
 

@@ -17,4 +17,6 @@ export class LobbyBootstrap extends Component {
     update(dt: number): void {
         this.app.update(dt);
     }
+
+    onDestroy(): void { this.app.destroy(); }
 }
