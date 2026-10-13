@@ -8,7 +8,7 @@ import BorderBeam from './effects/BorderBeam.vue'
 import { motionEnabled } from '../admin/preferences.js'
 import { historyQuery, publisherName, publicationType, sourceName } from '../admin/versionHistory.js'
 
-const props=defineProps({active:Object,history:{type:Array,default:()=>[]},dirty:Boolean})
+const props=defineProps({focusVersion:Number,canEdit:Boolean,canRollback:Boolean,active:Object,history:{type:Array,default:()=>[]},dirty:Boolean})
 const emit=defineEmits(['view','rolledback','error'])
 const beforeId=ref(null),afterId=ref(null),comparison=ref(null),compareBusy=ref(false),compareError=ref('')
 const comparisonArea=ref(null)
@@ -72,15 +72,16 @@ function compareSource(row) { knownVersions.value=[...knownVersions.value,row]; 
 function swapVersions() { const old=beforeId.value; beforeId.value=afterId.value; afterId.value=old; readComparison() }
 function initialize() {
   historyActiveId.value=props.active?.configId
-  beforeId.value=options.value.find(row=>row.configId!==props.active?.configId)?.configId ?? props.active?.configId ?? 0
+  beforeId.value=props.focusVersion ?? options.value.find(row=>row.configId!==props.active?.configId)?.configId ?? props.active?.configId ?? 0
   afterId.value=props.active?.configId ?? 0
   readComparison()
   historyPage.value=1; loadHistory()
 }
-watch([()=>props.active?.configId,()=>props.history],initialize)
+watch([()=>props.active?.configId,()=>props.history,()=>props.focusVersion],initialize)
 onMounted(initialize)
 onBeforeUnmount(()=>{ requestId++; historyRequestId++; optionRequestId++ })
 async function prepareRollback(row) {
+  if(!props.canRollback)return
   if (rollbackBusy.value || rollbackPreparing.value) return
   rollbackTarget.value=row; rollbackReview.value=null; rollbackError.value=''; rollbackStale.value=false; rollbackPreparing.value=true; rollbackOpen.value=true
   try {
@@ -115,7 +116,7 @@ async function confirmRollback() {
     <el-alert v-if="historyError" :title="historyError" type="error" :closable="false"><el-button size="small" @click="loadHistory">重试发布记录</el-button></el-alert>
     <div v-if="historyBusy" class="version-loading" role="status">正在读取发布记录…</div>
     <el-empty v-else-if="!historyRows.length&&!historyError" description="没有符合筛选条件的发布记录" :image-size="64" />
-    <el-timeline v-else-if="!historyError" class="version-timeline"><el-timeline-item v-for="row in historyRows" :key="row.configId" :timestamp="time(row.createdAt)" placement="top" :type="row.active?'primary':'info'"><div class="version-card"><div class="surface-heading"><h3>{{ versionName(row) }}</h3><el-tag v-if="row.active" type="success">生效中</el-tag><el-tag v-else type="info">历史版本</el-tag></div><p>{{ row.note || '暂无版本说明' }}</p><dl class="version-metadata"><div><dt>发布人</dt><dd>{{ publisherName(row) }}</dd></div><div><dt>发布类型</dt><dd>{{ publicationType(row) }}</dd></div><div v-if="row.sourceConfigId!=null"><dt>回滚来源</dt><dd>{{ sourceName(row) }}</dd></div><div class="version-hash"><dt>规则标识</dt><dd>{{ row.ruleHash || '未记录' }}</dd></div></dl><div class="section-toolbar"><el-button @click="compareRow(row)">与生效版本对比</el-button><el-button v-if="row.sourceConfigId!=null" @click="compareSource(row)">对比回滚来源</el-button><el-button @click="emit('view',row)">载入编辑</el-button><el-button v-if="!row.active" type="warning" :disabled="rollbackPreparing||rollbackBusy" @click="prepareRollback(row)">回滚到此</el-button></div><BorderBeam v-if="row.active" /></div></el-timeline-item></el-timeline>
+    <el-timeline v-else-if="!historyError" class="version-timeline"><el-timeline-item v-for="row in historyRows" :key="row.configId" :timestamp="time(row.createdAt)" placement="top" :type="row.active?'primary':'info'"><div class="version-card"><div class="surface-heading"><h3>{{ versionName(row) }}</h3><el-tag v-if="row.active" type="success">生效中</el-tag><el-tag v-else type="info">历史版本</el-tag></div><p>{{ row.note || '暂无版本说明' }}</p><dl class="version-metadata"><div><dt>发布人</dt><dd>{{ publisherName(row) }}</dd></div><div><dt>发布类型</dt><dd>{{ publicationType(row) }}</dd></div><div v-if="row.sourceConfigId!=null"><dt>回滚来源</dt><dd>{{ sourceName(row) }}</dd></div><div class="version-hash"><dt>规则标识</dt><dd>{{ row.ruleHash || '未记录' }}</dd></div></dl><div class="section-toolbar"><el-button @click="compareRow(row)">与生效版本对比</el-button><el-button v-if="row.sourceConfigId!=null" @click="compareSource(row)">对比回滚来源</el-button><el-button v-if="canEdit" @click="emit('view',row)">载入编辑</el-button><el-button v-if="canRollback && !row.active" type="warning" :disabled="rollbackPreparing||rollbackBusy" @click="prepareRollback(row)">回滚到此</el-button></div><BorderBeam v-if="row.active" /></div></el-timeline-item></el-timeline>
     <el-pagination v-if="!historyError" v-model:current-page="historyPage" v-model:page-size="historySize" class="history-pagination" :total="historyTotal" :page-sizes="[10,20,50]" :pager-count="5" layout="total, sizes, prev, pager, next" :disabled="historyBusy" @current-change="loadHistory" @size-change="historyPage=1; loadHistory()" />
     <el-dialog v-model="rollbackOpen" title="回滚前确认变更" width="min(960px, 94vw)" :close-on-click-modal="false" :close-on-press-escape="!rollbackBusy&&!rollbackPreparing" :show-close="!rollbackBusy&&!rollbackPreparing" class="version-dialog">
       <p>将以「{{ versionName(rollbackTarget) }}」的内容发布一个新版本，新开的房间立即生效。</p>

@@ -1,17 +1,13 @@
 package com.millionnaire.gateway.config;
 
 import com.millionnaire.gateway.room.ClientException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
-import java.time.Clock;
+import com.millionnaire.gateway.admin.AdminAuth;
+import com.millionnaire.gateway.admin.AdminAccess;
+import com.millionnaire.gateway.admin.AdminWeb;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,68 +21,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 管理后台接口（页面在 /admin）。测试版：单一管理员密码，来自环境变量 ADMIN_PASSWORD；不配置时后台不可用。
- * 登录得到 12 小时有效的令牌（只在内存里，后台重启后需重新登录）。
+ * 管理后台规则接口；独立身份、数据库会话与统一权限检查见 admin 包。
  */
 @RestController
 @RequestMapping("/admin-api/v1")
 public class AdminController {
-    static final long TOKEN_TTL_MS = 12 * 3600 * 1000L;
-    /** 连续输错这么多次后锁定一段时间（整个后台共用，测试版只有一个账号）。 */
-    static final int MAX_FAILURES = 5;
-    static final long LOCK_MS = 5 * 60 * 1000L;
-
     private final GameConfigs configs;
     private final com.millionnaire.gateway.record.Dashboard dashboard;
-    private final Clock clock;
-    private final byte[] password;
-    private final SecureRandom random = new SecureRandom();
-    private final Map<String, Long> tokens = new ConcurrentHashMap<>();
-    private int failures;
-    private long lockedUntil;
-
-    public AdminController(GameConfigs configs, com.millionnaire.gateway.record.Dashboard dashboard, Clock clock,
-                           @Value("${millionnaire.admin.password:}") String password) {
-        this.configs = configs;
-        this.dashboard = dashboard;
-        this.clock = clock;
-        this.password = password == null ? new byte[0] : password.getBytes(StandardCharsets.UTF_8);
-    }
-
-    public record Login(String password) {
-    }
-
-    @PostMapping("/auth/login")
-    public synchronized ResponseEntity<Map<String, Object>> login(@RequestBody(required = false) Login body) {
-        if (password.length == 0) {
-            return error(HttpStatus.SERVICE_UNAVAILABLE, "ADMIN_DISABLED", "未配置管理员密码（环境变量 ADMIN_PASSWORD）");
-        }
-        long now = clock.millis();
-        if (now < lockedUntil) {
-            return error(HttpStatus.TOO_MANY_REQUESTS, "LOCKED", "密码错误次数过多，请 5 分钟后再试");
-        }
-        byte[] given = body == null || body.password() == null ? new byte[0]
-                : body.password().getBytes(StandardCharsets.UTF_8);
-        if (!MessageDigest.isEqual(given, password)) {
-            if (++failures >= MAX_FAILURES) {
-                failures = 0;
-                lockedUntil = now + LOCK_MS;
-            }
-            return error(HttpStatus.FORBIDDEN, "BAD_PASSWORD", "密码错误");
-        }
-        failures = 0;
-        tokens.values().removeIf(exp -> exp < now);
-        byte[] raw = new byte[32];
-        random.nextBytes(raw);
-        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
-        tokens.put(token, now + TOKEN_TTL_MS);
-        Map<String, Object> out = new LinkedHashMap<>();
-        out.put("token", token);
-        out.put("expiresAt", now + TOKEN_TTL_MS);
-        return ResponseEntity.ok(out);
+    private final AdminAuth authentication;
+    public AdminController(GameConfigs configs, com.millionnaire.gateway.record.Dashboard dashboard, AdminAuth authentication) {
+        this.configs=configs; this.dashboard=dashboard; this.authentication=authentication;
     }
 
     /** 当前生效版本：{configId, settings, note, createdAt}。 */
+    @AdminAccess("config:read")
     @GetMapping("/config/active")
     public ResponseEntity<?> active(@RequestHeader(value = "Authorization", required = false) String auth) {
         check(auth);
@@ -95,12 +43,14 @@ public class AdminController {
     }
 
     /** 内置默认参数（"恢复默认值"按钮用）。 */
+    @AdminAccess("config:read")
     @GetMapping("/config/defaults")
     public ResponseEntity<?> defaults(@RequestHeader(value = "Authorization", required = false) String auth) {
         check(auth);
         return ResponseEntity.ok(SettingsMapper.defaults());
     }
 
+    @AdminAccess("config:write")
     @PostMapping("/config/validate")
     public ResponseEntity<?> validate(@RequestHeader(value = "Authorization", required = false) String auth,
                                       @RequestBody(required = false) GameSettings settings) {
@@ -111,6 +61,7 @@ public class AdminController {
     public record Publish(GameSettings settings, String note, Long expectedActiveId) {
     }
 
+    @AdminAccess("config:publish")
     @PostMapping("/config/publish")
     public ResponseEntity<?> publish(@RequestHeader(value = "Authorization", required = false) String auth,
                                      @RequestBody(required = false) Publish body) {
@@ -118,11 +69,13 @@ public class AdminController {
         if (body == null || body.expectedActiveId() == null) {
             throw new ClientException("BAD_REQUEST", "缺少 settings 或 expectedActiveId");
         }
-        return ResponseEntity.ok(summary(configs.publish(body.settings(), body.note(), "admin",
-                body.expectedActiveId(), null), false));
+        return ResponseEntity.ok(summary(authentication.mutation(authentication.authenticate(auth), "config:publish", "config", "publish", "",
+                () -> configs.publish(body.settings(), body.note(), authentication.authenticate(auth).user().username(), body.expectedActiveId(), null),
+                p -> Long.toString(p.configId()), "发布配置；参考版本 #" + body.expectedActiveId(), AdminWeb.currentRequestId()), false));
     }
 
     /** 运营数据看板：最近 days 天（北京时间，1～90，默认 14）。 */
+    @AdminAccess("dashboard:read")
     @GetMapping("/dashboard")
     public ResponseEntity<?> dashboard(@RequestHeader(value = "Authorization", required = false) String auth,
                                        @org.springframework.web.bind.annotation.RequestParam(value = "days", defaultValue = "14") int days) {
@@ -130,6 +83,7 @@ public class AdminController {
         return ResponseEntity.ok(dashboard.build(days));
     }
 
+    @AdminAccess("config:read")
     @GetMapping("/config/history")
     public ResponseEntity<?> history(@RequestHeader(value = "Authorization", required = false) String auth) {
         check(auth);
@@ -143,6 +97,7 @@ public class AdminController {
         return ResponseEntity.ok(out);
     }
 
+    @AdminAccess("config:read")
     @GetMapping("/config/{id}")
     public ResponseEntity<?> one(@RequestHeader(value = "Authorization", required = false) String auth,
                                  @PathVariable("id") long id) {
@@ -152,6 +107,7 @@ public class AdminController {
     }
 
     /** Paginated metadata, keeping the original /config/history list contract intact. */
+    @AdminAccess("config:read")
     @GetMapping("/config/history/page")
     public ResponseEntity<?> historyPage(@RequestHeader(value = "Authorization", required = false) String auth,
                                         @RequestParam(defaultValue = "1") int page,
@@ -166,6 +122,7 @@ public class AdminController {
     public record Rollback(Long configId, Long expectedActiveId) {
     }
 
+    @AdminAccess("config:rollback")
     @PostMapping("/config/rollback")
     public ResponseEntity<?> rollback(@RequestHeader(value = "Authorization", required = false) String auth,
                                       @RequestBody(required = false) Rollback body) {
@@ -173,19 +130,14 @@ public class AdminController {
         if (body == null || body.configId() == null || body.expectedActiveId() == null) {
             throw new ClientException("BAD_REQUEST", "缺少 configId 或 expectedActiveId");
         }
-        return ResponseEntity.ok(summary(configs.rollback(body.configId(), "admin", body.expectedActiveId()), false));
+        return ResponseEntity.ok(summary(authentication.mutation(authentication.authenticate(auth), "config:rollback", "config", "rollback", "",
+                () -> configs.rollback(body.configId(), authentication.authenticate(auth).user().username(), body.expectedActiveId()),
+                p -> Long.toString(p.configId()), "回滚来源 #" + body.configId(), AdminWeb.currentRequestId()), false));
     }
 
     /** 令牌无效时抛出，由 {@link #onClient} 转为 401。 */
     public void check(String auth) {
-        String token = auth != null && auth.startsWith("Bearer ") ? auth.substring(7).strip() : null;
-        Long exp = token == null ? null : tokens.get(token);
-        if (exp == null || exp < clock.millis()) {
-            if (token != null) {
-                tokens.remove(token);
-            }
-            throw new Unauthorized();
-        }
+        authentication.authenticate(auth);
     }
 
     public static final class Unauthorized extends RuntimeException {

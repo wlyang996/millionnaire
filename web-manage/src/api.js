@@ -10,10 +10,11 @@ export function setToken(t) {
 }
 
 export class ApiError extends Error {
-  constructor(status, code, message) {
+  constructor(status, code, message, retryAt) {
     super(message || code || ('HTTP ' + status))
     this.status = status
     this.code = code
+    this.retryAt = retryAt
   }
 }
 
@@ -26,7 +27,8 @@ export async function call(method, path, body) {
   try { data = await res.json() } catch { /* 空响应 */ }
   if (!res.ok) {
     if (res.status === 401) setToken(null)
-    throw new ApiError(res.status, data && data.code, data && data.message)
+    if ([401,403].includes(res.status)) window.dispatchEvent(new CustomEvent('admin-access-error',{detail:{status:res.status,code:data?.code}}))
+    throw new ApiError(res.status, data && data.code, data && data.message, data?.retryAt)
   }
   return data
 }

@@ -18,7 +18,7 @@ import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties="millionnaire.admin.password=character-test-secret")
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties={"millionnaire.admin.bootstrap-username=admin.test","millionnaire.admin.bootstrap-password=character-test-secret","millionnaire.admin.bcrypt-strength=4"})
 @ActiveProfiles("db")
 @TestPropertySource(properties={"spring.datasource.url=jdbc:h2:mem:characters;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE", "spring.datasource.username=sa", "spring.datasource.password=", "spring.flyway.placeholders.table_options="})
 class CharacterApiDbTest {
@@ -34,7 +34,7 @@ class CharacterApiDbTest {
     @Autowired RoomService rooms;
 
     @Test void authenticatedMultipartUploadRequiresAllSevenAndDoesNotLeakDrafts() throws Exception {
-        var login = http.postForObject("/admin-api/v1/auth/login",Map.of("password","character-test-secret"),Map.class);
+        var login = com.millionnaire.gateway.admin.AdminTestLogin.login(http,"admin.test","character-test-secret");
         var h = new HttpHeaders(); h.setBearerAuth((String)login.get("token"));
         assertThat(http.postForEntity("/admin-api/v1/characters/storage/check",Map.of(),Map.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         var check = http.exchange("/admin-api/v1/characters/storage/check",HttpMethod.POST,new HttpEntity<>(Map.of(),h),Map.class);
@@ -92,7 +92,7 @@ class CharacterApiDbTest {
         assertThat(image.getHeaders().getContentType()).isEqualTo(MediaType.IMAGE_PNG);
         assertThat(image.getHeaders().getCacheControl()).contains("immutable");
         assertThat(http.getForEntity("/api/characters/versions/"+released.version(),Map.class).getBody()).containsKey("characters");
-        var login = http.postForObject("/admin-api/v1/auth/login",Map.of("password","character-test-secret"),Map.class);
+        var login = com.millionnaire.gateway.admin.AdminTestLogin.login(http,"admin.test","character-test-secret");
         var h = new HttpHeaders(); h.setBearerAuth((String)login.get("token"));
         var stale = http.exchange("/admin-api/v1/characters/rollback",HttpMethod.POST,new HttpEntity<>(Map.of("version",0,"expectedVersion",released.version()),h),Map.class);
         assertThat(stale.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);

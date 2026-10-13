@@ -1,16 +1,17 @@
 <script setup>
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
-import { Orbit, Map, SlidersHorizontal, UsersRound, Megaphone, History, Search, Menu, X, Sun, Moon, LogOut, Sparkles, ChevronDown, ChevronRight, Check, Gamepad2 } from '@lucide/vue'
+import { Orbit, Map, SlidersHorizontal, UsersRound, Megaphone, History, Search, Menu, X, Sun, Moon, LogOut, Sparkles, ChevronDown, ChevronRight, Check, Gamepad2, ShieldCheck } from '@lucide/vue'
 import { groups, pageById } from '../admin/navigation.js'
+import { pageVisible, roleLabels } from '../admin/accessPolicy.js'
 import { useAdminPreferences } from '../admin/preferences.js'
 import BorderBeam from './effects/BorderBeam.vue'
 import AdminMascot from './AdminMascot.vue'
 import { usePageMotion } from '../admin/usePageMotion.js'
 const OrbEffect = defineAsyncComponent(() => import('./effects/Orb.vue'))
-const props = defineProps({ activePage: String, version: Number, dirty: Boolean, searchIndex: Object, celebration: Number, busy: Boolean, hasError: Boolean })
+const props = defineProps({ identity:Object, activePage: String, version: Number, dirty: Boolean, searchIndex: Object, celebration: Number, busy: Boolean, hasError: Boolean })
 const emit = defineEmits(['navigate', 'logout'])
-const icons = { Orbit, Map, SlidersHorizontal, UsersRound, Megaphone, History }
+const icons = { Orbit, Map, SlidersHorizontal, UsersRound, Megaphone, History, ShieldCheck }
 const { theme, motionLevel, motionEnabled, richMotion } = useAdminPreferences()
 const pageContent = ref(null)
 usePageMotion(pageContent, () => props.activePage)
@@ -18,7 +19,7 @@ const query = ref(''), mobileOpen = ref(false), collapsed = ref({}), paused = re
 const isMobile = ref(false)
 let mobileMedia
 const page = computed(() => pageById[props.activePage] || pageById.dashboard)
-const visibleGroups = computed(() => groups.map(group => ({ ...group, pages: group.pages.filter(([id, label, title, description]) => `${group.label}${label}${title}${description}${props.searchIndex?.[id] || ''}`.includes(query.value.trim())) })).filter(group => group.pages.length))
+const visibleGroups = computed(() => groups.map(group => ({ ...group, pages: group.pages.filter(([id, label, title, description]) => pageVisible(props.identity,id) && `${group.label}${label}${title}${description}${props.searchIndex?.[id] || ''}`.includes(query.value.trim())) })).filter(group => group.pages.length))
 function navigate(id) { emit('navigate', id); mobileOpen.value = false }
 function toggleTheme(event) {
   const change = () => { theme.value = theme.value === 'dark' ? 'light' : 'dark' }
@@ -54,7 +55,7 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', visibil
       <div class="sidebar-footer"><span class="status-dot" /><span>让下一局更有意思</span><Sparkles :size="14" /></div>
     </aside>
     <div class="admin-main">
-      <header class="admin-topbar"><div class="breadcrumbs"><button class="icon-button mobile-only" aria-label="打开导航" @click="mobileOpen = true"><Menu :size="20" /></button><span>{{ page.group }}</span><ChevronRight :size="12" /><strong>{{ page.label }}</strong></div><div class="topbar-actions"><span class="version-badge">{{ version === undefined ? '读取版本…' : version === 0 ? '内置默认' : '版本 #' + version }}</span><span v-if="dirty" class="draft-badge">有未发布修改</span><button class="icon-button" :aria-label="theme === 'dark' ? '切换浅色主题' : '切换深色主题'" @click="toggleTheme"><Sun v-if="theme === 'dark'" :size="18" /><Moon v-else :size="18" /></button><el-select v-model="motionLevel" class="motion-select" aria-label="动效偏好"><el-option label="丰富动效" value="rich" /><el-option label="标准动效" value="standard" /><el-option label="简化动效" value="reduced" /></el-select><button class="icon-button" aria-label="退出登录" @click="emit('logout')"><LogOut :size="17" /></button></div></header>
+      <header class="admin-topbar"><div class="breadcrumbs"><button class="icon-button mobile-only" aria-label="打开导航" @click="mobileOpen = true"><Menu :size="20" /></button><span>{{ page.group }}</span><ChevronRight :size="12" /><strong>{{ page.label }}</strong></div><div class="topbar-actions"><span class="version-badge">{{ version === undefined ? '读取版本…' : version === 0 ? '内置默认' : '版本 #' + version }}</span><span v-if="dirty" class="draft-badge">有未发布修改</span><button class="icon-button" :aria-label="theme === 'dark' ? '切换浅色主题' : '切换深色主题'" @click="toggleTheme"><Sun v-if="theme === 'dark'" :size="18" /><Moon v-else :size="18" /></button><el-select v-model="motionLevel" class="motion-select" aria-label="动效偏好"><el-option label="丰富动效" value="rich" /><el-option label="标准动效" value="standard" /><el-option label="简化动效" value="reduced" /></el-select><el-dropdown @command="navigate"><button class="admin-profile-button"><ShieldCheck :size="16" /><span>{{ identity?.user?.displayName }}<small> · {{ roleLabels[identity?.user?.role] }}</small></span><ChevronDown :size="12" /></button><template #dropdown><el-dropdown-menu><el-dropdown-item command="myPermissions">我的权限</el-dropdown-item><el-dropdown-item command="sessions">我的会话</el-dropdown-item><el-dropdown-item command="password">修改密码</el-dropdown-item></el-dropdown-menu></template></el-dropdown><button class="icon-button" aria-label="退出登录" @click="emit('logout')"><LogOut :size="17" /></button></div></header>
       <main class="admin-workspace">
         <div class="admin-hero"><div class="hero-aurora" aria-hidden="true" /><div class="hero-copy"><span class="eyebrow">MILLIONNAIRE / {{ page.group }}</span><Transition name="hero-title" mode="out-in"><div :key="page.id"><h1>{{ page.title }}</h1><p>{{ page.description }}</p></div></Transition><span class="hero-caption"><span class="status-dot" />{{ dirty ? '编辑中的修改，发布后才会生效' : '每一个小调整，都是下一局的新惊喜' }}</span></div><div class="hero-orb" aria-hidden="true"><OrbEffect v-if="richMotion" :enabled="!paused" :hue="18" background-color="#000000" /><div v-else class="orb-static" /></div><AdminMascot v-if="activePage === 'dashboard'" :busy="busy" :error="hasError" :success="celebration" /><BorderBeam /></div>
         <Transition name="page-enter" mode="out-in"><div :key="page.id" class="page-heading"><h2>{{ page.label }}</h2><span>{{ page.group }}</span></div></Transition>

@@ -73,13 +73,14 @@ class ConfigHistoryTest {
 
     @Test
     void historyEndpointRequiresAuthenticationAndPreservesLegacyListContract() throws Exception {
-        var controller = new AdminController(configs, mock(Dashboard.class), clock, "history-test-password");
-        MockMvc mvc = MockMvcBuilders.standaloneSetup(controller).build();
+        var policy=new com.millionnaire.gateway.admin.AdminPolicy();policy.setBootstrapUsername("admin.history");policy.setBootstrapPassword("history-test-password");policy.setBcryptStrength(4);policy.setAllowInMemory(true);
+        var authentication=new com.millionnaire.gateway.admin.AdminAuth(new com.millionnaire.gateway.admin.AdminStore(() -> null),clock,policy);
+        var first=authentication.login("admin.history","history-test-password","local","test","login");
+        var actor=authentication.authenticate("Bearer "+first.get("token"));authentication.changePassword(actor,"history-test-password","history-changed-password","change");
+        String auth="Bearer "+authentication.login("admin.history","history-changed-password","local","test","login").get("token");
+        var controller = new AdminController(configs, mock(Dashboard.class), authentication);
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new com.millionnaire.gateway.admin.AdminWeb.Errors()).build();
         mvc.perform(get("/admin-api/v1/config/history/page")).andExpect(status().isUnauthorized());
-        mvc.perform(post("/admin-api/v1/auth/login").contentType("application/json")
-                .content("{\"password\":\"history-test-password\"}")).andExpect(status().isOk());
-        var login = controller.login(new AdminController.Login("history-test-password"));
-        String auth = "Bearer " + login.getBody().get("token");
         assertThat(controller.history(auth).getBody()).isInstanceOf(List.class);
         var page = (ConfigHistory.Page) controller.historyPage(auth, 1, 20, "", "all", "active").getBody();
         assertThat(page.items()).extracting(ConfigHistory.Entry::configId).containsExactly(0L);

@@ -7,6 +7,7 @@ const props = defineProps({ loading: Boolean, error: String, success: Boolean })
 const emit = defineEmits(['submit', 'enter', 'clear-error'])
 const scene = ref(null)
 const passwordInput = ref(null)
+const username = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const focused = ref(false)
@@ -35,13 +36,14 @@ function clearError() {
 
 function submit() {
   if (busy.value) return
+  if (!username.value.trim()) { localError.value='请输入后台账号'; return }
   if (!password.value) {
-    localError.value = '请输入管理员密码'
+    localError.value = '请输入密码'
     passwordInput.value?.focus()
     return
   }
   clearError()
-  emit('submit', password.value)
+  emit('submit', {username:username.value.trim(),password:password.value})
 }
 
 watch([() => props.success, message, focused, showPassword], updateState)
@@ -86,22 +88,24 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="login-panel" aria-labelledby="login-title">
-      <div class="panel-top"><span>管理控制台</span><span class="access-badge"><span />管理员访问</span></div>
+      <div class="panel-top"><span>管理控制台</span><span class="access-badge"><span />独立账号访问</span></div>
       <div class="login-content">
         <div class="welcome-mark" aria-hidden="true">✦</div>
         <p class="welcome-label">WELCOME BACK</p>
         <h2 id="login-title">欢迎回来</h2>
         <p class="login-description">登录后台，让下一局更有意思。</p>
         <form class="login-form" @submit.prevent="submit" :aria-busy="busy">
-          <label for="admin-password">管理员密码</label>
+          <label for="admin-username">后台账号</label>
+          <div class="password-field username-field"><input id="admin-username" v-model="username" autocomplete="username" placeholder="请输入后台账号" maxlength="32" :disabled="busy" @input="clearError"></div>
+          <label for="admin-password">密码</label>
           <div class="password-field" :class="{ invalid: message }">
             <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /><path d="M12 14v3" /></svg>
-            <input id="admin-password" ref="passwordInput" v-model="password" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" placeholder="请输入管理员密码" :disabled="busy" :aria-invalid="!!message" aria-describedby="login-feedback" @focus="focused = true" @blur="focused = false" @input="clearError">
+            <input id="admin-password" ref="passwordInput" v-model="password" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" placeholder="请输入密码" :disabled="busy" :aria-invalid="!!message" aria-describedby="login-feedback" @focus="focused = true" @blur="focused = false" @input="clearError">
             <button class="password-toggle" type="button" :aria-label="showPassword ? '隐藏密码' : '显示密码'" :aria-pressed="showPassword" :disabled="busy" @click="showPassword = !showPassword">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /><path v-if="showPassword" d="m3 3 18 18" /></svg>
             </button>
           </div>
-          <p id="login-feedback" class="login-feedback" :class="{ 'has-error': message }" aria-live="polite">{{ props.success ? '登录成功，即将进入控制台' : message || '使用管理员密码安全访问' }}</p>
+          <p id="login-feedback" class="login-feedback" :class="{ 'has-error': message }" aria-live="polite">{{ props.success ? '登录成功，即将进入控制台' : message || '使用独立账号安全访问' }}</p>
           <button class="login-submit" type="submit" :disabled="busy">
             <span v-if="props.loading" class="spinner" aria-hidden="true" />
             <span>{{ props.success ? '登录成功' : props.loading ? '正在登录…' : '进入管理后台' }}</span>
@@ -147,7 +151,8 @@ onBeforeUnmount(() => {
 .welcome-label { margin: 0 0 14px; color: #9c9995; font-size: 10px; letter-spacing: 2.5px; }
 .login-content h2 { margin: 0 0 12px; font-size: 36px; font-weight: 700; letter-spacing: -1px; }
 .login-description { margin: 0; font-size: 13px; color: #9a9691; line-height: 1.8; }
-.login-form { margin-top: 43px; }
+.login-form { margin-top: 30px; }
+.username-field { margin-bottom:22px; }
 .login-form label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 11px; }
 .password-field { height: 54px; display: flex; align-items: center; border: 1px solid #e4e1dd; background: #faf9f7; border-radius: 12px; padding: 0 14px; transition: border-color .2s, box-shadow .2s; }
 .password-field:focus-within { border-color: #6b4eff; box-shadow: 0 0 0 3px #6b4eff12; }

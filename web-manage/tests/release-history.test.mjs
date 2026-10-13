@@ -23,7 +23,7 @@ test('version history filters are encoded safely and rollback to default is expl
   assert.equal(url.searchParams.get('q'),'夏季 & 100%');assert.equal(url.searchParams.get('page'),'4');assert.equal(url.searchParams.get('size'),'10')
   assert.equal(url.searchParams.get('type'),'rollback');assert.equal(url.searchParams.get('status'),'inactive')
   const rollback={configId:9,sourceConfigId:0,createdBy:'admin'}
-  assert.equal(publicationType(rollback),'回滚发布');assert.equal(sourceName(rollback),'内置默认配置');assert.equal(publisherName(rollback),'管理员')
+  assert.equal(publicationType(rollback),'回滚发布');assert.equal(sourceName(rollback),'内置默认配置');assert.equal(publisherName(rollback),'历史共享管理员')
   assert.equal(publicationType({configId:0}),'内置默认');assert.equal(sourceName({configId:8,sourceConfigId:2}),'版本 #2')
   assert.equal(publisherName({createdBy:'system'}),'系统');assert.equal(publisherName({createdBy:'other-user'}),'other-user')
 })

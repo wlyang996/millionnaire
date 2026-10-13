@@ -22,7 +22,9 @@ export const groups = [
   { id: 'announcement', label: '公告管理', icon: 'Megaphone', pages: [['announcement', '公告', '把下一份惊喜，告诉大家', '公告内容实时预览，发布后由游戏大厅读取。']] },
   { id: 'versions', label: '版本中心', icon: 'History', pages: [['history', '发布记录', '每次发布，都有清晰的落点', '按玩法对比历史差异，查看回滚摘要或载入编辑。']] },
 ]
+groups.push({id:'system',label:'系统管理',icon:'ShieldCheck',pages:[['accounts','后台账号','每个人，都有自己的通行证','独立账号、角色与状态统一管理。'],['roles','角色权限','权限范围，一眼就能看清','固定角色的能力与服务端校验一致。'],['audit','操作审计','每次改变，都有清晰记录','真实操作人、对象、结果与请求编号。']]})
 export const pages = groups.flatMap(group => group.pages.map(([id, label, title, description]) => ({ id, label, title, description, group: group.label, icon: group.icon })))
+pages.push(...[['sessions','我的会话','每次登录，都能由自己掌握','查看设备，撤销不再使用的会话。'],['password','修改密码','保护自己的通行证','改密后撤销全部会话，使用新密码重新登录。'],['myPermissions','我的权限','我的职责，一眼就能看清','当前角色的真实权限来自服务端。']].map(([id,label,title,description])=>({id,label,title,description,group:'个人账号',icon:'ShieldCheck'})))
 export const pageById = Object.fromEntries(pages.map(page => [page.id, page]))
 
 export function diffSettings(before, after, prefix = '') {
