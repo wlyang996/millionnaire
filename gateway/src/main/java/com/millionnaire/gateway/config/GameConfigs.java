@@ -126,6 +126,13 @@ public class GameConfigs {
         return out;
     }
 
+    public ConfigHistory.Page historyPage(ConfigHistory.Query query) {
+        long active = activeId();
+        JdbcTemplate db = jdbc.get();
+        return db == null ? ConfigHistory.memory(new ArrayList<>(memory.values()), defaultPublished(), active, query)
+                : ConfigHistory.database(db, defaultPublished(), active, query);
+    }
+
     /**
      * 校验并发布为新版本，立即生效。expectedActiveId 与当前生效版本不一致时拒绝（另一个人刚发布过）。
      */

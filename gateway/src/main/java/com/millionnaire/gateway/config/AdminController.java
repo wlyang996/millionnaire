@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -148,6 +149,18 @@ public class AdminController {
         check(auth);
         return configs.load(id).<ResponseEntity<?>>map(p -> ResponseEntity.ok(summary(p, true)))
                 .orElseGet(() -> error(HttpStatus.NOT_FOUND, "NOT_FOUND", "没有版本 #" + id));
+    }
+
+    /** Paginated metadata, keeping the original /config/history list contract intact. */
+    @GetMapping("/config/history/page")
+    public ResponseEntity<?> historyPage(@RequestHeader(value = "Authorization", required = false) String auth,
+                                        @RequestParam(defaultValue = "1") int page,
+                                        @RequestParam(defaultValue = "20") int size,
+                                        @RequestParam(defaultValue = "") String q,
+                                        @RequestParam(defaultValue = "all") String type,
+                                        @RequestParam(defaultValue = "all") String status) {
+        check(auth);
+        return ResponseEntity.ok(configs.historyPage(new ConfigHistory.Query(page, size, q, type, status)));
     }
 
     public record Rollback(Long configId, Long expectedActiveId) {

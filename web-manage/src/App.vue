@@ -9,9 +9,12 @@ import DashboardOverview from './components/DashboardOverview.vue'
 import RulePreview from './components/RulePreview.vue'
 import BoardPreview from './components/BoardPreview.vue'
 import VersionCenter from './components/VersionCenter.vue'
+import VersionDiff from './components/VersionDiff.vue'
 import BorderBeam from './components/effects/BorderBeam.vue'
-import { diffSettings, pageById, sectionForField } from './admin/navigation.js'
-import { fieldLabels, searchIndex } from './admin/fields.js'
+import { sectionForField } from './admin/navigation.js'
+import { searchIndex } from './admin/fields.js'
+import { compareVersions, versionName } from './admin/versionComparison.js'
+import { createReleaseReview } from './admin/releaseReview.js'
 import { motionEnabled } from './admin/preferences.js'
 import { rewardAmount } from './admin/ruleVisuals.js'
 
@@ -296,22 +299,35 @@ async function validate() {
 
 async function publish() {
   if (releaseBusy.value || !(await validate())) return
-  releaseNote.value = ''; releaseChanges.value=changes.value.map(change=>({...change})); releaseStage.value = 'review'; releaseOpen.value = true
+  releaseNote.value = ''; releaseStale.value=false; releaseReview.value=createReleaseReview(originalSettings.value,form.value,active.value.configId); releaseReviewKey.value++; releaseStage.value = 'review'; releaseOpen.value = true
 }
 async function confirmPublish() {
-  if (releaseBusy.value) return
+  if (releaseBusy.value || releaseStale.value || !releaseReview.value) return
   releaseBusy.value = true; releaseStage.value = 'validating'
   try {
-    if (!(await validate())) { releaseStage.value = 'invalid'; return }
+    const validation = await call('POST','/admin-api/v1/config/validate',releaseReview.value.settings)
+    errors.value=validation.errors
+    if (validation.errors.length) { releaseStage.value = 'invalid'; return }
     releaseStage.value = 'publishing'
-    const r = await call('POST', '/admin-api/v1/config/publish', { settings: form.value, note: releaseNote.value, expectedActiveId: active.value.configId })
+    const r = await call('POST', '/admin-api/v1/config/publish', { settings: releaseReview.value.settings, note: releaseNote.value, expectedActiveId: releaseReview.value.expectedActiveId })
     releaseStage.value = 'success'; celebrate(); ElMessage.success('已发布版本 #' + r.configId)
     await load()
   } catch (e) {
     releaseStage.value = 'failed'
-    if (e.status === 409) ElMessage.error(e.message + '（你的修改仍在编辑区）')
+    if (e.status === 409) { releaseStale.value=true; ElMessage.error(e.message + '（你的修改仍在编辑区）') }
     else fail(e)
   } finally { releaseBusy.value = false }
+}
+
+async function recheckRelease() {
+  if (releaseBusy.value) return
+  releaseBusy.value=true
+  try {
+    const current=await call('GET','/admin-api/v1/config/active')
+    releaseReview.value=createReleaseReview(fill(structuredClone(current.settings)),form.value,current.configId)
+    releaseReviewKey.value++; releaseStale.value=false; releaseStage.value='review'
+  } catch (e) { fail(e) }
+  finally { releaseBusy.value=false }
 }
 
 async function view(row) {
@@ -331,20 +347,11 @@ async function view(row) {
 const selectedTile = ref(0)
 const characterDirty = ref(false)
 const celebration = ref(0)
-const releaseOpen = ref(false), releaseBusy = ref(false), releaseNote = ref(''), releaseStage = ref('review'), releaseChanges = ref([])
+const releaseOpen = ref(false), releaseBusy = ref(false), releaseNote = ref(''), releaseStage = ref('review'), releaseReview = ref(null), releaseReviewKey = ref(0), releaseStale = ref(false)
 let celebrationTimer, validationTimer
 function celebrate() { celebration.value = Date.now(); clearTimeout(celebrationTimer); celebrationTimer = setTimeout(() => { celebration.value = 0 }, 1800) }
 const originalSettings = computed(() => { try { return JSON.parse(saved.value || '{}') } catch { return {} } })
-const changes = computed(() => diffSettings(originalSettings.value, form.value || {}))
-function changeName(change) {
-  const section = sectionForField(change.path)
-  const match = Object.entries(fieldLabels).find(([path]) => new RegExp('^' + path.replaceAll('.', '\\.').replaceAll('*', '[^.]+') + '$').test(change.path))
-  const label = match?.[1] || '配置项'
-  if (section === 'names') return '土地名称 · 第 ' + change.path.split('.').at(-1) + ' 格'
-  if (section === 'prices') { const index = Number(change.path.split('.')[1]); return (TIER_LABEL[form.value?.tiers?.[index]?.tier] || '车站') + ' · ' + label }
-  return (pageById[section]?.label || '配置') + ' · ' + label
-}
-function valueText(value) { return value === undefined ? '未设置' : typeof value === 'boolean' ? value ? '启用' : '关闭' : value === null ? '无' : String(value) }
+const changes = computed(() => compareVersions(originalSettings.value, form.value || {}).flatMap(group=>group.rows))
 const isConfigPage = computed(() => !['dashboard','characters','history'].includes(tab.value))
 const isBoardPage = computed(() => ['names','sets'].includes(tab.value))
 const parameterSearchIndex = computed(() => ({ ...searchIndex, events:searchIndex.events+' '+Object.values(EVENT_LABEL).join(' ')+' '+Object.values(CARD_LABEL).join(' '),timing:searchIndex.timing+' '+TIMING_FIELDS.map(field=>field[1]).join(' '),funTitles:searchIndex.funTitles+' '+Object.values(TITLE_LABEL).join(' '),cityEvents:searchIndex.cityEvents+' '+CITY_FIELDS.map(field=>field[1]).join(' ')+' '+Object.values(CITY_LABEL).join(' ') }))
@@ -638,14 +645,13 @@ onMounted(() => {
     </div>
     <section v-if="form && tab==='announcement'" class="announcement-preview surface"><span class="eyebrow">游戏大厅 · 公告预览</span><div class="notice-card" :class="{ muted: !form.announcement.enabled }"><strong>{{ form.announcement.title || '公告标题' }}</strong><p>{{ form.announcement.text || '编辑公告后，在这里预览游戏内展示内容。' }}</p><el-tag>{{ form.announcement.enabled ? '发布后展示' : '公告已关闭' }}</el-tag></div></section>
     <div v-if="form && isConfigPage" class="config-dock"><div><span class="status-dot" :class="{ clean: !dirty }" /><strong>{{ dirty ? '有未发布修改' : '配置与生效版本一致' }}</strong><small>{{ changes.length }} 项变更</small></div><div class="dock-actions"><el-button @click="useDefaults">填入默认值</el-button><el-button @click="discard">放弃修改</el-button><el-button @click="validate">校验</el-button><el-button type="primary" :disabled="loading" @click="publish">查看变更并发布</el-button></div><BorderBeam v-if="dirty" /></div>
-    <el-dialog v-model="releaseOpen" title="发布配置" width="min(720px, 94vw)" :close-on-click-modal="!releaseBusy" :close-on-press-escape="!releaseBusy" :show-close="!releaseBusy" append-to-body>
+    <el-dialog v-model="releaseOpen" title="发布配置" width="min(960px, 94vw)" class="version-dialog release-review-dialog" :close-on-click-modal="!releaseBusy" :close-on-press-escape="!releaseBusy" :show-close="!releaseBusy" append-to-body>
       <el-steps :active="releaseStage==='review' ? 0 : releaseStage==='validating' || releaseStage==='invalid' ? 1 : releaseStage==='publishing' ? 2 : 3" align-center finish-status="success"><el-step title="检查变更" /><el-step title="校验配置" /><el-step title="发布" /><el-step title="结果" /></el-steps>
       <p class="muted">新开的房间使用本次参数，进行中的对局保持原版本。</p>
-      <el-table v-if="releaseChanges.length" :data="releaseChanges" max-height="300"><el-table-column label="修改项" min-width="180"><template #default="{row}">{{ changeName(row) }}</template></el-table-column><el-table-column label="原值" min-width="120"><template #default="{row}">{{ valueText(row.before) }}</template></el-table-column><el-table-column label="新值" min-width="120"><template #default="{row}">{{ valueText(row.after) }}</template></el-table-column></el-table>
-      <p v-else>当前没有参数变化，发布将生成一个新的配置版本。</p>
+      <VersionDiff v-if="releaseReview" :key="releaseReviewKey" :groups="releaseReview.groups" :before-label="versionName({configId:releaseReview.expectedActiveId})+'（参考版本）'" after-label="本次待发布" empty-description="当前没有参数变化，发布将生成一个新的配置版本。" />
       <el-input v-model="releaseNote" type="textarea" :rows="2" maxlength="200" show-word-limit placeholder="这次改了什么（选填）" :disabled="releaseBusy || releaseStage==='success'" />
-      <el-alert v-if="releaseStage==='invalid'" type="error" title="校验未通过，关闭此窗口后修改页面上的错误" :closable="false" /><el-alert v-if="releaseStage==='failed'" type="error" title="发布失败，修改仍保留在编辑区，可重试" :closable="false" /><el-alert v-if="releaseStage==='success'" type="success" title="发布成功，生效版本已更新" :closable="false" />
-      <template #footer><el-button :disabled="releaseBusy" @click="releaseOpen=false">{{ releaseStage==='success'?'完成':'返回编辑' }}</el-button><el-button v-if="releaseStage!=='success'" type="primary" :loading="releaseBusy" @click="confirmPublish">{{ releaseStage==='validating'?'正在校验':releaseStage==='publishing'?'正在发布':'确认发布' }}</el-button></template>
+      <el-alert v-if="releaseStage==='invalid'" type="error" title="校验未通过，关闭此窗口后修改页面上的错误" :closable="false" /><el-alert v-if="releaseStage==='failed'" type="error" :title="releaseStale?'生效版本已更新，草稿仍保留。请重新核对生效版本，查看整份草稿相对新版本的差异后再确认。':'发布失败，修改仍保留在编辑区，可重试'" :closable="false" /><el-alert v-if="releaseStage==='success'" type="success" title="发布成功，生效版本已更新" :closable="false" />
+      <template #footer><el-button :disabled="releaseBusy" @click="releaseOpen=false">{{ releaseStage==='success'?'完成':'返回编辑' }}</el-button><el-button v-if="releaseStale" :loading="releaseBusy" @click="recheckRelease">重新核对生效版本</el-button><el-button v-if="releaseStage!=='success'" type="primary" :disabled="releaseStale" :loading="releaseBusy" @click="confirmPublish">{{ releaseStage==='validating'?'正在校验':releaseStage==='publishing'?'正在发布':'确认发布' }}</el-button></template>
     </el-dialog>
   </AdminShell>
 </template>
