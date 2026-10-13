@@ -33,7 +33,7 @@ public class CharacterController {
     public Map<String,Object> list(@RequestHeader(value="Authorization", required=false) String auth) {
         admin.check(auth);
         return Map.of("active", catalog.client(catalog.current()), "packs", catalog.packs(), "history", catalog.history().stream().map(CharacterCatalog.Catalog::version).toList(),
-                "storageReady", catalog.storageReady(), "persistent", catalog.persistent(), "slots", CharacterImages.SLOTS, "publishers", authentication.publishers("characters"));
+                "storageReady", catalog.storageReady(), "persistent", catalog.persistent(), "slots", CharacterImages.ALL_SLOTS, "motionSlots", CharacterImages.MOTION_SLOTS, "publishers", authentication.publishers("characters"));
     }
     @AdminAccess("character:write")
     @PostMapping("/admin-api/v1/characters/packs")

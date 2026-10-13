@@ -245,6 +245,9 @@ public final class LiveRoom {
      * 推送内容是最近 {@value #CHAT_KEEP} 条的完整列表，客户端直接替换即可（重连后也能补齐）。
      */
     public synchronized void chat(String playerId, String nickname, String raw) {
+        chat(playerId,nickname,raw,"UNCHECKED");
+    }
+    public synchronized String checkChat(String playerId,String raw) {
         if (closed) {
             throw new ClientException("ROOM_CLOSED", "room is closed");
         }
@@ -263,6 +266,12 @@ public final class LiveRoom {
         if (last != null && now - last < CHAT_MIN_GAP_MS) {
             throw new ClientException("TOO_FAST", "slow down");
         }
+        return text;
+    }
+    public synchronized void chat(String playerId,String nickname,String raw,String secStatus) {
+        if(!java.util.Set.of("PASS","UNCHECKED").contains(secStatus)) throw new ClientException("BAD_REQUEST","unapproved content");
+        String text=checkChat(playerId,raw);
+        long now=service.now();
         lastChatAt.put(playerId, now);
         chat.addLast(service.wire().object().put("from", playerId).put("nickname", nickname)
                 .put("text", text).put("at", now));
@@ -278,7 +287,7 @@ public final class LiveRoom {
         }
         chatNo++;
         try {
-            service.chatted(new GameRecords.ChatDraft(roomId, chatNo, Long.parseLong(playerId), text, now));
+            service.chatted(new GameRecords.ChatDraft(roomId, chatNo, Long.parseLong(playerId), text, now,secStatus));
         } catch (NumberFormatException e) {
             // 非数字的玩家 ID（不在用户表里）不入库
         }

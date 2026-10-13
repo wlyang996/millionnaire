@@ -5,6 +5,13 @@ import { bundledImage, bundledVisual, characterVisual } from '../src/admin/chara
 
 const slots = ['avatar', 'pawn', 'portrait', 'give', 'receive', 'worry', 'celebrate']
 const names = ['tangtang','keke','ajie','naicha','akai','yuanyuan','doudou','maomao']
+test('eight builtin characters provide four distinct movement preview frames',()=>{
+  for(let id=0;id<8;id++) {
+    const paths=['pawncrouch','pawnairborne','pawnland','pawnready'].map(slot=>bundledImage(id,slot));
+    assert.equal(new Set(paths).size,4);
+    for(const path of paths) assert.ok(fs.readFileSync(new URL('../public/'+path.replace('/admin/',''),import.meta.url)).length>24);
+  }
+})
 const source = fs.readFileSync(new URL('../../client/assets/scripts/ui/TeamPoseRegions.ts', import.meta.url), 'utf8')
 const sourceRegions = JSON.parse(source.slice(source.indexOf('=') + 1).trim().replace(/;\s*$/, ''))
 

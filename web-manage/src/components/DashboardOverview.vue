@@ -5,6 +5,7 @@ const AdminChart = defineAsyncComponent(() => import('./AdminChart.vue'))
 import SpotlightCard from './effects/SpotlightCard.vue'
 import NumberTicker from './effects/NumberTicker.vue'
 import { distributionRows } from '../admin/chartColors.js'
+import ContentSafetyStatus from './ContentSafetyStatus.vue'
 const props = defineProps({ data: Object, loading: Boolean, days: Number, labels: Object, miscLabels: Array })
 const emit = defineEmits(['refresh', 'update:days'])
 const metrics = [{ key: 'games', label: '对局数', unit: '局', icon: Gamepad2 }, { key: 'players', label: '参与玩家', unit: '人次', icon: UsersRound }, { key: 'newUsers', label: '新用户', unit: '人', icon: UserPlus }, { key: 'avgMinutes', label: '平均时长', unit: '分钟', icon: Timer, decimals: 1 }, { key: 'avgPlayers', label: '平均人数', unit: '人 / 局', icon: Users, decimals: 1 }]
@@ -15,6 +16,7 @@ const distributions = computed(() => [
 function distributionOption(rows) { return { legend: { type: 'scroll', bottom: 0 }, series: [{ type: 'pie', radius: ['45%', '68%'], center: ['50%', '43%'], label: { show: false }, emphasis: { label: { show: true, formatter: '{b}\n{d}%' } }, data: rows }] } }
 </script>
 <template>
+  <ContentSafetyStatus />
   <div class="dashboard-overview" v-loading="loading">
     <div class="section-toolbar"><el-radio-group :model-value="days" @update:model-value="emit('update:days', $event)"><el-radio-button v-for="n in [7,14,30]" :key="n" :value="n">近 {{ n }} 天</el-radio-button></el-radio-group><span class="muted" v-if="data">{{ data.from }} ～ {{ data.to }}（北京时间）</span><el-button :loading="loading" @click="emit('refresh')"><RefreshCw :size="14" />刷新</el-button></div>
     <el-alert v-if="data && !data.dbEnabled" title="后台未连接数据库，暂无可统计的数据" type="warning" :closable="false" />

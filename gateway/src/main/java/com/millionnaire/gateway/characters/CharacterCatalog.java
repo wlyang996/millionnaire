@@ -119,7 +119,13 @@ public class CharacterCatalog {
     }
     public Catalog publish(String id, int revision, long expectedVersion) {
         Pack verified = editable(id, revision);
-        if (!verified.character().images().keySet().equals(new HashSet<>(CharacterImages.SLOTS))) throw bad("必须上传完整七项素材才可发布");
+        var images = verified.character().images();
+        if (!images.keySet().containsAll(CharacterImages.SLOTS) || !CharacterImages.ALL_SLOTS.containsAll(images.keySet())) throw bad("必须上传完整七项基础素材才可发布");
+        if (CharacterImages.MOTION_SLOTS.stream().anyMatch(images::containsKey)) {
+            if (!images.keySet().containsAll(CharacterImages.MOTION_SLOTS)) throw bad("移动动作须完整上传蓄力、腾空、落地和准备四张，不能混用其他人物");
+            var pawn = images.get("pawn");
+            if (CharacterImages.MOTION_SLOTS.stream().map(images::get).anyMatch(a -> a.width() != pawn.width() || a.height() != pawn.height())) throw bad("四张移动姿态须与棋盘棋子使用相同画布尺寸，人物脚底位置须在预览中对齐");
+        }
         // COS IO must not hold the catalog monitor or database row lock used by active rooms.
         for (var e : verified.character().images().entrySet()) {
             var check = CharacterImages.inspect(e.getKey(), objects.get(e.getValue().key()));
@@ -167,7 +173,7 @@ public class CharacterCatalog {
         out.add(defaults()); return out;
     }
     public byte[] image(String packId, String slot, boolean draftAllowed) {
-        if (!CharacterImages.SLOTS.contains(slot)) throw missing();
+        if (!CharacterImages.ALL_SLOTS.contains(slot)) throw missing();
         Pack p = pack(packId);
         if (!draftAllowed && !p.published()) throw missing();
         Asset a = p.character().images().get(slot);

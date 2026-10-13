@@ -1,0 +1,112 @@
+[
+  {
+    "id": "dice",
+    "name": "01-骰子轻碰",
+    "file": "01-骰子轻碰.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 615,
+    "sha256": "5b0f1f507787e040fde4dccc2612eb173942bc4e9ac4d8fdd68fb7f422d14ac3",
+    "peakDbfs": -9
+  },
+  {
+    "id": "move",
+    "name": "02-棋子落地",
+    "file": "02-棋子落地.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 185,
+    "sha256": "f81746550a530c4b4a934228bd87e21bc1bd537cc335a5616760f50cea0e03dd",
+    "peakDbfs": -9
+  },
+  {
+    "id": "cashGain",
+    "name": "03-收入金币",
+    "file": "03-收入金币.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 490,
+    "sha256": "66eee4f55c38f88eff888599585543721ac195896297d3704427e484469bb88f",
+    "peakDbfs": -9
+  },
+  {
+    "id": "cashLoss",
+    "name": "04-支付金币",
+    "file": "04-支付金币.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 520,
+    "sha256": "b8e626113668dd1edcebd848480eec213b074eae98fb1aef0cb207b04eab61c1",
+    "peakDbfs": -9
+  },
+  {
+    "id": "card",
+    "name": "05-翻牌",
+    "file": "05-翻牌.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 315,
+    "sha256": "4fa91a2446a57f946983413ecf6f69cee677cfa0ec23ffb8b69bc4b308513bce",
+    "peakDbfs": -9
+  },
+  {
+    "id": "purchase",
+    "name": "06-购买成功",
+    "file": "06-购买成功.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 565,
+    "sha256": "127d9a50f59375457982f9009298bfbc9d8fa65dc11dfd0997b3ec9acd93ca7f",
+    "peakDbfs": -9
+  },
+  {
+    "id": "upgrade",
+    "name": "07-升级成功",
+    "file": "07-升级成功.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 550,
+    "sha256": "b4cc315a67313dae063616e1379bdcfa27c3d3785a1efa880b466041335c5f5f",
+    "peakDbfs": -9
+  },
+  {
+    "id": "auction",
+    "name": "08-拍卖落槌",
+    "file": "08-拍卖落槌.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 315,
+    "sha256": "2ceae9598aa063547e6a175a2e69680d78996e5be6473397267119e842e2fea8",
+    "peakDbfs": -9
+  },
+  {
+    "id": "jail",
+    "name": "09-入狱提示",
+    "file": "09-入狱提示.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 765,
+    "sha256": "e3dcf394adf0936a507d81c1d46f05c48a65ac2934920289bde39e96ea0f8bd2",
+    "peakDbfs": -9
+  },
+  {
+    "id": "release",
+    "name": "10-出狱提示",
+    "file": "10-出狱提示.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 625,
+    "sha256": "a15c79072beec4147ab40a194c2e5f9b768f887971b18403abad7e175322bc6e",
+    "peakDbfs": -9
+  },
+  {
+    "id": "reward",
+    "name": "11-全员奖励",
+    "file": "11-全员奖励.wav",
+    "status": "pending-user-review",
+    "source": "original-procedural-synthesis",
+    "durationMs": 815,
+    "sha256": "46f94d72d590fde3c02fc0bf770003b179be966421d0848ade814f2d97201a43",
+    "peakDbfs": -9
+  }
+]

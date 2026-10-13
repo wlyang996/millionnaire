@@ -51,10 +51,13 @@ public class GameSocketHandler extends TextWebSocketHandler {
     private final Clock clock;
     private final boolean testLoginEnabled;
     private final Presence presence;
+    private final com.millionnaire.gateway.safety.ContentSafety safety;
 
     public GameSocketHandler(RoomService rooms, UserStore users, SessionTokens tokens, Sockets sockets, Wire wire,
                              Clock clock, Presence presence,
-                             @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled) {
+                             @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled,
+                             com.millionnaire.gateway.safety.ContentSafety safety) {
+        this.safety=safety;
         this.testLoginEnabled = testLoginEnabled;
         this.presence = presence;
         this.rooms = rooms;
@@ -108,7 +111,9 @@ public class GameSocketHandler extends TextWebSocketHandler {
                 case "CHAT" -> {
                     LiveRoom room = rooms.roomOf(user.playerId())
                             .orElseThrow(() -> new ClientException("NOT_IN_ROOM", "join or create a room first"));
-                    room.chat(user.playerId(), user.nickname(), text(msg, "text"));
+                    String normalized=room.checkChat(user.playerId(),text(msg,"text"));
+                    var checked=safety.chat(user.id(),normalized); // Network IO outside the room monitor.
+                    room.chat(user.playerId(), user.nickname(), normalized,checked.status());
                     if (requestId != null) {
                         sockets.sendTo(session, wire.write(result(requestId, "ACCEPTED", null, room.code())));
                     }

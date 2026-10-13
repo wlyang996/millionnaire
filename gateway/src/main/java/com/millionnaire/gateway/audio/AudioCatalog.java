@@ -31,6 +31,8 @@ public class AudioCatalog {
     private final Clock clock;
     private final ObjectMapper json = new ObjectMapper();
     private final Map<String, Asset> builtin = new LinkedHashMap<>(), localAssets = new LinkedHashMap<>();
+    private final Set<String> candidates = new HashSet<>();
+    private final Map<String,String> candidateBindings = new LinkedHashMap<>();
     private final Set<String> localPublished = new HashSet<>();
     private final Map<Long, Release> localHistory = new LinkedHashMap<>();
     private long active = 0, next = 1;
@@ -42,6 +44,12 @@ public class AudioCatalog {
     public AudioCatalog(Supplier<JdbcTemplate> jdbc, AudioObjectStore objects, Clock clock) {
         this.jdbc = jdbc; this.objects = objects; this.clock = clock;
         addBuiltin("morning-town", "晨光小镇"); addBuiltin("friends-play", "好友开局");
+        Map<String,String> names=Map.ofEntries(Map.entry("dice","骰子轻碰"),Map.entry("move","棋子落地"),Map.entry("cashGain","收入金币"),Map.entry("cashLoss","支付金币"),Map.entry("card","翻牌"),Map.entry("purchase","购买成功"),Map.entry("upgrade","升级成功"),Map.entry("auction","拍卖落槌"),Map.entry("jail","入狱提示"),Map.entry("release","出狱提示"),Map.entry("reward","全员奖励"));
+        for(String effect:EFFECTS.stream().sorted().toList()) {
+            String key="audio/effects/cue-"+effect+"-v1.wav";
+            String id=UUID.nameUUIDFromBytes(key.getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
+            candidateBindings.put(effect,id);candidates.add(id);builtin.put(id,new Asset(id,names.get(effect),"effect",key,AudioFiles.inspect(bundled(key)),true,0));
+        }
     }
     private void addBuiltin(String id, String name) {
         String key = "audio/" + id + "-v1.wav";
@@ -76,7 +84,7 @@ public class AudioCatalog {
     }
     public synchronized List<Asset> assets() {
         var out = new ArrayList<>(builtin.values()); var t = jdbc.get();
-        out.addAll(t == null ? localAssets.values() : t.query("SELECT payload FROM audio_asset ORDER BY created_at DESC", (rs, i) -> read(rs.getString(1), Asset.class)));
+        out.addAll((t == null ? localAssets.values().stream() : t.query("SELECT payload FROM audio_asset ORDER BY created_at DESC", (rs, i) -> read(rs.getString(1), Asset.class)).stream()).filter(a->!builtin.containsKey(a.id())).toList());
         return out;
     }
     private Asset asset(String id) {
@@ -137,12 +145,12 @@ public class AudioCatalog {
         return bytes;
     }
     private boolean published(Asset a) {
-        if (a.builtin()) return true;
+        if (a.builtin() && !candidates.contains(a.id())) return true;
         var t = jdbc.get();
-        return t == null ? localPublished.contains(a.id()) : t.queryForObject("SELECT published FROM audio_asset WHERE asset_id=?", Integer.class, a.id()) == 1;
+        return t == null ? localPublished.contains(a.id()) : t.queryForList("SELECT published FROM audio_asset WHERE asset_id=?", Integer.class, a.id()).stream().anyMatch(v->v==1);
     }
     public synchronized Map<String, Object> admin() {
-        return Map.of("current", current(), "draft", draft(), "assets", assets(), "history", history(), "storageReady", storageReady(), "persistent", persistent());
+        return Map.of("current", current(), "draft", draft(), "assets", assets(), "history", history(), "storageReady", storageReady(), "persistent", persistent(),"candidateIds",candidates.stream().filter(id->!published(asset(id))).toList(),"candidateBindings",Map.copyOf(candidateBindings));
     }
     /** Management read permission exposes the active release, never unpublished resources or drafts. */
     public synchronized Map<String, Object> published() {
@@ -187,6 +195,9 @@ public class AudioCatalog {
         else {
             t.update("UPDATE audio_catalog SET payload=? WHERE version_id=?", write(r), version);
             for (String id : referenced(s)) if (!builtin.containsKey(id)) t.update("UPDATE audio_asset SET published=1 WHERE asset_id=?", id);
+            for(String id:referenced(s)) if(candidates.contains(id) && t.update("UPDATE audio_asset SET published=1 WHERE asset_id=?",id)==0) {
+                t.update("INSERT INTO audio_asset (asset_id,payload,published,created_at) VALUES (?,?,1,?)",id,write(asset(id)),clock.millis());
+            }
             t.update("UPDATE audio_active SET version_id=? WHERE slot='default'", version);
         }
         storeDraft(new Draft(version, revision + 1, s)); return r;

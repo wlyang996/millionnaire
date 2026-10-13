@@ -6,7 +6,7 @@
  * - 每张图 20 秒超时、失败重试一次，单张图卡住不会让整个游戏卡在加载页。
  */
 import { Node, Rect, Size, Vec2, resources, Sprite, SpriteFrame, assetManager, ImageAsset, Texture2D } from 'cc';
-import { CHARACTER_SLOTS, CharacterCatalog, CharacterEntry, CharacterSlot, defaultCharacterCatalog, validateCharacterCatalog } from '../core/CharacterCatalog';
+import { characterSlots, CharacterCatalog, CharacterEntry, CharacterSlot, defaultCharacterCatalog, validateCharacterCatalog } from '../core/CharacterCatalog';
 import { ART_PATHS } from './ArtCatalog';
 import { mk, setOpacity } from './Kit';
 
@@ -18,7 +18,7 @@ const characters = ['tangtang', 'keke', 'ajie', 'naicha', 'akai', 'yuanyuan', 'd
 let characterCatalog = defaultCharacterCatalog();
 let characterBaseUrl = '';
 let characterRevision = 0;
-const remotePacks = new Map<string, Record<CharacterSlot, string>>();
+const remotePacks = new Map<string, Partial<Record<CharacterSlot, string>>>();
 const remotePending = new Set<string>();
 const remoteFailures = new Set<string>();
 const remoteQueue: CharacterEntry[] = [];
@@ -44,9 +44,10 @@ export function characterFallback(idx: number): number {
 export function managedCharacterKey(idx: number, slot: CharacterSlot): string | null {
     const entry = characterCatalog.characters.find(c => c.id === idx);
     if (!entry || entry.bundled) return null;
-    const identity = characterBaseUrl + ':' + CHARACTER_SLOTS.map(s => entry.images[s]!.url).join('|');
+    if (!entry.images[slot]) return null;
+    const identity = characterBaseUrl + ':' + characterSlots(entry).map(s => entry.images[s]!.url).join('|');
     const ready = remotePacks.get(identity);
-    if (ready) return ready[slot];
+    if (ready) return ready[slot] ?? null;
     if (!remotePending.has(identity) && !remoteFailures.has(identity)) {
         remotePending.add(identity);
         remoteQueue.push(entry);
@@ -59,10 +60,11 @@ async function pumpCharacters(): Promise<void> {
     remoteBusy = true;
     const entry = remoteQueue.shift()!;
     const base = characterBaseUrl;
-    const identity = base + ':' + CHARACTER_SLOTS.map(s => entry.images[s]!.url).join('|');
+    const slots = characterSlots(entry);
+    const identity = base + ':' + slots.map(s => entry.images[s]!.url).join('|');
     const pending: { key: string; frame: SpriteFrame }[] = [];
     try {
-        for (const slot of CHARACTER_SLOTS) {
+        for (const slot of slots) {
             const a = entry.images[slot]!;
             const image = await new Promise<ImageAsset>((resolve, reject) => {
                 let expired = false;
@@ -78,8 +80,8 @@ async function pumpCharacters(): Promise<void> {
             const frame = new SpriteFrame(); frame.texture = texture;
             pending.push({ key: 'managed_' + a.sha256 + '_' + slot, frame });
         }
-        const keys = {} as Record<CharacterSlot, string>;
-        CHARACTER_SLOTS.forEach((slot, i) => { keys[slot] = pending[i].key; frames.set(pending[i].key, pending[i].frame); });
+        const keys: Partial<Record<CharacterSlot, string>> = {};
+        slots.forEach((slot, i) => { keys[slot] = pending[i].key; frames.set(pending[i].key, pending[i].frame); });
         remotePacks.set(identity, keys);
         characterRevision++;
         onArrived?.();

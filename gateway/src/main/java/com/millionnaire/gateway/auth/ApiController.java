@@ -36,9 +36,12 @@ public class ApiController {
     private final GameRecords records;
     private final WechatAuth wechat;
     private final Wire wire;
+    private final com.millionnaire.gateway.safety.ContentSafety safety;
 
     public ApiController(UserStore users, SessionTokens tokens, RoomService rooms, GameRecords records, WechatAuth wechat,
-                         Wire wire, @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled) {
+                         Wire wire, @Value("${millionnaire.auth.test-login-enabled:true}") boolean testLoginEnabled,
+                         com.millionnaire.gateway.safety.ContentSafety safety) {
+        this.safety=safety;
         this.wire = wire;
         this.wechat = wechat;
         this.records = records;
@@ -62,6 +65,7 @@ public class ApiController {
         if (nickname == null || !rooms.validNickname(nickname)) {
             return error(HttpStatus.BAD_REQUEST, "INVALID_NICKNAME");
         }
+        safety.nickname(null,nickname);
         User user = users.create(nickname, body.avatar() == null ? -1 : body.avatar());
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("token", tokens.issue(user.id()));
@@ -102,6 +106,7 @@ public class ApiController {
             return error(HttpStatus.BAD_REQUEST, "INVALID_NICKNAME");
         }
         boolean hasNick = nickname != null && !nickname.isEmpty();
+        if (hasNick) safety.nickname(openid.get(),nickname);
         int avatar = body.avatar() == null ? -1 : body.avatar();
         Optional<User> found = users.findByOpenid(wechat.appId(), openid.get());
         User user;
@@ -130,7 +135,14 @@ public class ApiController {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("wechat", wechat.configured());
         out.put("test", testLoginEnabled);
+        out.put("contentSafety",safety.enabled());
         return out;
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(com.millionnaire.gateway.room.ClientException.class)
+    public ResponseEntity<?> clientFailure(com.millionnaire.gateway.room.ClientException error) {
+        var status=error.code().equals("CONTENT_CHECK_UNAVAILABLE")?HttpStatus.SERVICE_UNAVAILABLE:HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status).body(Map.of("code",error.code(),"message",error.getMessage()));
     }
 
     @GetMapping("/me")

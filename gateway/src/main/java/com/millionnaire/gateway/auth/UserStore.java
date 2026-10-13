@@ -149,6 +149,13 @@ public class UserStore {
         return s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
+    /** Only trusted persisted identities can be used for provider content checks. */
+    public Optional<String> openid(long userId, String appId) {
+        JdbcTemplate t=jdbc.getIfAvailable();
+        if(t==null) return identities.entrySet().stream().filter(e->e.getValue()==userId && e.getKey().startsWith(appId+'\n')).map(e->e.getKey().substring(appId.length()+1)).findFirst();
+        return t.query("SELECT open_id FROM wx_identity WHERE user_id=? AND app_id=?",(rs,i)->new String(rs.getBytes(1),java.nio.charset.StandardCharsets.UTF_8),userId,bytes(appId)).stream().findFirst();
+    }
+
     public Optional<User> find(long id) {
         User cached = cache.get(id);
         if (cached != null) {

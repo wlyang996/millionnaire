@@ -144,3 +144,5 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 
 - [38-声音设置-开关与音量.png](38-声音设置-开关与音量.png)：用户已批准布局，接入音乐/音效独立开关与音量、本机自动保存和恢复默认。
 - [原稿与提示词](ui/audio-settings-v1/README.md)、[实施与验证](records/audio-integration-2026-10-13.md)。后台可上传 PCM WAV、试听、保存草稿、场景绑定、发布及历史回滚；独立音效尚无采用素材，默认不播放。未部署，微信真机待验收。
+
+2026-10-13：新增[11项独立音效候选](audio/effects-candidates-v1/README.md)，仍待用户采用；人物四帧管理与内容检测实际记录见[统一交付记录](records/features-2354-2026-10-13/交付记录.md)。

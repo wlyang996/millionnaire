@@ -95,7 +95,8 @@ public class GameRecords {
     }
 
     /** 一条聊天：msgNo 为房间内从 1 递增的序号。 */
-    public record ChatDraft(long roomId, int msgNo, long senderUserId, String content, long createdAt) {
+    public record ChatDraft(long roomId, int msgNo, long senderUserId, String content, long createdAt, String secStatus) {
+        public ChatDraft(long roomId,int msgNo,long senderUserId,String content,long createdAt) {this(roomId,msgNo,senderUserId,content,createdAt,"UNCHECKED");}
     }
 
     /** "我的最近 20 局"的一行。 */
@@ -240,7 +241,7 @@ public class GameRecords {
         }
     }
 
-    /** 同步保存一条聊天（写线程与测试用）。内容安全检测尚未接入，记为 UNCHECKED。 */
+    /** 保存广播前获得的检测结果；关闭检测的本地环境仍明确记为 UNCHECKED。 */
     void saveChat(ChatDraft d) {
         JdbcTemplate t = jdbc.get();
         if (t == null) {
@@ -248,8 +249,8 @@ public class GameRecords {
         }
         try {
             t.update("INSERT INTO chat_message (room_id, msg_no, sender_user_id, content, sec_status, hold_until,"
-                            + " sender_live, created_at) VALUES (?, ?, ?, ?, 'UNCHECKED', NULL, 1, ?)",
-                    d.roomId(), d.msgNo(), d.senderUserId(), d.content(), d.createdAt());
+                            + " sender_live, created_at) VALUES (?, ?, ?, ?, ?, NULL, 1, ?)",
+                    d.roomId(), d.msgNo(), d.senderUserId(), d.content(), d.secStatus(), d.createdAt());
         } catch (DuplicateKeyException e) {
             log.info("chat room {} #{} already saved", d.roomId(), d.msgNo());
         }

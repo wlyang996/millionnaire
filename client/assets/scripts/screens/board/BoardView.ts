@@ -14,7 +14,7 @@ import { col, fillCircle, fillPoly, fillRR, gfx, line, mk, place, setOpacity, st
 import { avatar } from '../../ui/Widgets';
 import { drawEventDeck } from './EventDeck';
 import { groupColor, groupOf } from '../../core/SetBonus';
-import { art, artRatio, characterKey } from '../../ui/Art';
+import { art, artRatio, characterKey, managedCharacterKey } from '../../ui/Art';
 
 export interface CamState { scale: number; vx: number; vy: number; follow: boolean; boardId: string }
 
@@ -707,7 +707,10 @@ export class BoardView {
 
     /** 切换姿态帧：按站立立绘的人物高度缩放画布，脚底对齐支点；素材未到时保持站立立绘。 */
     private showPose(tk: Token, pose: Pose | null): void {
-        if (tk.avatar === ROBOT_AVATAR || tk.avatar >= 9 || characterKey(tk.avatar, true).startsWith('managed_') || tk.pose === pose) return;
+        if (tk.avatar === ROBOT_AVATAR || tk.pose === pose) return;
+        const managed = characterKey(tk.avatar, true).startsWith('managed_');
+        if (managed && pose && !managedCharacterKey(tk.avatar, 'pawn' + pose as 'pawncrouch' | 'pawnairborne' | 'pawnland' | 'pawnready')) return;
+        if (!managed && tk.avatar >= 9) return;
         if (pose && !tk.poses) {
             const name = characterKey(tk.avatar, true);
             const poses = new Map<Pose, Node>();
@@ -718,7 +721,8 @@ export class BoardView {
             const cw = POSE_CANVAS.w * scale;
             const chh = POSE_CANVAS.h * scale;
             for (const ps of ['crouch', 'airborne', 'land', 'ready'] as Pose[]) {
-                const n = art(tk.body, name + '_' + ps, -cw / 2, -(POSE_CANVAS.feet * scale + feetUp), cw, chh, 'stretch');
+                const key = managed ? managedCharacterKey(tk.avatar, 'pawn' + ps as 'pawncrouch' | 'pawnairborne' | 'pawnland' | 'pawnready') : name + '_' + ps;
+                const n = key ? (managed ? art(tk.body, key, -tk.s / 2, -tk.s * 1.5, tk.s, tk.s * 1.5, 'contain', false, { bottom: true }) : art(tk.body, key, -cw / 2, -(POSE_CANVAS.feet * scale + feetUp), cw, chh, 'stretch')) : null;
                 if (!n) return; // 姿态帧还没加载完：本次仍用站立立绘
                 n.active = false;
                 poses.set(ps, n);

@@ -9,6 +9,20 @@ import java.util.*;
 import org.junit.jupiter.api.Test;
 
 class AudioCatalogTest {
+    @Test void candidatesRemainPrivateAndSilentUntilExplicitPublication() {
+        var c=new AudioCatalog(()->null,new Objects(),Clock.systemUTC());
+        var candidate=c.assets().stream().filter(a->a.kind().equals("effect")).findFirst().orElseThrow();
+        assertThat(c.assets().stream().filter(a->a.kind().equals("effect"))).hasSize(11);
+        assertThat(c.current().settings().effectsEnabled()).isFalse();
+        assertThatThrownBy(()->c.bytes(candidate.id(),false)).hasMessageContaining("不存在");
+        assertThat(c.bytes(candidate.id(),true)).isNotEmpty();
+        var s=c.current().settings();var bindings=new HashMap<>(s.effects());bindings.put("dice",candidate.id());
+        var draft=c.save(new AudioCatalog.Settings(true,30,true,65,400,s.scenes(),bindings),0,0);
+        assertThatThrownBy(()->c.bytes(candidate.id(),false)).hasMessageContaining("不存在");
+        c.publish(draft.revision(),0);assertThat(c.bytes(candidate.id(),false)).isNotEmpty();
+        c.rollback(0,c.current().version(),c.draft().revision());assertThat(c.current().settings().effectsEnabled()).isFalse();
+        assertThat(c.bytes(candidate.id(),false)).isNotEmpty(); // Prior releases retain immutable resources.
+    }
     static class Objects implements AudioObjectStore {
         final Map<String, byte[]> data = new HashMap<>(); boolean fail;
         public boolean ready() { return true; }
@@ -34,7 +48,7 @@ class AudioCatalogTest {
     }
     @Test void uploadDraftPublishAndRollbackKeepOldAssetsAndProtectUnpublished() {
         var o = new Objects(); var c = new AudioCatalog(() -> null, o, Clock.systemUTC());
-        assertThat(c.assets()).extracting(AudioCatalog.Asset::id).containsExactly("morning-town", "friends-play");
+        assertThat(c.assets().stream().filter(a->a.kind().equals("music"))).extracting(AudioCatalog.Asset::id).containsExactly("morning-town", "friends-play");
         var a = c.upload("新背景", "music", wav());
         assertThatThrownBy(() -> c.bytes(a.id(), false)).hasMessageContaining("不存在");
         var s = c.current().settings(); var scenes = new HashMap<>(s.scenes()); scenes.put("board", new AudioCatalog.Binding(a.id(),true));
@@ -52,7 +66,7 @@ class AudioCatalogTest {
     @Test void failedUploadOrReadbackNeverActivatesCorruptAssetsAndKindsStaySeparate() {
         var o = new Objects(); var c = new AudioCatalog(() -> null,o,Clock.systemUTC());
         o.fail = true; assertThatThrownBy(() -> c.upload("失败", "music", wav())).hasMessageContaining("test");
-        assertThat(c.assets()).hasSize(2); o.fail = false;
+        assertThat(c.assets().stream().filter(a->!a.builtin())).isEmpty(); o.fail = false;
         var a = c.upload("独立音效", "effect", wav());
         var s = c.current().settings(); var scenes = new HashMap<>(s.scenes()); scenes.put("board",new AudioCatalog.Binding(a.id(),true));
         assertThatThrownBy(() -> c.save(new AudioCatalog.Settings(true,30,true,65,0,scenes,s.effects()),0,0)).hasMessageContaining("背景音乐");

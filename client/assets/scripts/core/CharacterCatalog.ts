@@ -1,6 +1,10 @@
 /** Stable identities: 0..7 bundled, 8 robot, 9..998 managed. No Cocos dependency. */
 export const CHARACTER_SLOTS = ['avatar', 'pawn', 'portrait', 'give', 'receive', 'worry', 'celebrate'] as const;
-export type CharacterSlot = typeof CHARACTER_SLOTS[number];
+export const CHARACTER_MOTION_SLOTS = ['pawncrouch', 'pawnairborne', 'pawnland', 'pawnready'] as const;
+export type CharacterSlot = typeof CHARACTER_SLOTS[number] | typeof CHARACTER_MOTION_SLOTS[number];
+export function characterSlots(entry: CharacterEntry): CharacterSlot[] {
+    return [...CHARACTER_SLOTS, ...CHARACTER_MOTION_SLOTS.filter(s => !!entry.images?.[s])];
+}
 export interface CharacterImage { url: string; sha256: string; width: number; height: number }
 export interface CharacterEntry {
     id: number; name: string; sort: number; enabled: boolean; fallback: number; bundled: boolean;
@@ -20,7 +24,10 @@ export function validateCharacterCatalog(c: CharacterCatalog): boolean {
             || typeof e.enabled !== 'boolean' || typeof e.bundled !== 'boolean' || !Number.isInteger(e.fallback) || e.fallback < 0 || e.fallback > 7) return false;
         ids.add(e.id);
         if (e.bundled) return e.id < 8;
-        return CHARACTER_SLOTS.every(slot => {
+        const moving = CHARACTER_MOTION_SLOTS.some(s => !!e.images?.[s]);
+        if (moving && !CHARACTER_MOTION_SLOTS.every(s => !!e.images?.[s] && e.images[s]!.width === e.images.pawn?.width && e.images[s]!.height === e.images.pawn?.height)) return false;
+        if (Object.keys(e.images ?? {}).some(s => ![...CHARACTER_SLOTS, ...CHARACTER_MOTION_SLOTS].includes(s as CharacterSlot))) return false;
+        return characterSlots(e).every(slot => {
             const a = e.images?.[slot];
             return !!a && /^\/api\/characters\/assets\/[0-9a-f-]{36}\/[a-z]+\.png$/.test(a.url)
                 && /^[0-9a-f]{64}$/.test(a.sha256) && Number.isInteger(a.width) && Number.isInteger(a.height)

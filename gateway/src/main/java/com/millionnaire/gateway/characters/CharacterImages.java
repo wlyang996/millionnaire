@@ -10,10 +10,12 @@ import javax.imageio.ImageIO;
 /** Decode bounded PNGs before accepting them into an immutable character pack. */
 public final class CharacterImages {
     public static final List<String> SLOTS = List.of("avatar", "pawn", "portrait", "give", "receive", "worry", "celebrate");
+    public static final List<String> MOTION_SLOTS = List.of("pawncrouch", "pawnairborne", "pawnland", "pawnready");
+    public static final List<String> ALL_SLOTS = java.util.stream.Stream.concat(SLOTS.stream(), MOTION_SLOTS.stream()).toList();
     public static final int MAX_BYTES = 5 * 1024 * 1024;
     public record Info(int width, int height, String sha256, int bytes) {}
     public static Info inspect(String slot, byte[] bytes) {
-        if (!SLOTS.contains(slot)) throw bad("未知素材项目");
+        if (!ALL_SLOTS.contains(slot)) throw bad("未知素材项目");
         if (bytes == null || bytes.length < 24 || bytes.length > MAX_BYTES) throw bad("每张图片须为 PNG，且不超过 5MB");
         try (var in = ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
             var readers = ImageIO.getImageReaders(in);

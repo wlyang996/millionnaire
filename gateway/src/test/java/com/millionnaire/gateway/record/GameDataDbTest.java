@@ -86,5 +86,7 @@ class GameDataDbTest {
                 .isEqualTo("你好");
         assertThat(jdbc.queryForObject("SELECT sec_status FROM chat_message WHERE room_id = 7002 AND msg_no = 1", String.class))
                 .isEqualTo("UNCHECKED");
+        records.saveChat(new GameRecords.ChatDraft(7002,2,9001,"已检测",11,"PASS"));
+        assertThat(jdbc.queryForObject("SELECT sec_status FROM chat_message WHERE room_id=7002 AND msg_no=2",String.class)).isEqualTo("PASS");
     }
 }

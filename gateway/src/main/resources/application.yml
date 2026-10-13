@@ -21,6 +21,9 @@ spring:
       - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
 
 millionnaire:
+  content-safety:
+    enabled: ${CONTENT_SAFETY_ENABLED:false}
+    timeout-ms: ${CONTENT_SAFETY_TIMEOUT_MS:4000}
   cos:
     bucket: ${COS_BUCKET:}
     region: ${COS_REGION:}

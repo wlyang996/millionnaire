@@ -11,11 +11,13 @@ import { avatar } from '../ui/Widgets';
 import { ctx } from '../ui/Ctx';
 import { destroyChildren, fillRR, gfx, mk, onTap, text } from '../ui/Kit';
 import { Popup } from '../ui/Popup';
+import { Toast } from '../ui/Toast';
 
 const PHRASES = ['好～', '稳住！', '哈哈', '加油', '手下留情', '借我点钱', '你太强了', '再来一局'];
 const MAX_CHARS = 40;
 
 export class ChatPopup extends Popup {
+    private sending = false;
     private lines!: Node;
     private field: EditField | null = null;
     /** 上次画的是哪份列表、多少条（联机时每条推送都是新数组；满 30 条后条数不变，所以两个都比）。 */
@@ -70,11 +72,15 @@ export class ChatPopup extends Popup {
         const s = raw.trim();
         if (!s) return;
         const st = ctx.store;
-        if (fromField && this.field) this.field.value = '';
         if (st.online) {
-            void st.online.say(s);
+            if (this.sending) return;
+            this.sending=true;
+            void st.online.say(s).then(result=>{
+                if(result.ok && fromField && this.field?.value.trim()===s) this.field.value='';
+            }).catch(()=>Toast.show('消息未发送，请稍后重试')).finally(()=>{this.sending=false;});
             return; // 服务端推回完整列表后刷新
         }
+        if (fromField && this.field) this.field.value = '';
         st.game.chat.push({ from: st.me().nickname, text: s });
         st.emit();
     }

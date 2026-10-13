@@ -7,6 +7,8 @@ const companions = {
 const indexOf = id => typeof id === 'number' && Number.isInteger(id) && id >= 0 && id < assets.length ? id : typeof id === 'string' && /^[0-7]$/.test(id) ? Number(id) : -1
 export function bundledImage(id, slot = 'avatar') {
   const index = indexOf(id), key = assets[index]
+  const pose = {pawncrouch:'crouch',pawnairborne:'airborne',pawnland:'land',pawnready:'ready'}[slot]
+  if(key && pose) return `/admin/art/motion/pawn_${key}_${pose}.png`
   if (!key || !['avatar','pawn','portrait'].includes(slot)) return null
   if (slot === 'portrait') return `/admin/art/portraits/information_host_${key}.png`
   const kind = slot

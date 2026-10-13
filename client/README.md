@@ -149,3 +149,7 @@ demo/    DemoPanel LayoutCheck
 
 特殊土地后续已按20银行、21监狱/游戏中心、22事件/休息区、23车站、25起点分别接入独立布局，使用90件补充素材。银行可切换标签及选择资产查看金额；银行和出狱结算按钮因尚未接服务端明确禁用。事件仍在棋盘中央点击卡背，小游戏保持既有演示交互；查看起点不领奖。TypeScript、202项自检、官方web-mobile构建通过。完整状态与截图见 `design/screens/records/special-land-implementation-2026-10-06.md` 和 `special-land-preview-2026-10-06/`。
 按第18张已确认的资产／格子详情布局接入整页：新增17件专用位图，金额／产权／租金读取当前客户端状态。后续本轮已完成浏览器点选、滚动、等级标记、车站布局及连续关闭恢复验证；截图见 `design/screens/records/client-review-fixes-2026-10-06/`。微信真机未验证。素材及初轮记录见 `design/screens/assets-information-v1/MANIFEST.md`、`design/screens/records/information-pages-2026-10-06.md`；后续状态以 `design/screens/records/ui-corrections-2026-10-06.md` 为准。
+
+## 人物动作与内容检测（2026-10-13）
+
+云人物目录兼容七张静态素材与七张基础加四张移动帧的完整版本。四帧与pawn使用相同画布，整套到齐后接入，失败整套回退。动作速度继续取房间配置。昵称与聊天支持服务端微信内容检测；消息被拒绝时保留输入文字，只有接受后清空。基础独立音效默认关闭；11项候选须审核并由后台发布，保存草稿不生效。此前README中的未接入清单为历史阶段描述，当前状态以源码和2026-10-13记录为准。
