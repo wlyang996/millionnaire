@@ -2,6 +2,7 @@
 .discuss/
 /server/target/
 /gateway/target/
+tmp/
 
 # Local audio decoding tools and temporary frame analysis
 /tmp/audio-tools/
