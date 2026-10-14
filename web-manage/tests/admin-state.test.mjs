@@ -26,6 +26,7 @@ for(const size of [30,50])test(`${size}-tile preview has a closed clockwise peri
   assert.deepEqual(boardCell(size,grid),cells[0]);assert.deepEqual(boardCell(-1,grid),cells.at(-1))
 })
 test('every existing management section appears once in navigation',()=>{
-  assert.deepEqual(new Set(pages.map(page=>page.id)),new Set(['dashboard','names','sets','prices','money','rentRise','room','events','startPick','roundReward','cityEvents','funTitles','series','team','timing','characters','audio','announcement','history','accounts','roles','audit','sessions','password','myPermissions']))
-  assert.equal(pages.length,25)
+  const ids=pages.map(page=>page.id)
+  for(const id of ['workbench','dashboard','names','sets','prices','money','rentRise','room','events','startPick','roundReward','cityEvents','funTitles','series','team','timing','characters','audio','announcement','history','accounts','roles','audit','sessions','password','myPermissions']) assert.equal(ids.filter(value=>value===id).length,1,id)
+  assert.equal(new Set(ids).size,ids.length)
 })

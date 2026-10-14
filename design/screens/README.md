@@ -148,3 +148,7 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 2026-10-13：新增[11项独立音效候选](audio/effects-candidates-v1/README.md)，仍待用户采用；人物四帧管理与内容检测实际记录见[统一交付记录](records/features-2354-2026-10-13/交付记录.md)。
 
 2026-10-14：用户确认上述11项音效全部采用，原件与审核记录保留原目录，内置默认已接入；旧候选待审核描述为历史阶段状态。
+
+## 管理工作台与全局命令面板（2026-10-14）
+
+[方案](ui/admin-workbench-v1/方案.md)、[实施与页面验收截图](records/admin-workbench-2026-10-14/交付记录.md)。新登录首页采用彩光轨道和 Bento 布局，支持全景/聚焦、账号收藏与最近访问、三色工作室版本卡片、编辑提醒；Ctrl+K / Command+K搜索页面和参数，沿用当前权限及发布流程。页面截图使用只读静态样例，不代表生产数据；本地提交，由用户推送。

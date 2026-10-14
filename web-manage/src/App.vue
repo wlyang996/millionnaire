@@ -13,6 +13,7 @@ import './admin/access.css'
 import LoginPage from './components/LoginPage.vue'
 import AdminShell from './components/AdminShell.vue'
 import DashboardOverview from './components/DashboardOverview.vue'
+import WorkbenchOverview from './components/WorkbenchOverview.vue'
 import RulePreview from './components/RulePreview.vue'
 import BoardPreview from './components/BoardPreview.vue'
 import VersionCenter from './components/VersionCenter.vue'
@@ -45,7 +46,7 @@ const loggedIn = ref(!!token())
 const loginError = ref('')
 const loginSuccess = ref(false)
 const loading = ref(false)
-const tab = ref('dashboard')
+const tab = ref('workbench')
 const boards = ref([])
 const boardId = ref('classic-30')
 const active = ref(null)       // 当前生效版本 {configId, note, createdAt}
@@ -161,6 +162,7 @@ async function login(credentials) {
 }
 
 async function enterAdmin() {
+  tab.value = 'workbench'
   loggedIn.value = true
   loginSuccess.value = false
   try { await refreshIdentity(); if(!identity.value.mustChangePassword) await load() } catch (e) { fail(e) }
@@ -177,7 +179,7 @@ async function logout() {
 }
 
 function clearLogin() { setToken(null);setIdentity(null);loggedIn.value=false;loginSuccess.value=false }
-async function refreshIdentity(){ const result=await call('GET','/admin-api/v1/auth/me');setIdentity(result);if(!result.mustChangePassword&&!pageVisible(result,tab.value))tab.value='dashboard' }
+async function refreshIdentity(){ const result=await call('GET','/admin-api/v1/auth/me');setIdentity(result);if(!result.mustChangePassword&&!pageVisible(result,tab.value))tab.value='workbench' }
 let identityRefresh
 function handleAccessError(event){if(event.detail.status===401){clearLogin();return}if(!identityRefresh)identityRefresh=refreshIdentity().catch(fail).finally(()=>identityRefresh=null)}
 function resumed(){if(!document.hidden&&loggedIn.value)refreshIdentity().catch(fail)}
@@ -252,7 +254,7 @@ async function loadDash() {
     dashLoading.value = false
   }
 }
-watch(tab, (t) => { if (t === 'dashboard' && !dash.value) loadDash() })
+watch(tab, (t) => { if (['dashboard','workbench'].includes(t) && !dash.value && !dashLoading.value && can(identity.value,'dashboard:read')) loadDash() })
 const dashMax = computed(() => Math.max(1, ...((dash.value?.daily || []).map((d) => d.games))))
 // 分布表：{键: 次数} → [{name, n, pct}]，按次数从多到少
 function dist(m, names) {
@@ -275,7 +277,7 @@ async function load() {
     saved.value = JSON.stringify(form.value)
     errors.value = []
     history.value = await call('GET', '/admin-api/v1/config/history')
-    if (tab.value === 'dashboard' && !dash.value) await loadDash()
+    if (['dashboard','workbench'].includes(tab.value) && !dash.value && !dashLoading.value && can(identity.value,'dashboard:read')) await loadDash()
   } catch (e) {
     fail(e)
   } finally {
@@ -373,10 +375,21 @@ let celebrationTimer, validationTimer
 function celebrate() { celebration.value = Date.now(); clearTimeout(celebrationTimer); celebrationTimer = setTimeout(() => { celebration.value = 0 }, 1800) }
 const originalSettings = computed(() => { try { return JSON.parse(saved.value || '{}') } catch { return {} } })
 const changes = computed(() => compareVersions(originalSettings.value, form.value || {}).flatMap(group=>group.rows))
-const isConfigPage = computed(() => !isAccessPage.value && !['dashboard','characters','audio','history'].includes(tab.value))
+const isConfigPage = computed(() => !isAccessPage.value && !['workbench','dashboard','characters','audio','history'].includes(tab.value))
 const isBoardPage = computed(() => ['names','sets'].includes(tab.value))
 const parameterSearchIndex = computed(() => ({ ...searchIndex, events:searchIndex.events+' '+Object.values(EVENT_LABEL).join(' ')+' '+Object.values(CARD_LABEL).join(' '),timing:searchIndex.timing+' '+TIMING_FIELDS.map(field=>field[1]).join(' '),funTitles:searchIndex.funTitles+' '+Object.values(TITLE_LABEL).join(' '),cityEvents:searchIndex.cityEvents+' '+CITY_FIELDS.map(field=>field[1]).join(' ')+' '+Object.values(CITY_LABEL).join(' ') }))
 async function navigate(id) { if(!pageVisible(identity.value,id))return; auditVersion.value=null;tab.value = id; await nextTick(); window.scrollTo({ top:0, behavior:motionEnabled.value?'smooth':'auto' }) }
+async function focusParameter(result) {
+  if (!pageVisible(identity.value,result.page)) return
+  await navigate(result.page)
+  const section = document.querySelector(`[data-rule-page="${result.page}"]`)
+  const target = [...(section?.querySelectorAll('.el-form-item') || [])].find(field => field.querySelector('.el-form-item__label')?.textContent?.trim() === result.label) || section
+  document.querySelectorAll('.validation-focus').forEach(field=>field.classList.remove('validation-focus'))
+  target?.classList.add('validation-focus'); target?.scrollIntoView({block:'center',behavior:motionEnabled.value?'smooth':'auto'})
+  const focus = target?.querySelector('input,textarea,button') || target
+  if (focus) { if (!focus.matches('input,textarea,button')) focus.setAttribute('tabindex','-1'); focus.focus({preventScroll:true}) }
+  clearTimeout(validationTimer); validationTimer=setTimeout(()=>target?.classList.remove('validation-focus'),3000)
+}
 async function focusTile(index) {
   selectedTile.value = index
   await nextTick()
@@ -409,12 +422,13 @@ onMounted(() => {
 <template>
   <LoginPage v-if="!loggedIn" :loading="loading" :error="loginError" :success="loginSuccess" @submit="login" @enter="enterAdmin" @clear-error="loginError=''" />
   <PasswordChange v-else-if="identity?.mustChangePassword" mandatory @changed="signedout" @error="fail" @cancel="logout" />
-  <AdminShell v-else :identity="identity" :active-page="tab" :version="tab==='audio'?audioVersion:active?.configId" :dirty="dirty || characterDirty || audioDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @logout="logout">
+  <AdminShell v-else :identity="identity" :active-page="tab" :version="tab==='audio'?audioVersion:active?.configId" :dirty="dirty || characterDirty || audioDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @parameter="focusParameter" @logout="logout">
     <AdminAccessManager v-if="isAccessPage && identity" :page="tab" :identity="identity" @error="fail" @signedout="signedout" @compare="openAuditVersion" />
     <div v-show="!isAccessPage">
+    <WorkbenchOverview v-if="tab==='workbench' && identity" :identity="identity" :active="active" :data="dash" :days="dashDays" :loading="loading || dashLoading" :dirty="dirty" :character-dirty="characterDirty" :audio-dirty="audioDirty" :change-count="changes.length" @navigate="navigate" @refresh="loadDash" @error="fail" />
     <el-alert v-if="errors.length && !['characters','audio'].includes(tab)" class="validation-alert" type="error" :closable="false" title="请修改后再发布"><ul><li v-for="error in errors" :key="error"><button type="button" class="error-link" @click="focusValidation(error)">{{ error }}</button></li></ul></el-alert>
     <div class="rule-workspace" :class="{ 'with-live-preview': form && isConfigPage && !isBoardPage && tab!=='announcement' }">
-    <div v-if="form && isConfigPage && !canEdit"><ReadOnlyConfig :section="tab" :settings="form" /><template v-if="isBoardPage"><el-radio-group v-model="boardId" class="gap"><el-radio-button v-for="(_,id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button></el-radio-group><BoardPreview :tiles="boards.find(board=>board.id===boardId)?.tiles || []" :names="form.tileNames?.[boardId]" :groups="form.sets?.groups?.[boardId]" :selected="selectedTile" :group-mode="tab==='sets'" :board-id="boardId" @select="selectedTile=$event" /></template></div>
+    <div v-if="form && isConfigPage && !canEdit" :data-rule-page="tab"><ReadOnlyConfig :section="tab" :settings="form" /><template v-if="isBoardPage"><el-radio-group v-model="boardId" class="gap"><el-radio-button v-for="(_,id) in form.tileNames" :key="id" :value="id">{{ BOARD_LABEL[id] || id }}</el-radio-button></el-radio-group><BoardPreview :tiles="boards.find(board=>board.id===boardId)?.tiles || []" :names="form.tileNames?.[boardId]" :groups="form.sets?.groups?.[boardId]" :selected="selectedTile" :group-mode="tab==='sets'" :board-id="boardId" @select="selectedTile=$event" /></template></div>
     <div v-if="form && (!isConfigPage || canEdit)" class="editor-grid" :class="{ 'has-board': isBoardPage }" v-loading="loading">
       <div class="editor-content"><section v-show="tab === 'characters'" data-rule-page="characters" class="special-page"><KeepAlive><CharacterManager :read-only="!can(identity,'character:write')" :can-rollback="can(identity,'character:rollback')" v-if="tab === 'characters'" @update:dirty="characterDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>
       <section v-show="tab === 'audio'" data-rule-page="audio" class="special-page"><KeepAlive><AudioManager v-if="tab === 'audio'" :read-only="!can(identity,'audio:write')" :can-publish="can(identity,'audio:publish')" :can-rollback="can(identity,'audio:rollback')" @version="audioVersion=$event" @update:dirty="audioDirty=$event" @published="celebrate" @unauthorized="fail({status:401})" /></KeepAlive></section>

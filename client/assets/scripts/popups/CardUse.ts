@@ -4,6 +4,9 @@
  * 查询的选人与结果见 QueryPopups。规则：自己的回合投骰前（狱中只能出狱、查询）或落点结算后的用卡阶段，两阶段共一次；
  * 目标格一律为当前位置；条件不满足的卡不消耗。演示模式只在本地扣掉手牌并做简单效果。
  */
+import { CardPreviewPopup } from './CardPreviewPopup';
+import { EXPERIENCE } from '../core/Rules';
+import { sameTeam } from '../core/Teams';
 import { EventTouch, Node } from 'cc';
 import { BoardTile, CARD_NAMES, CardType, PlayerView, PropertyState } from '../core/Models';
 import { inflateRent, MAX_LEVEL, rentOf, standardValue, stationRent, TIERS } from '../core/Rules';
@@ -136,6 +139,52 @@ function tradeUsable(): Usable {
 
 /** 发送用卡（联机）或在演示里本地结算。 */
 export function sendCard(type: CardType, target: string | null = null, steps = 0): void {
+    const valid=()=>cardUsable(type).ok && (type!=='QUERY'||!!ctx.store.game.players.find(p=>p.playerId===target&&p.life==='ALIVE'&&p.playerId!==ctx.store.myId&&!sameTeam(p.playerId,ctx.store.myId)));
+    if(!valid()){Toast.show(cardUsable(type).reason || '目标已不可用');return;}
+    if(EXPERIENCE.cardPreviewEnabled){
+        ctx.popups.open(new CardPreviewPopup(CARD_NAMES[type],()=>cardPreview(type,target,steps),()=>previewFingerprint(type,target,steps),valid,()=>dispatchCard(type,target,steps)));
+        return;
+    }
+    dispatchCard(type,target,steps);
+}
+
+/** Includes public economics and this player's window only; never reads opponents' hands. */
+function previewFingerprint(type:CardType,target:string|null,steps:number):string {
+    const st=ctx.store,g=st.game;
+    return JSON.stringify([g.gameNo,g.turnNo,g.stage,st.me().position,st.me().cash,st.online?.myWindow('TURN')?.windowId,
+        g.properties,g.players.map(p=>[p.playerId,p.life,p.cash,p.position]),g.team,g.round,g.rentPercent,g.progress?.cityEvent,
+        cardUsable(type).ok,target,steps,cardPreview(type,target,steps)]);
+}
+function projectedRent(index:number,level:number):number{
+    const st=ctx.store,tile=st.tile(index);
+    const base=TIERS[tile.tier??'LOW'].rent[Math.max(0,Math.min(MAX_LEVEL,level))];
+    return inflateRent(setComplete(st.game,index)?applySet(base):base);
+}
+function cardPreview(type:CardType,target:string|null,steps:number):string[]{
+    const st=ctx.store,h=here(),tile=st.tile(h.index),owner=h.owner?.nickname??'无主';
+    const rows=['使用者：'+st.me().nickname,'目标：'+(type==='QUERY'?(st.player(target??'')?.nickname??'玩家'):tile.name)+' · '+owner];
+    if(type==='FIXED_MOVE'){
+        const n=st.game.tiles.length,to=(h.index+steps)%n,dest=st.tile(to),p=st.prop(to);
+        const waive=!!p?.owner && (p.owner===st.myId||sameTeam(p.owner,st.myId)||p.mortgaged);
+        rows[1]='前进 '+steps+' 格 → '+dest.name;
+        rows.push('预计落点租金：'+(waive?0:rentAt(to))+'（按当前状态）');
+        if(h.index+steps>=n)rows.push('经过起点：奖励与抽卡后继续前进');
+        else rows.push('替代投骰，忽略沿途路障；落点照常结算');
+    }else if(type==='FORCED_PURCHASE'){
+        rows.push('你支付 '+forcedPrice(h.index)+'，'+owner+' 收款');
+        rows.push('成功后所有权归你；对方可用拒绝购买抵挡');
+    }else if(['BUILD','DOWNGRADE','DEMOLISH'].includes(type)){
+        const level=h.prop?.level??0,next=type==='BUILD'?Math.min(MAX_LEVEL,level+1):type==='DEMOLISH'?0:Math.max(0,level-1);
+        rows.push('等级 '+level+' → '+next+'；租金 '+rentAt(h.index)+' → '+projectedRent(h.index,next));
+        rows.push(type==='BUILD'?'免费建造，土地所有者不变':'土地所有者不变；对方可用房屋保护抵挡');
+    }else if(type==='CLEAR_LAND'){rows.push('清除房屋与所有权；变为无主，租金为0');rows.push('对方可用房屋保护抵挡');}
+    else if(type==='QUERY'){rows[1]='查询：'+(st.player(target??'')?.nickname??'玩家');rows.push('使用后查看当时手牌快照，结果仅你可见');}
+    else if(type==='JAIL_RELEASE'){rows.push('解除关押，再正常投骰移动');}
+    else if(type==='ROADBLOCK'){rows.push('在当前格放置路障，影响经过者的移动');}
+    rows.push('消耗：1张'+CARD_NAMES[type]+' + 本回合主动用卡机会');
+    return rows;
+}
+function dispatchCard(type:CardType,target:string|null,steps:number):void {
     const st = ctx.store;
     const online = st.online;
     if (online) {
@@ -190,6 +239,19 @@ export function openCardUse(type: CardType): void {
     if (type === 'ROADBLOCK') ctx.popups.open(new RoadblockSheet());
     else if (type === 'FIXED_MOVE') ctx.popups.open(new FixedMoveSheet());
     else ctx.popups.open(new PropertyCardSheet(type));
+}
+
+function previewRequest(type:'AUCTION'|'TRADE',tile:number,buyer:string|null,price:number,submit:()=>void):void {
+    const valid=()=>cardUsable(type).ok && ctx.store.prop(tile)?.owner===ctx.store.myId && !ctx.store.prop(tile)?.mortgaged
+        && (type!=='TRADE'||!!ctx.store.player(buyer??'') && ctx.store.player(buyer??'')?.life==='ALIVE');
+    const rows=()=>['资产：'+ctx.store.tile(tile).name,
+        type==='TRADE'?'买家：'+ctx.store.player(buyer??'')?.nickname+' · 报价 '+price:'发起拍卖，实际收入由成交结果决定',
+        type==='TRADE'?'同意且现金足额才成交；拒绝或超时保留卡':'当前操作结束后开始；卖家不能竞价',
+        '成功时消耗1张'+CARD_NAMES[type]+'与主动用卡机会'];
+    if(!valid()){Toast.show('资产或操作时机已变化');return;}
+    if(EXPERIENCE.cardPreviewEnabled)ctx.popups.open(new CardPreviewPopup(CARD_NAMES[type],rows,
+        ()=>JSON.stringify([ctx.store.prop(tile),ctx.store.player(buyer??'')?.life,rows()]),valid,submit));
+    else submit();
 }
 
 // ================================================================ 底部确认面板
@@ -491,7 +553,7 @@ export class AuctionAssetPopup extends BottomSheet {
         const b = primaryButton(p, '申请拍卖', 264, h - 124, w - 288, 80, () => {
             const tile = this.sel;
             this.close();
-            if (tile >= 0) void ctx.store.online?.act('RequestAuction', { tile });
+            if(tile>=0) previewRequest('AUCTION',tile,null,0,()=>void ctx.store.online?.act('RequestAuction',{tile}));
         }, 34);
         b.setEnabled(this.sel >= 0, '请先选择要拍卖的资产');
         text(p, '当前操作结束后开始 · 占用本回合用卡机会 · 卖家不能出价 · 成交款全部归你', 0, h - 38, w, 28, 18, Theme.c.noteGray);
@@ -601,7 +663,7 @@ export class TradeSetupPopup extends BottomSheet {
             const buyer = this.buyer;
             const price = this.price;
             this.close();
-            if (tile >= 0) void ctx.store.online?.act('RequestTrade', { tile, buyer, price });
+            if(tile>=0) previewRequest('TRADE',tile,buyer,price,()=>void ctx.store.online?.act('RequestTrade',{tile,buyer,price}));
         }, 34);
         b.setEnabled(ready, !ok ? '请先选择资产' : '请选择买家');
         text(p, '买家 15 秒内同意且现金足额才成交 · 拒绝或超时保留交易卡', 0, h - 36, w, 26, 18, Theme.c.noteGray);
