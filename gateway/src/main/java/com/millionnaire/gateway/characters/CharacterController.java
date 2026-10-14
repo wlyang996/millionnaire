@@ -27,6 +27,8 @@ public class CharacterController {
 
     @AdminAccess("character:read") @GetMapping("/admin-api/v1/characters/published")
     public Map<String,Object> published() { return Map.of("active",catalog.client(catalog.current()),"history",catalog.history().stream().map(CharacterCatalog.Catalog::version).toList(),"publishers",authentication.publishers("characters")); }
+    @AdminAccess("character:read") @GetMapping("/admin-api/v1/characters/versions/{version}")
+    public Map<String,Object> publishedVersion(@PathVariable long version) { return catalog.client(catalog.load(version)); }
 
     @AdminAccess("character:draft")
     @GetMapping("/admin-api/v1/characters")

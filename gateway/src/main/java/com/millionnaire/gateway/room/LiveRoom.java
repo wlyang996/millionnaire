@@ -95,6 +95,7 @@ public final class LiveRoom {
     private final Engine<SessionState> engine;
     /** 建房时绑定的游戏参数版本（0 = 内置默认）；客户端按它拉取地名与价格表。 */
     private final long configId;
+    private final long createdAt;
     private final long characterVersion;
     private final RoomRunner<SessionState> runner;
     private final long roomId;
@@ -156,6 +157,7 @@ public final class LiveRoom {
         this.service = service;
         this.engine = engine;
         this.configId = configId;
+        this.createdAt = at;
         this.characterVersion = service.characterVersion();
         this.roomId = roomId;
         this.code = code;
@@ -336,6 +338,17 @@ public final class LiveRoom {
 
     public synchronized int watcherCount() {
         return watchers.size();
+    }
+
+    /** Read under the room lock, then release it before querying another room. */
+    public synchronized AdminRoomSnapshot adminSummary() {
+        SessionState state=(SessionState) runner.committed().domain();
+        var game=state.game();var settings=game==null?state.lobby().settings():game.settings();
+        int players=game==null?state.lobby().members().size():game.players().size();
+        int automated=game==null?0:(int)game.players().stream().filter(p->p.alive()&&p.automated()).count();
+        return new AdminRoomSnapshot(code(),closed?"CLOSED":game==null?"WAITING":"PLAYING",settings.boardId(),settings.endMode().name(),
+            players,watchers.size(),bots.size(),automated,game==null || game.turn()==null?0:game.turn().round(),game==null || game.turn()==null?0:game.turn().turnNo(),
+            game==null?0:game.gameNo(),configId,characterVersion,createdAt,game==null?0:game.startedAt());
     }
 
     public synchronized SessionView view(String playerId) {

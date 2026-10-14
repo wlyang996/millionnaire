@@ -268,6 +268,11 @@ public class RoomService {
         return Optional.ofNullable(byCode.get(code));
     }
 
+    public java.util.List<AdminRoomSnapshot> adminRooms() {
+        return byCode.values().stream().map(LiveRoom::adminSummary).filter(room->!room.status().equals("CLOSED"))
+            .sorted(java.util.Comparator.comparing(AdminRoomSnapshot::code)).toList();
+    }
+
     // ------------------------------------------------------------ 房间回调（在房间锁内调用）
 
     void membersChanged(LiveRoom room, Set<String> before, Set<String> after) {

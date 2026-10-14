@@ -40,6 +40,19 @@ class AdminAccessApiTest {
         for(String path:List.of("/config/validate","/config/publish","/config/rollback","/characters/packs","/characters/publish","/characters/rollback","/characters/configure","/characters/storage/check"))assertThat(request(HttpMethod.POST,path,Map.of(),token).getStatusCode()).as(path).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(request(HttpMethod.GET,"/characters/published",null,token).getBody()).doesNotContainKeys("packs","storageReady","persistent");
     }
+    @Test void operationalReadsRemainAuthenticatedAndContainOnlyPublishedMetadata(){
+        String viewer=user("VIEWER",admin());
+        for(String path:List.of("/rooms","/audio/versions/0","/characters/versions/0")) {
+            assertThat(http.getForEntity("/admin-api/v1"+path,Map.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            var result=request(HttpMethod.GET,path,null,viewer);
+            assertThat(result.getStatusCode()).as(path).isEqualTo(HttpStatus.OK);
+            assertThat(result.getBody()).doesNotContainKeys("draft","packs","storageReady","persistent");
+        }
+        assertThat(request(HttpMethod.GET,"/rooms?size=101",null,viewer).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(request(HttpMethod.GET,"/rooms",null,viewer).getBody().get("scope")).isEqualTo("current-instance");
+        assertThat(request(HttpMethod.GET,"/audio/versions/99999999",null,viewer).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(request(HttpMethod.GET,"/characters/versions/99999999",null,viewer).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
     @Test void operatorPublishesAsOwnUsernameButRollbackIsDeniedAndLogoutRevokes(){
         String administrator=admin(),token=user("OPERATOR",administrator);var me=request(HttpMethod.GET,"/auth/me",null,token).getBody();String username=(String)((Map)me.get("user")).get("username");var current=request(HttpMethod.GET,"/config/active",null,token).getBody();
         var published=request(HttpMethod.POST,"/config/publish",Map.of("settings",current.get("settings"),"expectedActiveId",current.get("configId"),"note","权限回归","createdBy","forged-user"),token);

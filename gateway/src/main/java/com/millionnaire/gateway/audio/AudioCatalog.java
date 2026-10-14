@@ -160,6 +160,14 @@ public class AudioCatalog {
             return Map.of("id",asset.id(),"name",asset.name(),"kind",asset.kind(),"info",asset.info(),"builtin",asset.builtin());
         }).toList());
     }
+    /** An immutable published release, with metadata only for resources referenced by that release. */
+    public synchronized Map<String,Object> publishedVersion(long version) {
+        Release release=load(version);
+        return Map.of("release",release,"assets",referenced(release.settings()).stream().map(id->{
+            Asset a=asset(id);
+            return Map.of("id",a.id(),"name",a.name(),"kind",a.kind(),"info",a.info(),"builtin",a.builtin());
+        }).toList());
+    }
     public synchronized Map<String, Object> client() {
         Release r = current();
         return Map.of("version", r.version(), "settings", r.settings(), "assets", referenced(r.settings()).stream().map(id -> {

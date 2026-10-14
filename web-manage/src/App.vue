@@ -14,6 +14,10 @@ import LoginPage from './components/LoginPage.vue'
 import AdminShell from './components/AdminShell.vue'
 import DashboardOverview from './components/DashboardOverview.vue'
 import WorkbenchOverview from './components/WorkbenchOverview.vue'
+import ConfigTransfer from './components/ConfigTransfer.vue'
+import LiveRooms from './components/LiveRooms.vue'
+import { useRuleDraft } from './admin/useRuleDraft.js'
+import { cloneJson } from './admin/configFiles.js'
 import RulePreview from './components/RulePreview.vue'
 import BoardPreview from './components/BoardPreview.vue'
 import VersionCenter from './components/VersionCenter.vue'
@@ -135,8 +139,7 @@ function time(ms) {
 
 function fail(e) {
   if (e.status === 401) {
-    setToken(null)
-    loggedIn.value = false
+    clearLogin()
     ElMessage.error('登录已过期，请重新登录')
     return
   }
@@ -178,12 +181,19 @@ async function logout() {
   Object.keys(drafts).forEach(key => delete drafts[key])
 }
 
-function clearLogin() { setToken(null);setIdentity(null);loggedIn.value=false;loginSuccess.value=false }
+function clearLogin() { localDraft.flush();setToken(null);setIdentity(null);loggedIn.value=false;loginSuccess.value=false }
 async function refreshIdentity(){ const result=await call('GET','/admin-api/v1/auth/me');setIdentity(result);if(!result.mustChangePassword&&!pageVisible(result,tab.value))tab.value='workbench' }
 let identityRefresh
 function handleAccessError(event){if(event.detail.status===401){clearLogin();return}if(!identityRefresh)identityRefresh=refreshIdentity().catch(fail).finally(()=>identityRefresh=null)}
 function resumed(){if(!document.hidden&&loggedIn.value)refreshIdentity().catch(fail)}
 const canEdit=computed(()=>can(identity.value,'config:write'))
+const transfer=ref(null)
+const localDraft=useRuleDraft({identity:()=>identity.value,canEdit:()=>canEdit.value,form:()=>form.value,inputs:()=>drafts,
+  dirty:()=>dirty.value,baseVersion:()=>active.value?.configId,baseSettings:()=>JSON.parse(saved.value || '{}')})
+const {candidate:recoverableDraft,status:draftStorageStatus}=localDraft
+async function clearLocalDraft(){try{await ElMessageBox.confirm('删除本机保存的规则草稿？当前编辑区不会被修改。','删除本机草稿',{type:'warning'});localDraft.remove()}catch{}}
+function applyDraft(value){localDraft.pause();form.value=fill(cloneJson(value.settings));Object.keys(drafts).forEach(key=>delete drafts[key]);Object.assign(drafts,value.inputs || {});errors.value=[];recoverableDraft.value=null;localDraft.paused.value=false;localDraft.flush();ElMessage.success('已载入编辑草稿，请核对后按原流程发布')}
+function exportRules(){Object.keys(drafts).filter(key=>key!=='teamQuickAmounts').forEach(commit);commitTeamQuickAmounts();try{transfer.value?.exportSettings(cloneJson(form.value))}catch(e){fail(e)}}
 const isAccessPage=computed(()=>accessPages.includes(tab.value))
 const auditVersion=ref(null)
 function signedout(){clearLogin();ElMessage.success('会话已撤销，请重新登录')}
@@ -267,6 +277,7 @@ const MISC_LABEL = [['rentPaid', '收租次数'], ['rentAmount', '租金总额']
   ['jailed', '入狱次数'], ['bankrupt', '破产出局'], ['surrendered', '认输出局']]
 
 async function load() {
+  localDraft.pause()
   loading.value = true
   try {
     if (!boards.value.length) boards.value = await call('GET', '/api/boards')
@@ -282,6 +293,7 @@ async function load() {
     fail(e)
   } finally {
     loading.value = false
+    if(canEdit.value && form.value)localDraft.discover()
   }
 }
 
@@ -290,6 +302,7 @@ async function discard() {
     await ElMessageBox.confirm('放弃所有未发布的修改，恢复为当前生效版本？', '放弃修改', { type: 'warning' })
   }
   await load()
+  if(!dirty.value)localDraft.remove()
 }
 
 async function useDefaults() {
@@ -332,6 +345,7 @@ async function confirmPublish() {
     releaseStage.value = 'publishing'
     const r = await call('POST', '/admin-api/v1/config/publish', { settings: releaseReview.value.settings, note: releaseNote.value, expectedActiveId: releaseReview.value.expectedActiveId })
     releaseStage.value = 'success'; celebrate(); ElMessage.success('已发布版本 #' + r.configId)
+    localDraft.remove()
     await load()
   } catch (e) {
     releaseStage.value = 'failed'
@@ -375,7 +389,7 @@ let celebrationTimer, validationTimer
 function celebrate() { celebration.value = Date.now(); clearTimeout(celebrationTimer); celebrationTimer = setTimeout(() => { celebration.value = 0 }, 1800) }
 const originalSettings = computed(() => { try { return JSON.parse(saved.value || '{}') } catch { return {} } })
 const changes = computed(() => compareVersions(originalSettings.value, form.value || {}).flatMap(group=>group.rows))
-const isConfigPage = computed(() => !isAccessPage.value && !['workbench','dashboard','characters','audio','history'].includes(tab.value))
+const isConfigPage = computed(() => !isAccessPage.value && !['workbench','dashboard','liveRooms','characters','audio','history'].includes(tab.value))
 const isBoardPage = computed(() => ['names','sets'].includes(tab.value))
 const parameterSearchIndex = computed(() => ({ ...searchIndex, events:searchIndex.events+' '+Object.values(EVENT_LABEL).join(' ')+' '+Object.values(CARD_LABEL).join(' '),timing:searchIndex.timing+' '+TIMING_FIELDS.map(field=>field[1]).join(' '),funTitles:searchIndex.funTitles+' '+Object.values(TITLE_LABEL).join(' '),cityEvents:searchIndex.cityEvents+' '+CITY_FIELDS.map(field=>field[1]).join(' ')+' '+Object.values(CITY_LABEL).join(' ') }))
 async function navigate(id) { if(!pageVisible(identity.value,id))return; auditVersion.value=null;tab.value = id; await nextTick(); window.scrollTo({ top:0, behavior:motionEnabled.value?'smooth':'auto' }) }
@@ -409,7 +423,7 @@ async function focusValidation(error) {
   clearTimeout(validationTimer); validationTimer=setTimeout(()=>target?.classList.remove('validation-focus'),3000)
 }
 watch(boardId, () => { selectedTile.value = 0 })
-function beforeLeave(event) { if (dirty.value || characterDirty.value || audioDirty.value) { event.preventDefault(); event.returnValue = '' } }
+function beforeLeave(event) { localDraft.flush();if (dirty.value || characterDirty.value || audioDirty.value) { event.preventDefault(); event.returnValue = '' } }
 onMounted(() => window.addEventListener('beforeunload', beforeLeave))
 onBeforeUnmount(() => { window.removeEventListener('admin-access-error',handleAccessError);document.removeEventListener('visibilitychange',resumed);window.removeEventListener('beforeunload', beforeLeave); clearTimeout(celebrationTimer); clearTimeout(validationTimer) })
 
@@ -425,6 +439,8 @@ onMounted(() => {
   <AdminShell v-else :identity="identity" :active-page="tab" :version="tab==='audio'?audioVersion:active?.configId" :dirty="dirty || characterDirty || audioDirty" :search-index="parameterSearchIndex" :celebration="celebration" :busy="loading || dashLoading" :has-error="!!errors.length" @navigate="navigate" @parameter="focusParameter" @logout="logout">
     <AdminAccessManager v-if="isAccessPage && identity" :page="tab" :identity="identity" @error="fail" @signedout="signedout" @compare="openAuditVersion" />
     <div v-show="!isAccessPage">
+    <LiveRooms v-if="tab==='liveRooms'" @error="fail" />
+    <ConfigTransfer v-if="form && (isConfigPage || tab==='history')" ref="transfer" :settings="form" :reference-id="active?.configId" :can-edit="canEdit" :candidate="recoverableDraft" :storage-status="draftStorageStatus" :dirty="dirty" @apply="applyDraft" @discard-local="clearLocalDraft" @prepare-export="exportRules" @error="fail" />
     <WorkbenchOverview v-if="tab==='workbench' && identity" :identity="identity" :active="active" :data="dash" :days="dashDays" :loading="loading || dashLoading" :dirty="dirty" :character-dirty="characterDirty" :audio-dirty="audioDirty" :change-count="changes.length" @navigate="navigate" @refresh="loadDash" @error="fail" />
     <el-alert v-if="errors.length && !['characters','audio'].includes(tab)" class="validation-alert" type="error" :closable="false" title="请修改后再发布"><ul><li v-for="error in errors" :key="error"><button type="button" class="error-link" @click="focusValidation(error)">{{ error }}</button></li></ul></el-alert>
     <div class="rule-workspace" :class="{ 'with-live-preview': form && isConfigPage && !isBoardPage && tab!=='announcement' }">

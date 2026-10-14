@@ -29,6 +29,8 @@ public class AudioController {
         return result;
     }
     @AdminAccess("audio:read") @GetMapping("/admin-api/v1/audio/published") public Map<String,Object> published() { return state(true); }
+    @AdminAccess("audio:read") @GetMapping("/admin-api/v1/audio/versions/{version}")
+    public Map<String,Object> version(@PathVariable long version) { return catalog.publishedVersion(version); }
     @AdminAccess("audio:read") @GetMapping("/admin-api/v1/audio/published/assets/{id}.wav") public ResponseEntity<Resource> publishedPreview(@PathVariable String id) { return wav(catalog.bytes(id, false), false); }
     @AdminAccess("audio:draft") @GetMapping("/admin-api/v1/audio") public Map<String,Object> state(@RequestHeader(value="Authorization",required=false) String auth) { admin.check(auth); return state(false); }
     @AdminAccess("audio:draft") @GetMapping("/admin-api/v1/audio/assets/{id}.wav") public ResponseEntity<Resource> preview(@RequestHeader(value="Authorization",required=false) String auth, @PathVariable String id) { admin.check(auth); return wav(catalog.bytes(id, true), false); }
