@@ -152,3 +152,5 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 ## 管理工作台与全局命令面板（2026-10-14）
 
 [方案](ui/admin-workbench-v1/方案.md)、[实施与页面验收截图](records/admin-workbench-2026-10-14/交付记录.md)。新登录首页采用彩光轨道和 Bento 布局，支持全景/聚焦、账号收藏与最近访问、三色工作室版本卡片、编辑提醒；Ctrl+K / Command+K搜索页面和参数，沿用当前权限及发布流程。页面截图使用只读静态样例，不代表生产数据；本地提交，由用户推送。
+
+2026-10-14配色修订：[彩光工作台 v2 配色方案](ui/admin-workbench-v2/配色方案.md)、[浅色/深色/手机页面样例](records/admin-workbench-color-v2-2026-10-14/README.md)。按“颜色太素了”的反馈，改为饱和紫、青蓝、玫瑰红工作室，深蓝统计台与模块彩色收藏；旧版截图保留。
