@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Search, ArrowUpRight, Star, Command, CornerDownLeft } from '@lucide/vue'
 import { commandResults, highlightParts } from '../admin/workbenchState.js'
 import { useWorkbench } from '../admin/useWorkbench.js'
-import { theme, motionLevel } from '../admin/preferences.js'
+import { theme, motionLevel, motionEnabled } from '../admin/preferences.js'
 const props = defineProps({ identity: Object, searchIndex: Object })
 const emit = defineEmits(['navigate', 'parameter'])
 const open = ref(false), query = ref(''), selected = ref(0), input = ref(null), list = ref(null)
@@ -50,7 +50,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', shortcut))
 </script>
 <template>
   <button type="button" class="command-trigger" aria-label="打开全局命令面板，Ctrl K 或 Command K" @click="show"><Search :size="16" /><span>搜索与快捷操作</span><kbd>Ctrl K</kbd></button>
-  <el-dialog v-model="open" title="全局命令面板" width="min(680px, 94vw)" class="command-dialog" append-to-body destroy-on-close @opened="input?.focus()" @closed="dispatch">
+  <el-dialog v-model="open" title="全局命令面板" width="min(680px, 94vw)" class="command-dialog" :transition="motionEnabled ? 'dialog-fade' : { name:'command-still', css:false }" append-to-body destroy-on-close @opened="input?.focus()" @closed="dispatch">
     <div class="command-search"><Search :size="20" /><input ref="input" v-model="query" placeholder="搜索页面、参数，或切换主题…" role="combobox" aria-label="搜索命令" aria-autocomplete="list" aria-expanded="true" aria-controls="admin-command-results" :aria-activedescendant="results.length ? `admin-command-${selected}` : undefined" @keydown="keydown" /></div>
     <div class="command-count" aria-live="polite">{{ query ? `找到 ${results.length} 项结果` : '收藏优先 · 输入关键词查找参数' }}</div>
     <div id="admin-command-results" ref="list" class="command-results" role="listbox" aria-label="命令结果">
