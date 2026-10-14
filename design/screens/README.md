@@ -158,3 +158,7 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 ## 管理端运营工具补齐（2026-10-14）
 
 [五项方案](ui/admin-operations-v1/方案.md)、[实施与页面验收](records/admin-operations-2026-10-14/交付记录.md)：规则草稿恢复、JSON备份、实时房间、波形/区间/场景试听，以及人物与音频历史对比。沿用现有彩光控制台与鉴权；截图为本机样例，本地提交由用户推送。
+
+## 管理端控件与模块配色（2026-10-14）
+
+[配色方案](ui/admin-control-colors-v1/方案.md)、[浅色、深色与手机验收](records/admin-control-colors-2026-10-14/README.md)：音乐青蓝、音效玫红、循环琥珀，并统一六组模块强调色，覆盖导航、表单、状态提示、实时指标和概率卡片。

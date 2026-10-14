@@ -3,6 +3,7 @@ import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch 
 import { motion } from 'motion-v'
 import { Orbit, Map, SlidersHorizontal, UsersRound, Music2, Megaphone, History, Search, Menu, X, Sun, Moon, LogOut, Sparkles, ChevronDown, ChevronRight, Check, Gamepad2, ShieldCheck, Star } from '@lucide/vue'
 import { groups, pageById } from '../admin/navigation.js'
+import { pageTone, groupTone } from '../admin/controlColors.js'
 import { pageVisible, roleLabels } from '../admin/accessPolicy.js'
 import { useAdminPreferences } from '../admin/preferences.js'
 import BorderBeam from './effects/BorderBeam.vue'
@@ -23,6 +24,7 @@ const query = ref(''), mobileOpen = ref(false), collapsed = ref({}), paused = re
 const isMobile = ref(false)
 let mobileMedia
 const page = computed(() => pageById[props.activePage] || pageById.dashboard)
+watch(() => props.activePage, id => { document.documentElement.dataset.adminAccent=pageTone(id) }, {immediate:true})
 const visibleGroups = computed(() => groups.map(group => ({ ...group, pages: group.pages.filter(([id, label, title, description]) => pageVisible(props.identity,id) && `${group.label}${label}${title}${description}${props.searchIndex?.[id] || ''}`.includes(query.value.trim())) })).filter(group => group.pages.length))
 function navigate(id) { emit('navigate', id); mobileOpen.value = false }
 function toggleTheme(event) {
@@ -36,7 +38,7 @@ function toggleTheme(event) {
 const visibility = () => { paused.value = document.hidden }
 const updateMobile = () => { isMobile.value = mobileMedia.matches; if (!isMobile.value) mobileOpen.value = false }
 onMounted(() => { document.addEventListener('visibilitychange', visibility); mobileMedia=matchMedia('(max-width:760px)'); updateMobile(); mobileMedia.addEventListener('change',updateMobile) })
-onBeforeUnmount(() => { document.removeEventListener('visibilitychange', visibility); mobileMedia?.removeEventListener('change',updateMobile) })
+onBeforeUnmount(() => { document.removeEventListener('visibilitychange', visibility); mobileMedia?.removeEventListener('change',updateMobile); delete document.documentElement.dataset.adminAccent })
 </script>
 <template>
   <div class="admin-shell" :data-paused="paused" :class="{ 'nav-open': mobileOpen }">
@@ -45,10 +47,10 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', visibil
       <div class="admin-brand"><span class="admin-brand-mark"><Gamepad2 :size="24" /></span><span>大富翁<small>CONTROL CENTER</small></span><button class="icon-button mobile-only" aria-label="关闭导航" @click="mobileOpen = false"><X :size="18" /></button></div>
       <el-input v-model="query" placeholder="搜索页面与参数" clearable aria-label="搜索页面与参数"><template #prefix><Search :size="15" /></template></el-input>
       <nav class="admin-nav">
-        <div v-for="group in visibleGroups" :key="group.id" class="admin-nav-group">
+        <div v-for="group in visibleGroups" :key="group.id" class="admin-nav-group" :data-control-tone="groupTone(group.id)">
           <button type="button" class="nav-group-label" :aria-expanded="query ? true : !collapsed[group.id]" @click="collapsed[group.id] = !collapsed[group.id]"><component :is="icons[group.icon]" :size="15" /><span>{{ group.label }}</span><ChevronDown :size="13" :class="{ rotated: collapsed[group.id] && !query }" /></button>
           <div v-show="query || !collapsed[group.id]" class="nav-pages">
-            <motion.button v-for="[id, label] in group.pages" :key="id" type="button" class="nav-page" :class="{ active: activePage === id }" :aria-current="activePage === id ? 'page' : undefined" :while-hover="motionEnabled ? { x: 3 } : undefined" :while-press="motionEnabled ? { scale: .97 } : undefined" @click="navigate(id)">
+            <motion.button v-for="[id, label] in group.pages" :key="id" type="button" class="nav-page" :data-control-tone="pageTone(id)" :class="{ active: activePage === id }" :aria-current="activePage === id ? 'page' : undefined" :while-hover="motionEnabled ? { x: 3 } : undefined" :while-press="motionEnabled ? { scale: .97 } : undefined" @click="navigate(id)">
               <motion.span v-if="activePage === id" class="nav-active" layout-id="admin-active-page" :transition="{ type: 'spring', stiffness: 330, damping: 30, duration: motionEnabled ? undefined : 0 }" />
               <span class="nav-page-dot" /><span>{{ label }}</span><ChevronRight v-if="activePage === id" :size="13" />
             </motion.button>

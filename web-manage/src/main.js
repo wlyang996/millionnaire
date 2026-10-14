@@ -6,6 +6,7 @@ import './admin/admin.css'
 import './admin/rule-previews.css'
 import './admin/version-comparison.css'
 import './admin/workbench.css'
+import './admin/control-colors.css'
 import App from './App.vue'
 
 createApp(App).use(ElementPlus, { locale: zhCn }).mount('#app')

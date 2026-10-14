@@ -1,0 +1,96 @@
+/* Functional accents also reach Element Plus dialogs and menus teleported to body. */
+html[data-admin-accent=violet], [data-control-tone=violet] { --control-light:#7450dc; --control-dark:#b69aff; }
+html[data-admin-accent=blue], [data-control-tone=blue] { --control-light:#2463cf; --control-dark:#87b8ff; }
+html[data-admin-accent=cyan], [data-control-tone=cyan] { --control-light:#08758b; --control-dark:#47d4e3; }
+html[data-admin-accent=rose], [data-control-tone=rose] { --control-light:#c42b6b; --control-dark:#ff89b5; }
+html[data-admin-accent=amber], [data-control-tone=amber] { --control-light:#aa550a; --control-dark:#ffc36a; }
+html[data-admin-accent=green], [data-control-tone=green] { --control-light:#077550; --control-dark:#56dfac; }
+html[data-admin-accent], [data-control-tone] {
+  --control-accent:var(--control-light);
+  --control-on-accent:#fff;
+  --control-soft:color-mix(in srgb,var(--control-accent) 9%,var(--admin-card));
+  --control-edge:color-mix(in srgb,var(--control-accent) 25%,var(--admin-border));
+  --admin-brand:var(--control-accent);
+  --admin-brand-soft:var(--control-soft);
+  --admin-glow:color-mix(in srgb,var(--control-accent) 15%,transparent);
+  --el-color-primary:var(--control-accent);
+  --el-color-primary-light-3:color-mix(in srgb,var(--control-accent) 75%,var(--admin-card));
+  --el-color-primary-light-5:color-mix(in srgb,var(--control-accent) 55%,var(--admin-card));
+  --el-color-primary-light-7:color-mix(in srgb,var(--control-accent) 35%,var(--admin-card));
+  --el-color-primary-light-8:color-mix(in srgb,var(--control-accent) 25%,var(--admin-card));
+  --el-color-primary-light-9:var(--control-soft);
+  --el-color-primary-dark-2:color-mix(in srgb,var(--control-accent) 80%,#132b40);
+}
+html[data-admin-accent] { --admin-bg:color-mix(in srgb,var(--control-light) 4%,#f7f9fd); --admin-secondary:color-mix(in srgb,var(--control-light) 3%,#f8fafc); }
+html[data-admin-theme=dark][data-admin-accent], html[data-admin-theme=dark] [data-control-tone] { --control-accent:var(--control-dark); --control-on-accent:#102334; }
+html[data-admin-theme=dark][data-admin-accent] { --admin-bg:#111827; --admin-card:#1b2435; --admin-secondary:#222e42; --admin-border:#35445c; --el-bg-color:var(--admin-card); --el-bg-color-overlay:#243148; --el-fill-color-blank:var(--admin-card); --el-fill-color-light:var(--admin-secondary); --el-border-color:#43546e; --el-border-color-light:var(--admin-border); --el-border-color-lighter:var(--admin-border); }
+.admin-shell .admin-hero { background:radial-gradient(ellipse at 95% 0%,color-mix(in srgb,var(--control-accent) 50%,transparent),transparent 65%),linear-gradient(120deg,color-mix(in srgb,var(--control-light) 65%,#172239),color-mix(in srgb,var(--control-light) 85%,#162d45)); box-shadow:0 12px 36px var(--admin-glow); }
+.admin-hero p,.admin-hero .hero-caption { color:#eef3ff; }
+.admin-nav-group .nav-group-label>svg:first-child { color:var(--control-accent); background:var(--control-soft); padding:4px; width:24px; height:24px; border-radius:8px; flex-shrink:0; }
+.nav-page:not(.active) .nav-page-dot { color:var(--control-accent); opacity:.8; width:5px; height:5px; }
+.admin-shell .page-heading h2 { border-left:4px solid var(--control-accent); padding-left:12px; }
+.admin-shell .field-panel-title>span::before { content:''; display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:9px; background:var(--control-accent); box-shadow:0 0 0 4px var(--control-soft); }
+.admin-shell .el-slider__bar { background:linear-gradient(90deg,var(--el-color-primary-dark-2),var(--el-color-primary)); }
+.admin-shell .el-slider__button:hover,.admin-shell .el-slider__button.dragging { box-shadow:0 0 0 5px var(--control-soft); }
+.admin-shell .el-switch { --el-switch-on-color:var(--control-accent); }
+.admin-shell .el-switch.is-checked .el-switch__action { background:var(--control-on-accent); }
+.admin-shell .el-radio-button { --el-radio-button-checked-text-color:var(--control-on-accent); }
+.admin-shell .el-checkbox { --el-checkbox-checked-icon-color:var(--control-on-accent); }
+html[data-admin-accent] .el-button--primary:not(.is-plain):not(.is-text):not(.is-link) { --el-button-text-color:var(--control-on-accent); --el-button-hover-text-color:var(--control-on-accent); --el-button-active-text-color:var(--control-on-accent); }
+html[data-admin-accent] .el-button--primary.is-plain { --el-button-hover-text-color:var(--control-on-accent); --el-button-active-text-color:var(--control-on-accent); }
+.audio-defaults>label[data-control-tone] { padding:20px; border:1px solid var(--control-edge); border-top:3px solid var(--control-accent); border-radius:16px; background:linear-gradient(130deg,var(--control-soft),var(--admin-card)); }
+.audio-channel-heading { display:flex; align-items:center; gap:9px; color:var(--control-accent); font-weight:600; }
+.audio-channel-heading svg { flex-shrink:0; }
+.audio-defaults>label:last-child { grid-column:1/-1; }
+.audio-channel-caption { color:var(--admin-muted); font-size:11px; font-weight:400; }
+.audio-track[data-control-tone] { border-left:3px solid var(--control-accent); background:linear-gradient(120deg,var(--control-soft),var(--admin-card)); }
+.audio-track[data-control-tone]>svg { color:var(--control-accent); }
+.audio-binding>.el-checkbox { --el-checkbox-checked-text-color:var(--control-accent); }
+.wave-loop-control { display:flex; align-items:center; padding:6px 12px; min-height:36px; border:1px solid var(--control-edge); border-radius:12px; background:var(--control-soft); }
+.live-room-metrics .surface[data-control-tone] { border-top:3px solid var(--control-accent); background:linear-gradient(135deg,var(--admin-card),var(--control-soft)); }
+.live-room-metrics .surface[data-control-tone] strong { color:var(--control-accent); }
+.dashboard-overview .metric-grid>.spotlight-card[data-control-tone] { border-top:3px solid var(--control-accent); background:linear-gradient(135deg,var(--admin-card),var(--control-soft)); }
+.dashboard-overview .metric-value>.number-ticker,.dashboard-overview .metric-label>svg { color:var(--control-accent); }
+.probability-card[data-control-tone] { border-top:3px solid var(--control-accent); }
+.probability-card[data-control-tone] h3>svg { color:var(--control-accent); }
+@media(max-width:550px) { .audio-defaults>label[data-control-tone] { padding:16px; } }
+
+/* Status colors keep their established meaning, with theme-aware soft fills. */
+html[data-admin-accent] {
+  --el-color-success:#16754e;
+  --el-color-success-light-3:color-mix(in srgb,var(--el-color-success) 75%,var(--admin-card));
+  --el-color-success-light-5:color-mix(in srgb,var(--el-color-success) 55%,var(--admin-card));
+  --el-color-success-light-7:color-mix(in srgb,var(--el-color-success) 35%,var(--admin-card));
+  --el-color-success-light-8:color-mix(in srgb,var(--el-color-success) 25%,var(--admin-card));
+  --el-color-success-light-9:color-mix(in srgb,var(--el-color-success) 10%,var(--admin-card));
+  --el-color-success-dark-2:color-mix(in srgb,var(--el-color-success) 80%,#132b40);
+  --el-color-warning:#a45b08;
+  --el-color-warning-light-3:color-mix(in srgb,var(--el-color-warning) 75%,var(--admin-card));
+  --el-color-warning-light-5:color-mix(in srgb,var(--el-color-warning) 55%,var(--admin-card));
+  --el-color-warning-light-7:color-mix(in srgb,var(--el-color-warning) 35%,var(--admin-card));
+  --el-color-warning-light-8:color-mix(in srgb,var(--el-color-warning) 25%,var(--admin-card));
+  --el-color-warning-light-9:color-mix(in srgb,var(--el-color-warning) 10%,var(--admin-card));
+  --el-color-warning-dark-2:color-mix(in srgb,var(--el-color-warning) 80%,#132b40);
+  --el-color-danger:#c33248;
+  --el-color-danger-light-3:color-mix(in srgb,var(--el-color-danger) 75%,var(--admin-card));
+  --el-color-danger-light-5:color-mix(in srgb,var(--el-color-danger) 55%,var(--admin-card));
+  --el-color-danger-light-7:color-mix(in srgb,var(--el-color-danger) 35%,var(--admin-card));
+  --el-color-danger-light-8:color-mix(in srgb,var(--el-color-danger) 25%,var(--admin-card));
+  --el-color-danger-light-9:color-mix(in srgb,var(--el-color-danger) 10%,var(--admin-card));
+  --el-color-danger-dark-2:color-mix(in srgb,var(--el-color-danger) 80%,#132b40);
+  --el-color-info:#596a80;
+  --el-color-info-light-3:color-mix(in srgb,var(--el-color-info) 75%,var(--admin-card));
+  --el-color-info-light-5:color-mix(in srgb,var(--el-color-info) 55%,var(--admin-card));
+  --el-color-info-light-7:color-mix(in srgb,var(--el-color-info) 35%,var(--admin-card));
+  --el-color-info-light-8:color-mix(in srgb,var(--el-color-info) 25%,var(--admin-card));
+  --el-color-info-light-9:color-mix(in srgb,var(--el-color-info) 10%,var(--admin-card));
+  --el-color-info-dark-2:color-mix(in srgb,var(--el-color-info) 80%,#132b40);
+}
+html[data-admin-theme=dark][data-admin-accent] {
+  --el-color-success:#59d4a4;
+  --el-color-warning:#f6bf61;
+  --el-color-danger:#ff8588;
+  --el-color-info:#adbbd0;
+}
+html[data-admin-theme=dark][data-admin-accent] .el-button:is(.el-button--success,.el-button--warning,.el-button--danger):not(.is-text):not(.is-link) { --el-button-hover-text-color:#102334; --el-button-active-text-color:#102334; }
+html[data-admin-theme=dark][data-admin-accent] .el-button:is(.el-button--success,.el-button--warning,.el-button--danger):not(.is-plain):not(.is-text):not(.is-link) { --el-button-text-color:#102334; }
