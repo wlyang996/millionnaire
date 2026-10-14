@@ -3,7 +3,7 @@
  *   screens(页面) < capsule(微信胶囊占位) < popups(弹窗) < demo(☰ 菜单) < toast。
  * 由 LobbyBootstrap 组件在 onLoad 里调用 start()，每帧调用 update()。
  */
-import { Camera, Canvas, Color, Layers, Node, profiler, ResolutionPolicy, UITransform, Vec3, view } from 'cc';
+import { Camera, Canvas, Color, game, Game, Layers, Node, profiler, ResolutionPolicy, UITransform, Vec3, view } from 'cc';
 import { launchRoom, onShowRoom, setupShareMenu } from './net/Wx';
 import { MockStore, Scenario } from './core/MockStore';
 import { POPUP_CATALOG } from './popups/Catalog';
@@ -36,6 +36,11 @@ import { Sound } from './audio/Sound';
 import { PracticeScreen } from './screens/PracticeScreen';
 
 export class App {
+    private readonly hide=()=>ctx.store?.online?.suspendPresentation();
+    private readonly show=()=>{
+        if(['board','spectator'].includes(ctx.screens?.currentId??'')&&ctx.store?.online?.resumePresentation())ctx.popups.closeAll();
+    };
+    private readonly visibility=()=>document.hidden?this.hide():this.show();
     start(host: Node): void {
         profiler.hideStats();
         view.setDesignResolutionSize(Theme.W, Theme.H, ResolutionPolicy.SHOW_ALL);
@@ -85,7 +90,12 @@ export class App {
         ctx.clock = store.clock;
         ctx.root = root;
         Sound.init(root);
-        ctx.screens = new ScreenManager(root, id => Sound.scene(id));
+        ctx.screens = new ScreenManager(root, id => {
+            Sound.scene(id);
+            if(id==='lobby'||id==='practice')store.online?.suspendPresentation();
+        });
+        game.on(Game.EVENT_HIDE,this.hide);game.on(Game.EVENT_SHOW,this.show);
+        if(typeof document!=='undefined')document.addEventListener('visibilitychange',this.visibility);
         const demo = new DemoPanel(root, !store.online); // 先建，使胶囊占位位于页面之上、弹窗之下；联机不显示"☰"演示菜单
         ctx.popups = new PopupManager(root);
         demo.bringToFront();
@@ -164,7 +174,11 @@ export class App {
         Toast.update();
     }
 
-    destroy(): void { Sound.dispose(); }
+    destroy(): void {
+        game.off(Game.EVENT_HIDE,this.hide);game.off(Game.EVENT_SHOW,this.show);
+        if(typeof document!=='undefined')document.removeEventListener('visibilitychange',this.visibility);
+        Sound.dispose();
+    }
 
     /** 联机对局中断线重连：显示"正在同步最新状态…"遮罩（设计稿 06 右），连上后关闭。 */
     private updateResync(): void {

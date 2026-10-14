@@ -15,7 +15,8 @@ class EmoteTest {
         try{
             var r=rooms.create(new User(1,"可可"),"create",null).room();
             rooms.join(new User(2,"阿杰"),r.codeNumber(),"join");sent.clear();
-            r.emote("1","CHEER");
+            r.emote("1","first","CHEER");
+            r.emote("1","first","CHEER"); // Reconnect retries acknowledge without rebroadcasting.
             assertThat(sent).hasSize(2).allSatisfy(s->{assertThat(s).contains("\"playerId\":\"1\"","CHEER","endsAt");});
             assertThatThrownBy(()->r.emote("1","WOW")).isInstanceOf(ClientException.class).hasMessageContaining("太快");
             assertThatThrownBy(()->r.emote("2","<script>")).isInstanceOf(ClientException.class).hasMessageContaining("未知");

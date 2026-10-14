@@ -2,7 +2,7 @@
  * 聊天：最近消息 + 输入框 + 快捷短语。
  * 联机时经服务端聊天通道发送（房间内所有人含观战者都能看到）；演示模式只写本地。
  */
-import { EMOTES,EmoteId } from '../core/Emotes';
+import { EMOTES,EMOTE_GLYPHS,EmoteId } from '../core/Emotes';
 import { EXPERIENCE } from '../core/Rules';
 import { Node } from 'cc';
 import { ChatLine } from '../core/Models';
@@ -65,7 +65,7 @@ export class ChatPopup extends Popup {
             text(p,'快捷表情 · 头像气泡',28,790,w-56,38,26,Theme.c.navy,{bold:true,align:'l'});
             Object.entries(EMOTES).forEach(([id,label],i)=>{
                 const bw=(w-80)/3,n=mk(p,'Emote:'+id,28+i%3*(bw+12),842+Math.floor(i/3)*66,bw,54);
-                fillRR(gfx(n),0,0,bw,54,18,'#FFF0BE');text(n,label,0,0,bw,54,26,Theme.c.navy,{bold:true});
+                fillRR(gfx(n),0,0,bw,54,18,'#FFF0BE');text(n,EMOTE_GLYPHS[id as EmoteId]+' '+label,0,0,bw,54,26,Theme.c.navy,{bold:true});
                 onTap(n,()=>this.emote(id as EmoteId));
             });
         }

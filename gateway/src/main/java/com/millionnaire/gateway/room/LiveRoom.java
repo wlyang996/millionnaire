@@ -95,6 +95,7 @@ public final class LiveRoom {
     private final Engine<SessionState> engine;
     /** 建房时绑定的游戏参数版本（0 = 内置默认）；客户端按它拉取地名与价格表。 */
     private final long configId;
+    private final PublicJournal publicJournal=new PublicJournal();
     private final long createdAt;
     private final long characterVersion;
     private final RoomRunner<SessionState> runner;
@@ -120,8 +121,13 @@ public final class LiveRoom {
     private final Map<String, Long> lastEmoteAt = new HashMap<>();
     private long emoteSequence;
     public synchronized void emote(String playerId,String id) {
+        emote(playerId,java.util.UUID.randomUUID().toString(),id);
+    }
+    public synchronized void emote(String playerId,String requestId,String id) {
         if(closed) throw new ClientException("ROOM_CLOSED","room is closed");
         if(!lobby(runner.committed()).isMember(playerId)) throw new ClientException("NOT_IN_ROOM","not a member");
+        String receipt="emote\u0000"+playerId+'\u0000'+requestId;
+        if(replies.containsKey(receipt))return;
         var experience=engine.config().experience();
         if(!experience.emotesEnabled()) throw new ClientException("EMOTES_DISABLED","快捷表情暂未开放");
         if(id==null||!java.util.Set.of("CHEER","THANKS","WOW","LAUGH","SORRY","GOOD_GAME").contains(id))
@@ -133,6 +139,7 @@ public final class LiveRoom {
         var message=service.wire().object().put("type","EMOTE").put("roomCode",code()).put("playerId",playerId)
             .put("id",id).put("sequence",++emoteSequence).put("endsAt",now+experience.emoteVisibleMs());
         var json=service.wire().write(message);
+        replies.put(receipt,new Reply("ACCEPTED",null));
         for(String p:members(runner.committed())) service.outbox().send(p,json);
         for(String p:watchers) service.outbox().send(p,json);
     }
@@ -359,7 +366,7 @@ public final class LiveRoom {
     public synchronized String snapshot(String playerId) {
         EngineState s = runner.committed();
         return service.wire().update(code(), s.lastSeq(), service.now(), List.of(),
-                SessionDomain.INSTANCE.project(s, playerId), service.roomAvatars(avatarPlayers(s), characterVersion), configId, characterVersion);
+                SessionDomain.INSTANCE.project(s, playerId), service.roomAvatars(avatarPlayers(s), characterVersion), configId, characterVersion, publicJournal.snapshot());
     }
 
     public synchronized boolean isMember(String playerId) {
@@ -399,6 +406,10 @@ public final class LiveRoom {
         lastTime = at;
         EngineState after = r.state();
         Set<String> membersAfter = members(after);
+        var domainAfter=(SessionState)after.domain();
+        var domainBefore=(SessionState)before.domain();
+        long journalGame=domainAfter.game()!=null?domainAfter.game().gameNo():domainBefore.game()!=null?domainBefore.game().gameNo():domainAfter.gamesPlayed();
+        publicJournal.append(journalGame,r.events(),engine.config().experience().summaryMaxLines());
         // 先做簿记（成员索引、关房或安排下一次唤醒），推送失败不能影响房间推进
         service.membersChanged(this, membersBefore, membersAfter);
         if (lobby(after).status() == RoomStatus.CLOSED) {
@@ -416,7 +427,7 @@ public final class LiveRoom {
                 try {
                     List<Event> visible = EventProjector.project(r.events(), p);
                     service.outbox().send(p, service.wire().update(code(), after.lastSeq(), at, visible,
-                            SessionDomain.INSTANCE.project(after, p), avatars, configId, characterVersion));
+                            SessionDomain.INSTANCE.project(after, p), avatars, configId, characterVersion, publicJournal.snapshot()));
                 } catch (RuntimeException e) {
                     log.error("room {} cannot push seq {} to {}", code(), after.lastSeq(), p, e);
                 }

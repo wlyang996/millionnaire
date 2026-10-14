@@ -4,6 +4,10 @@
  * - 本步事件里的掷骰、移动转成动画提示（cues），棋盘页逐个播放，所有人看到的动画一致；
  * - 对局开始 / 结束时请求跳页（board / result）。
  */
+import { ReturnChanges } from '../core/ReturnChanges';
+import { EXPERIENCE } from '../core/Rules';
+import { describeEvent } from './GameLog';
+import type { ReturnSummary } from '../popups/ReturnSummaryPopup';
 import type { MockStore } from '../core/MockStore';
 import { CARD_NAMES, ChatLine, OpenWindow, RoomSettings, SessionView, CardType, StartPickResult } from '../core/Models';
 import { EVENT_IDLE, EventKind, EventResult } from '../core/EventDraw';
@@ -61,6 +65,24 @@ export class OnlineSession {
     readonly client: GameClient;
     boards: BoardTemplate[] | null = null;
     /** 待播放的动画提示（棋盘页消费）。 */
+    readonly changes=new ReturnChanges();
+    returnSummary:ReturnSummary|null=null;
+    private presentationVisible=false;
+    suspendPresentation():void{this.presentationVisible=false;this.changes.leave();}
+    resumePresentation():boolean{
+        this.presentationVisible=true;
+        if(!this.changes.resume())return false;
+        this.cues.length=0;this.store.eventDraw=EVENT_IDLE;this.store.emit();this.client.sync();
+        return true;
+    }
+    showSummary():ReturnSummary|null{
+        const result=this.changes.take(),g=this.store.session.game;
+        if(!result||!g||!EXPERIENCE.returnSummaryEnabled)return null;
+        const names={myId:this.myId,name:(id:unknown)=>g.players.find(p=>p.playerId===String(id))?.nickname??'玩家',tile:(index:unknown)=>g.tiles[Number(index)]?.name??'土地'};
+        const lines=result.changes.map(e=>describeEvent(e,names)?.text).filter((v):v is string=>!!v).slice(-EXPERIENCE.summaryMaxLines);
+        return this.returnSummary={lines:lines.length?lines:['离开期间没有新的公开结算。'],truncated:result.truncated,
+            current:(g.players.find(p=>p.playerId===g.currentPlayer)?.nickname??'玩家')+'的回合'};
+    }
     readonly cues: Cue[] = [];
     lastDice = 1;
     link: LinkState = 'idle';
@@ -116,6 +138,8 @@ export class OnlineSession {
         this.useCharacters();
         this.client.onState = (s) => {
             this.link = s;
+            if(s==='reconnecting')this.changes.leave();
+            else if(s==='open'&&this.presentationVisible)this.resumePresentation();
             this.store.emit();
         };
         this.client.onNotice = (m) => {
@@ -362,6 +386,7 @@ export class OnlineSession {
 
     // ------------------------------------------------------------ 内部
     private update(u: UpdateMsg): void {
+        const suppress=this.changes.suppressAnimations;
         this.eventCueAt = -1;
         for (const [index, e] of u.events.entries()) {
             const d = e.data ?? {};
@@ -419,6 +444,7 @@ export class OnlineSession {
         setCityEvent(s.game?.progress?.cityEvent ?? null, s.game?.round ?? 0);
         this.trackCards(u, s);
         this.trackStartPick(u, s);
+        if(s.game)this.changes.update(u.roomCode+':'+s.game.gameNo,u.publicChanges??[],s.game.gameNo);
         const hasGame = !!s.game;
         if (hasGame && !this.hadGame) {
             this.store.gameLog = []; // 新的一局（或重连进来）：记录从这里开始
@@ -453,6 +479,13 @@ export class OnlineSession {
         } else if (!this.eventWaitQueued && this.store.eventDraw.phase === 'IDLE') {
             this.eventWaitQueued = true;
             this.cues.push({ kind: 'event', playerId: g.currentPlayer, actor: g.currentPlayer, waiting: true, result: null });
+        }
+        if(suppress){
+            this.cues.length=0;
+            this.store.flowResult=null;
+            if(!g?.minigame)this.store.toothResult=null;
+            this.store.eventDraw=waiting&&g?{phase:'WAITING',actor:g.currentPlayer,since:Date.now(),result:null,settled:this.store.eventDraw.settled}:EVENT_IDLE;
+            this.eventWaitQueued=waiting;
         }
         this.store.emit();
     }
@@ -642,6 +675,7 @@ export class OnlineSession {
     }
 
     private leaveLocally(): void {
+        this.changes.clear();this.returnSummary=null;
         this.store.emotes.clear();
         this.useCharacters(undefined, true);
         this.hadGame = false;

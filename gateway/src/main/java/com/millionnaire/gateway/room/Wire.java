@@ -82,6 +82,10 @@ public class Wire {
 
     public String update(String roomCode, long version, long serverTime, List<Event> events, SessionView view,
                          java.util.Map<String, Integer> avatars, long configId, long characterVersion) {
+        return update(roomCode,version,serverTime,events,view,avatars,configId,characterVersion,List.of());
+    }
+    public String update(String roomCode,long version,long serverTime,List<Event> events,SessionView view,
+            Map<String,Integer> avatars,long configId,long characterVersion,List<ObjectNode> publicChanges){
         ObjectNode n = object();
         n.put("type", "UPDATE");
         n.put("roomCode", roomCode);
@@ -90,6 +94,7 @@ public class Wire {
         n.put("configId", configId);
         n.put("characterVersion", characterVersion);
         n.set("events", events(events));
+        n.set("publicChanges",json.valueToTree(publicChanges));
         n.set("view", json.valueToTree(view));
         ObjectNode av = n.putObject("avatars");
         avatars.forEach(av::put);

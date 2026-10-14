@@ -19,6 +19,7 @@ import { RulesPopup } from '../popups/RulesPopup';
 import { ghostButton, IconButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { DiceView } from '../ui/DiceView';
+import { ReturnSummaryPopup } from '../popups/ReturnSummaryPopup';
 import { Reminders } from '../ui/Reminder';
 import { EXPERIENCE } from '../core/Rules';
 import { vibrateTurn } from '../net/Wx';
@@ -108,6 +109,7 @@ export class BoardScreen extends Screen {
     }
 
     onShow(): void {
+        if(ctx.store.online?.resumePresentation())ctx.popups.closeAll();
         boardHooks.jailRoll = () => this.startRoll();
         this.lastCurrent = '';
     }
@@ -116,6 +118,10 @@ export class BoardScreen extends Screen {
     private dirty = false;
 
     refresh(): void {
+        if(ctx.store.online?.changes.suppressAnimations){
+            this.move=null;this.dice=null;this.pendingEnd=false;this.openedFor=-1;
+            this.jailOv?.root.destroy();this.jailOv=null;this.jail=null;
+        }
         if (this.move || (this.dice && this.dice.playing)) {
             this.dirty = true;
             return;
@@ -325,7 +331,7 @@ export class BoardScreen extends Screen {
         if (online) {
             const g = ctx.store.game;
             const w = online.myWindow('TURN');
-            return !this.spectator && !!w && online.isOpen(w) && (g.stage === 'PRE_ROLL' || g.stage === 'JAIL_DECISION')
+            return !this.spectator && !online.changes.suppressAnimations && !!w && online.isOpen(w) && (g.stage === 'PRE_ROLL' || g.stage === 'JAIL_DECISION')
                 && !this.busy() && ctx.popups.count === 0 && online.cues.length === 0;
         }
         return !this.spectator && ctx.store.isMyTurn() && me_manual(ctx.store.me()) && !this.busy() && ctx.popups.count === 0;
@@ -481,12 +487,13 @@ export class BoardScreen extends Screen {
         }
         for (const p of game.players) {
             const previous = this.cashSnapshot.get(p.playerId);
-            if (previous !== undefined && previous !== p.cash) {
+            if (previous !== undefined && previous !== p.cash && !ctx.store.online?.changes.suppressAnimations) {
                 this.cashChanges.set(p.playerId, { amount: p.cash - previous, until: now + CASH_DELTA_MS });
                 Sound.effect(p.cash > previous ? 'cashGain' : 'cashLoss');
             }
             this.cashSnapshot.set(p.playerId, p.cash);
         }
+        if(ctx.store.online?.changes.suppressAnimations)this.cashChanges.clear();
         for (const [id, change] of this.cashChanges) if (change.until <= now) this.cashChanges.delete(id);
     }
 
@@ -553,6 +560,9 @@ export class BoardScreen extends Screen {
         const g = st.game;
         if (!this.view || !g) return;
         this.tickGlobalNotice();
+        const summary=st.online?.showSummary();
+        if(summary){this.dirty=true;}
+        this.tickSummary();
         if (this.dirty && !this.move && !(this.dice && this.dice.playing)) {
             this.refresh();
             return;
@@ -667,13 +677,25 @@ export class BoardScreen extends Screen {
         }
     }
 
+    private summaryNode:Node|null=null;
+    private tickSummary():void{
+        const online=ctx.store.online,summary=online?.returnSummary;
+        if(this.summaryNode?.isValid)return;
+        if(!summary||!online||!EXPERIENCE.returnSummaryEnabled)return;
+        const n=mk(this.root,'ReturnSummaryNotice',44,222,632,32);this.summaryNode=n;
+        fillRR(gfx(n),0,0,632,32,16,'#FFF2CD');
+        text(n,'已同步 · '+summary.lines.length+'条变化 · 点此查看',12,0,560,32,20,Theme.c.navy,{bold:true,align:'l'});
+        onTap(n,()=>ctx.popups.openExclusive(new ReturnSummaryPopup({...summary,current:(ctx.store.player(ctx.store.game.currentPlayer)?.nickname??'玩家')+'的回合'})),false);
+        const close=mk(n,'Dismiss',574,0,48,32);text(close,'×',0,0,48,32,28,Theme.c.navy);
+        onTap(close,()=>{online.returnSummary=null;n.destroy();this.summaryNode=null;},false);
+    }
     private tickReminder(): void {
         const st=ctx.store,g=st.game,me=st.me(),w=st.online?.myWindow('TURN');
         const actionable=!!me && me.life==='ALIVE' && me_manual(me) && st.isMyTurn()
             && (g.stage==='PRE_ROLL'||g.stage==='JAIL_DECISION') && !this.spectator
             && !this.cashAnimating() && !this.busy() && !this.globalOv && !this.jailOv
             && st.eventDraw.phase==='IDLE' && ctx.popups.count===0
-            && (!st.online || st.online.isOpen(w) && st.online.cues.length===0);
+            && (!st.online || !st.online.changes.suppressAnimations && st.online.isOpen(w) && st.online.cues.length===0);
         const key=st.session.roomId+':'+g.gameNo+':'+g.turnNo;
         if(Reminders.take(key,actionable)&&EXPERIENCE.turnReminderEnabled&&Reminders.enabled){
             Reminders.until=Date.now()+EXPERIENCE.reminderHighlightMs;
@@ -821,7 +843,7 @@ export class BoardScreen extends Screen {
         const g = st.game;
         if (this.spectator || ctx.popups.count > 0 || online.cues.length > 0 || !me_manual(st.me())) return;
         const w = online.myWindow();
-        if (!w || !online.isOpen(w) || w.windowId === this.openedFor) return;
+        if (online.changes.suppressAnimations || !w || !online.isOpen(w) || w.windowId === this.openedFor) return;
         const id = w.windowId;
         const landing = g.landing;
         if (w.kind === 'TURN' && g.stage === 'LANDING' && landing && landing.decisionPending) {

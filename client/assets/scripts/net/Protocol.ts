@@ -169,6 +169,7 @@ export interface SEvent {
 
 export interface UpdateMsg {
     type: 'UPDATE';
+    publicChanges?: import('../core/ReturnChanges').PublicChange[];
     roomCode: string;
     version: number;
     serverTime: number;

@@ -16,6 +16,7 @@ export const groups = [
     ['funTitles', '结算称号', '给精彩的一局，留下一个名字', '称号名称、启停与门槛统一配置。'],
     ['series', '好友系列赛', '精彩不止一局', '局数、计分和并列规则随设置即时预览。'],
     ['team', '组队合作', '和队友一起，把优势连起来', '队伍模式、免租、资金与欠款援助独立配置。'],
+    ['experience', '体验与互动', '让每一步操作更清楚', '回合提醒、道具预览、新手练习、快捷表情和返回摘要。'],
     ['timing', '操作时限', '让每一次操作，都有合适的节奏', '选择窗口、动画留时与托管设置保留原有单位。'],
   ] },
   { id: 'characters', label: '人物工作室', icon: 'UsersRound', pages: [['characters', '人物素材', '每一位角色，都有自己的舞台', '七张基础素材、四帧移动预览和整套版本，统一发布。']] },
@@ -35,5 +36,5 @@ export function diffSettings(before, after, prefix = '') {
   }
   return [{ path: prefix, before, after }]
 }
-const sectionByField = { tileNames: 'names', sets: 'sets', tiers: 'prices', station: 'prices', fees: 'money', eventCash: 'money', rentRise: 'rentRise', eventWeights: 'events', cardWeights: 'events', lucky: 'events', handLimit: 'events', room: 'room', startPick: 'startPick', roundReward: 'roundReward', cityEvents: 'cityEvents', funTitles: 'funTitles', series: 'series', team: 'team', timing: 'timing', announcement: 'announcement' }
+const sectionByField = { tileNames: 'names', sets: 'sets', tiers: 'prices', station: 'prices', fees: 'money', eventCash: 'money', rentRise: 'rentRise', eventWeights: 'events', cardWeights: 'events', lucky: 'events', handLimit: 'events', room: 'room', startPick: 'startPick', roundReward: 'roundReward', cityEvents: 'cityEvents', funTitles: 'funTitles', series: 'series', team: 'team', experience: 'experience', timing: 'timing', announcement: 'announcement' }
 export function sectionForField(path) { return sectionByField[String(path).split(/[.\[]/)[0]] }

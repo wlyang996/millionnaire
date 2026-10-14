@@ -5,7 +5,7 @@
  * 目标格一律为当前位置；条件不满足的卡不消耗。演示模式只在本地扣掉手牌并做简单效果。
  */
 import { CardPreviewPopup } from './CardPreviewPopup';
-import { EXPERIENCE } from '../core/Rules';
+import { EXPERIENCE, GLOBAL_RULES } from '../core/Rules';
 import { sameTeam } from '../core/Teams';
 import { EventTouch, Node } from 'cc';
 import { BoardTile, CARD_NAMES, CardType, PlayerView, PropertyState } from '../core/Models';
@@ -75,6 +75,7 @@ export function cardUsable(type: CardType): Usable {
     if (me.control !== 'MANUAL' || me.conn === 'OFFLINE') return no('托管中不能用卡');
     const online = st.online;
     if (online) {
+        if (online.changes.suppressAnimations) return no('正在同步对局，请稍后使用');
         const w = online.myWindow('TURN');
         if (!w || !online.isOpen(w)) return no('当前不是用卡时机');
         if (g.cards?.chanceUsed.includes(st.myId)) return no('本回合已经用过道具了');
@@ -165,7 +166,7 @@ function cardPreview(type:CardType,target:string|null,steps:number):string[]{
     const rows=['使用者：'+st.me().nickname,'目标：'+(type==='QUERY'?(st.player(target??'')?.nickname??'玩家'):tile.name)+' · '+owner];
     if(type==='FIXED_MOVE'){
         const n=st.game.tiles.length,to=(h.index+steps)%n,dest=st.tile(to),p=st.prop(to);
-        const waive=!!p?.owner && (p.owner===st.myId||sameTeam(p.owner,st.myId)||p.mortgaged);
+        const waive=!!p?.owner && (p.owner===st.myId||!!GLOBAL_RULES.team?.allyRentWaiver&&sameTeam(p.owner,st.myId)||p.mortgaged);
         rows[1]='前进 '+steps+' 格 → '+dest.name;
         rows.push('预计落点租金：'+(waive?0:rentAt(to))+'（按当前状态）');
         if(h.index+steps>=n)rows.push('经过起点：奖励与抽卡后继续前进');

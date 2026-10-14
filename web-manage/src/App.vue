@@ -676,6 +676,13 @@ onMounted(() => {
         </el-form>
         <p v-else class="muted">当前服务端未下发组队参数，请升级服务端后配置；不使用浏览器自设默认金额。</p>
       </section>
+<section v-show="tab === 'experience'" data-rule-page="experience" class="surface field-panel"><div class="field-panel-title"><span>体验与互动</span><small>发布后对新房间生效</small></div>
+        <el-form v-if="form.experience" label-width="170px" class="narrow">
+          <el-form-item v-for="f in [['turnReminderEnabled','回合提醒'],['turnSoundEnabled','回合提示音'],['hapticAllowed','允许震动提醒'],['cardPreviewEnabled','道具效果预览'],['practiceEnabled','新手练习入口'],['emotesEnabled','快捷表情'],['returnSummaryEnabled','返回变化摘要']]" :key="f[0]" :label="f[1]"><el-switch v-model="form.experience[f[0]]" /></el-form-item>
+          <el-form-item v-for="f in [['reminderHighlightMs','提醒高亮（毫秒）',500,10000],['emoteCooldownMs','表情间隔（毫秒）',1000,60000],['emoteVisibleMs','表情展示（毫秒）',500,10000],['summaryMaxLines','摘要最多条数',1,20]]" :key="f[0]" :label="f[1]"><el-input-number v-model="form.experience[f[0]]" :min="f[2]" :max="f[3]" /></el-form-item>
+          <p class="hint">提醒仅在可行动且动画播放完毕时触发；音效遵从个人声音开关。震动默认关闭，可由玩家在提醒设置开启。练习局独立运行，不写入战绩。表情采用固定内容，服务端限制发送频率。返回摘要只含公开信息。</p>
+        </el-form>
+      </section>
 <section v-show="tab === 'timing'" data-rule-page="timing" class="surface field-panel"><div class="field-panel-title"><span>操作时限</span><small>修改只在发布后生效</small></div>
         <el-form v-if="form.timing" label-width="170px" class="narrow">
           <p class="muted">各类弹窗的倒计时与动画留时。投骰时间在「建房选项」里配置。只影响发布之后新建的房间。</p>

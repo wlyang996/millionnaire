@@ -1,4 +1,5 @@
 export const EMOTES={CHEER:'加油！',THANKS:'谢谢',WOW:'太强了',LAUGH:'哈哈',SORRY:'抱歉',GOOD_GAME:'好局！'} as const;
+export const EMOTE_GLYPHS={CHEER:'💪',THANKS:'🙏',WOW:'🤩',LAUGH:'😂',SORRY:'🥺',GOOD_GAME:'👏'} as const;
 export type EmoteId=keyof typeof EMOTES;
 export interface EmoteBubble{playerId:string;id:EmoteId;endsAt:number;sequence:number}
 /** Only fixed, public identifiers are accepted; expired/repeated bubbles never replay. */
@@ -7,7 +8,7 @@ export class EmoteState{
     receive(raw:unknown,now:number):boolean{
         const v=raw as Partial<EmoteBubble>|null;
         if(!v||typeof v.playerId!=='string'||!v.id||!Object.prototype.hasOwnProperty.call(EMOTES,v.id)
-            ||!Number.isFinite(v.endsAt)||!Number.isFinite(v.sequence)||v.endsAt!<=now)return false;
+            ||!Number.isFinite(v.endsAt)||!Number.isSafeInteger(v.sequence)||v.endsAt!<=now)return false;
         const old=this.latest.get(v.playerId);
         if(old&&old.sequence>=v.sequence!)return false;
         this.latest.set(v.playerId,v as EmoteBubble);return true;

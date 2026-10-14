@@ -107,8 +107,19 @@ public record RuleConfig(
      * 列表换序都会得到不同哈希；保守地视为不同配置（拒绝续跑）是安全的。
      */
     public String contentHash() {
+        // Default presentation settings do not invalidate existing snapshots. A custom setting is still hashed.
+        if (ExperienceConfig.DEFAULT.equals(experience)) {
+            return Canonical.sha256Hex(new HashV1(ruleVersion, boards, tiers, station, economy, ratios, cardWeights,
+                    eventWeights, timing, room, rentInflation, setBonus, startPick, roundReward, funTitles, cityEvents, series, team));
+        }
         return Canonical.sha256Hex(this);
     }
+
+    /** Exact pre-experience canonical shape; field order is part of the historical hash contract. */
+    public record HashV1(String ruleVersion, List<BoardTemplate> boards, List<TierPricing> tiers, StationPricing station,
+            EconomyConfig economy, RatioConfig ratios, Map<CardType,Integer> cardWeights, Map<EventKind,Integer> eventWeights,
+            TimingConfig timing, RoomOptions room, RentInflation rentInflation, SetBonus setBonus, StartPick startPick,
+            RoundRewardConfig roundReward, FunTitleConfig funTitles, CityEventConfig cityEvents, SeriesConfig series, TeamConfig team) {}
 
     public Optional<BoardTemplate> board(String id) {
         return boards.stream().filter(b -> b.id().equals(id)).findFirst();

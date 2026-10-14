@@ -102,7 +102,10 @@ export class LobbyScreen extends Screen {
             const practice=mk(this.root,'PracticeEntry',180,1188,360,60);
             fillRR(gfx(practice),0,0,360,60,30,Theme.c.ivory);
             text(practice,'新手练习 · 随时重练',0,0,360,60,26,Theme.c.navy,{bold:true});
-            onTap(practice,()=>ctx.screens.push('practice'));
+            onTap(practice,()=>{
+                if(st.online&&st.session.status==='PLAYING'){Toast.show('请先完成当前对局再进入练习');return;}
+                ctx.screens.push('practice');
+            });
         }
     }
 

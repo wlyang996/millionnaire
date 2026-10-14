@@ -1,7 +1,7 @@
 import { buildBoard } from './BoardLayout';
 import { GameView, Profile, ROBOT_AVATAR } from './Models';
 import { INITIAL_CASH_OPTIONS, landPrice, rentOf, TIERS } from './Rules';
-export type PracticeStep='ROLL'|'BUY'|'RENT'|'EVENT'|'CARD'|'DONE';
+export type PracticeStep='ROLL'|'BUY'|'RENT'|'EVENT'|'EVENT_RESULT'|'CARD'|'DONE';
 /** Scripted learning sandbox: no OnlineSession, persistence, history or real room references. */
 export class Practice {
     step:PracticeStep='ROLL';
@@ -34,7 +34,9 @@ export class Practice {
             case 'RENT':
                 this.bot.position=this.land;this.bot.cash-=this.rent;this.me.cash+=this.rent;this.me.position=this.event;this.step='EVENT';break;
             case 'EVENT':
-                this.me.cash+=this.eventReward;this.game.myHand=[{id:'practice-build',type:'BUILD'}];this.me.handCount=1;
+                this.me.cash+=this.eventReward;this.step='EVENT_RESULT';break;
+            case 'EVENT_RESULT':
+                this.game.myHand=[{id:'practice-build',type:'BUILD'}];this.me.handCount=1;
                 this.me.position=this.land;this.step='CARD';break;
             case 'CARD':
                 this.property.level++;this.property.upgradeSpent=TIERS[this.game.tiles[this.land].tier??'LOW'].upgrade;

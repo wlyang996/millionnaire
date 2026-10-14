@@ -1,5 +1,5 @@
 import { Node } from 'cc';
-import { EMOTES } from '../core/Emotes';
+import { EMOTES,EMOTE_GLYPHS } from '../core/Emotes';
 import { EXPERIENCE } from '../core/Rules';
 import { ctx } from './Ctx';
 import { fillRR,gfx,mk,text } from './Kit';
@@ -9,7 +9,7 @@ export function drawEmoteBubble(parent:Node,id:string,x:number,y:number,w=140):v
     const now=ctx.store.online?.now()??Date.now(),v=ctx.store.emotes.get(id,now);
     if(!v)return;
     const n=mk(parent,'EmoteBubble',x,y,w,42);fillRR(gfx(n),0,0,w,42,16,'#FFF3C1');
-    text(n,EMOTES[v.id],0,0,w,42,23,'#101A50',{bold:true});bubbles.set(n,v.endsAt);
+    text(n,EMOTE_GLYPHS[v.id]+' '+EMOTES[v.id],0,0,w,42,23,'#101A50',{bold:true});bubbles.set(n,v.endsAt);
 }
 export function tickEmoteBubbles():void{
     const now=ctx.store.online?.now()??Date.now();
