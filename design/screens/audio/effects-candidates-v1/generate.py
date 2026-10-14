@@ -34,11 +34,18 @@ def save(path,y):
     pcm=np.round(y*32767).astype('<i2')
     with wave.open(str(path),'wb') as f:f.setnchannels(1);f.setsampwidth(2);f.setframerate(SR);f.writeframes(pcm.tobytes())
     return dict(durationMs=round(len(y)*1000/SR),sha256=hashlib.sha256(path.read_bytes()).hexdigest(),peakDbfs=-9)
+existing = json.loads((ROOT/'manifest.json').read_text(encoding='utf-8')) if (ROOT/'manifest.json').exists() else []
+previous = {item['id']:item for item in existing}
 manifest=[];preview=[]
 for key,name,y in specs:
     path=ROOT/(name+'.wav');meta=save(path,y)
-    manifest.append(dict(id=key,name=name,file=path.name,status='pending-user-review',source='original-procedural-synthesis',**meta))
+    item=dict(id=key,name=name,file=path.name,status='pending-user-review',source='original-procedural-synthesis',**meta)
+    old=previous.get(key,{})
+    if old.get('sha256')==meta['sha256']:
+        for field in ['status','approvedAt']:
+            if field in old:item[field]=old[field]
+    manifest.append(item)
     preview.extend([y,np.zeros(round(.8*SR))])
 save(ROOT/'00-十一项音效-按序试听.wav',np.concatenate(preview))
 (ROOT/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-print('Generated 11 isolated original cues; pending review.')
+print('Generated 11 isolated original cues; unchanged approval records preserved.')

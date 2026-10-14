@@ -31,7 +31,6 @@ public class AudioCatalog {
     private final Clock clock;
     private final ObjectMapper json = new ObjectMapper();
     private final Map<String, Asset> builtin = new LinkedHashMap<>(), localAssets = new LinkedHashMap<>();
-    private final Set<String> candidates = new HashSet<>();
     private final Map<String,String> candidateBindings = new LinkedHashMap<>();
     private final Set<String> localPublished = new HashSet<>();
     private final Map<Long, Release> localHistory = new LinkedHashMap<>();
@@ -47,8 +46,8 @@ public class AudioCatalog {
         Map<String,String> names=Map.ofEntries(Map.entry("dice","骰子轻碰"),Map.entry("move","棋子落地"),Map.entry("cashGain","收入金币"),Map.entry("cashLoss","支付金币"),Map.entry("card","翻牌"),Map.entry("purchase","购买成功"),Map.entry("upgrade","升级成功"),Map.entry("auction","拍卖落槌"),Map.entry("jail","入狱提示"),Map.entry("release","出狱提示"),Map.entry("reward","全员奖励"));
         for(String effect:EFFECTS.stream().sorted().toList()) {
             String key="audio/effects/cue-"+effect+"-v1.wav";
-            String id=UUID.nameUUIDFromBytes(key.getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
-            candidateBindings.put(effect,id);candidates.add(id);builtin.put(id,new Asset(id,names.get(effect),"effect",key,AudioFiles.inspect(bundled(key)),true,0));
+            String id=defaultEffectId(effect);
+            candidateBindings.put(effect,id);builtin.put(id,new Asset(id,names.get(effect),"effect",key,AudioFiles.inspect(bundled(key)),true,0));
         }
     }
     private void addBuiltin(String id, String name) {
@@ -58,9 +57,10 @@ public class AudioCatalog {
     public static Settings defaults() {
         Map<String, Binding> scenes = new LinkedHashMap<>();
         for (String s : SCENES) scenes.put(s, new Binding(s.equals("lobby") || s.equals("board") ? "morning-town" : "friends-play", true));
-        Map<String, String> effects = new LinkedHashMap<>(); EFFECTS.forEach(s -> effects.put(s, ""));
-        return new Settings(true, 30, false, 65, 400, scenes, effects);
+        Map<String, String> effects = new LinkedHashMap<>(); EFFECTS.forEach(s -> effects.put(s, defaultEffectId(s)));
+        return new Settings(true, 30, true, 65, 400, scenes, effects);
     }
+    private static String defaultEffectId(String effect) { return UUID.nameUUIDFromBytes(("audio/effects/cue-"+effect+"-v1.wav").getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString(); }
     public boolean persistent() { return jdbc.get() != null; }
     public boolean storageReady() { return objects.ready(); }
     private long activeId() {
@@ -145,12 +145,12 @@ public class AudioCatalog {
         return bytes;
     }
     private boolean published(Asset a) {
-        if (a.builtin() && !candidates.contains(a.id())) return true;
+        if (a.builtin()) return true; // All shipped cues were explicitly approved on 2026-10-14.
         var t = jdbc.get();
         return t == null ? localPublished.contains(a.id()) : t.queryForList("SELECT published FROM audio_asset WHERE asset_id=?", Integer.class, a.id()).stream().anyMatch(v->v==1);
     }
     public synchronized Map<String, Object> admin() {
-        return Map.of("current", current(), "draft", draft(), "assets", assets(), "history", history(), "storageReady", storageReady(), "persistent", persistent(),"candidateIds",candidates.stream().filter(id->!published(asset(id))).toList(),"candidateBindings",Map.copyOf(candidateBindings));
+        return Map.of("current", current(), "draft", draft(), "assets", assets(), "history", history(), "storageReady", storageReady(), "persistent", persistent(),"candidateIds",List.of(),"candidateBindings",Map.copyOf(candidateBindings));
     }
     /** Management read permission exposes the active release, never unpublished resources or drafts. */
     public synchronized Map<String, Object> published() {
@@ -195,9 +195,6 @@ public class AudioCatalog {
         else {
             t.update("UPDATE audio_catalog SET payload=? WHERE version_id=?", write(r), version);
             for (String id : referenced(s)) if (!builtin.containsKey(id)) t.update("UPDATE audio_asset SET published=1 WHERE asset_id=?", id);
-            for(String id:referenced(s)) if(candidates.contains(id) && t.update("UPDATE audio_asset SET published=1 WHERE asset_id=?",id)==0) {
-                t.update("INSERT INTO audio_asset (asset_id,payload,published,created_at) VALUES (?,?,1,?)",id,write(asset(id)),clock.millis());
-            }
             t.update("UPDATE audio_active SET version_id=? WHERE slot='default'", version);
         }
         storeDraft(new Draft(version, revision + 1, s)); return r;

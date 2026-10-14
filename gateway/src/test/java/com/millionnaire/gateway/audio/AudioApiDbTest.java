@@ -54,7 +54,7 @@ class AudioApiDbTest {
         assertThat(http.getForEntity("/api/audio/assets/"+id+".wav",byte[].class).getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(http.getForEntity("/api/audio",Map.class).getHeaders().getCacheControl()).isEqualTo("no-store");
         var candidate=catalog.assets().stream().filter(a->a.kind().equals("effect")&&a.builtin()).findFirst().orElseThrow();
-        assertThat(http.getForEntity("/api/audio/assets/"+candidate.id()+".wav",byte[].class).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(http.getForEntity("/api/audio/assets/"+candidate.id()+".wav",byte[].class).getStatusCode()).isEqualTo(HttpStatus.OK);
         var effects=new HashMap<>(s.effects());effects.put("dice",candidate.id());
         var candidateDraft=catalog.save(new AudioCatalog.Settings(true,30,true,65,400,s.scenes(),effects),catalog.draft().revision(),catalog.current().version());
         var candidatePublished=http.exchange("/admin-api/v1/audio/publish",HttpMethod.POST,new HttpEntity<>(new AudioController.Publish(candidateDraft.revision(),catalog.current().version()),headers),Map.class);
@@ -62,6 +62,6 @@ class AudioApiDbTest {
         var restarted=new AudioCatalog(jdbc,objects,clock);assertThat(restarted.bytes(candidate.id(),false)).isNotEmpty();
         assertThat(restarted.assets().stream().filter(a->a.id().equals(candidate.id()))).hasSize(1);
         catalog.rollback(0,catalog.current().version(),catalog.draft().revision());
-        assertThat(restarted.bytes(candidate.id(),false)).isNotEmpty();assertThat(restarted.current().settings().effectsEnabled()).isFalse();
+        assertThat(restarted.bytes(candidate.id(),false)).isNotEmpty();assertThat(restarted.current().settings().effectsEnabled()).isTrue();
     }
 }

@@ -9,19 +9,16 @@ import java.util.*;
 import org.junit.jupiter.api.Test;
 
 class AudioCatalogTest {
-    @Test void candidatesRemainPrivateAndSilentUntilExplicitPublication() {
+    @Test void approvedDefaultsBindElevenReadableEffectsAndPreserveExplicitMute() {
         var c=new AudioCatalog(()->null,new Objects(),Clock.systemUTC());
-        var candidate=c.assets().stream().filter(a->a.kind().equals("effect")).findFirst().orElseThrow();
+        var settings=c.current().settings();
+        assertThat(settings.effectsEnabled()).isTrue();assertThat(settings.effects()).hasSize(11);
         assertThat(c.assets().stream().filter(a->a.kind().equals("effect"))).hasSize(11);
+        for(String id:settings.effects().values()) assertThat(c.bytes(id,false)).isNotEmpty();
+        var muted=new AudioCatalog.Settings(true,30,false,65,400,settings.scenes(),settings.effects());
+        var draft=c.save(muted,0,0);c.publish(draft.revision(),0);
         assertThat(c.current().settings().effectsEnabled()).isFalse();
-        assertThatThrownBy(()->c.bytes(candidate.id(),false)).hasMessageContaining("不存在");
-        assertThat(c.bytes(candidate.id(),true)).isNotEmpty();
-        var s=c.current().settings();var bindings=new HashMap<>(s.effects());bindings.put("dice",candidate.id());
-        var draft=c.save(new AudioCatalog.Settings(true,30,true,65,400,s.scenes(),bindings),0,0);
-        assertThatThrownBy(()->c.bytes(candidate.id(),false)).hasMessageContaining("不存在");
-        c.publish(draft.revision(),0);assertThat(c.bytes(candidate.id(),false)).isNotEmpty();
-        c.rollback(0,c.current().version(),c.draft().revision());assertThat(c.current().settings().effectsEnabled()).isFalse();
-        assertThat(c.bytes(candidate.id(),false)).isNotEmpty(); // Prior releases retain immutable resources.
+        assertThat(c.load(c.current().version()).settings()).isEqualTo(muted);
     }
     static class Objects implements AudioObjectStore {
         final Map<String, byte[]> data = new HashMap<>(); boolean fail;
