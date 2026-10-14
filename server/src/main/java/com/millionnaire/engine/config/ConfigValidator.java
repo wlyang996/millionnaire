@@ -72,6 +72,7 @@ public final class ConfigValidator {
             fail("ruleVersion missing");
         }
         checkSets(c);
+        errors.addAll(ExperienceConfig.validate(c.experience()));
         errors.addAll(GlobalGameplayValidator.validate(c.roundReward(), c.funTitles(), c.cityEvents()));
         errors.addAll(SeriesConfig.validate(c.series()));
         errors.addAll(TeamConfig.validate(c.team()));

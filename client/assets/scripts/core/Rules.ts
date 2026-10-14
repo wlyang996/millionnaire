@@ -50,7 +50,15 @@ export const PRESENTATION = { event: 3700, cash: 2300, start: 1800, jail: 2600 }
 export let START_PICK: StartPickRule = { cashWeight: 60, cardWeight: 40, cashMin: 200, cashMax: 1000, cashStep: 100 };
 
 /** 后台参数里客户端显示要用的部分（GET /api/configs/{id}/client）。 */
+export interface ExperienceRules {
+    turnReminderEnabled: boolean; turnSoundEnabled: boolean; hapticAllowed: boolean; reminderHighlightMs: number;
+    cardPreviewEnabled: boolean; practiceEnabled: boolean; emotesEnabled: boolean; emoteCooldownMs: number;
+    emoteVisibleMs: number; returnSummaryEnabled: boolean; summaryMaxLines: number;
+}
+export const EXPERIENCE: ExperienceRules = { turnReminderEnabled:true,turnSoundEnabled:true,hapticAllowed:true,reminderHighlightMs:2400,
+    cardPreviewEnabled:true,practiceEnabled:true,emotesEnabled:true,emoteCooldownMs:3000,emoteVisibleMs:2400,returnSummaryEnabled:true,summaryMaxLines:8 };
 export interface ServerRules {
+    experience?: ExperienceRules;
     /** Server-configured values only; no team entry is enabled until gameplay is integrated. */
     team?: {
         enabled: boolean; teamSizeOptions: number[]; defaultTeamSize: number;
@@ -87,6 +95,7 @@ export interface ServerRules {
 
 /** 用房间绑定的参数版本覆盖价格、租金与固定费用（就地修改，已引用 TIERS / STATION 的地方随之生效）。 */
 export function applyServerRules(r: ServerRules): void {
+    if(r.experience) Object.assign(EXPERIENCE,r.experience);
     GLOBAL_RULES.series = r.series;
     GLOBAL_RULES.team = r.team;
     GLOBAL_RULES.roundReward = r.roundReward;

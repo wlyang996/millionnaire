@@ -11,11 +11,12 @@ import { Popup } from '../ui/Popup';
 import { surrenderConfirm } from './ConfirmPopup';
 import { GameLogPopup } from './GameLogPopup';
 import { RulesPopup } from './RulesPopup';
+import { ReminderSettingsPopup } from './ReminderSettingsPopup';
 import { SoundSettingsPopup } from './SoundSettingsPopup';
 
 const W = 300;
 const ROW_H = 84;
-const H = ROW_H * 5 + 16;
+const H = ROW_H * 6 + 16;
 
 export class SelfMenuPopup extends Popup {
     constructor() {
@@ -38,6 +39,7 @@ export class SelfMenuPopup extends Popup {
             ['对局记录', '每一步买地、租金、事件', Theme.c.navy, () => this.open(new GameLogPopup())],
             ['游戏规则', '价格、租金与玩法说明', Theme.c.navy, () => this.open(new RulesPopup())],
             ['声音设置', '音乐和音效的本机音量', Theme.c.navy, () => this.open(new SoundSettingsPopup())],
+            ['回合提醒', '高亮、提示音与轻震动', Theme.c.navy, () => this.open(new ReminderSettingsPopup())],
             ['主动托管', '系统代为投骰、买地和升级', Theme.c.navy, () => this.host()],
             ['认输', '现金与资产由系统回收', Theme.c.payRed, () => this.surrender()],
         ];

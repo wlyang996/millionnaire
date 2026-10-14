@@ -51,7 +51,15 @@ public record GameSettings(
         FunTitleConfig funTitles,
         CityEventConfig cityEvents,
         com.millionnaire.engine.config.SeriesConfig series,
-        com.millionnaire.engine.config.TeamConfig team) {
+        com.millionnaire.engine.config.TeamConfig team, com.millionnaire.engine.config.ExperienceConfig experience) {
+    public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
+            Map<String,Integer> eventWeights, Map<String,Integer> cardWeights, Map<String,List<String>> tileNames,
+            List<LuckySetting> lucky, RentRise rentRise, Integer handLimit, RoomSetting room, SetSetting sets, TimingSetting timing,
+            Announcement announcement, StartPickSetting startPick, RoundRewardConfig roundReward, FunTitleConfig funTitles,
+            CityEventConfig cityEvents, com.millionnaire.engine.config.SeriesConfig series, com.millionnaire.engine.config.TeamConfig team) {
+        this(tiers, station, fees, eventCash, eventWeights, cardWeights, tileNames, lucky, rentRise, handLimit, room, sets, timing,
+                announcement, startPick, roundReward, funTitles, cityEvents, series, team, com.millionnaire.engine.config.ExperienceConfig.DEFAULT);
+    }
     /** Missing team settings must not activate new rules in a published snapshot. */
     public GameSettings(List<TierSetting> tiers, StationSetting station, Fees fees, EventCash eventCash,
                         Map<String, Integer> eventWeights, Map<String, Integer> cardWeights,

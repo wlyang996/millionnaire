@@ -19,6 +19,9 @@ import { RulesPopup } from '../popups/RulesPopup';
 import { ghostButton, IconButton, primaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
 import { DiceView } from '../ui/DiceView';
+import { Reminders } from '../ui/Reminder';
+import { EXPERIENCE } from '../core/Rules';
+import { vibrateTurn } from '../net/Wx';
 import { Sound } from '../audio/Sound';
 import { drawBack, drawClock } from '../ui/Icons';
 import { fillCircle, fillRR, gfx, mk, onTap, setOpacity, setText, strokeRR, text } from '../ui/Kit';
@@ -562,6 +565,7 @@ export class BoardScreen extends Screen {
         this.view.tick(dt);
         this.dice?.setReady(this.canRoll());
         this.dice?.update();
+        this.tickReminder();
         if (st.online) {
             // 最后一段动画结束后主动刷新余额，不依赖下一次推送（连续收租金额相同也要刷新）。
             if (!this.cashAnimating() && g.players.some(p => this.shownCash.get(p.playerId) !== p.cash)) {
@@ -661,6 +665,30 @@ export class BoardScreen extends Screen {
             this.cityKey = key;
             if (this.globalOv) this.globalOv.node.setSiblingIndex(this.root.children.length - 1);
         }
+    }
+
+    private tickReminder(): void {
+        const st=ctx.store,g=st.game,me=st.me(),w=st.online?.myWindow('TURN');
+        const actionable=!!me && me.life==='ALIVE' && me_manual(me) && st.isMyTurn()
+            && (g.stage==='PRE_ROLL'||g.stage==='JAIL_DECISION') && !this.spectator
+            && !this.cashAnimating() && !this.busy() && !this.globalOv && !this.jailOv
+            && st.eventDraw.phase==='IDLE' && ctx.popups.count===0
+            && (!st.online || st.online.isOpen(w) && st.online.cues.length===0);
+        const key=st.session.roomId+':'+g.gameNo+':'+g.turnNo;
+        if(Reminders.take(key,actionable)&&EXPERIENCE.turnReminderEnabled&&Reminders.enabled){
+            Reminders.until=Date.now()+EXPERIENCE.reminderHighlightMs;
+            if(EXPERIENCE.turnSoundEnabled&&Reminders.sound) Sound.effect('card','turn:'+key);
+            if(EXPERIENCE.hapticAllowed&&Reminders.haptic) vibrateTurn();
+        }
+        const cell=this.root.getChildByName('PlayerBar')?.getChildByName('P:'+this.myId);
+        if(!cell)return;
+        let ring=cell.getChildByName('TurnReminder');
+        const show=st.isMyTurn() && EXPERIENCE.turnReminderEnabled && Reminders.enabled && Date.now()<Reminders.until;
+        if(!ring&&show){
+            ring=mk(cell,'TurnReminder',0,0,152,68);
+            strokeRR(gfx(ring),2,2,148,64,14,'#FFA900',5);
+        }
+        if(ring){ring.active=show;if(show)setOpacity(ring,Math.round(170+85*Math.sin(Date.now()/180)));}
     }
 
     private tickOnline(): void {

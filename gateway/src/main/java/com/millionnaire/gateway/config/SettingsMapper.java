@@ -75,6 +75,10 @@ public final class SettingsMapper {
     }
 
     /** 内置租金上涨参数（引擎默认）。 */
+    public static com.millionnaire.engine.config.ExperienceConfig experienceOf(GameSettings s) {
+        return s.experience() == null ? com.millionnaire.engine.config.ExperienceConfig.DEFAULT : s.experience();
+    }
+
     public static RentRise defaultRentRise() {
         RentInflation r = BASE.rentInflation();
         return new RentRise(r.freeRounds(), r.everyRounds(), r.stepPercent(), r.capPercent());
@@ -594,7 +598,7 @@ public final class SettingsMapper {
                 new GameSettings.Announcement(announcementOf(s).enabled(),
                         announcementOf(s).title() == null ? "" : announcementOf(s).title().strip(),
                         announcementOf(s).text() == null ? "" : announcementOf(s).text().strip()),
-                startPickOf(s), roundRewardOf(s), funTitlesOf(s), cityEventsOf(s), seriesOf(s), teamOf(s));
+                startPickOf(s), roundRewardOf(s), funTitlesOf(s), cityEventsOf(s), seriesOf(s), teamOf(s), experienceOf(s));
     }
 
     /** 选项按从小到大保存（建房页按这个顺序显示）。 */
@@ -665,7 +669,7 @@ public final class SettingsMapper {
                 new RentInflation(rr.freeRounds(), rr.everyRounds(), rr.stepPercent(), rr.capPercent()),
                 new SetBonus(setsOf(s).rentPercent(), setsOf(s).groups()),
                 new StartPick(sp.cashWeight(), sp.cardWeight(), sp.cashMin(), sp.cashMax(), sp.cashStep()),
-                roundRewardOf(s), funTitlesOf(s), cityEventsOf(s), seriesOf(s), teamOf(s));
+                roundRewardOf(s), funTitlesOf(s), cityEventsOf(s), seriesOf(s), teamOf(s), experienceOf(s));
     }
 
     private static Map<String, List<String>> loadDefaultNames() {

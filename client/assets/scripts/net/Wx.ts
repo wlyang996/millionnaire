@@ -8,6 +8,7 @@
 interface WxShareOptions { title: string; query?: string; imageUrl?: string }
 interface WxLaunch { query?: Record<string, string> }
 interface WxApi {
+    vibrateShort?(o: { type: 'light'; fail?(): void }): void;
     login(o: { success(r: { code: string }): void; fail(e: unknown): void; timeout?: number }): void;
     showShareMenu?(o: { withShareTicket?: boolean; menus?: string[] }): void;
     onShareAppMessage?(fn: () => WxShareOptions): void;
@@ -26,6 +27,11 @@ export function wxApi(): WxApi | null {
 
 export function isWechat(): boolean {
     return wxApi() !== null;
+}
+
+/** Unsupported devices fail silently; haptics never gate a game action. */
+export function vibrateTurn(): void {
+    try { wxApi()?.vibrateShort?.({ type: 'light', fail: () => undefined }); } catch { /* unavailable */ }
 }
 
 /** wx.login 的一次性 code（5 分钟有效、只能用一次）。 */

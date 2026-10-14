@@ -4,6 +4,7 @@ import { describe } from '../net/OnlineSession';
 import { Theme } from '../core/Theme';
 import { HistoryPopup } from '../popups/HistoryPopup';
 import { JoinRoomPopup } from '../popups/JoinRoomPopup';
+import { ReminderSettingsPopup } from '../popups/ReminderSettingsPopup';
 import { SoundSettingsPopup } from '../popups/SoundSettingsPopup';
 import { IconButton, primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -35,7 +36,7 @@ export class LobbyScreen extends Screen {
         for (let i = 0; i < 3; i++) fillRR(gfx(mk(me, 'Sig', 230 + i * 11, 40 - i * 8, 7, 12 + i * 8)), 0, 0, 7, 12 + i * 8, 2, Theme.c.green);
         // 设计稿 08：昵称胶囊右侧依次是音量、设置（"…"与圆点由微信胶囊绘制）
         new IconButton(this.root, 366, 22, 64, '♪', () => ctx.popups.openExclusive(new SoundSettingsPopup()));
-        const settings = new IconButton(this.root, 440, 22, 64, '', () => Toast.show('房间内可调整地图、资金与回合设置'));
+        const settings = new IconButton(this.root, 440, 22, 64, '', () => ctx.popups.openExclusive(new ReminderSettingsPopup()));
         art(settings.node, 'icon_settings', 10, 10, 44, 44);
 
         // 设计稿 08：彩色木牌品牌标志（与登录资料页同一素材）+ 四人围坐桌游插画
