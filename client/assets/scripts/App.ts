@@ -32,6 +32,7 @@ import { seriesPreview } from './demo/SeriesPreview';
 import { teamPreview, teamPreviewPopup } from './demo/TeamPreview';
 import { emptySession, OnlineSession } from './net/OnlineSession';
 import { Sound } from './audio/Sound';
+import { PracticeScreen } from './screens/PracticeScreen';
 
 export class App {
     start(host: Node): void {
@@ -93,6 +94,7 @@ export class App {
         const s = ctx.screens;
         s.register('profile', () => new ProfileScreen());
         s.register('lobby', () => new LobbyScreen());
+        s.register('practice', () => new PracticeScreen());
         s.register('room', () => new RoomScreen());
         s.register('series', () => new SeriesScreen());
         s.register('board', () => new BoardScreen(false));

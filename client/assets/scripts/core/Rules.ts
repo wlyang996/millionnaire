@@ -28,6 +28,8 @@ export const MAX_LEVEL = 3;
 export let MAX_HAND = 6;
 export let MINIGAME_REWARD = 500;
 export let BAIL_COST = 500;
+/** Also used for the deterministic cash example in the practice sandbox. */
+export const EVENT_CASH = { min:100, max:1000, step:100 };
 
 /** 幸运格奖池（内置默认见 EventDraw.LUCKY_POOL；联机按房间绑定的参数版本覆盖）。 */
 type PoolItem = { kind: string; amount: number; label: string; weight: number; unlucky?: boolean };
@@ -59,6 +61,7 @@ export const EXPERIENCE: ExperienceRules = { turnReminderEnabled:true,turnSoundE
     cardPreviewEnabled:true,practiceEnabled:true,emotesEnabled:true,emoteCooldownMs:3000,emoteVisibleMs:2400,returnSummaryEnabled:true,summaryMaxLines:8 };
 export interface ServerRules {
     experience?: ExperienceRules;
+    eventCash?: { min:number;max:number;step:number };
     /** Server-configured values only; no team entry is enabled until gameplay is integrated. */
     team?: {
         enabled: boolean; teamSizeOptions: number[]; defaultTeamSize: number;
@@ -96,6 +99,7 @@ export interface ServerRules {
 /** 用房间绑定的参数版本覆盖价格、租金与固定费用（就地修改，已引用 TIERS / STATION 的地方随之生效）。 */
 export function applyServerRules(r: ServerRules): void {
     if(r.experience) Object.assign(EXPERIENCE,r.experience);
+    if(r.eventCash) Object.assign(EVENT_CASH,r.eventCash);
     GLOBAL_RULES.series = r.series;
     GLOBAL_RULES.team = r.team;
     GLOBAL_RULES.roundReward = r.roundReward;

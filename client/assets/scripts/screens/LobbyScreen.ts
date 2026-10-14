@@ -14,6 +14,7 @@ import { Screen } from '../ui/Screen';
 import { Toast } from '../ui/Toast';
 import { avatar, roundedPanel } from '../ui/Widgets';
 import { art } from '../ui/Art';
+import { EXPERIENCE } from '../core/Rules';
 
 export class LobbyScreen extends Screen {
     readonly id = 'lobby' as const;
@@ -21,6 +22,7 @@ export class LobbyScreen extends Screen {
 
     protected build(): void {
         const st = ctx.store;
+        void st.online?.loadLobbyConfig();
         this.backdrop('sky');
         this.joinFromShare();
         art(this.root, 'information_background', 0, 0, Theme.W, Theme.H, 'stretch');
@@ -96,6 +98,12 @@ export class LobbyScreen extends Screen {
         text(rec, '我的战绩', 120, 0, 200, 80, Theme.font.lg, Theme.c.white, { bold: true });
         text(rec, '›', 352, 0, 40, 80, Theme.font.xl, Theme.c.white);
         onTap(rec, () => ctx.popups.open(new HistoryPopup()));
+        if(EXPERIENCE.practiceEnabled) {
+            const practice=mk(this.root,'PracticeEntry',180,1188,360,60);
+            fillRR(gfx(practice),0,0,360,60,30,Theme.c.ivory);
+            text(practice,'新手练习 · 随时重练',0,0,360,60,26,Theme.c.navy,{bold:true});
+            onTap(practice,()=>ctx.screens.push('practice'));
+        }
     }
 
     private drawTown(parent: import('cc').Node): boolean {

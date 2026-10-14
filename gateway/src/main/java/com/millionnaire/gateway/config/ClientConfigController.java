@@ -59,4 +59,10 @@ public class ClientConfigController {
             return ResponseEntity.ok().cacheControl(cache).body(out);
         }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("code", "NOT_FOUND")));
     }
+    /** Lobby and practice use the current published version before creating a room. */
+    @GetMapping("/api/configs/current/client")
+    public ResponseEntity<Map<String,Object>> currentClient() {
+        var response=client(configs.current().configId());
+        return ResponseEntity.status(response.getStatusCode()).cacheControl(CacheControl.noCache()).body(response.getBody());
+    }
 }

@@ -84,6 +84,17 @@ export class OnlineSession {
     private lastUpdate: UpdateMsg | null = null;
     private charactersWanted = '';
     private charactersGeneration = 0;
+    private lobbyConfigAt=0;
+    private lobbyConfigPending=false;
+    async loadLobbyConfig():Promise<void>{
+        if(this.store.session.roomId||this.lobbyConfigPending||Date.now()-this.lobbyConfigAt<3000)return;
+        this.lobbyConfigPending=true;this.lobbyConfigAt=Date.now();
+        try{
+            const c=await this.client.lobbyConfig();
+            if(!this.store.session.roomId){applyServerRules(c);applyServerSets(c.sets);applyServerNames(c.tileNames);this.store.emit();}
+        }catch{/* Keep last valid defaults when temporarily offline. */}
+        finally{this.lobbyConfigPending=false;}
+    }
 
     private useCharacters(version?: number, force = false): void {
         const wanted = version === undefined ? 'active' : String(version);

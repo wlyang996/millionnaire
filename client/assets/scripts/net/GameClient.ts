@@ -116,6 +116,11 @@ export class GameClient {
     }
 
     /** 某个参数版本的地名、价格与租金表（无需登录；已发布版本不变）。 */
+    async lobbyConfig(): Promise<ClientConfig> {
+        const r=await requestJson<ClientConfig>('GET',this.baseUrl+'/api/configs/current/client');
+        if(r.status!==200||!r.body)throw new Error('cannot load lobby config');
+        return r.body;
+    }
     async clientConfig(configId: number): Promise<ClientConfig> {
         const r = await requestJson<ClientConfig>('GET', this.baseUrl + '/api/configs/' + configId + '/client');
         if (r.status !== 200 || !r.body) throw new Error('cannot load config ' + configId);
