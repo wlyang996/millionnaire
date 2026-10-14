@@ -2,6 +2,7 @@
  * 演示数据仓库：不连后端，用可切换的"场景"生成 SessionView / GameView 等。
  * 接入后端时，用 WebSocket 推送的 SessionView 替换 `session` 并调用 emit() 即可，UI 只读本类的数据。
  */
+import { EmoteState } from './Emotes';
 import { buildBoard } from './BoardLayout';
 import { Clock } from './Clock';
 import { remainingSecFromMs } from './MatchClock';
@@ -49,6 +50,7 @@ export class MockStore {
     nowSource: () => number = () => Date.now();
     readonly clock = new Clock(() => this.nowSource());
     /** 我的 playerId：演示为 'p1'；联机登录后为服务端 userId。 */
+    emotes=new EmoteState();
     myId: string = ME;
     /** 联机会话；为 null 时是演示模式（本类的数据全部本地生成）。 */
     online: OnlineSession | null = null;

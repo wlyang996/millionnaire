@@ -123,6 +123,9 @@ export class OnlineSession {
                 this.watching = null;
                 this.leaveLocally();
             } else if (m.type === 'HELLO') this.watching = m.roomCode ? null : typeof m.watching === 'string' ? m.watching : null;
+            else if(m.type==='EMOTE' && m.roomCode===this.store.session.roomId) {
+                if(this.store.emotes.receive(m,this.now()))this.store.emit();
+            }
             else if (m.type === 'CHAT') this.receiveChat(m.lines);
             else if (m.type === 'ROOM_CLOSED') {
                 this.onToast?.('房间已关闭');
@@ -300,6 +303,7 @@ export class OnlineSession {
     }
 
     /** 发一句聊天；过快、过长由服务端拒绝或截断。 */
+    async emote(id:string):Promise<ResultMsg>{return this.check(await this.client.emote(id));}
     async say(text: string): Promise<ResultMsg> {
         const t = text.trim();
         if (!t) return { type: 'RESULT', requestId: null, ok: false, outcome: 'ERROR', code: 'BAD_REQUEST' } as ResultMsg;
@@ -638,6 +642,7 @@ export class OnlineSession {
     }
 
     private leaveLocally(): void {
+        this.store.emotes.clear();
         this.useCharacters(undefined, true);
         this.hadGame = false;
         this.chat = [];

@@ -3,6 +3,7 @@
  * 现金变化时在现金旁浮出"+500"（绿）/"-300"（红）的小标签，向上飘起并渐隐（用户 2026-10-07 要求的动态效果，
  * 取代早先的文字提示）；动画由 BoardScreen.tickCashChanges 按时间驱动，重建时按剩余时间接着播。
  */
+import { drawEmoteBubble } from '../../ui/EmoteBubbles';
 import { Node } from 'cc';
 import { ROBOT_AVATAR, ConnState, ControlMode, PlayerView } from '../../core/Models';
 import { Theme } from '../../core/Theme';
@@ -134,6 +135,7 @@ export function drawPlayerBar(parent: Node, x: number, y: number, players: Playe
         const change = changes.get(p.playerId);
         // 浮在现金正上方（昵称那一行），向上飘出卡片
         if (change) cashDelta(cell, 88, 24, change, changeNodes, 18);
+        drawEmoteBubble(cell,p.playerId,6,-34,140);
     });
     return bar;
 }

@@ -108,6 +108,12 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     sockets.sendTo(session, wire.write(pong));
                 }
                 case "SYNC" -> sync(session, user);
+                case "EMOTE" -> {
+                    LiveRoom room=rooms.roomOf(user.playerId()).orElseThrow(()->new ClientException("NOT_IN_ROOM","join a room first"));
+                    requireRequestId(requestId);
+                    room.emote(user.playerId(),text(msg,"id"));
+                    sockets.sendTo(session,wire.write(result(requestId,"ACCEPTED",null,room.code())));
+                }
                 case "CHAT" -> {
                     LiveRoom room = rooms.roomOf(user.playerId())
                             .orElseThrow(() -> new ClientException("NOT_IN_ROOM", "join or create a room first"));

@@ -116,6 +116,25 @@ public final class LiveRoom {
     /** 单局收集上限（条）：超过后本局不再写日志，避免异常长局占内存。 */
     private static final int GAME_LOG_MAX_EVENTS = 200_000;
     private boolean gameLogOverflow;
+    private final Map<String, Long> lastEmoteAt = new HashMap<>();
+    private long emoteSequence;
+    public synchronized void emote(String playerId,String id) {
+        if(closed) throw new ClientException("ROOM_CLOSED","room is closed");
+        if(!lobby(runner.committed()).isMember(playerId)) throw new ClientException("NOT_IN_ROOM","not a member");
+        var experience=engine.config().experience();
+        if(!experience.emotesEnabled()) throw new ClientException("EMOTES_DISABLED","快捷表情暂未开放");
+        if(id==null||!java.util.Set.of("CHEER","THANKS","WOW","LAUGH","SORRY","GOOD_GAME").contains(id))
+            throw new ClientException("BAD_REQUEST","未知表情");
+        long now=service.now();
+        Long last=lastEmoteAt.get(playerId);
+        if(last!=null && now-last<experience.emoteCooldownMs()) throw new ClientException("TOO_FAST","表情发送太快，请稍后再试");
+        lastEmoteAt.put(playerId,now);
+        var message=service.wire().object().put("type","EMOTE").put("roomCode",code()).put("playerId",playerId)
+            .put("id",id).put("sequence",++emoteSequence).put("endsAt",now+experience.emoteVisibleMs());
+        var json=service.wire().write(message);
+        for(String p:members(runner.committed())) service.outbox().send(p,json);
+        for(String p:watchers) service.outbox().send(p,json);
+    }
     private final Map<String, Long> lastChatAt = new HashMap<>();
     /** 挂机判定：每位手动玩家连续被系统代投的次数（亲手投骰即清零）。 */
     private final Map<String, Integer> missedRolls = new HashMap<>();

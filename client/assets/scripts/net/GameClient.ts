@@ -248,6 +248,7 @@ export class GameClient {
     }
 
     /** 房间聊天（服务端推 CHAT 完整列表，经 onNotice 交出）。 */
+    emote(id:string):Promise<ResultMsg>{return this.request('EMOTE',{id});}
     chat(text: string): Promise<ResultMsg> {
         return this.request('CHAT', { text });
     }

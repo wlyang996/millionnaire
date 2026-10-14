@@ -9,6 +9,14 @@ test('reminder waits for actionable foreground turn and survives refresh',()=>{
  assert.equal(r.take('room:1:8',true,true),true);
  assert.equal(r.take('room:2:7',true,true),true);
 });
+const {EmoteState}=require('../temp/features-selfcheck/core/Emotes.js');
+test('emotes reject unknown, expired and duplicate messages',()=>{
+ const s=new EmoteState(),v={playerId:'1',id:'CHEER',sequence:4,endsAt:3000};
+ assert.equal(s.receive({...v,id:'unknown'},1000),false);assert.equal(s.receive(v,3000),false);
+ assert.equal(s.receive(v,1000),true);assert.equal(s.receive(v,1000),false);
+ assert.equal(s.get('1',2999).id,'CHEER');assert.equal(s.get('1',3000),undefined);
+ s.clear();assert.equal(s.get('1',1000),undefined);
+});
 const {Practice}=require('../temp/features-selfcheck/core/Practice.js');
 test('practice completes interactive steps independently and can restart without history',()=>{
  const profile={nickname:'可可',avatar:1};const p=new Practice(profile,300);const start=p.me.cash;

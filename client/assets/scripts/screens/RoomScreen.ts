@@ -1,4 +1,5 @@
 /** 页面 3：好友房间（房号分享、8 个座位、房主设置、语音条/聊天片段、准备/开局）。 */
+import { drawEmoteBubble } from '../ui/EmoteBubbles';
 import { Node } from 'cc';
 import { copyText, shareRoom } from '../net/Wx';
 import { BANKRUPTCY_CAP_MINUTES, boardSizeOf, INITIAL_CASH_OPTIONS, MAX_HAND, maxPlayers, ROOM_ANIMATION, ROLL_SECONDS_OPTIONS, TIME_LIMIT_OPTIONS } from '../core/Rules';
@@ -187,6 +188,7 @@ export class RoomScreen extends Screen {
         strokeRR(cg, 1, 1, 102, 102, 20, '#FFFFFF', 3);
         // 半身人物图（透明底）直接站在色块上；素材未到时退回圆形头像
         if (m.avatar === ROBOT_AVATAR || !art(card, informationCharacterKey(m.avatar), 6, 4, 92, 100)) avatar(card, 10, 10, 84, m.avatar, m.nickname);
+        drawEmoteBubble(card,m.playerId,0,-34,104);
         if (m.playerId === s.hostId) {
             const tag = mk(cell, 'Host', 86, -8, 56, 30);
             fillRR(gfx(tag), 0, 0, 56, 30, 12, Theme.c.orange);

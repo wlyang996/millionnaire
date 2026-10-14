@@ -31,6 +31,7 @@ import { globalPreview } from './demo/GlobalPreview';
 import { seriesPreview } from './demo/SeriesPreview';
 import { teamPreview, teamPreviewPopup } from './demo/TeamPreview';
 import { emptySession, OnlineSession } from './net/OnlineSession';
+import { tickEmoteBubbles } from './ui/EmoteBubbles';
 import { Sound } from './audio/Sound';
 import { PracticeScreen } from './screens/PracticeScreen';
 
@@ -155,6 +156,7 @@ export class App {
 
     update(dt: number): void {
         Sound.update(dt);
+        tickEmoteBubbles();
         if (!ctx.screens) return;
         ctx.screens.update(dt);
         this.updateResync();

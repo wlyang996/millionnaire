@@ -6,6 +6,7 @@ import { teamColor, teamName } from '../core/Teams';
 import { art, informationCharacterKey } from '../ui/Art';
 import { primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
+import { drawEmoteBubble } from '../ui/EmoteBubbles';
 import { text, onTap } from '../ui/Kit';
 import { avatar, chip, Segmented } from '../ui/Widgets';
 import { shareRoom } from '../net/Wx';
@@ -42,6 +43,7 @@ export function buildTeamRoom(root: Node): void {
             if(m.playerId===s.hostId)chip(cell,4,2,'房主','#FFB437','#FFFFFF',16,24);
             text(cell,m.nickname,0,90,cw-10,30,23,Theme.c.navy,{bold:true});
             text(cell,m.ready?'✓ 已准备':'未准备',0,122,cw-10,32,22,m.ready?Theme.c.greenDark:Theme.c.inkSoft);
+            drawEmoteBubble(cell,m.playerId,0,-24,cw-10);
             if(host && m.bot)onTap(cell,()=>void st.online?.assignBotTeam(m.playerId,id==='BLUE'?'RED':'BLUE'));
             else if(host && m.playerId!==st.myId)onTap(cell,()=>ctx.popups.open(new ConfirmPopup({title:'移除 '+m.nickname+'？',message:'成员移除后，全员需要重新准备。',onConfirm:()=>void st.online?.kick(m.playerId)})));
         }

@@ -2,6 +2,8 @@
  * 聊天：最近消息 + 输入框 + 快捷短语。
  * 联机时经服务端聊天通道发送（房间内所有人含观战者都能看到）；演示模式只写本地。
  */
+import { EMOTES,EmoteId } from '../core/Emotes';
+import { EXPERIENCE } from '../core/Rules';
 import { Node } from 'cc';
 import { ChatLine } from '../core/Models';
 import { Theme } from '../core/Theme';
@@ -18,6 +20,7 @@ const MAX_CHARS = 40;
 
 export class ChatPopup extends Popup {
     private sending = false;
+    private emoteSending=false;private nextEmoteAt=0;
     private lines!: Node;
     private field: EditField | null = null;
     /** 上次画的是哪份列表、多少条（联机时每条推送都是新数组；满 30 条后条数不变，所以两个都比）。 */
@@ -26,7 +29,7 @@ export class ChatPopup extends Popup {
     private readonly watch = () => this.refresh();
 
     constructor() {
-        super('chat', '聊天', 640, 800, 0, true);
+        super('chat', '聊天', 640, 1000, 0, true);
     }
 
     protected buildTitle(): void {
@@ -58,6 +61,14 @@ export class ChatPopup extends Popup {
             text(b, s, 0, 0, bw, 54, Theme.font.sm, Theme.c.blueDark, { bold: true });
             onTap(b, () => this.send(s, false));
         });
+        if(EXPERIENCE.emotesEnabled){
+            text(p,'快捷表情 · 头像气泡',28,790,w-56,38,26,Theme.c.navy,{bold:true,align:'l'});
+            Object.entries(EMOTES).forEach(([id,label],i)=>{
+                const bw=(w-80)/3,n=mk(p,'Emote:'+id,28+i%3*(bw+12),842+Math.floor(i/3)*66,bw,54);
+                fillRR(gfx(n),0,0,bw,54,18,'#FFF0BE');text(n,label,0,0,bw,54,26,Theme.c.navy,{bold:true});
+                onTap(n,()=>this.emote(id as EmoteId));
+            });
+        }
         ctx.store.offChange(this.watch);
         ctx.store.onChange(this.watch);
     }
@@ -68,6 +79,18 @@ export class ChatPopup extends Popup {
         super.close();
     }
 
+    private emote(id:EmoteId):void{
+        const st=ctx.store;
+        if(this.emoteSending||Date.now()<this.nextEmoteAt){Toast.show('表情发送太快，请稍后再试');return;}
+        if(st.isWatcher()){Toast.show('观战者可查看表情');return;}
+        this.emoteSending=true;
+        if(st.online)void st.online.emote(id).then(r=>{if(r.ok)this.nextEmoteAt=Date.now()+EXPERIENCE.emoteCooldownMs;})
+            .finally(()=>this.emoteSending=false).catch(()=>Toast.show('表情未发送，请重试'));
+        else{
+            this.nextEmoteAt=Date.now()+EXPERIENCE.emoteCooldownMs;this.emoteSending=false;
+            st.emotes.receive({playerId:st.myId,id,sequence:Date.now(),endsAt:Date.now()+EXPERIENCE.emoteVisibleMs},Date.now());st.emit();
+        }
+    }
     private send(raw: string, fromField: boolean): void {
         const s = raw.trim();
         if (!s) return;
