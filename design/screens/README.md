@@ -162,3 +162,7 @@ powershell -NoProfile -File .\design\screens\records\update.ps1
 ## 管理端控件与模块配色（2026-10-14）
 
 [配色方案](ui/admin-control-colors-v1/方案.md)、[浅色、深色与手机验收](records/admin-control-colors-2026-10-14/README.md)：音乐青蓝、音效玫红、循环琥珀，并统一六组模块强调色，覆盖导航、表单、状态提示、实时指标和概率卡片。
+
+## 科技感管理端候选（2026-10-14）
+
+[深空青蓝／赛博紫红可切换预览](ui/admin-neon-console-v1/README.md)：深色霓虹、紧凑状态带、硬朗面板，提供左侧导航与顶部导航两种布局。作为候选方案保留，尚未切换正式管理端。
