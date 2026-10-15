@@ -3,6 +3,7 @@ import { Theme } from '../core/Theme';
 import { GLOBAL_RULES, INITIAL_CASH_OPTIONS, TIME_LIMIT_OPTIONS, ROLL_SECONDS_OPTIONS, MAX_HAND, ROOM_ANIMATION } from '../core/Rules';
 import { TeamId } from '../core/Models';
 import { teamColor, teamName } from '../core/Teams';
+import { botTeamDestination } from '../core/BotTeamAssignment';
 import { art, informationCharacterKey } from '../ui/Art';
 import { primaryButton, secondaryButton } from '../ui/Buttons';
 import { ctx } from '../ui/Ctx';
@@ -55,8 +56,13 @@ export function buildTeamRoom(root: Node): void {
     const bots=waiting.filter(m=>m.bot);
     const botList=bots.length ? new ScrollList(notes,20,86,432,48) : null;
     bots.forEach((m,i)=>{
-        const n=secondaryButton(botList!.content,m.nickname+' 分队',(i%2)*216,Math.floor(i/2)*50,208,46,()=>void st.online?.assignBotTeam(m.playerId,'BLUE'),20);
-        n.setEnabled(host,'仅房主可分配机器人');
+        const destination=botTeamDestination(t,m.playerId);
+        const n=secondaryButton(botList!.content,m.nickname+' 加入'+(destination?teamName(destination):'队伍'),(i%2)*216,Math.floor(i/2)*50,208,46,()=>{
+            const current=st.session.team;
+            const target=current && botTeamDestination(current,m.playerId);
+            if(target)void st.online?.assignBotTeam(m.playerId,target);
+        },20);
+        n.setEnabled(host && !!destination,host?'两队人数已满':'仅房主可分配机器人');
     });
     botList?.setContentHeight(Math.ceil(bots.length/2)*50);
     if(!waiting.some(m=>m.bot)) secondaryButton(notes,'地图 / 金额 / 计时设置',24,88,420,46,()=>ctx.popups.open(new TeamRoomSettingsPage()),23);
