@@ -12,10 +12,7 @@ test('mandatory password rotation blocks normal navigation even with administrat
   const user={mustChangePassword:true,permissions:['admin-user:manage','config:publish','config:read']}
   assert.equal(can(user,'config:publish'),false);assert.equal(pageVisible(user,'accounts'),false);assert.equal(pageVisible(null,'dashboard'),false)
 })
-test('password validation measures Unicode code points and the actual bcrypt byte boundary',()=>{
-  assert.equal(passwordError('safe-test-password'), '')
-  assert.equal(passwordError('密'.repeat(24)), '')
-  assert.notEqual(passwordError('密'.repeat(25)), '')
-  assert.notEqual(passwordError('short'), '')
-  assert.notEqual(passwordError('safe-test-password\n'), '')
+test('password validation accepts 6 through 12 Unicode code points and rejects control characters',()=>{
+  for(const value of ['abcdef','a'.repeat(12),'密'.repeat(6),'密'.repeat(12),'😀'.repeat(6),'😀'.repeat(12)])assert.equal(passwordError(value),'')
+  for(const value of [null,'','short','a'.repeat(13),'密'.repeat(13),'😀'.repeat(13),'abcde\n','abcde\u0085'])assert.notEqual(passwordError(value),'')
 })

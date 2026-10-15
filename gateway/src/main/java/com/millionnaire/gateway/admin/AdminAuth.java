@@ -39,7 +39,7 @@ public class AdminAuth {
         if(!store.persistent()&&!policy.isAllowInMemory())throw new AdminFault(503,"ADMIN_DATABASE_REQUIRED","后台账号需要数据库；仅本地开发可设置 ADMIN_ALLOW_IN_MEMORY=true");
         if(!store.users().isEmpty())return;
         if(policy.getBootstrapUsername().isBlank()||policy.getBootstrapPassword().isBlank())throw new AdminFault(503,"ADMIN_SETUP_REQUIRED","后台账号尚未初始化，请配置 ADMIN_BOOTSTRAP_USERNAME 和 ADMIN_BOOTSTRAP_PASSWORD");
-        String name;try{name=username(policy.getBootstrapUsername());validatePassword(policy.getBootstrapPassword());}catch(AdminFault e){throw new AdminFault(503,"ADMIN_SETUP_REQUIRED","初始化账号或密码不符合要求，请检查后台初始化配置");}
+        String name;try{name=username(policy.getBootstrapUsername());validatePassword(policy.getBootstrapPassword());}catch(AdminFault e){throw new AdminFault(503,"ADMIN_SETUP_REQUIRED","初始化配置不符合要求："+e.getMessage());}
         long now=clock.millis();var user=new User(Ids.nextId(),name,"超级管理员",encode(policy.getBootstrapPassword()),"SUPER_ADMIN","ACTIVE",true,0,0,1,now,now,0);store.insert(user);
         audit(null,"security","bootstrap",name,"SUCCESS","首次初始化超级管理员",UUID.randomUUID().toString());
         policy.setBootstrapPassword("");
@@ -94,10 +94,10 @@ public class AdminAuth {
     public static String username(String s){if(s==null)throw bad("请输入账号");String n=s.strip().toLowerCase(Locale.ROOT);if(!n.matches("[a-z0-9][a-z0-9._-]{2,31}")||Set.of("admin","system").contains(n))throw bad("账号须为3～32位字母、数字、点、下划线或短横线，不能使用历史保留名admin/system");return n;}
     private static String displayName(String s){if(s==null||s.strip().isEmpty()||s.codePointCount(0,s.length())>32||s.codePoints().anyMatch(Character::isISOControl))throw bad("姓名须为1～32字且不能含控制符");return s.strip();}
     private static void validRole(String role){if(!ROLES.containsKey(role))throw bad("角色不正确");}
-    public static void validatePassword(String p){if(p==null||p.codePointCount(0,p.length())<12||p.codePointCount(0,p.length())>64||p.getBytes(StandardCharsets.UTF_8).length>72||p.codePoints().anyMatch(Character::isISOControl))throw bad("密码须为12～64个字符，UTF-8不超过72字节且不能含控制符");}
+    public static void validatePassword(String p){if(p==null||p.codePointCount(0,p.length())<6||p.codePointCount(0,p.length())>12||p.codePoints().anyMatch(Character::isISOControl))throw bad("密码须为6～12个字符且不能含控制符");}
     private String encode(String p){return "{bcrypt}"+passwords.encode(p);}
     private static String rawHash(String p){if(!p.startsWith("{bcrypt}"))throw new AdminFault(503,"ADMIN_UNAVAILABLE","账号凭证格式不可用，请联系管理员");return p.substring(8);}
-    private String temporaryPassword(){byte[] bytes=new byte[18];random.nextBytes(bytes);return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);}
+    private String temporaryPassword(){byte[] bytes=new byte[9];random.nextBytes(bytes);return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);}
     public static String hash(String p){try{return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(p.getBytes(StandardCharsets.UTF_8)));}catch(NoSuchAlgorithmException e){throw new IllegalStateException(e);}}
     public static String safe(String s,int max){return s==null?"":s.replaceAll("[\\p{Cntrl}]"," ").substring(0,Math.min(max,s.length()));}
     public static void page(int p,int s){if(p<1||p>1000000||s<1||s>100)throw bad("页码须为1～1000000，每页1～100条");}

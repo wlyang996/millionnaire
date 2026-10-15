@@ -73,11 +73,11 @@ class ConfigHistoryTest {
 
     @Test
     void historyEndpointRequiresAuthenticationAndPreservesLegacyListContract() throws Exception {
-        var policy=new com.millionnaire.gateway.admin.AdminPolicy();policy.setBootstrapUsername("admin.history");policy.setBootstrapPassword("history-test-password");policy.setBcryptStrength(4);policy.setAllowInMemory(true);
+        var policy=new com.millionnaire.gateway.admin.AdminPolicy();policy.setBootstrapUsername("admin.history");policy.setBootstrapPassword("History123!");policy.setBcryptStrength(4);policy.setAllowInMemory(true);
         var authentication=new com.millionnaire.gateway.admin.AdminAuth(new com.millionnaire.gateway.admin.AdminStore(() -> null),clock,policy);
-        var first=authentication.login("admin.history","history-test-password","local","test","login");
-        var actor=authentication.authenticate("Bearer "+first.get("token"));authentication.changePassword(actor,"history-test-password","history-changed-password","change");
-        String auth="Bearer "+authentication.login("admin.history","history-changed-password","local","test","login").get("token");
+        var first=authentication.login("admin.history","History123!","local","test","login");
+        var actor=authentication.authenticate("Bearer "+first.get("token"));authentication.changePassword(actor,"History123!","History456!","change");
+        String auth="Bearer "+authentication.login("admin.history","History456!","local","test","login").get("token");
         var controller = new AdminController(configs, mock(Dashboard.class), authentication);
         MockMvc mvc = MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new com.millionnaire.gateway.admin.AdminWeb.Errors()).build();
         mvc.perform(get("/admin-api/v1/config/history/page")).andExpect(status().isUnauthorized());

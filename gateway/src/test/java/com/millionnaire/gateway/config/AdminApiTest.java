@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 
 /** 管理后台接口：密码登录、读取、校验、发布、回滚；客户端按 configId 拉取地名与价格。 */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {"millionnaire.admin.bootstrap-username=admin.test","millionnaire.admin.bootstrap-password=test-secret-1234","millionnaire.admin.bcrypt-strength=4","millionnaire.admin.allow-in-memory=true"})
+        properties = {"millionnaire.admin.bootstrap-username=admin.test","millionnaire.admin.bootstrap-password=Test1234!","millionnaire.admin.bcrypt-strength=4","millionnaire.admin.allow-in-memory=true"})
 class AdminApiTest {
     @Autowired
     TestRestTemplate http;
@@ -28,7 +28,7 @@ class AdminApiTest {
                 .getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(http.getForEntity("/admin-api/v1/config/active", Map.class).getStatusCode())
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
-        Map<String,Object> login=com.millionnaire.gateway.admin.AdminTestLogin.login(http,"admin.test","test-secret-1234");
+        Map<String,Object> login=com.millionnaire.gateway.admin.AdminTestLogin.login(http,"admin.test","Test1234!");
         HttpHeaders h = new HttpHeaders();
         h.setBearerAuth((String) login.get("token"));
 

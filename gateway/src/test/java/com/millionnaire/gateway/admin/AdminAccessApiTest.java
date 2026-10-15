@@ -9,7 +9,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"spring.datasource.url=jdbc:h2:mem:access-api;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1","spring.datasource.username=sa","spring.datasource.password=","spring.flyway.placeholders.table_options=","millionnaire.admin.bootstrap-username=root.api","millionnaire.admin.bootstrap-password=initial-api-password","millionnaire.admin.bcrypt-strength=4","millionnaire.admin.ip-attempts=1000"})
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={"spring.datasource.url=jdbc:h2:mem:access-api;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1","spring.datasource.username=sa","spring.datasource.password=","spring.flyway.placeholders.table_options=","millionnaire.admin.bootstrap-username=root.api","millionnaire.admin.bootstrap-password=InitialApi1!","millionnaire.admin.bcrypt-strength=4","millionnaire.admin.ip-attempts=1000"})
 @ActiveProfiles("db")
 @SuppressWarnings({"unchecked","rawtypes"})
 class AdminAccessApiTest {
@@ -17,7 +17,7 @@ class AdminAccessApiTest {
     private static final AtomicLong next=new AtomicLong();
     HttpHeaders headers(String token){var h=new HttpHeaders();h.setBearerAuth(token);return h;}
     ResponseEntity<Map> request(HttpMethod method,String url,Object body,String token){return http.exchange("/admin-api/v1"+url,method,new HttpEntity<>(body,headers(token)),Map.class);}
-    String admin(){return (String)AdminTestLogin.login(http,"root.api","initial-api-password").get("token");}
+    String admin(){return (String)AdminTestLogin.login(http,"root.api","InitialApi1!").get("token");}
     String user(String role,String administrator){String username="api.user"+next.incrementAndGet();var created=request(HttpMethod.POST,"/users",Map.of("username",username,"displayName","测试账号","role",role),administrator);assertThat(created.getStatusCode()).isEqualTo(HttpStatus.OK);return (String)AdminTestLogin.login(http,username,(String)created.getBody().get("temporaryPassword")).get("token");}
     @Test void stableAdminEntryAlwaysReturnsCurrentHtmlRatherThanAStaleConditionalResponse(){
         var conditional=new HttpHeaders();conditional.setIfModifiedSince(System.currentTimeMillis()+86400000);
@@ -30,7 +30,7 @@ class AdminAccessApiTest {
     }
     @Test void anonymousUnknownAndOldSharedPasswordRoutesCannotBypassAuthentication(){
         assertThat(http.getForEntity("/admin-api/v1/config/active",Map.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(http.postForEntity("/admin-api/v1/auth/login",Map.of("password","initial-api-password"),Map.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(http.postForEntity("/admin-api/v1/auth/login",Map.of("password","InitialApi1!"),Map.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(request(HttpMethod.GET,"/unregistered",null,admin()).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
     @Test void viewerReadsPublishedDataButCannotReadDraftsManageAccountsOrMutate(){
@@ -64,8 +64,8 @@ class AdminAccessApiTest {
     @Test void initialCredentialOnlyAllowsRotationAndSessionIdsAreOwnershipChecked(){
         String administrator=admin(),username="api.initial"+next.incrementAndGet();var created=request(HttpMethod.POST,"/users",Map.of("username",username,"displayName","初次登录","role","VIEWER"),administrator).getBody();String password=(String)created.get("temporaryPassword");var login=http.postForObject("/admin-api/v1/auth/login",Map.of("username",username,"password",password),Map.class);String token=(String)login.get("token");
         assertThat(request(HttpMethod.GET,"/config/active",null,token).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);assertThat(request(HttpMethod.GET,"/auth/me",null,token).getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(request(HttpMethod.POST,"/auth/password",Map.of("currentPassword",password,"newPassword","rotated-api-password"),token).getStatusCode()).isEqualTo(HttpStatus.OK);
-        var fresh=http.postForObject("/admin-api/v1/auth/login",Map.of("username",username,"password","rotated-api-password"),Map.class);String freshToken=(String)fresh.get("token");String adminSession=(String)request(HttpMethod.GET,"/auth/me",null,administrator).getBody().get("sessionId");
+        assertThat(request(HttpMethod.POST,"/auth/password",Map.of("currentPassword",password,"newPassword","RotatedApi1!"),token).getStatusCode()).isEqualTo(HttpStatus.OK);
+        var fresh=http.postForObject("/admin-api/v1/auth/login",Map.of("username",username,"password","RotatedApi1!"),Map.class);String freshToken=(String)fresh.get("token");String adminSession=(String)request(HttpMethod.GET,"/auth/me",null,administrator).getBody().get("sessionId");
         assertThat(request(HttpMethod.POST,"/auth/sessions/"+adminSession+"/revoke",Map.of(),freshToken).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(request(HttpMethod.GET,"/users?page=0",null,administrator).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);assertThat(request(HttpMethod.GET,"/audit?from=100&to=0",null,administrator).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }

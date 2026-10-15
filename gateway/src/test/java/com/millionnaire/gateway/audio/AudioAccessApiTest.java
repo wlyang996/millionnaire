@@ -15,7 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties={
     "spring.datasource.url=jdbc:h2:mem:audio-access;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
     "spring.datasource.username=sa","spring.datasource.password=","spring.flyway.placeholders.table_options=",
-    "millionnaire.admin.bootstrap-username=root.audioaccess","millionnaire.admin.bootstrap-password=audio-access-initial",
+    "millionnaire.admin.bootstrap-username=root.audioaccess","millionnaire.admin.bootstrap-password=AudioAccess!",
     "millionnaire.admin.bcrypt-strength=4","millionnaire.admin.ip-attempts=1000"})
 @ActiveProfiles("db")
 @SuppressWarnings({"rawtypes","unchecked"})
@@ -29,7 +29,7 @@ class AudioAccessApiTest {
     @Autowired java.time.Clock clock;
     @Autowired AdminPolicy policy;
     private static final AtomicLong next=new AtomicLong();
-    String admin(){return (String)AdminTestLogin.login(http,"root.audioaccess","audio-access-initial").get("token");}
+    String admin(){return (String)AdminTestLogin.login(http,"root.audioaccess","AudioAccess!").get("token");}
     HttpHeaders headers(String token){var h=new HttpHeaders();h.setBearerAuth(token);return h;}
     ResponseEntity<Map> request(HttpMethod method,String path,Object body,String token){return http.exchange("/admin-api/v1"+path,method,new HttpEntity<>(body,headers(token)),Map.class);}
     String user(String role,String administrator){var created=request(HttpMethod.POST,"/users",Map.of("username","audio.user"+next.incrementAndGet(),"displayName","音频测试账号","role",role),administrator).getBody();return (String)AdminTestLogin.login(http,(String)((Map)created.get("user")).get("username"),(String)created.get("temporaryPassword")).get("token");}

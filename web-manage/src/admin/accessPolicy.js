@@ -9,6 +9,6 @@ export function pageVisible(identity,page){
   return can(identity,permission)
 }
 export function passwordError(value){
-  if(!value||Array.from(value).length<12||Array.from(value).length>64||new TextEncoder().encode(value).length>72||/[\u0000-\u001f\u007f]/.test(value))return '密码须为12～64个字符，UTF-8不超过72字节且不能含控制符'
+  if(!value||Array.from(value).length<6||Array.from(value).length>12||/[\u0000-\u001f\u007f-\u009f]/.test(value))return '密码须为6～12个字符且不能含控制符'
   return ''
 }
