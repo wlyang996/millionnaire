@@ -72,6 +72,7 @@ public class CosCharacterStore implements CharacterObjectStore {
     private void require() {
         if (!ready()) throw new ClientException("COS_NOT_CONFIGURED", "请配置 COS_BUCKET、COS_REGION；无需配置长期密钥");
     }
+    public void delete(String key){require();try{execute(c->{c.deleteObject(bucket,key);return null;});}catch(RuntimeException e){throw failure(e,"COS 删除失败，请检查对象存储权限");}}
     private <T> T execute(Function<COSClient,T> action) {
         try { return action.apply(client); }
         catch (CosServiceException e) {

@@ -25,7 +25,9 @@ public class AdminAccountsController {
     @AdminAccess("admin-user:manage") @PostMapping("/users/{id}/reset-password") public Object reset(@PathVariable long id,@RequestBody Expected body,HttpServletRequest r){if(body.expectedVersion()==null)throw new AdminFault(400,"BAD_REQUEST","缺少账号版本");return auth.resetPassword(actor(r),id,body.expectedVersion(),requestId(r));}
     @AdminAccess("admin-session:manage") @GetMapping("/users/{id}/sessions") public Object userSessions(@PathVariable long id,HttpServletRequest r){return auth.sessions(actor(r),id);}
     @AdminAccess("admin-session:manage") @PostMapping("/users/{id}/sessions/revoke-all") public Object userRevoke(@PathVariable long id,HttpServletRequest r){auth.revoke(actor(r),id,null,requestId(r));return Map.of("ok",true);}
-    @AdminAccess("admin-user:manage") @GetMapping("/roles") public Object roles(){return List.of(role("SUPER_ADMIN","超级管理员","全部内容、账号、会话和审计权限"),role("OPERATOR","运营管理员","编辑、上传及发布；不能回滚或管理账号"),role("VIEWER","只读观察员","查看统计、生效内容及历史；不能读取草稿"));}
+    @AdminAccess("admin-user:manage") @GetMapping("/roles") public Object roles(){return auth.roles();}
+    public record SaveRole(String name,String description,Set<String> permissions,Long expectedVersion){}
+    @AdminAccess("admin-user:manage") @PutMapping("/roles/{id}") public Object saveRole(@PathVariable String id,@RequestBody SaveRole body,HttpServletRequest r){return auth.saveRole(actor(r),id,body.name(),body.description(),body.permissions(),body.expectedVersion(),requestId(r));}
     private Object role(String id,String name,String description){return Map.of("id",id,"name",name,"description",description,"permissions",AdminAuth.ROLES.get(id));}
     @AdminAccess("audit:read") @GetMapping("/audit") public Object audit(@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int size,@RequestParam(defaultValue="")String actor,@RequestParam(defaultValue="")String action,@RequestParam(defaultValue="all")String result,@RequestParam(defaultValue="0")long from,@RequestParam(defaultValue="9223372036854775807")long to){return auth.auditPage(page,size,actor,action,result,from,to);}
 }

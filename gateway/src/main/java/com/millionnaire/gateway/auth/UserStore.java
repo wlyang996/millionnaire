@@ -13,6 +13,23 @@ import org.springframework.stereotype.Component;
 /** 用户：启用 db 配置时写 app_user，否则只在内存（本地开发、测试）。 */
 @Component
 public class UserStore {
+    public Map<String,Object> adminProfile(long id){
+        var db=jdbc.getIfAvailable();if(db==null){var u=cache.get(id);if(u==null)throw new com.millionnaire.gateway.admin.AdminFault(404,"NOT_FOUND","玩家不存在");return Map.of("userId",u.id(),"nickname",u.nickname(),"avatarId",u.avatarId(),"status","ACTIVE");}
+        var found=db.query("SELECT user_id,nickname,avatar_id,status,created_at,last_login_at FROM app_user WHERE user_id=?",(r,i)->Map.<String,Object>of("userId",r.getLong("user_id"),"nickname",r.getString("nickname"),"avatarId",r.getInt("avatar_id"),"status",r.getString("status"),"createdAt",r.getLong("created_at"),"lastLoginAt",r.getLong("last_login_at")),id);
+        if(found.isEmpty())throw new com.millionnaire.gateway.admin.AdminFault(404,"NOT_FOUND","玩家不存在");return found.getFirst();
+    }
+    /** Management projection deliberately excludes WeChat identities and credentials. */
+    public Map<String,Object> adminPage(int page,int size,String q){
+        if(page<1||page>100000||size<1||size>100||q.length()>100)throw new com.millionnaire.gateway.admin.AdminFault(400,"BAD_REQUEST","玩家筛选参数不正确");
+        var t=jdbc.getIfAvailable();
+        if(t==null){var rows=cache.values().stream().filter(u->u.nickname().contains(q)||Long.toString(u.id()).equals(q)).sorted(java.util.Comparator.comparingLong(User::id)).toList();return Map.of("persistent",false,"items",rows.stream().skip((long)(page-1)*size).limit(size).map(u->Map.of("userId",u.id(),"nickname",u.nickname(),"avatarId",u.avatarId(),"status","ACTIVE")).toList(),"total",rows.size());}
+        String where=" WHERE (nickname LIKE ? ESCAPE '!' OR user_id=?)";
+        long exactId=-1;try{exactId=Long.parseLong(q);}catch(NumberFormatException ignored){}
+        String like="%"+q.replace("!","!!").replace("%","!%").replace("_","!_")+"%";
+        long total=t.queryForObject("SELECT COUNT(*) FROM app_user"+where,Long.class,like,exactId);
+        var rows=t.query("SELECT user_id,nickname,avatar_id,status,created_at,last_login_at FROM app_user"+where+" ORDER BY created_at DESC,user_id DESC LIMIT ? OFFSET ?",(r,i)->Map.of("userId",r.getLong("user_id"),"nickname",r.getString("nickname"),"avatarId",r.getInt("avatar_id"),"status",r.getString("status"),"createdAt",r.getLong("created_at"),"lastLoginAt",r.getLong("last_login_at")),like,exactId,size,(page-1)*size);
+        return Map.of("persistent",true,"items",rows,"total",total);
+    }
     /** avatarId：app_user.avatar_id，0 = 没选（客户端按玩家 ID 取默认头像），1～8 = 头像序号 + 1。 */
     public record User(long id, String nickname, int avatarId) {
         public User(long id, String nickname) {

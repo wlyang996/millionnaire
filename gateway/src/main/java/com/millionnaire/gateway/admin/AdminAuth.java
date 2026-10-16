@@ -12,28 +12,52 @@ import static com.millionnaire.gateway.admin.AdminStore.*;
 
 @Service
 public class AdminAuth {
-    public record Identity(User user,Session session) {}
+    public record Identity(User user,Session session,Set<String> grants) {
+        public Identity(User user,Session session){this(user,session,permissions(user));}
+        public Identity { grants=Set.copyOf(grants); }
+    }
     private record Outcome(Map<String,Object> value,AdminFault error) {}
     private final AdminStore store; private final Clock clock; private final AdminPolicy policy;
     private final BCryptPasswordEncoder passwords; private final String dummy;
     private final SecureRandom random=new SecureRandom();
     public static final Map<String,Set<String>> ROLES;
     static {
-        var read=Set.of("dashboard:read","config:read","character:read","audio:read");
-        var operator=new HashSet<>(read);operator.addAll(Set.of("config:write","config:publish","character:draft","character:write","character:publish","audio:draft","audio:write","audio:publish"));
-        var admin=new HashSet<>(operator);admin.addAll(Set.of("config:rollback","character:rollback","audio:rollback","admin-user:manage","admin-session:manage","audit:read"));
+        var read=Set.of("dashboard:read","config:read","character:read","audio:read","player:read","game:read");
+        var operator=new HashSet<>(read);operator.addAll(Set.of("config:write","config:publish","character:draft","character:write","character:publish","audio:draft","audio:write","audio:publish","release:read","release:submit"));
+        var admin=new HashSet<>(operator);admin.addAll(Set.of("config:rollback","character:rollback","audio:rollback","admin-user:manage","admin-session:manage","audit:read","release:approve","media:manage"));
         ROLES=Map.of("SUPER_ADMIN",Set.copyOf(admin),"OPERATOR",Set.copyOf(operator),"VIEWER",read);
     }
     public AdminAuth(AdminStore store,Clock clock,AdminPolicy policy){this.store=store;this.clock=clock;this.policy=policy;policy.validate();passwords=new BCryptPasswordEncoder(policy.getBcryptStrength());dummy=passwords.encode(UUID.randomUUID().toString());}
     public static Map<String,Object> publicUser(User u){return Map.of("id",u.id(),"username",u.username(),"displayName",u.displayName(),"role",u.role(),"status",u.status(),"mustChangePassword",u.mustChangePassword(),"version",u.version(),"lastLoginAt",u.lastLoginAt(),"lockedUntil",u.lockedUntil());}
-    public Map<String,Object> me(Identity actor){return Map.of("user",publicUser(actor.user()),"permissions",permissions(actor.user()),"expiresAt",actor.session().expiresAt(),"sessionId",actor.session().id(),"mustChangePassword",actor.user().mustChangePassword(),"persistent",store.persistent());}
+    public Map<String,Object> me(Identity actor){return Map.of("user",publicUser(actor.user()),"permissions",actor.grants(),"expiresAt",actor.session().expiresAt(),"sessionId",actor.session().id(),"mustChangePassword",actor.user().mustChangePassword(),"persistent",store.persistent());}
     public Map<String,Object> publishers(String module){return store.publishers(module);}
     public static Set<String> permissions(User u){return ROLES.getOrDefault(u.role(),Set.of());}
-    public static void require(Identity actor,String permission){if(actor==null)throw unauthorized();if(actor.user().mustChangePassword())throw new AdminFault(403,"PASSWORD_CHANGE_REQUIRED","首次登录或密码已重置，请先修改密码");if(!permission.equals("self")&&!permissions(actor.user()).contains(permission))throw new AdminFault(403,"FORBIDDEN","当前角色没有此操作权限");}
+    public static void require(Identity actor,String permission){if(actor==null)throw unauthorized();if(actor.user().mustChangePassword())throw new AdminFault(403,"PASSWORD_CHANGE_REQUIRED","首次登录或密码已重置，请先修改密码");if(!permission.equals("self")&&!actor.grants().contains(permission))throw new AdminFault(403,"FORBIDDEN","当前角色没有此操作权限");}
+    public Identity currentIdentity(long id){var user=existing(id);if(!user.status().equals("ACTIVE"))throw unauthorized();return resolve(user,null);}
+    private Identity resolve(User user,Session session){return new Identity(user,session,ROLES.containsKey(user.role())?permissions(user):store.roles().stream().filter(r->r.id().equals(user.role())).findFirst().map(Role::permissions).orElse(Set.of()));}
+    public List<Map<String,Object>> roles(){
+        var out=new ArrayList<Map<String,Object>>();
+        for(String id:List.of("SUPER_ADMIN","OPERATOR","VIEWER"))out.add(Map.of("id",id,"name",Map.of("SUPER_ADMIN","超级管理员","OPERATOR","运营管理员","VIEWER","只读观察员").get(id),"description","系统固定角色","permissions",ROLES.get(id),"builtin",true,"version",0));
+        for(var role:store.roles())out.add(Map.of("id",role.id(),"name",role.name(),"description",role.description(),"permissions",role.permissions(),"builtin",false,"version",role.version()));
+        return out;
+    }
+    public Role saveRole(Identity actor,String id,String name,String description,Set<String> permissions,Long expected,String requestId){
+        require(actor,"admin-user:manage");
+        if(id==null||!id.matches("CUSTOM_[A-Z0-9_]{1,17}")||name==null||name.isBlank()||name.length()>32||description==null||description.length()>200||permissions==null)throw bad("请填写有效角色标识、名称和说明");
+        var allowed=new HashSet<>(ROLES.get("SUPER_ADMIN"));allowed.removeAll(Set.of("admin-user:manage","admin-session:manage"));
+        if(!allowed.containsAll(permissions))throw bad("自定义角色不能分配账号与全局会话管理权限");
+        // A mutation permission always includes its read dependencies.
+        var granted=new HashSet<>(permissions);
+        for(String prefix:List.of("config","character","audio"))if(granted.stream().anyMatch(p->p.startsWith(prefix+":")&&!p.equals(prefix+":read")))granted.add(prefix+":read");
+        if(granted.contains("character:publish")||granted.contains("character:write"))granted.add("character:draft");
+        if(granted.contains("audio:publish")||granted.contains("audio:write"))granted.add("audio:draft");
+        if(granted.contains("release:submit")||granted.contains("release:approve"))granted.add("release:read");
+        return store.atomic(()->{var role=new Role(id,name.strip(),description.strip(),Set.copyOf(granted),expected==null?1:expected+1);store.saveRole(role,expected);for(var u:store.users())if(u.role().equals(id))store.revoke(u.id(),null,clock.millis());audit(actor,"roles","role-save",id,"SUCCESS","更新角色并撤销受影响账号会话",requestId);return role;});
+    }
     public Identity authenticate(String authorization){
         if(authorization==null||!authorization.startsWith("Bearer "))throw unauthorized();String token=authorization.substring(7).strip();if(token.length()<32||token.length()>128)throw unauthorized();
         var session=store.token(hash(token)).orElseThrow(AdminAuth::unauthorized);long now=clock.millis();if(session.revokedAt()!=null||session.expiresAt()<=now)throw unauthorized();
-        var user=store.user(session.userId()).orElseThrow(AdminAuth::unauthorized);if(!user.status().equals("ACTIVE"))throw unauthorized();store.touch(session,now);return new Identity(user,session);
+        var user=store.user(session.userId()).orElseThrow(AdminAuth::unauthorized);if(!user.status().equals("ACTIVE"))throw unauthorized();store.touch(session,now);return resolve(user,session);
     }
     private void initialize(){
         if(!store.persistent()&&!policy.isAllowInMemory())throw new AdminFault(503,"ADMIN_DATABASE_REQUIRED","后台账号需要数据库；仅本地开发可设置 ADMIN_ALLOW_IN_MEMORY=true");
@@ -63,7 +87,7 @@ public class AdminAuth {
             byte[] bytes=new byte[32];random.nextBytes(bytes);String token=Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
             var session=new Session(UUID.randomUUID().toString(),hash(token),user.id(),now,now+policy.getSessionHours()*3600000L,null,now,safe(device,160));store.issue(session);
             audit(new Identity(current,session),"security","login",session.id(),"SUCCESS","登录成功",requestId);
-            var result=new LinkedHashMap<String,Object>(me(new Identity(current,session)));result.put("token",token);return new Outcome(result,null);
+            var result=new LinkedHashMap<String,Object>(me(resolve(current,session)));result.put("token",token);return new Outcome(result,null);
         });
         if(outcome.error()!=null)throw outcome.error();return outcome.value();
     }
@@ -83,7 +107,7 @@ public class AdminAuth {
         // Serialize rule publication across instances, including the initial missing active pointer.
         // Audio preparation reads must follow this guard too: MySQL repeatable-read snapshots
         // otherwise retain a stale draft even after the catalog later locks its active row.
-        boolean guarded=module.equals("config") || module.equals("audio")&&Set.of("draft-edit","publish","rollback").contains(action);
+        boolean guarded=module.equals("config") || module.equals("character") || module.equals("audio");
         return guarded?store.atomic(audited):store.transaction(audited);
     }
     public void audit(Identity actor,String module,String action,String object,String result,String detail,String requestId){var u=actor==null?null:actor.user();store.audit(new Audit(UUID.randomUUID().toString(),u==null?null:u.id(),u==null?"":u.username(),u==null?"匿名":u.displayName(),safe(module,32),safe(action,64),safe(object,200),result,clock.millis(),safe(requestId,36),safe(detail,1000)));}
@@ -93,7 +117,7 @@ public class AdminAuth {
     private static User copy(User u,String name,String hash,String role,String status,boolean must,int failures,long locked,long version,long updated,long login){return new User(u.id(),u.username(),name,hash,role,status,must,failures,locked,version,u.createdAt(),updated,login);}
     public static String username(String s){if(s==null)throw bad("请输入账号");String n=s.strip().toLowerCase(Locale.ROOT);if(!n.matches("[a-z0-9][a-z0-9._-]{2,31}")||Set.of("admin","system").contains(n))throw bad("账号须为3～32位字母、数字、点、下划线或短横线，不能使用历史保留名admin/system");return n;}
     private static String displayName(String s){if(s==null||s.strip().isEmpty()||s.codePointCount(0,s.length())>32||s.codePoints().anyMatch(Character::isISOControl))throw bad("姓名须为1～32字且不能含控制符");return s.strip();}
-    private static void validRole(String role){if(!ROLES.containsKey(role))throw bad("角色不正确");}
+    private void validRole(String role){if(!ROLES.containsKey(role)&&store.roles().stream().noneMatch(r->r.id().equals(role)))throw bad("角色不正确");}
     public static void validatePassword(String p){if(p==null||p.codePointCount(0,p.length())<6||p.codePointCount(0,p.length())>12||p.codePoints().anyMatch(Character::isISOControl))throw bad("密码须为6～12个字符且不能含控制符");}
     private String encode(String p){return "{bcrypt}"+passwords.encode(p);}
     private static String rawHash(String p){if(!p.startsWith("{bcrypt}"))throw new AdminFault(503,"ADMIN_UNAVAILABLE","账号凭证格式不可用，请联系管理员");return p.substring(8);}

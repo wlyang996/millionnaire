@@ -16,6 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 /** Whole packs are immutable after publication; active pointer and snapshot commit atomically. */
 @Component
 public class CharacterCatalog {
+    @Autowired(required=false) private com.millionnaire.gateway.admin.MediaObjectRegistry mediaObjects;
     public record Asset(String key, String sha256, int width, int height, int bytes) {}
     public record Entry(int id, String name, int sort, boolean enabled, int fallback, String packId, Map<String, Asset> images) {
         public Entry { images = Map.copyOf(images); }
@@ -111,7 +112,9 @@ public class CharacterCatalog {
         Pack p = editable(id, revision);
         var info = CharacterImages.inspect(slot, png);
         String key = "characters/" + p.character().id() + "/" + id + "/" + slot + "-" + info.sha256() + ".png";
+        if(mediaObjects!=null&&!mediaObjects.available(key))throw bad("该素材已在回收站或清理中，请先恢复或使用其他素材");
         objects.put(key, png); // only commit metadata after COS confirms upload
+        if(mediaObjects!=null)mediaObjects.register(key,"character",png.length);
         var assets = new HashMap<>(p.character().images());
         assets.put(slot, new Asset(key, info.sha256(), info.width(), info.height(), info.bytes()));
         var c = p.character();

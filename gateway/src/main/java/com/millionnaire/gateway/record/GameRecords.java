@@ -44,6 +44,27 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Component
 public class GameRecords {
+    public Map<String,Object> adminPage(int page,int size,String room,Long player,long from,long to){
+        if(page<1||page>100000||size<1||size>100||room.length()>20||(!room.isEmpty()&&!room.matches("[0-9]+"))||from<0||to<from)throw new com.millionnaire.gateway.admin.AdminFault(400,"BAD_REQUEST","对局筛选参数不正确");
+        var t=jdbc.get();
+        if(t==null){List<Draft> rows; synchronized(memoryGames){rows=memoryGames.values().stream().filter(d->(room.isEmpty()||Long.toString(d.roomId()).equals(room))&&(player==null||d.seats().stream().anyMatch(s->s.userId()==player))&&d.endedAt()>=from&&d.endedAt()<=to).sorted(java.util.Comparator.comparingLong(Draft::endedAt).reversed()).toList();}return Map.of("persistent",false,"items",rows.stream().skip((long)(page-1)*size).limit(size).map(d->Map.of("roomId",d.roomId(),"gameNo",d.gameNo(),"boardId",d.boardId(),"playerCount",d.seats().size(),"endedAt",d.endedAt(),"endReason",d.reason(),"configHash",d.configHash())).toList(),"total",rows.size());}
+        var args=new ArrayList<Object>(List.of(from,to));String where=" WHERE r.ended_at>=? AND r.ended_at<=?";
+        if(!room.isEmpty()){long id;try{id=Long.parseLong(room);}catch(NumberFormatException e){throw new com.millionnaire.gateway.admin.AdminFault(400,"BAD_REQUEST","房间编号超出范围");}where+=" AND (r.room_id=? OR EXISTS(SELECT 1 FROM room m WHERE m.room_id=r.room_id AND m.room_code=?))";args.add(id);args.add(id);}
+        if(player!=null){where+=" AND EXISTS(SELECT 1 FROM game_record_player p WHERE p.record_id=r.record_id AND p.user_id=?)";args.add(player);}
+        long total=t.queryForObject("SELECT COUNT(*) FROM game_record r"+where,Long.class,args.toArray());args.add(size);args.add((page-1)*size);
+        var rows=t.query("SELECT r.room_id,r.game_no,r.board_id,r.player_count,r.started_at,r.ended_at,r.end_reason,r.config_hash FROM game_record r"+where+" ORDER BY r.ended_at DESC,r.record_id DESC LIMIT ? OFFSET ?",(r,i)->Map.of("roomId",r.getLong("room_id"),"gameNo",r.getLong("game_no"),"boardId",r.getString("board_id"),"playerCount",r.getInt("player_count"),"startedAt",r.getLong("started_at"),"endedAt",r.getLong("ended_at"),"endReason",r.getString("end_reason"),"configHash",r.getString("config_hash")),args.toArray());
+        return Map.of("persistent",true,"items",rows,"total",total);
+    }
+    public java.util.Optional<Detail> adminDetail(long room,long game){
+        var t=jdbc.get();if(t==null){var d=memoryGames.get(room+"#"+game);return d==null?java.util.Optional.empty():java.util.Optional.of(new Detail(row(d,d.seats().getFirst()),d.initialCash(),d.seats(),memoryLogs.get(room+"#"+game),d.resultJson()));}
+        var headers=t.query("SELECT r.*,0 AS finish_rank,0 AS final_net_worth,0 AS final_cash,'' AS life_state FROM game_record r WHERE room_id=? AND game_no=?",(r,i)->new Row(r.getLong("game_no"),r.getString("end_mode"),r.getObject("time_limit_min",Integer.class),r.getString("board_id"),r.getInt("player_count"),r.getLong("started_at"),r.getLong("ended_at"),r.getString("end_reason"),null,null,null,"",r.getLong("room_id")),room,game);
+        if(headers.isEmpty())return java.util.Optional.empty();
+        var seats=t.query("SELECT p.* FROM game_record_player p JOIN game_record r ON p.record_id=r.record_id WHERE r.room_id=? AND r.game_no=? ORDER BY p.seat_no",(r,i)->new Seat(r.getInt("seat_no"),r.getLong("user_id"),r.getObject("finish_rank",Integer.class),r.getObject("final_net_worth",Long.class),r.getObject("final_cash",Long.class),r.getString("life_state")),room,game);
+        var payload=t.query("SELECT payload FROM game_log WHERE room_id=? AND game_no=?",(r,i)->r.getBytes(1),room,game);String events=null;
+        if(!payload.isEmpty())try(var zip=new java.util.zip.GZIPInputStream(new java.io.ByteArrayInputStream(payload.getFirst()))){var bytes=zip.readNBytes(LOG_MAX_PLAIN+1);if(bytes.length>LOG_MAX_PLAIN)throw new IllegalStateException("公开日志超过读取上限");events=new String(bytes,StandardCharsets.UTF_8);}catch(IOException e){throw new IllegalStateException("公开日志读取失败",e);}
+        long initial=t.queryForObject("SELECT initial_cash FROM game_record WHERE room_id=? AND game_no=?",Long.class,room,game);
+        return java.util.Optional.of(new Detail(headers.getFirst(),initial,seats,events,null));
+    }
     private static final Logger log = LoggerFactory.getLogger(GameRecords.class);
     public static final int RECENT = 20;
     /** 写库失败后的重试间隔（毫秒）：第 1～5 次重试。 */

@@ -22,6 +22,17 @@ public class AdminStore {
     private final Map<String,Session> sessions=new HashMap<>();
     private final List<Audit> audits=new ArrayList<>();
     private final Map<String,Rate> rates=new HashMap<>();
+    public record Role(String id,String name,String description,Set<String> permissions,long version) {}
+    private final Map<String,Role> roles=new HashMap<>();
+    public synchronized List<Role> roles(){var db=jdbc.get();return db==null?List.copyOf(roles.values()):db.query("SELECT * FROM admin_role ORDER BY role_id",(r,i)->new Role(r.getString("role_id"),r.getString("name"),r.getString("description"),r.getString("permissions").isEmpty()?Set.of():Set.copyOf(Arrays.asList(r.getString("permissions").split("\\n"))),r.getLong("version")));}
+    public synchronized void saveRole(Role role,Long expected){
+        var old=roles().stream().filter(r->r.id().equals(role.id())).findFirst().orElse(null);
+        if(old==null?expected!=null:expected==null||old.version()!=expected)throw new AdminFault(409,"STALE_ROLE","角色已变化，请刷新后修改");
+        var db=jdbc.get();if(db==null){roles.put(role.id(),role);return;}
+        String permissions=String.join("\n",new TreeSet<>(role.permissions()));
+        if(old==null)db.update("INSERT INTO admin_role VALUES(?,?,?,?,?)",role.id(),role.name(),role.description(),permissions,role.version());
+        else db.update("UPDATE admin_role SET name=?,description=?,permissions=?,version=? WHERE role_id=?",role.name(),role.description(),permissions,role.version(),role.id());
+    }
     @org.springframework.beans.factory.annotation.Autowired
     public AdminStore(ObjectProvider<JdbcTemplate> jdbc){this.jdbc=jdbc::getIfAvailable;}
     public AdminStore(Supplier<JdbcTemplate> jdbc){this.jdbc=jdbc;}

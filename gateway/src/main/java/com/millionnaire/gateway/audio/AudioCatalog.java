@@ -16,6 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 /** Presentation settings have their own immutable releases, independent of game rule snapshots. */
 @Component
 public class AudioCatalog {
+    @Autowired(required=false) private com.millionnaire.gateway.admin.MediaObjectRegistry mediaObjects;
     public static final Set<String> SCENES = Set.of("lobby", "room", "board", "game", "result");
     public static final Set<String> EFFECTS = Set.of("dice", "move", "cashGain", "cashLoss", "card", "purchase", "upgrade", "auction", "jail", "release", "reward");
     public record Binding(String assetId, boolean loop) {}
@@ -85,14 +86,14 @@ public class AudioCatalog {
     public synchronized List<Asset> assets() {
         var out = new ArrayList<>(builtin.values()); var t = jdbc.get();
         out.addAll((t == null ? localAssets.values().stream() : t.query("SELECT payload FROM audio_asset ORDER BY created_at DESC", (rs, i) -> read(rs.getString(1), Asset.class)).stream()).filter(a->!builtin.containsKey(a.id())).toList());
-        return out;
+        return mediaObjects==null?out:out.stream().filter(a->a.builtin()||mediaObjects.available(a.key())).toList();
     }
     private Asset asset(String id) {
         var b = builtin.get(id); if (b != null) return b;
         var t = jdbc.get();
-        if (t == null) { var a = localAssets.get(id); if (a == null) throw missing(); return a; }
+        if (t == null) { var a = localAssets.get(id); if (a == null || mediaObjects!=null&&!mediaObjects.available(a.key())) throw missing(); return a; }
         var rows = t.queryForList("SELECT payload FROM audio_asset WHERE asset_id=?", String.class, id);
-        if (rows.isEmpty()) throw missing(); return read(rows.getFirst(), Asset.class);
+        if (rows.isEmpty()) throw missing();var a=read(rows.getFirst(), Asset.class);if(mediaObjects!=null&&!mediaObjects.available(a.key()))throw missing();return a;
     }
     public Asset upload(String name, String kind, byte[] wav) {
         if (name == null || name.isBlank() || name.codePointCount(0, name.length()) > 30 || name.codePoints().anyMatch(Character::isISOControl)) throw AudioFiles.bad("名称须为 1～30 字");
@@ -101,6 +102,7 @@ public class AudioCatalog {
         if (kind.equals("effect") && info.seconds() > 10) throw AudioFiles.bad("独立音效不得超过 10 秒");
         String id = UUID.randomUUID().toString(), key = "audio/" + id + "/" + info.sha256() + ".wav";
         objects.put(key, wav);
+        if(mediaObjects!=null)mediaObjects.register(key,"audio",wav.length);
         var a = new Asset(id, name.strip(), kind, key, info, false, clock.millis());
         synchronized (this) {
             var t = jdbc.get();
@@ -137,6 +139,13 @@ public class AudioCatalog {
         var out = new ArrayList<>(t == null ? localHistory.values().stream().sorted(Comparator.comparingLong(Release::version).reversed()).limit(50).toList()
                 : t.query("SELECT payload FROM audio_catalog ORDER BY version_id DESC LIMIT 50", (rs, i) -> read(rs.getString(1), Release.class)));
         out.add(load(0)); return out;
+    }
+    public synchronized Map<String,List<String>> managementReferences(){
+        var out=new LinkedHashMap<String,List<String>>();
+        java.util.function.BiConsumer<Settings,String> add=(settings,label)->{for(var id:referenced(settings)){var a=assets().stream().filter(v->v.id().equals(id)).findFirst().orElse(null);if(a!=null)out.computeIfAbsent(a.key(),k->new ArrayList<>()).add(label);}};
+        add.accept(current().settings(),"当前音频版本 #"+current().version());add.accept(draft().settings(),"音频编辑草稿");
+        var db=jdbc.get();var releases=db==null?List.copyOf(localHistory.values()):db.query("SELECT payload FROM audio_catalog",(r,i)->read(r.getString(1),Release.class));
+        for(var release:releases)add.accept(release.settings(),"音频历史 #"+release.version());return out;
     }
     public byte[] bytes(String id, boolean draftAllowed) {
         Asset a; synchronized (this) { a = asset(id); if (!draftAllowed && !published(a)) throw missing(); }

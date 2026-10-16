@@ -4,6 +4,8 @@ export function can(identity,permission){return !identity?.mustChangePassword&&!
 export function pageVisible(identity,page){
   if(!identity||identity.mustChangePassword)return false
   if(['sessions','password','myPermissions'].includes(page))return true
+  const extra={players:'player:read',games:'game:read',releases:'release:read',media:'media:manage'}
+  if(extra[page])return can(identity,extra[page])
   if(!['workbench','dashboard','liveRooms','characters','history','accounts','roles','audit','audio','names','sets','prices','money','rentRise','room','events','startPick','roundReward','cityEvents','funTitles','series','team','experience','timing','announcement'].includes(page))return false
   const permission={workbench:'dashboard:read',liveRooms:'dashboard:read',dashboard:'dashboard:read',characters:'character:read',history:'config:read',accounts:'admin-user:manage',roles:'admin-user:manage',audit:'audit:read',audio:'audio:read'}[page]||'config:read'
   return can(identity,permission)
