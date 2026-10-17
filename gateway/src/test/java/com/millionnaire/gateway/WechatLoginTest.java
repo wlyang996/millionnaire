@@ -51,6 +51,18 @@ class WechatLoginTest {
     TestRestTemplate http;
     @Autowired
     JdbcTemplate jdbc;
+
+    @Test void diagnosticHeaderWorksWithBrowserCorsAndIsEchoedOnTheLoginRoute() {
+        var headers=new HttpHeaders();headers.set("Origin","http://localhost:8765");
+        headers.set("Access-Control-Request-Method","POST");headers.set("Access-Control-Request-Headers","content-type,x-mn-trace-id");
+        var preflight=http.exchange("/api/auth/wx-login",HttpMethod.OPTIONS,new HttpEntity<>(headers),String.class);
+        assertThat(preflight.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(preflight.getHeaders().getAccessControlAllowHeaders()).anyMatch(h->h.equalsIgnoreCase("x-mn-trace-id"));
+        headers=new HttpHeaders();headers.set("X-MN-Trace-Id","http-login-test");
+        var response=http.exchange("/api/auth/wx-login",HttpMethod.POST,new HttpEntity<>(Map.of("code","invalid"),headers),Map.class);
+        assertThat(response.getHeaders().getFirst("X-MN-Trace-Id")).isEqualTo("http-login-test");
+        assertThat(response.getStatusCode().value()).isEqualTo(401);
+    }
     @Autowired com.millionnaire.gateway.room.RoomService rooms;
     @Autowired com.millionnaire.gateway.auth.UserStore users;
 

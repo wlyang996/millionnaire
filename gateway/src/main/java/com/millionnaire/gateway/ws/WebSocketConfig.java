@@ -1,6 +1,7 @@
 package com.millionnaire.gateway.ws;
 
 import com.millionnaire.gateway.auth.SessionTokens;
+import com.millionnaire.gateway.diagnostics.ConnectionDiagnostics;
 import java.util.Map;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
@@ -41,6 +42,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
         @Override
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                        WebSocketHandler wsHandler, Map<String, Object> attributes) {
+            String trace = ConnectionDiagnostics.traceId(UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams().getFirst("traceId"));
+            attributes.put(GameSocketHandler.CONNECTION_TRACE, trace);
             String token = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams().getFirst("token");
             var uid = tokens.resolve(token)
                     .or(() -> tokens.fromAuthorization(request.getHeaders().getFirst("Authorization")));
@@ -48,12 +51,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
             if (uid.isEmpty() && token != null && !token.isBlank()) {
                 attributes.put(GameSocketHandler.TOKEN_REJECTED, Boolean.TRUE); // 带了令牌但已失效（如后台重启）：连上后立即告知重新登录
             }
+            org.slf4j.LoggerFactory.getLogger(WebSocketConfig.class).info("[MN-NET] ws.handshake trace={} authenticated={} tokenPresented={}", trace, uid.isPresent(), token != null || request.getHeaders().containsKey("Authorization"));
             return true; // 未带令牌也允许连上，之后必须先发 AUTH
         }
 
         @Override
         public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                    WebSocketHandler wsHandler, Exception exception) {
+            if (exception != null) org.slf4j.LoggerFactory.getLogger(WebSocketConfig.class).warn("[MN-NET] ws.handshake.fail kind={}", ConnectionDiagnostics.failureKind(exception));
         }
     }
 }

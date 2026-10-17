@@ -4,6 +4,7 @@
  * - 分享：右上角菜单与"分享邀请"按钮都带 query room=房间号；好友从分享卡片进入时读启动参数自动加房；
  * - 复制：wx.setClipboardData / navigator.clipboard。
  */
+import { diagnosticError, diagnosticId, networkLog } from './Diagnostics';
 
 interface WxShareOptions { title: string; query?: string; imageUrl?: string }
 interface WxLaunch { query?: Record<string, string> }
@@ -37,13 +38,22 @@ export function vibrateTurn(): void {
 /** wx.login 的一次性 code（5 分钟有效、只能用一次）。 */
 export function wxLoginCode(): Promise<string> {
     const wx = wxApi();
-    if (!wx) return Promise.reject(Object.assign(new Error('not in wechat'), { code: 'NOT_WECHAT' }));
-    return new Promise((resolve, reject) => {
+    const trace = diagnosticId('wx'), started = Date.now();
+    networkLog('wx.login.start', { trace, available: !!wx, timeoutMs: 10000 });
+    const promise = !wx ? Promise.reject(Object.assign(new Error('not in wechat'), { code: 'NOT_WECHAT' })) : new Promise<string>((resolve, reject) => {
         wx.login({
             timeout: 10000,
             success: (r) => (r && r.code ? resolve(r.code) : reject(Object.assign(new Error('no code'), { code: 'WECHAT_LOGIN_FAILED' }))),
-            fail: () => reject(Object.assign(new Error('wx.login failed'), { code: 'WECHAT_LOGIN_FAILED' })),
+            fail: (e) => reject(Object.assign(new Error('wx.login failed'), { code: 'WECHAT_LOGIN_FAILED',
+                errMsg: diagnosticError(e).errMsg ?? 'wx.login:fail' })),
         });
+    });
+    return promise.then(code => {
+        networkLog('wx.login.end', { trace, elapsedMs: Date.now() - started, hasCode: true });
+        return code;
+    }, error => {
+        networkLog('wx.login.fail', { trace, elapsedMs: Date.now() - started, ...diagnosticError(error) }, true);
+        throw error;
     });
 }
 

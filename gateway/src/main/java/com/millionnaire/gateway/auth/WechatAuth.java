@@ -2,6 +2,7 @@ package com.millionnaire.gateway.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.millionnaire.gateway.diagnostics.ConnectionDiagnostics;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -52,6 +53,7 @@ public class WechatAuth {
         this.appId = appId == null ? "" : appId.strip();
         this.secret = secret == null ? "" : secret.strip();
         this.exchanger = custom.getIfAvailable(() -> http(apiBase, json));
+        log.info("[MN-NET] wechat.config appIdConfigured={} secretConfigured={}", !this.appId.isEmpty(), !this.secret.isEmpty());
     }
 
     public boolean configured() {
@@ -63,10 +65,16 @@ public class WechatAuth {
     }
 
     public Exchange exchange(String code) {
+        long started = System.nanoTime();
+        log.info("[MN-NET] wechat.exchange.start trace={} configured={} hasCode={}", ConnectionDiagnostics.trace(), configured(), code != null && !code.isBlank());
         if (!configured() || code == null || code.isBlank() || code.length() > 128) {
+            log.warn("[MN-NET] wechat.exchange.rejected trace={} configured={} validCode={}", ConnectionDiagnostics.trace(), configured(), code != null && !code.isBlank() && code.length() <= 128);
             return Exchange.fail(40029, "invalid code");
         }
-        return exchanger.exchange(appId, secret, code.strip());
+        Exchange result = exchanger.exchange(appId, secret, code.strip());
+        log.info("[MN-NET] wechat.exchange.end trace={} ok={} errcode={} elapsedMs={}", ConnectionDiagnostics.trace(), result.openid() != null,
+                result.errcode(), (System.nanoTime() - started) / 1_000_000);
+        return result;
     }
 
     /**
@@ -80,6 +88,7 @@ public class WechatAuth {
         return (appId, secret, code) -> {
             Exchange r = call(client, json, primary, appId, secret, code);
             if (r.errcode() == -1 && fallback != null) {
+                log.warn("[MN-NET] wechat.http.fallback trace={} transport=http", ConnectionDiagnostics.trace());
                 Exchange second = call(client, json, fallback, appId, secret, code);
                 return second.errcode() == -1 ? Exchange.fail(-1, r.errmsg() + " | " + second.errmsg()) : second;
             }
@@ -88,26 +97,33 @@ public class WechatAuth {
     }
 
     private static Exchange call(HttpClient client, ObjectMapper json, String base, String appId, String secret, String code) {
+        long started = System.nanoTime();
+        String transport = base.startsWith("https:") ? "https" : "http";
         String url = base + "/sns/jscode2session?appid=" + enc(appId) + "&secret=" + enc(secret)
                 + "&js_code=" + enc(code) + "&grant_type=authorization_code";
         try {
+            log.info("[MN-NET] wechat.http.start trace={} transport={} operation=jscode2session", ConnectionDiagnostics.trace(), transport);
             HttpResponse<String> r = client.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(8)).GET().build(),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            log.info("[MN-NET] wechat.http.end trace={} transport={} status={} elapsedMs={}", ConnectionDiagnostics.trace(), transport,
+                    r.statusCode(), (System.nanoTime() - started) / 1_000_000);
             JsonNode body = json.readTree(r.body());
-            String openid = body.path("openid").asText("");
+            String openid = body == null ? "" : body.path("openid").asText("");
             if (r.statusCode() != 200 || openid.isEmpty()) {
-                // 不记录 code 与 secret
-                log.warn("jscode2session via {} failed: http {} errcode {} errmsg {}", base, r.statusCode(), body.path("errcode").asInt(),
-                        body.path("errmsg").asText());
-                return Exchange.fail(body.path("errcode").asInt(r.statusCode()), body.path("errmsg").asText(""));
+                int errcode = body == null ? r.statusCode() : body.path("errcode").asInt(r.statusCode());
+                log.warn("[MN-NET] wechat.http.rejected trace={} transport={} status={} errcode={}", ConnectionDiagnostics.trace(), transport, r.statusCode(), errcode);
+                // Provider text is returned for diagnosis, but never write its body or credential-bearing URI into logs.
+                return Exchange.fail(errcode, body == null ? "empty response" : body.path("errmsg").asText(""));
             }
             return Exchange.ok(openid);
         } catch (IOException e) {
-            log.warn("jscode2session via {} unreachable", base, e);
-            String why = e.getClass().getSimpleName() + (e.getMessage() == null ? "" : ": " + e.getMessage());
-            return Exchange.fail(-1, base.startsWith("https") ? "https " + why : "http " + why);
+            String kind = ConnectionDiagnostics.failureKind(e);
+            log.warn("[MN-NET] wechat.http.fail trace={} transport={} kind={} elapsedMs={}", ConnectionDiagnostics.trace(), transport, kind,
+                    (System.nanoTime() - started) / 1_000_000);
+            return Exchange.fail(-1, transport + " " + kind);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            log.warn("[MN-NET] wechat.http.interrupted trace={} transport={}", ConnectionDiagnostics.trace(), transport);
             return Exchange.fail(-1, "interrupted");
         }
     }

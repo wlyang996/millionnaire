@@ -1,6 +1,7 @@
 package com.millionnaire.gateway.auth;
 
 import com.millionnaire.gateway.auth.UserStore.User;
+import com.millionnaire.gateway.diagnostics.ConnectionDiagnostics;
 import com.millionnaire.gateway.record.EventLogs;
 import com.millionnaire.gateway.record.GameRecords;
 import com.millionnaire.gateway.room.Wire;
@@ -86,6 +87,7 @@ public class ApiController {
     @PostMapping("/auth/wx-login")
     public ResponseEntity<Map<String, Object>> wxLogin(@RequestBody(required = false) WxLogin body) {
         if (!wechat.configured()) {
+            log.warn("[MN-NET] login.wechat.disabled trace={}", ConnectionDiagnostics.trace());
             return error(HttpStatus.SERVICE_UNAVAILABLE, "WECHAT_NOT_CONFIGURED");
         }
         if (body == null || body.code() == null || body.code().isBlank()) {
@@ -111,12 +113,15 @@ public class ApiController {
         Optional<User> found = users.findByOpenid(wechat.appId(), openid.get());
         User user;
         if (found.isPresent()) {
+            log.info("[MN-NET] login.wechat.identity trace={} returning=true", ConnectionDiagnostics.trace());
             user = hasNick || avatar >= 0 ? users.updateProfile(found.get(), hasNick ? nickname : found.get().nickname(), avatar) : found.get();
         } else if (!hasNick) {
+            log.info("[MN-NET] login.wechat.profile-required trace={}", ConnectionDiagnostics.trace());
             Map<String, Object> out = new LinkedHashMap<>();
             out.put("needProfile", true);
             return ResponseEntity.ok(out);
         } else {
+            log.info("[MN-NET] login.wechat.identity trace={} returning=false", ConnectionDiagnostics.trace());
             user = users.createWithOpenid(wechat.appId(), openid.get(), nickname, avatar);
         }
         rooms.rememberAvatar(user);
@@ -126,6 +131,7 @@ public class ApiController {
         out.put("nickname", user.nickname());
         out.put("avatar", user.avatar());
         out.put("roomCode", rooms.roomOf(user.playerId()).map(LiveRoom::code).orElse(null));
+        log.info("[MN-NET] login.wechat.accepted trace={}", ConnectionDiagnostics.trace());
         return ResponseEntity.ok(out);
     }
 

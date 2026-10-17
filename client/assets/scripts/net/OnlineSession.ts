@@ -21,6 +21,7 @@ import { BoardTemplate, GameArgs, GameCommandName, ResultMsg, SGameDetail, Updat
 import { adaptSession, lastDiceFrom } from './ViewAdapter';
 import { activateCharacterCatalog, resetCharacterCatalog } from '../ui/Art';
 import { isWechat, wxLoginCode } from './Wx';
+import { diagnosticError, networkLog } from './Diagnostics';
 import type { AudioEffect } from '../core/AudioState';
 
 export type Cue =
@@ -167,7 +168,12 @@ export class OnlineSession {
 
     /** 在微信小游戏里且服务端已配置微信登录时，走微信登录。 */
     private async useWechat(): Promise<boolean> {
-        return isWechat() && (await this.client.authMethods()).wechat;
+        const runtime = isWechat();
+        if (!runtime) { networkLog('login.mode', { wechatRuntime: false, mode: 'test' }); return false; }
+        const methods = await this.client.authMethods();
+        networkLog('login.mode', { wechatRuntime: true, wechatEnabled: methods.wechat, testEnabled: methods.test,
+            mode: methods.wechat ? 'wechat' : 'test' });
+        return methods.wechat;
     }
 
     /**
@@ -750,8 +756,10 @@ export function reasonOf(e: unknown): string {
 
 /** 登录的某一步：失败时保留原错误码（code / wxErrcode），并记下是哪一步（stage）与可读原因（reason）。 */
 function step<T>(stage: string, p: Promise<T>): Promise<T> {
-    return p.catch((e: unknown) => {
-        console.error('[login] ' + stage + ' failed', e);
+    const started = Date.now();
+    networkLog('login.step.start', { stage });
+    return p.then(value => { networkLog('login.step.end', { stage, elapsedMs: Date.now() - started }); return value; }).catch((e: unknown) => {
+        networkLog('login.step.fail', { stage, elapsedMs: Date.now() - started, ...diagnosticError(e) }, true);
         const o = (e && typeof e === 'object' ? e : {}) as { code?: string; wxErrcode?: number };
         throw Object.assign(new Error(stage + ' 失败'), { code: o.code, wxErrcode: o.wxErrcode, stage, reason: reasonOf(e) });
     });

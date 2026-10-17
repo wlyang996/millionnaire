@@ -12,6 +12,7 @@ import { Toast } from '../ui/Toast';
 import { avatar } from '../ui/Widgets';
 import { art, characterChoices, characterArtRevision, informationCharacterKey } from '../ui/Art';
 import { isWechat } from '../net/Wx';
+import { diagnosticError, networkLog } from '../net/Diagnostics';
 
 export class ProfileScreen extends Screen {
     get id(): 'profile' | 'profile-edit' { return this.editing ? 'profile-edit' : 'profile'; }
@@ -183,7 +184,7 @@ export class ProfileScreen extends Screen {
 
 /** 登录失败提示：写明失败在哪一步、具体原因；微信换身份失败时解释错误码。 */
 function wechatError(e: { code?: string; wxErrcode?: number; stage?: string; reason?: string } | undefined): string {
-    console.error('[login] failed', e);
+    networkLog('login.failed', diagnosticError(e), true);
     const c = e ? e.wxErrcode : undefined;
     if (e && e.code === 'WECHAT_LOGIN_FAILED') {
         if (c === 40029) return '微信登录失败（40029：code 无效，请检查小游戏 AppID 与后台 WECHAT_APPID 是否一致）';

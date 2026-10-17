@@ -182,12 +182,19 @@ class LiveRoomTimerTest {
      * 选牙经 Wire 解析 GAME/PickTooth，结束时推送 MinigameEnded 并发奖励。
      */
     @Test
-    void minigameRunsOverTheWireProtocol() {
+    void minigameRunsOverTheWireProtocol() throws Exception {
         MutableClock clock = new MutableClock(System.currentTimeMillis());
         List<String> sent = new CopyOnWriteArrayList<>();
         RoomStore store = new RoomStore(new StaticListableBeanFactory().getBeanProvider(JdbcTemplate.class), clock);
         Wire wire = new Wire(new ObjectMapper());
-        RoomService rooms = new RoomService(store, (player, json) -> sent.add(json), wire, clock);
+        // A random route can end the minigame at the reward-round boundary. Isolate the
+        // minigame's 500 cash assertion from the separate global income-percentage grant.
+        var configs = com.millionnaire.gateway.config.GameConfigs.inMemory(clock);
+        var json = new ObjectMapper();
+        com.fasterxml.jackson.databind.node.ObjectNode settings = json.valueToTree(configs.current().settings());
+        ((com.fasterxml.jackson.databind.node.ObjectNode)settings.get("roundReward")).put("enabled", false);
+        configs.publish(json.treeToValue(settings, com.millionnaire.gateway.config.GameSettings.class), "isolated minigame test", "test", 0, null);
+        RoomService rooms = new RoomService(store, (player, jsonMessage) -> sent.add(jsonMessage), wire, clock, configs);
         try {
             LiveRoom room = rooms.create(new User(1, "阿杰"), "c", null).room();
             assertThat(rooms.join(new User(2, "糖糖"), room.codeNumber(), "j").ok()).isTrue();

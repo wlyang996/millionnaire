@@ -7,6 +7,7 @@
  * - 时间：用每条 UPDATE / PONG 的 serverTime 估算与服务器的时钟偏差，倒计时用 serverNow()。
  */
 import { requestJson } from './Http';
+import { diagnosticError, diagnosticId, networkLog, safeEndpoint } from './Diagnostics';
 import type { CharacterCatalog } from '../core/CharacterCatalog';
 import { BoardTemplate, ClientConfig, GameArgs, GameCommandName, HelloMsg, ResultMsg, SGameDetail, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
 import type { PlayerStats, SeriesState } from '../core/Models';
@@ -287,11 +288,16 @@ export class GameClient {
 
     private open(state: LinkState): void {
         this.setState(state);
-        const url = this.baseUrl.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(this.token!);
-        const ws = this.socketFactory(url);
+        const trace = diagnosticId('ws'), started = Date.now();
+        const url = this.baseUrl.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(this.token!) + '&traceId=' + trace;
+        networkLog('ws.start', { trace, endpoint: safeEndpoint(url), attempt: this.attempts + 1 });
+        let ws: Socket;
+        try { ws = this.socketFactory(url); }
+        catch (e) { networkLog('ws.fail', { trace, elapsedMs: Date.now() - started, ...diagnosticError(e) }, true); throw e; }
         this.ws = ws;
         ws.onopen = () => {
             if (this.ws !== ws) return;
+            networkLog('ws.open', { trace, elapsedMs: Date.now() - started });
             this.attempts = 0;
             this.setState('open');
             this.pingTimer = setInterval(() => this.sendRaw({ type: 'PING' }), PING_MS);
@@ -299,28 +305,33 @@ export class GameClient {
             this.pending.forEach((p) => this.sendRaw(p.msg));
         };
         ws.onmessage = (ev) => {
-            if (this.ws === ws) this.receive(typeof ev.data === 'string' ? ev.data : String(ev.data));
+            if (this.ws === ws) this.receive(typeof ev.data === 'string' ? ev.data : String(ev.data), trace);
         };
-        ws.onclose = () => {
+        ws.onclose = (ev) => {
             if (this.ws !== ws) return;
+            const e = ev as { code?: unknown; reason?: unknown; wasClean?: unknown } | undefined;
+            networkLog('ws.close', { trace, elapsedMs: Date.now() - started, closeCode: typeof e?.code === 'number' ? e.code : undefined,
+                reason: typeof e?.reason === 'string' ? e.reason : undefined, wasClean: e?.wasClean === true, reconnect: this.wantOpen }, this.wantOpen);
             this.clearTimers();
             this.ws = null;
             if (!this.wantOpen) return;
             const delay = BACKOFF_MS[Math.min(this.attempts, BACKOFF_MS.length - 1)];
             this.attempts++;
+            networkLog('ws.retry', { trace, delayMs: delay, attempt: this.attempts });
             this.setState('reconnecting');
             this.retryTimer = setTimeout(() => this.open('reconnecting'), delay);
         };
-        ws.onerror = () => {
-            /* 随后会收到 onclose */
+        ws.onerror = (ev) => {
+            if (this.ws === ws) networkLog('ws.error', { trace, elapsedMs: Date.now() - started, ...diagnosticError(ev) }, true);
         };
     }
 
-    private receive(text: string): void {
+    private receive(text: string, trace: string): void {
         let m: { type: string; [k: string]: unknown };
         try {
             m = JSON.parse(text);
         } catch {
+            networkLog('ws.invalid-json', { trace, length: text.length }, true);
             return;
         }
         if (typeof m.serverTime === 'number') this.offset = m.serverTime - Date.now();
@@ -334,6 +345,7 @@ export class GameClient {
             }
             case 'RESULT': {
                 const r = m as unknown as ResultMsg;
+                if (!r.ok) networkLog('ws.result.rejected', { trace, outcome: r.outcome, serverCode: r.code ?? undefined }, true);
                 if (r.ok && r.roomCode) this.roomCode = r.roomCode;
                 const p = r.requestId ? this.pending.get(r.requestId) : undefined;
                 if (!p && r.code === 'UNAUTHENTICATED') {
@@ -349,6 +361,7 @@ export class GameClient {
                 return;
             }
             case 'HELLO': {
+                networkLog('ws.hello', { trace, authenticated: true, inRoom: !!m.roomCode });
                 const h = m as unknown as HelloMsg;
                 this.roomCode = h.roomCode;
                 if (!h.roomCode) this.latest = null;

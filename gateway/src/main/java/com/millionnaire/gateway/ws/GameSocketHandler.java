@@ -10,6 +10,7 @@ import com.millionnaire.engine.core.command.RoomCommand.ChangeSettings;
 import com.millionnaire.engine.core.command.SessionCommand.StartGame;
 import com.millionnaire.engine.core.state.ControlMode;
 import com.millionnaire.gateway.auth.SessionTokens;
+import com.millionnaire.gateway.diagnostics.ConnectionDiagnostics;
 import com.millionnaire.gateway.auth.UserStore;
 import com.millionnaire.gateway.auth.UserStore.User;
 import com.millionnaire.gateway.room.ClientException;
@@ -40,6 +41,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
     static final String USER = "millionnaire.userId";
     /** 握手时带的令牌已失效（见 WebSocketConfig）：连上后立即回 UNAUTHENTICATED。 */
     public static final String TOKEN_REJECTED = "mn.tokenRejected";
+    public static final String CONNECTION_TRACE = "mn.connectionTrace";
     private static final Logger log = LoggerFactory.getLogger(GameSocketHandler.class);
     private static final int MAX_REQUEST_ID = 64;
 
@@ -70,6 +72,8 @@ public class GameSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
+        log.info("[MN-NET] ws.open trace={} authenticated={} tokenRejected={}", session.getAttributes().get(CONNECTION_TRACE), session.getAttributes().get(USER) instanceof Long,
+                Boolean.TRUE.equals(session.getAttributes().get(TOKEN_REJECTED)));
         if (session.getAttributes().get(USER) instanceof Long uid) {
             authenticate(session, uid);
         } else if (Boolean.TRUE.equals(session.getAttributes().get(TOKEN_REJECTED))) {
@@ -79,9 +83,15 @@ public class GameSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        log.info("[MN-NET] ws.close trace={} closeCode={}", session.getAttributes().get(CONNECTION_TRACE), status.getCode());
         if (session.getAttributes().get(USER) instanceof Long uid) {
             sockets.unbind(Long.toString(uid), session);
         }
+    }
+
+    @Override public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        log.warn("[MN-NET] ws.transport.fail trace={} kind={}", session.getAttributes().get(CONNECTION_TRACE), ConnectionDiagnostics.failureKind(exception));
+        super.handleTransportError(session, exception);
     }
 
     @Override
@@ -127,6 +137,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
                 default -> command(session, user, type, requireRequestId(requestId), msg);
             }
         } catch (ClientException e) {
+            if ("UNAUTHENTICATED".equals(e.code())) log.warn("[MN-NET] ws.auth.rejected trace={}", session.getAttributes().get(CONNECTION_TRACE));
             sockets.sendTo(session, wire.write(result(requestId, "ERROR", e.code(), null).put("message", e.getMessage())));
         } catch (RuntimeException e) {
             log.error("websocket message failed", e);
@@ -252,6 +263,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
     private void authenticate(WebSocketSession session, long uid) {
         User user = users.find(uid).orElse(null);
         if (user == null) {
+            log.warn("[MN-NET] ws.auth.rejected trace={} userFound=false", session.getAttributes().get(CONNECTION_TRACE));
             sockets.sendTo(session, wire.write(result(null, "ERROR", "UNAUTHENTICATED", null)));
             return;
         }
@@ -278,6 +290,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
         hello.put("roomCode", room.map(LiveRoom::code).orElse(null));
         hello.put("watching", watched.map(LiveRoom::code).orElse(null));
         sockets.sendTo(session, wire.write(hello));
+        log.info("[MN-NET] ws.hello trace={} inRoom={}", session.getAttributes().get(CONNECTION_TRACE), room.isPresent() || watched.isPresent());
         if (room.isEmpty()) {
             room = watched; // 观战者重连：补发所看房间的快照
         }
