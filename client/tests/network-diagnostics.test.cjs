@@ -3,7 +3,20 @@ const assert = require('node:assert/strict');
 const { requestJson } = require('../temp/network-tests/net/Http.js');
 const { wxLoginCode } = require('../temp/network-tests/net/Wx.js');
 const { GameClient } = require('../temp/network-tests/net/GameClient.js');
-const { safeDiagnosticText } = require('../temp/network-tests/net/Diagnostics.js');
+const { safeDiagnosticText, diagnosticError } = require('../temp/network-tests/net/Diagnostics.js');
+
+test('cloud platform subcodes remain visible while login credentials stay redacted', () => {
+    for(const subcode of ['[-501000]','[INVALID_ENV]','[ResourceEnvNotFound]','-501000']){
+        const error={errCode:-501000,errno:85088,errMsg:'cloud.callContainer:fail 85088 . cloud.callContainer:fail system error. code='+subcode+' js_code=PRIVATE_CODE token=PRIVATE_TOKEN'};
+        const safe=safeDiagnosticText(error.errMsg);
+        assert(safe.includes('code='+subcode));assert(!safe.includes('PRIVATE_CODE')&&!safe.includes('PRIVATE_TOKEN'));
+        const details=diagnosticError(error);
+        assert.equal(details.platformCode,subcode);assert.equal(details.errCode,-501000);assert.equal(details.errno,85088);
+        assert.equal(safeDiagnosticText(safe),safe);
+    }
+    assert(!safeDiagnosticText('code=123456 js_code=PRIVATE_CODE').includes('123456'));
+    assert(!safeDiagnosticText('cloud.callContainer:fail code=PRIVATE_LOGIN_CODE').includes('PRIVATE_LOGIN_CODE'));
+});
 
 test('free-form platform error text redacts credential URLs, headers and quoted JSON', () => {
     const output=safeDiagnosticText('request:fail {"session_key":"PRIVATE_SESSION","secret":"PRIVATE_SECRET"} Authorization: Bearer PRIVATE_BEARER https://user:PRIVATE_PASSWORD@host/ws?token=PRIVATE_URL_TOKEN');

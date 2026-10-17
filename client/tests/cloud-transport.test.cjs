@@ -59,6 +59,13 @@ test('container invocation failures retain platform diagnostics and do not invok
     await assert.rejects(requestJson('GET',DEFAULT_SERVER+'/api/boards'),e=>e.code==='WX_CLOUD_REQUEST_FAILED'&&e.errMsg.includes('environment not found'));
 }));
 
+test('native platform subcode and numeric error fields survive the HTTP error wrapper',()=>fixture(async lines=>{
+    global.wx={login(){},cloud:{init(){},async callContainer(){throw {errCode:-501000,errno:85088,
+        errMsg:'cloud.callContainer:fail 85088 . cloud.callContainer:fail system error. code=[INVALID_ENV] token=PRIVATE_TOKEN'};}}};
+    await assert.rejects(requestJson('GET',DEFAULT_SERVER+'/api/auth/methods'),e=>e.code==='WX_CLOUD_REQUEST_FAILED'&&e.errCode===-501000&&e.errno===85088&&e.platformCode==='[INVALID_ENV]');
+    const output=lines.join('');assert(output.includes('[INVALID_ENV]')&&output.includes('-501000'));assert(!output.includes('PRIVATE_TOKEN'));
+}));
+
 test('browser HTTP and WebSocket retain direct transport even when a cloud-like object exists',()=>fixture(async()=>{
     let fetched=0,opened=0;
     global.wx={cloud:{init(){assert.fail('browser initialized cloud');}}};

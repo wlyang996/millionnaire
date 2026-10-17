@@ -40,7 +40,8 @@ const initialized = new WeakMap<CloudApi, Map<string, Promise<void>>>();
 
 function failure(code: string, hint: string, error?: unknown): Error {
     const details = diagnosticError(error);
-    return Object.assign(new Error(hint), { code, errMsg: hint + (details.errMsg || details.message ? '：' + (details.errMsg || details.message) : '') });
+    return Object.assign(new Error(hint), { code, errMsg: hint + (details.errMsg || details.message ? '：' + (details.errMsg || details.message) : ''),
+        errCode: details.errCode, errcode: details.errcode, errno: details.errno, platformCode: details.platformCode });
 }
 
 async function cloudApi(target: CloudTarget, capability: 'callContainer' | 'connectContainer'): Promise<CloudApi> {
