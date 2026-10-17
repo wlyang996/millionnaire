@@ -104,6 +104,7 @@ export class App {
 
         const s = ctx.screens;
         s.register('profile', () => new ProfileScreen());
+        s.register('profile-edit', () => new ProfileScreen(true));
         s.register('lobby', () => new LobbyScreen());
         s.register('practice', () => new PracticeScreen());
         s.register('room', () => new RoomScreen());

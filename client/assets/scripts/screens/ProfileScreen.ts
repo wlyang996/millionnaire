@@ -1,4 +1,4 @@
-/** 页面 1：登录资料（微信登录 / 昵称输入与检查 / 内置头像选择）。 */
+/** 登录页仅填写昵称；头像与昵称编辑从大厅的个人资料入口进入。 */
 import { Graphics, Label } from 'cc';
 import { checkNickname, NICK_MAX } from '../core/Rules';
 import { Theme } from '../core/Theme';
@@ -14,8 +14,9 @@ import { art, characterChoices, characterArtRevision, informationCharacterKey } 
 import { isWechat } from '../net/Wx';
 
 export class ProfileScreen extends Screen {
-    readonly id = 'profile' as const;
-    readonly title = '登录资料';
+    get id(): 'profile' | 'profile-edit' { return this.editing ? 'profile-edit' : 'profile'; }
+    get title(): string { return this.editing ? '个人资料' : '登录'; }
+    constructor(private readonly editing = false) { super(); }
     private nick = '';
     private avatarIdx = 0;
     private initialized = false;
@@ -37,30 +38,20 @@ export class ProfileScreen extends Screen {
             this.avatarIdx = st.profile.avatar;
             this.initialized = true;
         }
-        // 设计稿 03：品牌 Logo（好友桌游 + 骰子）
-        art(this.root, 'brand_logo', 100, 112, 520, 331);
+        if (!this.editing) { this.buildLogin(); return; }
+        this.header('个人资料', () => { if (!this.busy) ctx.screens.back('lobby'); });
+        avatar(this.root, 302, 120, 116, this.avatarIdx, this.nick || '我');
 
         const panelHeight = characterChoices().length > 8 ? 704 : 646;
-        const card = mk(this.root, 'ProfilePanel', 36, 612, 648, panelHeight);
+        const card = mk(this.root, 'ProfilePanel', 36, 280, 648, panelHeight);
         art(card, 'info_asset_panel', 0, 0, 648, panelHeight, 'panel');
-        text(card, '登录资料', 28, 12, 592, 56, 38, '#613C24', { bold: true });
+        text(card, '个人资料', 28, 12, 592, 56, 38, '#613C24', { bold: true });
         // 标题两侧的绿叶
         const leaves = gfx(mk(card, 'Leaves', 0, 0, 648, 70));
         for (const [cx, dir] of [[218, -1], [430, 1]] as [number, number][]) {
             fillPoly(leaves, [[cx, 54], [cx + dir * 14, 24], [cx + dir * 30, 14], [cx + dir * 24, 40]], '#5DAE45');
             fillPoly(leaves, [[cx, 54], [cx + dir * 30, 40], [cx + dir * 44, 46], [cx + dir * 24, 56]], '#7CC75E');
         }
-
-        // 微信登录
-        const logged = st.profile.loggedIn;
-        new Button(this.root, logged ? '已登录 · 微信用户 ✓' : '微信登录', 36, 500, 648, 92, logged ? 'ghost' : 'success', () => {
-            if (st.profile.loggedIn || this.busy) return;
-            if (st.online && isWechat()) return this.wechatLogin();
-            st.setProfile({ loggedIn: true });
-            if (!this.nick && !st.online) this.nick = '微信用户';
-            Toast.show(st.online ? '测试登录：填写昵称后保存即可联机' : '微信登录成功（演示，未连接微信）');
-            this.rebuild();
-        }, Theme.font.lg);
 
         // 头像
         text(card, '内置头像', 28, 222, 400, 36, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
@@ -86,6 +77,7 @@ export class ProfileScreen extends Screen {
                 drawCheck(gg, 115, 88, 30, Theme.c.white, 4);
             }
             onTap(cell, () => {
+                if (this.busy) return;
                 this.avatarIdx = i;
                 this.rebuild();
             }, false);
@@ -108,48 +100,68 @@ export class ProfileScreen extends Screen {
 
 
         this.enter = primaryButton(card, '保存资料', 28, pages > 1 ? 570 : 520, 592, pages > 1 ? 88 : 96, () => {
-            const r = checkNickname(this.nick);
-            if (!st.profile.loggedIn) return Toast.show('请先微信登录');
-            if (!r.ok) return Toast.show(r.reason);
-            if (!characterChoices().some(c => c.id === this.avatarIdx)) return Toast.show('该人物已停用，请重新选择');
-            st.setProfile({ nickname: this.nick.trim(), avatar: this.avatarIdx });
-            if (!st.online) return ctx.screens.go('lobby');
-            // 联机：微信里用 wx.login（带上昵称与头像），其他环境用测试身份，然后连接服务器
-            this.enter.setEnabled(false, '正在连接服务器…');
-            st.online.login(this.nick.trim(), this.avatarIdx).then(() => ctx.screens.go('lobby'), (e: { code?: string; wxErrcode?: number }) => {
-                Toast.show(e && e.code === 'INVALID_NICKNAME' ? '昵称不合法，请换一个' : wechatError(e));
-                this.checkNow();
-            });
+            void this.saveProfile();
         });
         this.checkNow();
     }
 
-    /** 微信里：wx.login 换身份；老用户直接进大厅（沿用服务端存的昵称、头像），新用户留在本页填资料。 */
-    private wechatLogin(): void {
-        const st = ctx.store;
-        this.busy = true;
-        st.online!.wechatQuickLogin().then((p) => {
-            this.busy = false;
-            st.setProfile({ loggedIn: true });
-            if (p) {
-                st.setProfile({ nickname: p.nickname, avatar: p.avatar >= 0 ? p.avatar : st.profile.avatar });
-                Toast.show('欢迎回来，' + p.nickname);
-                ctx.screens.go('lobby');
-                return;
-            }
-            Toast.show('微信登录成功，请填写昵称并选择头像');
-            this.rebuild();
-        }, (e: { code?: string; wxErrcode?: number }) => {
-            this.busy = false;
-            Toast.show(wechatError(e));
+    private buildLogin(): void {
+        art(this.root, 'brand_logo', 100, 112, 520, 331);
+        const card = mk(this.root, 'LoginPanel', 36, 590, 648, 280);
+        art(card, 'info_asset_panel', 0, 0, 648, 280, 'panel');
+        text(card, '昵称', 28, 28, 592, 44, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
+        this.field = new EditField(card, 28, 88, 592, 64, '输入昵称（最多 ' + NICK_MAX + ' 字）', 20, s => {
+            this.nick = s; this.checkNow();
         });
+        if (this.nick) this.field.value = this.nick;
+        this.hintIcon = gfx(mk(card, 'HintIcon', 28, 184, 28, 28));
+        this.hint = text(card, '', 64, 180, 556, 64, 21, Theme.c.inkSoft, { align: 'l', wrap: true });
+        this.enter = new Button(this.root, '微信登录', 36, 900, 648, 96, 'success', () => void this.submitLogin(), Theme.font.lg);
+        this.checkNow();
+    }
+
+    private async submitLogin(): Promise<void> {
+        if (this.busy) return;
+        const st = ctx.store;
+        this.busy = true; this.checkNow();
+        try {
+            if (st.online && isWechat()) {
+                const existing = await st.online.wechatQuickLogin();
+                if (existing) { ctx.screens.go('lobby'); return; }
+            }
+            const result = checkNickname(this.nick);
+            if (!result.ok) { Toast.show(result.reason); return; }
+            const choices = characterChoices();
+            const defaultAvatar = choices.find(c => c.id === st.profile.avatar)?.id ?? choices[0]?.id;
+            if (defaultAvatar === undefined) { Toast.show('暂无可用人物，请稍后重试'); return; }
+            if (st.online) await st.online.login(this.nick.trim(), defaultAvatar);
+            else st.setProfile({ nickname: this.nick.trim(), avatar: defaultAvatar, loggedIn: true });
+            ctx.screens.go('lobby');
+        } catch (e) { Toast.show(wechatError(e as Parameters<typeof wechatError>[0])); }
+        finally { this.busy = false; if (this.root.isValid) this.checkNow(); }
+    }
+
+    private async saveProfile(): Promise<void> {
+        if (this.busy) return;
+        const st = ctx.store, result = checkNickname(this.nick);
+        if (!result.ok) { Toast.show(result.reason); return; }
+        if (!characterChoices().some(c => c.id === this.avatarIdx)) { Toast.show('该人物已停用，请重新选择'); return; }
+        this.busy = true; this.checkNow();
+        try {
+            let nextRoom = false;
+            if (st.online) nextRoom = await st.online.updateProfile(this.nick.trim(), this.avatarIdx);
+            else st.setProfile({ nickname: this.nick.trim(), avatar: this.avatarIdx });
+            ctx.screens.back('lobby');
+            Toast.show(nextRoom ? '资料已保存，下次加入房间时生效' : '资料已保存');
+        } catch (e) { Toast.show(wechatError(e as Parameters<typeof wechatError>[0])); }
+        finally { this.busy = false; if (this.root.isValid) this.checkNow(); }
     }
 
     private checkNow(): void {
         const r = checkNickname(this.nick);
-        const ok = r.ok && ctx.store.profile.loggedIn;
+        const ok = !this.busy && (r.ok || !this.editing && !!ctx.store.online && isWechat());
         const good = !this.nick.trim() || r.ok;
-        setText(this.hint, this.nick.trim() ? r.reason : '昵称需检查，检查通过后可继续', good ? Theme.c.greenDark : Theme.c.red);
+        setText(this.hint, this.nick.trim() ? r.reason : this.editing ? '请输入昵称' : '首次登录请填写昵称，老用户可直接登录', good ? Theme.c.greenDark : Theme.c.red);
         // 设计稿 03：提示前的圆形对勾（不合法时红色叉）
         const g = this.hintIcon;
         g.clear();
@@ -159,7 +171,7 @@ export class ProfileScreen extends Screen {
             line(g, 9, 9, 19, 19, Theme.c.white, 3);
             line(g, 19, 9, 9, 19, Theme.c.white, 3);
         }
-        this.enter.setEnabled(ok, ctx.store.profile.loggedIn ? r.reason : '请先微信登录');
+        this.enter.setEnabled(ok, this.busy ? '正在保存或登录…' : r.reason);
     }
 
     /** store 变化时不整页重建，避免打断输入。 */

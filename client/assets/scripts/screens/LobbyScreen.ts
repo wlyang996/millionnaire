@@ -34,6 +34,7 @@ export class LobbyScreen extends Screen {
         fillRR(g, 0, 3, 274, 68, 34, Theme.c.shadow);
         fillRR(g, 0, 0, 274, 68, 34, Theme.c.ivory);
         avatar(me, 4, 4, 60, st.profile.avatar, st.profile.nickname || '我');
+        onTap(me, () => ctx.screens.push('profile-edit'));
         text(me, st.profile.nickname || '微信用户', 76, 0, 150, 68, Theme.font.md, Theme.c.ink, { bold: true, align: 'l' });
         for (let i = 0; i < 3; i++) fillRR(gfx(mk(me, 'Sig', 230 + i * 11, 40 - i * 8, 7, 12 + i * 8)), 0, 0, 7, 12 + i * 8, 2, Theme.c.green);
         // 设计稿 08：昵称胶囊右侧依次是音量、设置（"…"与圆点由微信胶囊绘制）

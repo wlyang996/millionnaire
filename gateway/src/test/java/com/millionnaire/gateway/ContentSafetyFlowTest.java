@@ -49,4 +49,15 @@ class ContentSafetyFlowTest {
         var test=http.postForEntity("/api/auth/test-login",Map.of("nickname","测试身份"),Map.class);
         assertThat(test.getBody().get("code")).isEqualTo("CONTENT_ID_REQUIRED");
     }
+    @Test void profileEditorChecksTheTrustedWechatIdentityBeforeSavingNickname() {
+        var login=http.postForObject("/api/auth/wx-login",Map.of("code","profile-edit","nickname","原昵称","avatar",0),Map.class);
+        var headers=new org.springframework.http.HttpHeaders();headers.setBearerAuth((String)login.get("token"));
+        for(String name:java.util.List.of("拒绝名字","待审名字","故障名字","未知名字")) {
+            var result=http.exchange("/api/me/profile",org.springframework.http.HttpMethod.POST,new org.springframework.http.HttpEntity<>(Map.of("nickname",name,"avatar",1),headers),Map.class);
+            assertThat(result.getStatusCode().isError()).isTrue();
+            assertThat(jdbc.queryForObject("SELECT nickname FROM app_user WHERE user_id=?",String.class,Long.parseLong((String)login.get("userId")))).isEqualTo("原昵称");
+        }
+        var result=http.exchange("/api/me/profile",org.springframework.http.HttpMethod.POST,new org.springframework.http.HttpEntity<>(Map.of("nickname","新昵称","avatar",1),headers),Map.class);
+        assertThat(result.getStatusCode().is2xxSuccessful()).isTrue();
+    }
 }

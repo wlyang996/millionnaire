@@ -198,7 +198,19 @@ export class OnlineSession {
         this.boards = await step('读取地图', this.client.boards());
         this.store.myId = this.client.userId!;
         this.leaveLocally();
+        this.store.setProfile({ nickname: this.client.nickname, avatar: this.client.avatar >= 0 ? this.client.avatar : this.store.profile.avatar, loggedIn: true });
         await step('建立连接', Promise.resolve().then(() => this.client.connect()));
+    }
+
+    async updateProfile(nickname: string, avatar: number): Promise<boolean> {
+        try {
+            const saved = await this.client.updateProfile(nickname, avatar);
+            this.store.setProfile({ nickname: saved.nickname, avatar: saved.avatar });
+            return saved.appliesNextRoom;
+        } catch (e) {
+            if ((e as { code?: string }).code === 'UNAUTHENTICATED') this.expired();
+            throw e;
+        }
     }
 
     // ------------------------------------------------------------ 房间

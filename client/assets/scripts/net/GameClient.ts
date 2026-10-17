@@ -40,6 +40,7 @@ export class GameClient {
     token: string | null = null;
     userId: string | null = null;
     nickname = '';
+    avatar = -1;
     roomCode: string | null = null;
     latest: UpdateMsg | null = null;
     state: LinkState = 'idle';
@@ -71,7 +72,7 @@ export class GameClient {
     /** 测试身份登录；失败时抛出带 code 的错误（如 INVALID_NICKNAME）。 */
     /** @param avatar 已发布且启用的人物 ID（服务端记下，随推送下发给房间所有人）。 */
     async login(nickname: string, avatar?: number): Promise<void> {
-        const r = await requestJson<{ token: string; userId: string; nickname: string; code?: string }>(
+        const r = await requestJson<{ token: string; userId: string; nickname: string; avatar?: number; code?: string }>(
             'POST', this.baseUrl + '/api/auth/test-login', avatar === undefined ? { nickname } : { nickname, avatar });
         if (r.status !== 200 || !r.body?.token) {
             throw Object.assign(new Error('login failed'), { code: r.body?.code ?? 'HTTP_' + r.status });
@@ -79,6 +80,7 @@ export class GameClient {
         this.token = r.body.token;
         this.userId = r.body.userId;
         this.nickname = r.body.nickname;
+        this.avatar = r.body.avatar ?? -1;
     }
 
     /** 服务端开放的登录方式（微信登录要服务端配好 AppID / AppSecret）。旧后台没有这个接口时当作只有测试登录。 */
@@ -106,7 +108,17 @@ export class GameClient {
         this.token = r.body.token;
         this.userId = r.body.userId ?? null;
         this.nickname = r.body.nickname ?? '';
+        this.avatar = r.body.avatar ?? -1;
         return { nickname: r.body.nickname ?? '', avatar: typeof r.body.avatar === 'number' ? r.body.avatar : -1 };
+    }
+
+    async updateProfile(nickname: string, avatar: number): Promise<{ nickname: string; avatar: number; appliesNextRoom: boolean }> {
+        const r = await requestJson<{ nickname: string; avatar: number; appliesNextRoom: boolean; code?: string }>(
+            'POST', this.baseUrl + '/api/me/profile', { nickname, avatar }, this.token ?? undefined);
+        if (r.status !== 200 || !r.body) throw Object.assign(new Error('profile save failed'), { code: r.body?.code ?? 'HTTP_' + r.status });
+        this.nickname = r.body.nickname;
+        this.avatar = r.body.avatar;
+        return r.body;
     }
 
     async boards(): Promise<BoardTemplate[]> {

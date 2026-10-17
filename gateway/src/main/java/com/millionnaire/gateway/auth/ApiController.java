@@ -159,7 +159,26 @@ public class ApiController {
         return ResponseEntity.ok(out);
     }
 
-    /** 我的最近 20 局（新的在前）：[{gameNo, endMode, timeLimitMinutes, boardId, playerCount, startedAt, endedAt, endReason, rank, netWorth, cash, life}]。 */
+    /** Authenticated profile changes preserve the player identity and current room roster. */
+    public record ProfileUpdate(String nickname, Integer avatar) { }
+
+    @PostMapping("/me/profile")
+    public ResponseEntity<?> updateProfile(@RequestHeader(value = "Authorization", required = false) String auth,
+                                          @RequestBody(required = false) ProfileUpdate body) {
+        Optional<User> found = user(auth);
+        if (found.isEmpty()) return error(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED");
+        String nickname = body == null || body.nickname() == null ? null : body.nickname().strip();
+        if (nickname == null || !rooms.validNickname(nickname)) return error(HttpStatus.BAD_REQUEST, "INVALID_NICKNAME");
+        User current = found.get();
+        if (!nickname.equals(current.nickname())) safety.nickname(users.openid(current.id(), wechat.appId()).orElse(null), nickname);
+        User updated = users.updateProfile(current, nickname, body.avatar() == null ? -1 : body.avatar());
+        boolean nextRoom = rooms.roomOf(updated.playerId()).isPresent();
+        if (!nextRoom) rooms.rememberAvatar(updated);
+        return ResponseEntity.ok(Map.of("userId", updated.playerId(), "nickname", updated.nickname(),
+                "avatar", updated.avatar(), "appliesNextRoom", nextRoom));
+    }
+
+    /** 我的最近 20 局（新的在前）。 */
     @GetMapping("/me/history")
     public ResponseEntity<?> history(@RequestHeader(value = "Authorization", required = false) String auth) {
         Optional<User> user = user(auth);

@@ -31,6 +31,7 @@
 | POST | `/api/auth/wx-login` | 微信登录。请求 `{"code","nickname?","avatar?"}`，`code` 为 `wx.login` 的一次性 code，服务端调 `jscode2session` 换 openid（不保存 session_key），按 `wx_identity` 找用户。老用户直接返回 `{"token","userId","nickname","avatar","roomCode"}`（带了昵称 / 头像就更新）；新用户没带昵称返回 `{"needProfile":true}`（code 已用掉，填完资料后重新 `wx.login` 再调）。错误：503 `WECHAT_NOT_CONFIGURED`、401 `WECHAT_LOGIN_FAILED`、400 `INVALID_NICKNAME` / `BAD_REQUEST` |
 | GET | `/api/auth/methods` | `{"wechat":bool,"test":bool}`：客户端据此决定走微信登录还是测试登录 |
 | GET | `/api/me` | 头 `Authorization: Bearer <token>`；返回 `{"userId","nickname","avatar","roomCode"}`（avatar 为 -1 表示没选） |
+| POST | `/api/me/profile` | 头 `Authorization: Bearer <token>`；请求 `{"nickname","avatar"}`，保存当前账号资料并返回 `{"userId","nickname","avatar","appliesNextRoom"}`，不创建新账号或替换令牌。昵称沿用内容安全检测，头像须为当前启用的人物。已有房间时 `appliesNextRoom=true`，当前房间成员快照不变 |
 | GET | `/api/me/history` | 头 `Authorization`；我的最近 20 局（新的在前）：`[{gameNo, endMode, timeLimitMinutes, boardId, playerCount, startedAt, endedAt, endReason, rank, netWorth, cash, life}]`。每局结束时写入 `game_record` / `game_record_player`（db 配置），否则只在内存 |
 | GET | `/api/room` | 当前房间快照，形状同 WebSocket 的 `UPDATE`（`events` 为空）；不在房间 404 |
 | GET | `/health`、`/health/db` | 存活与数据库诊断 |

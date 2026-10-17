@@ -51,6 +51,56 @@ class WechatLoginTest {
     TestRestTemplate http;
     @Autowired
     JdbcTemplate jdbc;
+    @Autowired com.millionnaire.gateway.room.RoomService rooms;
+    @Autowired com.millionnaire.gateway.auth.UserStore users;
+
+    @org.junit.jupiter.api.BeforeEach
+    void h2RoomByteLengthCheck() {
+        // H2 decodes VARBINARY in LENGTH; the production MySQL constraint counts bytes.
+        jdbc.execute("ALTER TABLE room DROP CONSTRAINT IF EXISTS ck_room_ids");
+        jdbc.execute("ALTER TABLE room ADD CONSTRAINT ck_room_ids CHECK (OCTET_LENGTH(create_request_id) = 16 AND max_saved_game_no >= 0)");
+    }
+
+    private ResponseEntity<Map> profile(String token, Map<String, Object> body) {
+        var headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        return http.exchange("/api/me/profile", HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
+    }
+
+    @Test void authenticatedProfileChangesKeepTheSameIdentityAndPersistForLaterLogin() {
+        var first = wx(Map.of("code", "c-profile-1", "nickname", "旧昵称", "avatar", 0));
+        var other = wx(Map.of("code", "c-otherprofile-1", "nickname", "其他人", "avatar", 2));
+        String uid = (String)first.get("userId"), token = (String)first.get("token");
+        int before = jdbc.queryForObject("SELECT COUNT(*) FROM app_user", Integer.class);
+        var saved = profile(token, Map.of("nickname", "新昵称", "avatar", 1, "userId", other.get("userId")));
+        assertThat(saved.getStatusCode().value()).isEqualTo(200);
+        assertThat(saved.getBody()).containsEntry("userId", uid).containsEntry("nickname", "新昵称")
+                .containsEntry("avatar", 1).containsEntry("appliesNextRoom", false).doesNotContainKey("token");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM app_user", Integer.class)).isEqualTo(before);
+        assertThat(wx(Map.of("code", "c-profile-2"))).containsEntry("userId", uid).containsEntry("nickname", "新昵称").containsEntry("avatar", 1);
+        assertThat(wx(Map.of("code", "c-otherprofile-2"))).containsEntry("nickname", "其他人").containsEntry("avatar", 2);
+        var headers = new HttpHeaders();headers.setBearerAuth(token);
+        assertThat(http.exchange("/api/me", HttpMethod.GET, new HttpEntity<>(headers), Map.class).getBody()).containsEntry("nickname", "新昵称");
+    }
+
+    @Test void invalidOrUnauthenticatedProfileChangesDoNotOverwriteSavedData() {
+        var first = wx(Map.of("code", "c-invalidprofile-1", "nickname", "保留资料", "avatar", 0));
+        String token = (String)first.get("token");
+        assertThat(http.postForEntity("/api/me/profile", Map.of("nickname", "别人", "avatar", 1), Map.class).getStatusCode().value()).isEqualTo(401);
+        assertThat(profile(token, Map.of("nickname", "​", "avatar", 1)).getStatusCode().value()).isEqualTo(400);
+        assertThat(profile(token, Map.of("nickname", "不能保存", "avatar", 8)).getStatusCode().is4xxClientError()).isTrue();
+        assertThat(wx(Map.of("code", "c-invalidprofile-2"))).containsEntry("nickname", "保留资料").containsEntry("avatar", 0);
+    }
+
+    @Test void editingProfileInARoomKeepsTheActiveRoomAvatarAndMemberName() {
+        var first = wx(Map.of("code", "c-roomprofile-1", "nickname", "房内旧名", "avatar", 0));
+        var current = users.find(Long.parseLong((String)first.get("userId"))).orElseThrow();
+        var created = rooms.create(current, "profile-room", null);
+        var saved = profile((String)first.get("token"), Map.of("nickname", "房外新名", "avatar", 1));
+        assertThat(saved.getBody()).containsEntry("appliesNextRoom", true);
+        assertThat(rooms.avatarsOf(java.util.List.of(current.playerId()))).containsEntry(current.playerId(), 0);
+        assertThat(created.room().view(current.playerId()).toString()).contains("房内旧名").doesNotContain("房外新名");
+    }
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> wx(Map<String, Object> body) {
