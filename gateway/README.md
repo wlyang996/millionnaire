@@ -121,7 +121,7 @@
 ## 尚未实现
 以下早期清单可能陈旧，以后面的日期记录和当前源代码为准。
 - 掉线判定（15 秒疑似、30 秒确认）还没接到引擎的连接命令上，目前断线的玩家按"在线但不操作"处理（超时由引擎自动处理）。
-- 微信登录走 `wx.login` + `jscode2session`（需要 AppSecret），沿用现在客户端直连云托管域名的 HTTP / WebSocket。如果以后改用 `wx.cloud.callContainer` / `connectContainer`，可以改读云托管注入的 `X-WX-OPENID`（不需要 AppSecret），但必须确认公网请求无法伪造这个头。
+- 微信登录继续走 `wx.login` + `jscode2session`（需要 AppSecret）；2026-10-18 客户端的业务 HTTP / WebSocket 已改为 `wx.cloud.callContainer` / `connectContainer`，H5 保留直连。没有改用或信任请求方传来的 `X-WX-OPENID`，仍由登录令牌鉴权。见[微信云托管专用通道](微信云托管专用通道.md)。
 - 战绩写库（`game_record`）、聊天落库、房间号加入频率限制、空房间超时关闭。
 
 ## 2026-10-12 微信云托管对象存储

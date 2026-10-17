@@ -5,6 +5,14 @@
  */
 export const DEFAULT_SERVER = 'https://springboot-ad5i-prod-d6gztvk354abc40f5-1501212143.ap-shanghai.run.wxcloudrun.com';
 
+/** Deployment identifiers (not secrets). Keep these aligned with the WeChat cloud console. */
+export const DEFAULT_WECHAT_CLOUD = { env: 'prod-d6gztvk354abc40f5', service: 'springboot-ad5i' };
+
+export function wechatCloudSettings(): { env: string; service: string } {
+    const override = (globalThis as unknown as { __MN_WECHAT_CLOUD?: { env?: string; service?: string } }).__MN_WECHAT_CLOUD;
+    return { env: override?.env ?? DEFAULT_WECHAT_CLOUD.env, service: override?.service ?? DEFAULT_WECHAT_CLOUD.service };
+}
+
 function query(name: string): string | null {
     const loc = (globalThis as unknown as { location?: { search?: string } }).location;
     if (!loc || typeof loc.search !== 'string') return null; // 微信小游戏没有 location

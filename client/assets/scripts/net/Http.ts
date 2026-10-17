@@ -1,7 +1,8 @@
 /**
- * 最小 JSON 请求：优先用 XMLHttpRequest（浏览器与微信小游戏的 Cocos 适配层都提供），没有时退回 fetch（Node 测试）。
+ * JSON 请求：微信业务接口走 callContainer；H5 使用 XHR，Node 测试使用 fetch。
  */
 import { diagnosticError, diagnosticId, networkLog, safeEndpoint } from './Diagnostics';
+import { cloudRequest, cloudTarget } from './CloudTransport';
 export interface HttpResult<T> {
     status: number;
     body: T | null;
@@ -17,8 +18,9 @@ interface WxRequestApi {
 export async function requestJson<T>(method: 'GET' | 'POST', url: string, body?: unknown, token?: string): Promise<HttpResult<T>> {
     const trace = diagnosticId('http'), started = Date.now();
     const g = globalThis as unknown as { wx?: WxRequestApi; XMLHttpRequest?: unknown };
-    const transport = typeof g.wx?.request === 'function' ? 'wx.request' : g.XMLHttpRequest ? 'xhr' : 'fetch';
-    const fields = { trace, method, endpoint: safeEndpoint(url), transport };
+    const target = cloudTarget(url);
+    const transport = target ? 'wx.cloud.callContainer' : typeof g.wx?.request === 'function' ? 'wx.request' : g.XMLHttpRequest ? 'xhr' : 'fetch';
+    const fields = { trace, method, endpoint: safeEndpoint(url), transport, env: target?.env, service: target?.service };
     networkLog('http.start', fields);
     try {
         const result = await perform<T>(method, url, trace, body, token);
@@ -36,6 +38,9 @@ export async function requestJson<T>(method: 'GET' | 'POST', url: string, body?:
 
 function perform<T>(method: 'GET' | 'POST', url: string, trace: string, body?: unknown, token?: string): Promise<HttpResult<T>> {
     const payload = body === undefined ? undefined : JSON.stringify(body);
+    const target = cloudTarget(url);
+    if (target) return cloudRequest(target, method, trace, payload, token).then(r => ({ status: r.statusCode,
+        body: typeof r.data === 'string' ? parse<T>(r.data) : r.data as T | null }));
     // 微信小游戏：直接用 wx.request，失败时能拿到 errMsg（如 "request:fail url not in domain list"），适配层的 XHR 只给出 network error
     const wx = (globalThis as unknown as { wx?: WxRequestApi }).wx;
     if (wx && typeof wx.request === 'function') {

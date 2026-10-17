@@ -1,5 +1,5 @@
 /**
- * 联机客户端（纯 TS，不依赖 cc；浏览器与微信小游戏都用全局 WebSocket，Cocos 适配层会转成 wx.connectSocket）。
+ * 联机客户端（纯 TS，不依赖 cc；微信业务连接用 connectContainer，浏览器用全局 WebSocket）。
  * - 登录：测试身份 POST /api/auth/test-login，令牌只在内存（服务端重启后需重新登录）；
  * - 连接：/ws?token=…，断线后按 1/2/4/8/10 秒退避自动重连，重连后服务端会推当前房间快照；
  * - 请求：每条改变状态的消息带 requestId，等待同号 RESULT；断线期间未完成的请求在重连后用同一 requestId 重发
@@ -8,6 +8,7 @@
  */
 import { requestJson } from './Http';
 import { diagnosticError, diagnosticId, networkLog, safeEndpoint } from './Diagnostics';
+import { CloudSocket, cloudTarget } from './CloudTransport';
 import type { CharacterCatalog } from '../core/CharacterCatalog';
 import { BoardTemplate, ClientConfig, GameArgs, GameCommandName, HelloMsg, ResultMsg, SGameDetail, SHistoryRow, SSettings, UpdateMsg } from './Protocol';
 import type { PlayerStats, SeriesState } from '../core/Models';
@@ -290,7 +291,9 @@ export class GameClient {
         this.setState(state);
         const trace = diagnosticId('ws'), started = Date.now();
         const url = this.baseUrl.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(this.token!) + '&traceId=' + trace;
-        networkLog('ws.start', { trace, endpoint: safeEndpoint(url), attempt: this.attempts + 1 });
+        const target = cloudTarget(url);
+        networkLog('ws.start', { trace, endpoint: safeEndpoint(url), attempt: this.attempts + 1,
+            transport: target ? 'wx.cloud.connectContainer' : 'WebSocket', env: target?.env, service: target?.service });
         let ws: Socket;
         try { ws = this.socketFactory(url); }
         catch (e) { networkLog('ws.fail', { trace, elapsedMs: Date.now() - started, ...diagnosticError(e) }, true); throw e; }
@@ -412,6 +415,8 @@ function local(requestId: string, outcome: string): ResultMsg {
 }
 
 function defaultSocket(url: string): Socket {
+    const target = cloudTarget(url);
+    if (target) return new CloudSocket(target);
     const WS = (globalThis as unknown as { WebSocket: new (u: string) => Socket }).WebSocket;
     return new WS(url);
 }

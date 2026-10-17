@@ -2,6 +2,8 @@
 
 微信登录与连接诊断：Console 筛选 `[MN-NET]`，日志包含阶段、请求诊断编号、地址、状态和耗时，不打印登录凭证。更新时先更新后台，再构建客户端；收集方式见[微信连接排查](../gateway/微信连接排查.md)。
 
+2026-10-18 起微信端业务 HTTP / WebSocket 改为 `wx.cloud.callContainer` / `wx.cloud.connectContainer`，默认环境 `prod-d6gztvk354abc40f5`、服务 `springboot-ad5i`；H5 仍按 `serverUrl()` 直连。云通道初始化或能力缺失会明确报错，不自动回退公网。初始化前可用 `globalThis.__MN_WECHAT_CLOUD = { env, service }` 覆盖部署参数。详见[微信云托管专用通道](../gateway/微信云托管专用通道.md)。
+
 ## 联机模式（2026-10-07 起默认）
 - 服务地址默认是云托管 prod（`net/Config.ts`）。H5 预览可在地址后加 `?server=http://localhost:8080` 连本地后台，加 `?demo=1` 回到不联网的演示模式（美术评审用）。
 - 一个人测试：房主在房间页点空位"加机器人"（服务端测试模式才有），机器人自动准备，开局后由服务端托管代打（约 1 秒后自动行动）。
