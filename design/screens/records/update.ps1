@@ -60,7 +60,10 @@ $entries = @(
     [pscustomobject]@{ File = '35-组队合作-主动援助-欠款援助-队伍结算-候选.png'; Source = (Join-Path $sourceUi 'team-coop-v1/主动援助-欠款援助-队伍结算-v1.png'); Role = '主动援助-队友欠款出资-单局队伍结算'; Version = 1; Status = 'layout approved by user; implemented with existing character poses; not deployed' },
     [pscustomobject]@{ File = '36-组队合作-土地详情-欠款发起求助-候选.png'; Source = (Join-Path $sourceUi 'team-coop-v1/队友土地-敌方土地-欠款发起求助-v1.png'); Role = '队友与敌方土地-当前等级-欠款人发起求助'; Version = 1; Status = 'layout approved by user; implemented with existing character poses; not deployed' },
     [pscustomobject]@{ File = '37-组队合作-递币接币-欠款求助-共同捧杯-待审阅.png'; Source = (Join-Path $sourceUi 'team-coop-poses-v1/援助递币-欠款求助-共同捧杯-v1.png'); Role = '主动援助递币接币-欠款人忧虑求助-队伍共同捧杯'; Version = 1; Status = 'approved by user; character states integrated with independent assets; not deployed' },
-    [pscustomobject]@{ File = '38-声音设置-开关与音量.png'; Source = (Join-Path $sourceUi 'audio-settings-v1/声音设置-开关与音量-v1.png'); Role = '背景音乐与音效开关-独立音量-恢复默认'; Version = 1; Status = 'layout approved by user; integrated using existing town artwork; not deployed' }
+    [pscustomobject]@{ File = '38-声音设置-开关与音量.png'; Source = (Join-Path $sourceUi 'audio-settings-v1/声音设置-开关与音量-v1.png'); Role = '背景音乐与音效开关-独立音量-恢复默认'; Version = 1; Status = 'layout approved by user; integrated using existing town artwork; not deployed' },
+    [pscustomobject]@{ File = '39-管理工作台-新拟物布局-待评审.png'; Source = (Join-Path $sourceUi 'admin-clean-console-v6/管理工作台-清爽浅色-v6.png'); Role = '管理端原版浅色-任务待办-草稿-生效版本-常用入口'; Version = 6; Status = 'task focused clean white palette candidate; sample data; pending user review; not implemented' },
+    [pscustomobject]@{ File = '40-声音工作室-新拟物旋钮-待评审.png'; Source = (Join-Path $sourceUi 'admin-clean-console-v6/声音工作室-清爽浅色-v6.png'); Role = '管理端原版浅色-音量旋钮-拨动开关-场景试听'; Version = 6; Status = 'clean white palette candidate; sample data; pending user review; not implemented' },
+    [pscustomobject]@{ File = '41-管理端-模块场景横幅-待评审.png'; Source = (Join-Path $sourceUi 'admin-module-heroes-v8/管理端-模块场景横幅-v8.png'); Role = '公告-地图-声音-人物-浅色微缩场景横幅'; Version = 8; Status = 'static reference; module scene headers integrated locally; not deployed' }
 )
 
 # Check every source before copying any file.

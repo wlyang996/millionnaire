@@ -1,0 +1,30 @@
+[
+  {
+    "file": "管理工作台-清爽浅色-v6.png",
+    "source": "exec-49c8218f-876e-4520-898e-f6900ab659f0.png",
+    "editTarget": "../admin-task-workbench-v5/管理工作台-任务布局-v5.png",
+    "colorReference": "reference/current-admin.png",
+    "sha256": "c6cb8c6e836fe71b0e1f16e1a84faa958fcdfefaebfb553d543b4e16294e5578",
+    "bytes": 1358257,
+    "generator": "built-in image_gen",
+    "status": "clean white palette static review; sample data; not integrated"
+  },
+  {
+    "file": "声音工作室-清爽浅色-v6.png",
+    "source": "exec-646a82ad-225a-4f30-9e81-712454b9f766.png",
+    "editTarget": "../admin-neumorphic-v2/声音工作室-新拟物旋钮-v2.png",
+    "colorReference": "reference/current-admin.png",
+    "sha256": "a13da351bbc6f32b1652ff70cfa24828616a2368f59c7d2d7d3f5fdbe922b967",
+    "bytes": 1427880,
+    "generator": "built-in image_gen",
+    "status": "clean white palette static review; sample data; not integrated"
+  },
+  {
+    "file": "admin-motion-review.html",
+    "source": "../admin-neumorphic-motion-v4/admin-motion-review.html",
+    "sha256": "d63550179ca2e02ee65bb314f37945d51e46b6dd51dbd2e70b2509e8e71dcb77",
+    "bytes": 30684,
+    "generator": "code-authored palette revision; visualize skill",
+    "status": "syntax checked; palette-only review; not integrated"
+  }
+]

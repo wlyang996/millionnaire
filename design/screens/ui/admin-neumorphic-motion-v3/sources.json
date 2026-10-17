@@ -1,0 +1,8 @@
+{
+  "file": "admin-motion-review.html",
+  "sha256": "5761157620d6709381b93df1de969cec074733898b6d0c26b0f846bd75ab6e08",
+  "bytes": 26374,
+  "status": "interactive review prototype; sample data; not integrated",
+  "source": "code-authored using visualize skill",
+  "staticReference": "../admin-neumorphic-v2/README.md"
+}

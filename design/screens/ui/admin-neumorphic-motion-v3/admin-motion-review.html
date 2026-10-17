@@ -1,0 +1,178 @@
+<div id="admin-motion-review" lang="zh-CN">
+  <style>
+    #admin-motion-review{--paper:#eeeae4;--panel:#f5f2ed;--recess:#e8e3dc;--ink:#323137;--muted:#716e73;--violet:#8059d9;--cyan:#139bac;--rose:#d95783;--amber:#bf8529;--line:#dcd6ce;--duration:220ms;--depth:.28;--ease:cubic-bezier(.22,.75,.25,1);font:14px/1.5 "Microsoft YaHei","PingFang SC",sans-serif;color:var(--ink);background:var(--paper);border-radius:20px;overflow:hidden;color-scheme:light}
+    #admin-motion-review *{box-sizing:border-box}
+    #admin-motion-review button,#admin-motion-review input{font:inherit;color:inherit}
+    #admin-motion-review button{cursor:pointer}
+    #admin-motion-review button:focus-visible,#admin-motion-review input:focus-visible{outline:2px solid var(--violet);outline-offset:4px}
+    #admin-motion-review [hidden]{display:none!important}
+    #admin-motion-review .shell{display:grid;grid-template-columns:180px minmax(0,1fr)}
+    #admin-motion-review .sidebar{padding:26px 16px;border-right:1px solid var(--line)}
+    #admin-motion-review .brand{display:flex;align-items:center;gap:10px;margin:0 0 32px;font-size:18px;font-weight:600}
+    #admin-motion-review .brand-mark{display:grid;grid-template-columns:repeat(2,9px);gap:3px;transform:rotate(-8deg)}
+    #admin-motion-review .brand-mark span{width:9px;height:9px;border-radius:3px;background:var(--violet)}
+    #admin-motion-review .brand-mark span:nth-child(2){background:var(--ink)}
+    #admin-motion-review .brand-mark span:nth-child(3){background:var(--rose)}
+    #admin-motion-review .brand-mark span:nth-child(4){background:var(--amber)}
+    #admin-motion-review .section-label{font-size:12px;color:var(--muted);margin:24px 0 12px}
+    #admin-motion-review .key{border:1px solid #ffffff85;border-radius:12px;background:var(--panel);box-shadow:2px 3px 6px rgb(133 116 95 / var(--depth)),-2px -2px 5px #ffffffa6;transition:transform 140ms var(--ease),background var(--duration) var(--ease),color var(--duration) var(--ease);min-height:44px;padding:10px 14px;display:inline-flex;align-items:center;justify-content:center;gap:9px}
+    #admin-motion-review .nav-key{width:100%;justify-content:flex-start;margin-bottom:12px;position:relative}
+    #admin-motion-review .key:active{transform:translateY(1px);box-shadow:inset 2px 2px 4px #c5bbae7a,inset -2px -2px 4px #ffffffb8}
+    #admin-motion-review .nav-key[aria-pressed=true]{color:var(--violet);background:#eee8f2;box-shadow:inset 2px 2px 4px #c8becd70,inset -2px -2px 4px #ffffffb8}
+    #admin-motion-review .nav-key .led{margin-left:auto}
+    #admin-motion-review .led{display:inline-block;width:7px;height:7px;flex-shrink:0;border-radius:50%;background:var(--line);transition:background var(--duration),box-shadow var(--duration)}
+    #admin-motion-review .nav-key[aria-pressed=true] .led{background:var(--violet);box-shadow:0 0 4px #8059d92b}
+    #admin-motion-review .sidebar-note{margin-top:30px;color:var(--muted);font-size:12px}
+    #admin-motion-review .content{padding:26px;min-width:0}
+    #admin-motion-review .topline{display:flex;align-items:center;gap:12px;justify-content:space-between;padding-right:75px;flex-wrap:wrap;color:var(--muted);font-size:12px;min-height:30px}
+    #admin-motion-review .topline label{display:flex;align-items:center;gap:6px;white-space:nowrap}
+    #admin-motion-review .topline input{accent-color:var(--violet)}
+    #admin-motion-review h1{font-size:25px;font-weight:600;margin:15px 0 5px;letter-spacing:.03em}
+    #admin-motion-review .sub{color:var(--muted);margin:0 0 24px;font-size:13px}
+    #admin-motion-review .channels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    #admin-motion-review .module{background:var(--panel);border:1px solid #ffffffa0;border-radius:18px;padding:18px;box-shadow:2px 3px 8px rgb(133 116 95 / calc(var(--depth)*.58));min-width:0}
+    #admin-motion-review .module-head{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap}
+    #admin-motion-review h2{font-size:15px;font-weight:600;margin:0;display:flex;gap:8px;align-items:center}
+    #admin-motion-review [data-lucide]{width:18px;height:18px}
+    #admin-motion-review .tone-icon{color:var(--tone);transition:color var(--duration) var(--ease)}
+    #admin-motion-review .channel[data-on=false] .tone-icon{color:#878388}
+    #admin-motion-review .switch-wrap{display:flex;gap:7px;align-items:center;font-size:12px;color:var(--muted)}
+    #admin-motion-review .switch{width:44px;height:26px;padding:3px;border:1px solid #d6d0c8;background:var(--recess);border-radius:20px;position:relative;transition:background var(--duration) var(--ease);flex-shrink:0}
+    #admin-motion-review .switch[aria-checked=true]{background:var(--tone);border-color:transparent}
+    #admin-motion-review .thumb{display:block;width:18px;height:18px;background:#fffdf9;border-radius:50%;box-shadow:0 1px 2px #55463824;transform:translateX(0);transition:transform var(--duration) var(--ease)}
+    #admin-motion-review .switch[aria-checked=true] .thumb{transform:translateX(18px)}
+    #admin-motion-review .switch-state{min-width:37px}
+    #admin-motion-review .dial-layout{display:flex;align-items:center;gap:18px;justify-content:center;flex-wrap:wrap}
+    #admin-motion-review .dial{position:relative;width:146px;height:146px;flex-shrink:0}
+    #admin-motion-review .dial-track{position:absolute;inset:7px;border-radius:50%;background:conic-gradient(from 225deg,var(--tone) 0deg calc(var(--value)*2.7deg),#d9d3cb calc(var(--value)*2.7deg) 270deg,transparent 270deg 360deg)}
+    #admin-motion-review .dial-track:after{content:"";position:absolute;inset:5px;background:var(--panel);border-radius:50%}
+    #admin-motion-review .dial-face{position:absolute;inset:19px;border-radius:50%;background:var(--panel);border:1px solid #fffdf8;box-shadow:3px 4px 7px rgb(133 116 95 / var(--depth)),-2px -2px 6px #fffdf8;display:grid;place-items:center;font-size:24px;font-weight:500;font-variant-numeric:tabular-nums}
+    #admin-motion-review .needle{position:absolute;inset:0;transform:rotate(calc(-135deg + var(--value)*2.7deg));transition:transform 90ms linear}
+    #admin-motion-review .needle:after{content:"";position:absolute;width:3px;height:12px;border-radius:3px;background:var(--muted);left:calc(50% - 1.5px);top:6px}
+    #admin-motion-review .dial.dragging .needle{transition:none}
+    #admin-motion-review .dial-range{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;touch-action:none;cursor:grab}
+    #admin-motion-review .dial:focus-within{outline:2px solid var(--violet);outline-offset:2px;border-radius:50%}
+    #admin-motion-review .dial-zero,#admin-motion-review .dial-max{position:absolute;bottom:-2px;font-size:11px;color:var(--muted)}
+    #admin-motion-review .dial-zero{left:15px}#admin-motion-review .dial-max{right:10px}
+    #admin-motion-review .precise{display:grid;gap:8px;min-width:105px;flex:1}
+    #admin-motion-review .precise label{font-size:12px;color:var(--muted)}
+    #admin-motion-review .number-row{display:flex;align-items:center;gap:6px}
+    #admin-motion-review .number-input{width:76px;min-height:40px;padding:6px 8px;text-align:center;background:#faf7f2;border:1px solid var(--line);border-radius:8px;font-variant-numeric:tabular-nums}
+    #admin-motion-review .precision-note{font-size:12px;color:var(--muted)}
+    #admin-motion-review .lower{display:grid;grid-template-columns:.85fr 1.15fr;gap:18px;margin-top:18px}
+    #admin-motion-review .roller-row{display:flex;gap:5px;margin:22px 0 20px}
+    #admin-motion-review .digit{width:35px;height:48px;overflow:hidden;border:1px solid var(--line);border-radius:7px;background:#eeeae4;box-shadow:inset 1px 2px 3px #c5bbae38;font-size:31px;line-height:48px;text-align:center;font-variant-numeric:tabular-nums;color:var(--violet)}
+    #admin-motion-review .digit span{display:block;height:48px}
+    #admin-motion-review .counter-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    #admin-motion-review .hint{font-size:12px;color:var(--muted);margin:15px 0 0}
+    #admin-motion-review .stack-area{position:relative;height:236px;padding-top:4px;--pull:0px}
+    #admin-motion-review .back-card{position:absolute;inset:20px 12px auto;height:150px;border-radius:13px;background:#e7e1d8;border:1px solid #ddd5cb;transform:translateY(calc(var(--pull)*.12));transition:transform var(--duration) var(--ease)}
+    #admin-motion-review .back-card.second{inset:12px 6px auto;background:#eee9e1;transform:translateY(calc(var(--pull)*.22))}
+    #admin-motion-review .front-card{position:relative;border:1px solid var(--line);border-radius:13px;background:#faf7f2;transform:translateY(var(--pull));transition:transform var(--duration) var(--ease);box-shadow:0 2px 4px #86745f12;overflow:hidden}
+    #admin-motion-review .stack-area.dragging .front-card,#admin-motion-review .stack-area.dragging .back-card{transition:none}
+    #admin-motion-review .drag-handle{width:100%;min-height:34px;border:0;background:transparent;display:grid;place-items:center;touch-action:pan-x;cursor:ns-resize}
+    #admin-motion-review .drag-handle:after{content:"";width:30px;height:3px;background:#c8c0b6;border-radius:4px}
+    #admin-motion-review .card-content{padding:0 16px 13px}
+    #admin-motion-review .task-title{display:flex;justify-content:space-between;gap:10px;font-weight:500}
+    #admin-motion-review .task-status{font-size:12px;font-weight:400;color:#a23b60}
+    #admin-motion-review .task-meta{font-size:12px;color:var(--muted);margin:9px 0 13px}
+    #admin-motion-review .detail-key{border:0;padding:5px 0;background:transparent;color:var(--violet);font-size:12px;min-height:30px}
+    #admin-motion-review .details{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows var(--duration) var(--ease),opacity var(--duration) var(--ease)}
+    #admin-motion-review .details>div{min-height:0;overflow:hidden;font-size:12px;color:var(--muted)}
+    #admin-motion-review .details p{margin:7px 0 0;border-top:1px solid var(--line);padding-top:10px}
+    #admin-motion-review .stack-area[data-open=true] .details{grid-template-rows:1fr;opacity:1}
+    #admin-motion-review .footer{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+    #admin-motion-review .announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+    #admin-motion-review[data-reduced=true] *,#admin-motion-review[data-reduced=true] *:before,#admin-motion-review[data-reduced=true] *:after{transition:none!important;animation:none!important}
+    @media(hover:hover){#admin-motion-review .key:not([aria-pressed=true]):hover{background:#faf7f2}}
+    @media(prefers-reduced-motion:reduce){#admin-motion-review *,#admin-motion-review *:after{transition:none!important;animation:none!important}}
+    @media(max-width:850px){#admin-motion-review .shell{grid-template-columns:145px minmax(0,1fr)}#admin-motion-review .content{padding:20px}#admin-motion-review .dial-layout{gap:14px}#admin-motion-review .precise{flex-basis:100%}#admin-motion-review .number-row{justify-content:center}#admin-motion-review .precise label,#admin-motion-review .precision-note{text-align:center}}
+    @media(max-width:620px){#admin-motion-review .shell{display:block}#admin-motion-review .sidebar{border-right:0;border-bottom:1px solid var(--line);padding:16px}#admin-motion-review .brand{margin-bottom:16px}#admin-motion-review .nav-list{display:flex;gap:8px;flex-wrap:wrap}#admin-motion-review .nav-key{width:auto;flex:1;margin:0;min-width:100px;font-size:12px;padding:9px}#admin-motion-review .sidebar-note,#admin-motion-review .section-label{display:none}#admin-motion-review .channels,#admin-motion-review .lower{grid-template-columns:1fr}#admin-motion-review .content{padding:18px}#admin-motion-review .dial-layout{flex-wrap:nowrap}#admin-motion-review .precise{flex-basis:auto}#admin-motion-review .number-row{justify-content:flex-start}#admin-motion-review .precise label,#admin-motion-review .precision-note{text-align:left}#admin-motion-review .topline{padding-right:0}#admin-motion-review .stack-area{height:230px}}
+    @media(max-width:400px){#admin-motion-review .dial-layout{flex-wrap:wrap}#admin-motion-review .precise{flex-basis:100%}#admin-motion-review .number-row{justify-content:center}#admin-motion-review .precise label,#admin-motion-review .precision-note{text-align:center}}
+  </style>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>大富翁</div>
+      <div class="section-label">控件手感评审</div>
+      <nav class="nav-list" aria-label="实体按键示例">
+        <button type="button" class="key nav-key" aria-pressed="true" data-nav="工作台"><i data-lucide="layout-dashboard" aria-hidden="true"></i>工作台<span class="led" aria-hidden="true"></span></button>
+        <button type="button" class="key nav-key" aria-pressed="false" data-nav="声音工作室"><i data-lucide="music-2" aria-hidden="true"></i>声音工作室<span class="led" aria-hidden="true"></span></button>
+        <button type="button" class="key nav-key" aria-pressed="false" data-nav="发布审批"><i data-lucide="layers" aria-hidden="true"></i>发布审批<span class="led" aria-hidden="true"></span></button>
+      </nav>
+      <div class="sidebar-note">暖米灰 · 轻凹凸<br>状态切换示例</div>
+    </aside>
+    <main class="content">
+      <div class="topline"><span>管理端 / 交互评审</span><label><input type="checkbox" data-reduce>减少动态效果</label></div>
+      <h1>轻触，有回应；松手，即停稳。</h1>
+      <p class="sub">平稳版 · 原型示例数据</p>
+      <div class="channels">
+        <section class="module channel" data-channel="music" data-on="true" style="--tone:var(--cyan);--value:65">
+          <div class="module-head"><h2><i class="tone-icon" data-lucide="music-2" aria-hidden="true"></i>背景音乐</h2><div class="switch-wrap"><button type="button" class="switch" role="switch" aria-checked="true" aria-label="背景音乐示例开关"><span class="thumb"></span></button><span class="switch-state">已开启</span></div></div>
+          <div class="dial-layout"><div class="dial"><div class="dial-track"></div><div class="dial-face"><span class="dial-value">65%</span><span class="needle"></span></div><input class="dial-range" type="range" min="0" max="100" step="1" value="65" aria-label="背景音乐示例音量"><span class="dial-zero">0</span><span class="dial-max">100</span></div><div class="precise"><label for="motion-music-value">默认音量（%）</label><div class="number-row"><input id="motion-music-value" class="number-input" type="number" min="0" max="100" step="1" value="65"><span>%</span></div><span class="precision-note">拖动旋钮 · 方向键微调</span></div></div>
+        </section>
+        <section class="module channel" data-channel="effects" data-on="true" style="--tone:var(--rose);--value:72">
+          <div class="module-head"><h2><i class="tone-icon" data-lucide="volume-2" aria-hidden="true"></i>游戏音效</h2><div class="switch-wrap"><button type="button" class="switch" role="switch" aria-checked="true" aria-label="游戏音效示例开关"><span class="thumb"></span></button><span class="switch-state">已开启</span></div></div>
+          <div class="dial-layout"><div class="dial"><div class="dial-track"></div><div class="dial-face"><span class="dial-value">72%</span><span class="needle"></span></div><input class="dial-range" type="range" min="0" max="100" step="1" value="72" aria-label="游戏音效示例音量"><span class="dial-zero">0</span><span class="dial-max">100</span></div><div class="precise"><label for="motion-effects-value">默认音量（%）</label><div class="number-row"><input id="motion-effects-value" class="number-input" type="number" min="0" max="100" step="1" value="72"><span>%</span></div><span class="precision-note">实时跟手 · 按1%吸附</span></div></div>
+        </section>
+      </div>
+      <div class="lower">
+        <section class="module"><h2><i data-lucide="list-ordered" aria-hidden="true"></i>待审核 · 示例</h2><div class="roller-row" role="img" aria-label="待审核示例：3项"><div class="digit"><span>0</span></div><div class="digit"><span>0</span></div><div class="digit"><span>3</span></div></div><div class="counter-controls"><button class="key" type="button" data-count>模拟数字变化</button></div><p class="hint">逐位滚动，结束直接停稳</p></section>
+        <section class="module"><h2><i data-lucide="layers" aria-hidden="true"></i>待办卡片 · 示例</h2><div class="stack-area" data-open="false"><div class="back-card" aria-hidden="true"></div><div class="back-card second" aria-hidden="true"></div><article class="front-card"><button type="button" class="drag-handle" aria-label="下拉或点击展开待办示例" aria-expanded="false" aria-controls="motion-task-details"></button><div class="card-content"><div class="task-title"><span>玩法规则 v12</span><span class="task-status">待审核</span></div><p class="task-meta">提交人：运营 A · 08:30</p><button type="button" class="detail-key" aria-expanded="false" aria-controls="motion-task-details">查看详情</button><div class="details" id="motion-task-details" inert><div><p>版本内容已固定<br>需要其他有权限的账号审核<br>本原型仅展示展开，不执行发布</p></div></div></div></article></div></section>
+      </div>
+      <div class="footer"><span data-selected>实体按键：工作台已按下</span><span>交互评审 · 无后台写入 · 不播放音频</span></div>
+      <div class="announcement" aria-live="polite" aria-atomic="true"></div>
+    </main>
+  </div>
+  <script>
+    (()=>{
+      const root=document.getElementById('admin-motion-review');
+      const query=s=>root.querySelector(s),all=s=>[...root.querySelectorAll(s)];
+      const media=matchMedia('(prefers-reduced-motion: reduce)');
+      const tuning={duration:220,depth:.28};
+      const state={music:65,effects:72,musicOn:true,effectsOn:true,count:3,nav:'工作台',open:false,reduced:media.matches,revision:0};
+      let counting=false,drag=null,knobPointer=null,blockCardClick=false;
+      const clamp=v=>Math.max(0,Math.min(100,Math.round(Number(v)||0)));
+      const reduced=()=>state.reduced||media.matches;
+      function announce(message){query('.announcement').textContent=message;}
+      function save(){state.revision++;globalThis.openai?.setWidgetState?.({modelContent:{review:'平稳交互评审',music:state.music,effects:state.effects,musicOn:state.musicOn,effectsOn:state.effectsOn,reduced:state.reduced},privateContent:{...state}})?.catch?.(()=>{});}
+      function setChannel(id,value){state[id]=clamp(value);const el=query('[data-channel="'+id+'"]');el.style.setProperty('--value',state[id]);el.querySelector('.dial-range').value=state[id];el.querySelector('.number-input').value=state[id];el.querySelector('.dial-value').textContent=state[id]+'%';}
+      function renderSwitch(id){const el=query('[data-channel="'+id+'"]'),on=state[id+'On'];el.dataset.on=String(on);el.querySelector('.switch').setAttribute('aria-checked',String(on));el.querySelector('.switch-state').textContent=on?'已开启':'已关闭';}
+      function renderNav(){all('[data-nav]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.nav===state.nav)));query('[data-selected]').textContent='实体按键：'+state.nav+'已按下';}
+      function setOpen(on,notify=false){state.open=on;const stack=query('.stack-area');stack.dataset.open=String(on);stack.style.setProperty('--pull','0px');all('[aria-controls="motion-task-details"]').forEach(el=>el.setAttribute('aria-expanded',String(on)));query('.detail-key').textContent=on?'收起详情':'查看详情';query('.details').inert=!on;if(notify){announce(on?'待办示例已展开':'待办示例已收起');save();}}
+      function renderCount(){const text=String(state.count).padStart(3,'0');all('.digit').forEach((el,i)=>{el.replaceChildren(Object.assign(document.createElement('span'),{textContent:text[i]}));});query('.roller-row').setAttribute('aria-label','待审核示例：'+state.count+'项');}
+      function restore(saved){if(!saved||typeof saved!=='object')return;['music','effects'].forEach(id=>{if(Number.isFinite(saved[id]))state[id]=clamp(saved[id]);if(typeof saved[id+'On']==='boolean')state[id+'On']=saved[id+'On'];});if(['工作台','声音工作室','发布审批'].includes(saved.nav))state.nav=saved.nav;if(Number.isInteger(saved.count))state.count=Math.max(0,Math.min(999,saved.count));if(typeof saved.open==='boolean')state.open=saved.open;if(typeof saved.reduced==='boolean')state.reduced=saved.reduced;if(Number.isSafeInteger(saved.revision))state.revision=Math.max(0,saved.revision);}
+      function render(){root.style.setProperty('--duration',tuning.duration+'ms');root.style.setProperty('--depth',tuning.depth);root.dataset.reduced=String(reduced());query('[data-reduce]').checked=state.reduced;['music','effects'].forEach(id=>{setChannel(id,state[id]);renderSwitch(id);});renderNav();setOpen(state.open);if(!counting)renderCount();}
+      restore(globalThis.openai?.widgetState?.privateContent);render();
+      all('[data-nav]').forEach(el=>el.addEventListener('click',()=>{state.nav=el.dataset.nav;renderNav();announce(state.nav+'按键已选中，当前为同一控件评审页');save();}));
+      query('[data-reduce]').addEventListener('change',e=>{state.reduced=e.target.checked;root.dataset.reduced=String(reduced());announce(reduced()?'已减少动态效果':'已恢复平稳动效');save();});
+      media.addEventListener('change',()=>{root.dataset.reduced=String(reduced());});
+      all('[data-channel]').forEach(el=>{
+        const id=el.dataset.channel,input=el.querySelector('.dial-range'),number=el.querySelector('.number-input'),dial=el.querySelector('.dial');
+        el.querySelector('.switch').addEventListener('click',()=>{state[id+'On']=!state[id+'On'];renderSwitch(id);announce((id==='music'?'背景音乐':'游戏音效')+'示例已'+(state[id+'On']?'开启':'关闭'));save();});
+        input.addEventListener('input',()=>setChannel(id,input.value));input.addEventListener('change',save);
+        number.addEventListener('input',()=>{if(number.value!==''&&number.validity.valid){state[id]=clamp(number.value);el.style.setProperty('--value',state[id]);input.value=state[id];el.querySelector('.dial-value').textContent=state[id]+'%';save();}});
+        number.addEventListener('change',()=>{setChannel(id,number.value);save();});
+        const update=e=>{const r=dial.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2;if(Math.hypot(dx,dy)<12)return;const angle=Math.atan2(dx,-dy)*180/Math.PI;const value=Math.abs(angle)>135?(state[id]>=50?100:0):(angle+135)/2.7;setChannel(id,value);};
+        input.addEventListener('pointerdown',e=>{if(knobPointer||e.button!==0)return;e.preventDefault();input.focus({preventScroll:true});knobPointer={id,pointer:e.pointerId};input.setPointerCapture(e.pointerId);dial.classList.add('dragging');update(e);});
+        input.addEventListener('pointermove',e=>{if(knobPointer?.id===id&&knobPointer.pointer===e.pointerId)update(e);});
+        const end=e=>{if(knobPointer?.id!==id||knobPointer.pointer!==e.pointerId)return;knobPointer=null;dial.classList.remove('dragging');save();};
+        input.addEventListener('pointerup',end);input.addEventListener('pointercancel',end);input.addEventListener('lostpointercapture',end);
+      });
+      query('[data-count]').addEventListener('click',async()=>{
+        if(counting)return;counting=true;const old=String(state.count).padStart(3,'0');state.count=(state.count+1)%1000;const next=String(state.count).padStart(3,'0');
+        if(!reduced()){await Promise.all(all('.digit').map(async(el,i)=>{if(old[i]===next[i])return;const steps=(Number(next[i])-Number(old[i])+10)%10;const reel=document.createElement('div');for(let n=0;n<=steps;n++){const digit=document.createElement('span');digit.textContent=(Number(old[i])+n)%10;reel.append(digit);}el.replaceChildren(reel);const a=reel.animate([{transform:'translateY(0)'},{transform:'translateY(-'+steps*48+'px)'}],{duration:tuning.duration+70,delay:i*12,easing:'cubic-bezier(.22,.75,.25,1)',fill:'forwards'});await a.finished.catch(()=>{});}));}
+        renderCount();counting=false;announce('待审核示例更新为'+state.count+'项');save();
+      });
+      const stack=query('.stack-area'),handle=query('.drag-handle');
+      handle.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={id:e.pointerId,y:e.clientY,distance:0};blockCardClick=false;handle.setPointerCapture(e.pointerId);stack.classList.add('dragging');});
+      handle.addEventListener('pointermove',e=>{if(!drag||drag.id!==e.pointerId)return;drag.distance=Math.max(0,Math.min(76,(e.clientY-drag.y)*.7));stack.style.setProperty('--pull',(reduced()?0:drag.distance)+'px');});
+      handle.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const distance=drag.distance;drag=null;stack.classList.remove('dragging');blockCardClick=distance>4;if(distance>=56)setOpen(true,true);else setOpen(state.open);});
+      const cancel=e=>{if(drag&&drag.id===e.pointerId){drag=null;blockCardClick=true;stack.classList.remove('dragging');setOpen(state.open);}};
+      handle.addEventListener('pointercancel',cancel);handle.addEventListener('lostpointercapture',cancel);
+      handle.addEventListener('click',e=>{if(blockCardClick){e.preventDefault();blockCardClick=false;return;}setOpen(!state.open,true);});
+      query('.detail-key').addEventListener('click',()=>setOpen(!state.open,true));
+      window.addEventListener('openai:set_globals',e=>{const saved=e.detail?.globals?.widgetState?.privateContent;if(Number.isSafeInteger(saved?.revision)&&saved.revision>state.revision&&!drag&&!knobPointer&&!counting){restore(saved);render();}});
+      if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:render});tweak.addSlider(tuning,'duration',{label:'动作时长',min:160,max:320,step:10,unit:'ms'});tweak.addSlider(tuning,'depth',{label:'阴影强度',min:.15,max:.4,step:.01});}
+    })();
+  </script>
+</div>

@@ -1,0 +1,20 @@
+[
+  {
+    "file": "管理工作台-新拟物布局-v2.png",
+    "source": "exec-6993972b-52d2-4631-9a58-a34aaf0147e8.png",
+    "editTarget": "../admin-neumorphic-v1/管理工作台-新拟物布局-v1.png",
+    "sha256": "048bee6baaa9fbb9bbcc64ee6ebc4705fdc681d58fe1ef170391852adaef4d52",
+    "bytes": 1539645,
+    "status": "pending user review; static palette revision; sample data",
+    "generator": "built-in image_gen"
+  },
+  {
+    "file": "声音工作室-新拟物旋钮-v2.png",
+    "source": "exec-bb84da4c-d496-4e74-b539-a9fbe8a5c620.png",
+    "editTarget": "../admin-neumorphic-v1/声音工作室-新拟物旋钮-v1.png",
+    "sha256": "842e40538be2a0c8a24ac2dd410e3ad6e11d057bdfc54d0a229450f3502da124",
+    "bytes": 1580813,
+    "status": "pending user review; static palette revision; sample data",
+    "generator": "built-in image_gen"
+  }
+]

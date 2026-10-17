@@ -335,6 +335,33 @@
       "status": "layout approved by user; integrated using existing town artwork; not deployed",
       "sha256": "b1d0703b6b1381da5303341386ade48e05260ba0cfb8e1ee52af7880549e7497",
       "bytes": 2275700
+    },
+    {
+      "file": "39-管理工作台-新拟物布局-待评审.png",
+      "source": "screens/ui/admin-clean-console-v6/管理工作台-清爽浅色-v6.png",
+      "version": 6,
+      "role": "管理端原版浅色-任务待办-草稿-生效版本-常用入口",
+      "status": "task focused clean white palette candidate; sample data; pending user review; not implemented",
+      "sha256": "c6cb8c6e836fe71b0e1f16e1a84faa958fcdfefaebfb553d543b4e16294e5578",
+      "bytes": 1358257
+    },
+    {
+      "file": "40-声音工作室-新拟物旋钮-待评审.png",
+      "source": "screens/ui/admin-clean-console-v6/声音工作室-清爽浅色-v6.png",
+      "version": 6,
+      "role": "管理端原版浅色-音量旋钮-拨动开关-场景试听",
+      "status": "clean white palette candidate; sample data; pending user review; not implemented",
+      "sha256": "a13da351bbc6f32b1652ff70cfa24828616a2368f59c7d2d7d3f5fdbe922b967",
+      "bytes": 1427880
+    },
+    {
+      "file": "41-管理端-模块场景横幅-待评审.png",
+      "source": "screens/ui/admin-module-heroes-v8/管理端-模块场景横幅-v8.png",
+      "version": 8,
+      "role": "公告-地图-声音-人物-浅色微缩场景横幅",
+      "status": "static reference; module scene headers integrated locally; not deployed",
+      "sha256": "9398528722165a0da6a46b72d2a94fcfbe4060ce9b3de6b5e0585b40895f71fd",
+      "bytes": 1663150
     }
   ]
 }

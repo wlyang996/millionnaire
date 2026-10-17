@@ -1,23 +1,21 @@
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { motion } from 'motion-v'
 import { Orbit, Map, SlidersHorizontal, UsersRound, Music2, Megaphone, History, Search, Menu, X, Sun, Moon, LogOut, Sparkles, ChevronDown, ChevronRight, Check, Gamepad2, ShieldCheck, Star } from '@lucide/vue'
 import { groups, pageById } from '../admin/navigation.js'
 import { pageTone, groupTone } from '../admin/controlColors.js'
 import { pageVisible, roleLabels } from '../admin/accessPolicy.js'
 import { useAdminPreferences } from '../admin/preferences.js'
-import BorderBeam from './effects/BorderBeam.vue'
-import AdminMascot from './AdminMascot.vue'
+import AdminHero from './AdminHero.vue'
 import { usePageMotion } from '../admin/usePageMotion.js'
 import { useWorkbench } from '../admin/useWorkbench.js'
 import CommandPalette from './CommandPalette.vue'
-const OrbEffect = defineAsyncComponent(() => import('./effects/Orb.vue'))
 const props = defineProps({ identity:Object, activePage: String, version: Number, dirty: Boolean, searchIndex: Object, celebration: Number, busy: Boolean, hasError: Boolean })
 const emit = defineEmits(['navigate', 'parameter', 'logout'])
 const { favorites, toggle, visit } = useWorkbench()
 watch(() => `${props.identity?.user?.id}:${props.activePage}`, () => visit(props.activePage), {immediate:true})
 const icons = { Orbit, Map, SlidersHorizontal, UsersRound, Music2, Megaphone, History, ShieldCheck }
-const { theme, motionLevel, motionEnabled, richMotion } = useAdminPreferences()
+const { theme, motionLevel, motionEnabled } = useAdminPreferences()
 const pageContent = ref(null)
 usePageMotion(pageContent, () => props.activePage)
 const query = ref(''), mobileOpen = ref(false), collapsed = ref({}), paused = ref(document.hidden)
@@ -63,7 +61,7 @@ onBeforeUnmount(() => { document.removeEventListener('visibilitychange', visibil
     <div class="admin-main">
       <header class="admin-topbar"><div class="breadcrumbs"><button class="icon-button mobile-only" aria-label="打开导航" @click="mobileOpen = true"><Menu :size="20" /></button><span>{{ page.group }}</span><ChevronRight :size="12" /><strong>{{ page.label }}</strong></div><div class="topbar-actions"><CommandPalette :identity="identity" :search-index="searchIndex" @navigate="navigate" @parameter="emit('parameter',$event)" /><button class="icon-button page-star" :aria-label="(favorites.includes(activePage)?'取消收藏':'收藏')+page.label" :aria-pressed="favorites.includes(activePage)" @click="toggle(activePage)"><Star :size="17" :fill="favorites.includes(activePage)?'currentColor':'none'" /></button><span class="version-badge">{{ version === undefined ? '读取版本…' : version === 0 ? '内置默认' : '版本 #' + version }}</span><span v-if="dirty" class="draft-badge">有未发布修改</span><button class="icon-button" :aria-label="theme === 'dark' ? '切换浅色主题' : '切换深色主题'" @click="toggleTheme"><Sun v-if="theme === 'dark'" :size="18" /><Moon v-else :size="18" /></button><el-select v-model="motionLevel" class="motion-select" aria-label="动效偏好"><el-option label="丰富动效" value="rich" /><el-option label="标准动效" value="standard" /><el-option label="简化动效" value="reduced" /></el-select><el-dropdown @command="navigate"><button class="admin-profile-button"><ShieldCheck :size="16" /><span>{{ identity?.user?.displayName }}<small> · {{ roleLabels[identity?.user?.role] || identity?.user?.role }}</small></span><ChevronDown :size="12" /></button><template #dropdown><el-dropdown-menu><el-dropdown-item command="myPermissions">我的权限</el-dropdown-item><el-dropdown-item command="sessions">我的会话</el-dropdown-item><el-dropdown-item command="password">修改密码</el-dropdown-item></el-dropdown-menu></template></el-dropdown><button class="icon-button" aria-label="退出登录" @click="emit('logout')"><LogOut :size="17" /></button></div></header>
       <main class="admin-workspace">
-        <div class="admin-hero"><div class="hero-aurora" aria-hidden="true" /><div class="hero-copy"><span class="eyebrow">MILLIONNAIRE / {{ page.group }}</span><Transition name="hero-title" mode="out-in"><div :key="page.id"><h1>{{ page.title }}</h1><p>{{ page.description }}</p></div></Transition><span class="hero-caption"><span class="status-dot" />{{ dirty ? '编辑中的修改，发布后才会生效' : '每一个小调整，都是下一局的新惊喜' }}</span></div><div class="hero-orb" aria-hidden="true"><OrbEffect v-if="richMotion" :enabled="!paused" :hue="18" background-color="#000000" /><div v-else class="orb-static" /></div><AdminMascot v-if="['dashboard','workbench'].includes(activePage)" :busy="busy" :error="hasError" :success="celebration" /><BorderBeam /></div>
+        <AdminHero :page="page" :dirty="dirty" />
         <Transition name="page-enter" mode="out-in"><div :key="page.id" class="page-heading"><h2>{{ page.label }}</h2><span>{{ page.group }}</span></div></Transition>
         <div ref="pageContent" class="admin-page-content"><slot /></div>
       </main>

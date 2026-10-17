@@ -1,0 +1,24 @@
+{
+  "files": [
+    {
+      "file": "admin-navigation-review.html",
+      "sha256": "d4ecf21db4d74266cdb04f4138f33dc08e9fcad20c3e96b1ef0978d34cf69e5d",
+      "bytes": 14810,
+      "status": "original navigation icon review; not integrated"
+    },
+    {
+      "file": "reference/original-navigation.png",
+      "sha256": "91dba6d3063fddb59c174252bcc851c3b7d0246b89f278b719eaf6f96467524d",
+      "bytes": 54530,
+      "status": "original navigation icon review; not integrated"
+    }
+  ],
+  "sourceFiles": [
+    "web-manage/src/components/AdminShell.vue",
+    "web-manage/src/admin/navigation.js",
+    "web-manage/src/admin/controlColors.js",
+    "web-manage/src/admin/control-colors.css"
+  ],
+  "method": "code-authored using visualize; Lucide icons; no image generation",
+  "verification": "syntax and browser menu interactions checked"
+}

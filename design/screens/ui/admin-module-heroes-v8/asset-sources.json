@@ -1,0 +1,228 @@
+{
+  "assets": [
+    {
+      "id": "announcement",
+      "generator": "built-in image_gen",
+      "reference": "管理端-模块场景横幅-v8.png",
+      "generatedFile": "exec-a02d4679-6625-4dba-97b2-5e6a8240f0f2.png",
+      "prompt": "prompts/assets/announcement.txt",
+      "original": {
+        "file": "design/screens/ui/admin-module-heroes-v8/assets/announcement.png",
+        "sha256": "e2a44ad51c53e39c415f8255546d34b58315fd2dcf87c816557ad14ed9d65b2a",
+        "bytes": 1482452,
+        "size": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA"
+      },
+      "runtime": {
+        "file": "web-manage/src/assets/admin-heroes/announcement.webp",
+        "sha256": "45fde9e2825931031b363f8c25118e89a04d896604a8c216de66c6bc0689ac2f",
+        "bytes": 51314,
+        "size": [
+          768,
+          512
+        ],
+        "mode": "RGBA"
+      },
+      "status": "integrated locally; not deployed"
+    },
+    {
+      "id": "economy",
+      "generator": "built-in image_gen",
+      "reference": "管理端-模块场景横幅-v8.png",
+      "generatedFile": "exec-234ed610-aa06-49f3-a61a-a421101cb306.png",
+      "prompt": "prompts/assets/economy.txt",
+      "original": {
+        "file": "design/screens/ui/admin-module-heroes-v8/assets/economy.png",
+        "sha256": "d9bb368f8b61de6c0442469d5dca370296f26a627d4cc1b79918ed109a0a0fe7",
+        "bytes": 1683681,
+        "size": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA"
+      },
+      "runtime": {
+        "file": "web-manage/src/assets/admin-heroes/economy.webp",
+        "sha256": "84c46cab2b09de438300bc861bb9f05ca770983d9616d36b50c4e1a2ab3af560",
+        "bytes": 53802,
+        "size": [
+          768,
+          512
+        ],
+        "mode": "RGBA"
+      },
+      "status": "integrated locally; not deployed"
+    },
+    {
+      "id": "characters",
+      "generator": "built-in image_gen",
+      "reference": "管理端-模块场景横幅-v8.png",
+      "generatedFile": "exec-349286ae-b013-485a-8e68-22b4816e2dfd.png",
+      "prompt": "prompts/assets/characters.txt",
+      "original": {
+        "file": "design/screens/ui/admin-module-heroes-v8/assets/characters.png",
+        "sha256": "f2f44b0a31a703df4e426343417ad0537879b8d73d19f0416e603072216d8a16",
+        "bytes": 1534749,
+        "size": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA"
+      },
+      "runtime": {
+        "file": "web-manage/src/assets/admin-heroes/characters.webp",
+        "sha256": "2fc4a8c0eb3370f4c647cff7e2f1d2c49acafeda47458a99b6126e46a47f9f41",
+        "bytes": 46086,
+        "size": [
+          768,
+          512
+        ],
+        "mode": "RGBA"
+      },
+      "status": "integrated locally; not deployed"
+    },
+    {
+      "id": "audio",
+      "generator": "built-in image_gen",
+      "reference": "管理端-模块场景横幅-v8.png",
+      "generatedFile": "exec-f7dc24cc-8ec4-4abd-9c4f-daa2ab126ac5.png",
+      "prompt": "prompts/assets/audio.txt",
+      "original": {
+        "file": "design/screens/ui/admin-module-heroes-v8/assets/audio.png",
+        "sha256": "fc47de6daf60ff3d07d3ae2f42d8542c81947fa39bfd911a05a211aec862ed39",
+        "bytes": 1559842,
+        "size": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA"
+      },
+      "runtime": {
+        "file": "web-manage/src/assets/admin-heroes/audio.webp",
+        "sha256": "e02f82fea4b413d9914a610466575059d2d9c662653603eb21836dabef955d6d",
+        "bytes": 53596,
+        "size": [
+          768,
+          512
+        ],
+        "mode": "RGBA"
+      },
+      "status": "integrated locally; not deployed"
+    },
+    {
+      "id": "overview",
+      "generator": "built-in image_gen",
+      "reference": "管理端-模块场景横幅-v8.png",
+      "generatedFile": "exec-8ab904f6-5704-4cd5-9194-a065553be4c2.png",
+      "prompt": "prompts/assets/overview.txt",
+      "original": {
+        "file": "design/screens/ui/admin-module-heroes-v8/assets/overview.png",
+        "sha256": "1d59bd633ade038ed573e923299f9d9e08b79fc0ac8e960ea872e9fc692c107b",
+        "bytes": 1945581,
+        "size": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA"
+      },
+      "runtime": {
+        "file": "web-manage/src/assets/admin-heroes/overview.webp",
+        "sha256": "71094c627bf262bb74b91c1ea4d25b7b75a41aa54f26cebfa4ea4248b53c6aa2",
+        "bytes": 100040,
+        "size": [
+          768,
+          512
+        ],
+        "mode": "RGBA"
+      },
+      "status": "integrated locally; not deployed"
+    },
+    {
+      "id": "rules",
+      "generator": "built-in image_gen",
+      "reference": "管理端-模块场景横幅-v8.png",
+      "generatedFile": "exec-e8a839ed-334b-4db6-9902-aaf517622bcf.png",
+      "prompt": "prompts/assets/rules.txt",
+      "original": {
+        "file": "design/screens/ui/admin-module-heroes-v8/assets/rules.png",
+        "sha256": "4c7f6b71da67fab5b24a0f44c1ff7f6aa411fb355411b07be252eb3dbd976f59",
+        "bytes": 1668109,
+        "size": [
+          1500,
+          1049
+        ],
+        "mode": "RGBA"
+      },
+      "runtime": {
+        "file": "web-manage/src/assets/admin-heroes/rules.webp",
+        "sha256": "a2084c109e3d99dbe4cb31155c27921ac39c930968806273f95f9597d2cef94f",
+        "bytes": 90230,
+        "size": [
+          768,
+          537
+        ],
+        "mode": "RGBA"
+      },
+      "status": "integrated locally; not deployed"
+    },
+    {
+      "id": "versions",
+      "generator": "built-in image_gen",
+      "reference": "管理端-模块场景横幅-v8.png",
+      "generatedFile": "exec-97f5259a-597c-4e86-8b85-bbbe927001b0.png",
+      "prompt": "prompts/assets/versions.txt",
+      "original": {
+        "file": "design/screens/ui/admin-module-heroes-v8/assets/versions.png",
+        "sha256": "6fc1eff23f2ac10e52816b288d787b236c6719208f01fec6e8ebdf7042525728",
+        "bytes": 1486096,
+        "size": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA"
+      },
+      "runtime": {
+        "file": "web-manage/src/assets/admin-heroes/versions.webp",
+        "sha256": "bb39d9178f9e33d6e59720234f759d99f5014e22d5ab25abb26dc843bb7d5892",
+        "bytes": 33188,
+        "size": [
+          768,
+          512
+        ],
+        "mode": "RGBA"
+      },
+      "status": "integrated locally; not deployed"
+    },
+    {
+      "id": "system",
+      "generator": "built-in image_gen",
+      "reference": "管理端-模块场景横幅-v8.png",
+      "generatedFile": "exec-e28eb0aa-c665-439a-a13f-0536da939d9a.png",
+      "prompt": "prompts/assets/system.txt",
+      "original": {
+        "file": "design/screens/ui/admin-module-heroes-v8/assets/system.png",
+        "sha256": "cef1f51974e4ab2bc4c42d50fc5c6e139b51c276d8e3540099daa432251f1e56",
+        "bytes": 1875224,
+        "size": [
+          1676,
+          939
+        ],
+        "mode": "RGBA"
+      },
+      "runtime": {
+        "file": "web-manage/src/assets/admin-heroes/system.webp",
+        "sha256": "228ecf4d5c8c5be56adf439a50ffedd3e13b1a4a5edd3b3ae70faa0fe685be97",
+        "bytes": 79332,
+        "size": [
+          768,
+          430
+        ],
+        "mode": "RGBA"
+      },
+      "status": "integrated locally; not deployed"
+    }
+  ]
+}

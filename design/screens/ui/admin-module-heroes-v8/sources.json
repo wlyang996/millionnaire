@@ -1,0 +1,15 @@
+{
+  "file": "管理端-模块场景横幅-v8.png",
+  "source": "exec-d59e0998-ed79-45d8-92db-f9059aea1f6b.png",
+  "sha256": "9398528722165a0da6a46b72d2a94fcfbe4060ce9b3de6b5e0585b40895f71fd",
+  "bytes": 1663150,
+  "generator": "built-in image_gen",
+  "mode": "new image from text brief; no image inputs",
+  "contextReference": "reference/current-hero.png",
+  "sourceCodeReferences": [
+    "web-manage/src/components/AdminShell.vue",
+    "web-manage/src/admin/admin.css",
+    "web-manage/src/admin/control-colors.css"
+  ],
+  "status": "original static design reference; eight independent assets integrated locally; see implementation.md"
+}

@@ -1,0 +1,320 @@
+<div class="viz-dotted-background" id="admin-original-nav-v7">
+  <style>
+    #admin-original-nav-v7{padding:24px 16px;--nav-text:#302b47;--nav-muted:#827b96;--nav-border:#e9e4f2;--nav-purple:#7450dc;--nav-ease:cubic-bezier(.22,.75,.25,1)}
+    #admin-original-nav-v7 *{box-sizing:border-box}
+    #admin-original-nav-v7 .sidebar{max-width:304px;width:100%;margin:0 auto;padding:26px 20px 18px;background:#fff;color:var(--nav-text);font:12px/1.5 "Microsoft YaHei","PingFang SC",sans-serif;border:1px solid var(--nav-border);border-radius:16px}
+    #admin-original-nav-v7 .brand{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+    #admin-original-nav-v7 .brand-mark{display:grid;place-items:center;width:42px;height:42px;background:linear-gradient(135deg,#a789fa,#6643c9);border-radius:14px;color:#fff;transform:rotate(-8deg)}
+    #admin-original-nav-v7 .brand-mark svg{width:24px;height:24px}
+    #admin-original-nav-v7 .brand-name{font-size:21px;font-weight:600;letter-spacing:1px}
+    #admin-original-nav-v7 .brand small{display:block;color:var(--nav-muted);font-size:11px;letter-spacing:1.5px}
+    #admin-original-nav-v7 .search{display:flex;align-items:center;gap:8px;border:1px solid var(--nav-border);border-radius:10px;padding:7px 10px;margin-bottom:22px;color:#9b95aa}
+    #admin-original-nav-v7 .search svg{width:15px;height:15px;flex-shrink:0}
+    #admin-original-nav-v7 .search input{border:0;background:transparent;color:var(--nav-text);font:inherit;width:100%;min-width:0;padding:0}
+    #admin-original-nav-v7 .search input::placeholder{color:#9b95aa}
+    #admin-original-nav-v7 button{font:inherit}
+    #admin-original-nav-v7 button:focus-visible,#admin-original-nav-v7 input:focus-visible{outline:2px solid var(--nav-purple);outline-offset:3px}
+    #admin-original-nav-v7 .group{margin-bottom:14px;--accent:var(--nav-purple);--soft:color-mix(in srgb,var(--accent) 9%,#fff)}
+    #admin-original-nav-v7 .group-label{width:100%;border:0;background:transparent;color:var(--nav-muted);padding:8px 5px;display:flex;align-items:center;gap:9px;min-height:40px;text-align:left}
+    #admin-original-nav-v7 .group-label>.label{flex:1}
+    #admin-original-nav-v7 .group-icon{color:var(--accent);background:var(--soft);padding:4px;width:24px;height:24px;border-radius:8px;flex-shrink:0}
+    #admin-original-nav-v7 .chevron{width:13px;height:13px;flex-shrink:0;transition:transform 220ms var(--nav-ease)}
+    #admin-original-nav-v7 .group-label[aria-expanded=false] .chevron{transform:rotate(-90deg)}
+    #admin-original-nav-v7 .pages{display:grid;grid-template-rows:1fr;opacity:1;transition:grid-template-rows 220ms var(--nav-ease),opacity 170ms var(--nav-ease)}
+    #admin-original-nav-v7 .pages[data-open=false]{grid-template-rows:0fr;opacity:0}
+    #admin-original-nav-v7 .pages-inner{min-height:0;overflow:hidden;display:grid;gap:4px}
+    #admin-original-nav-v7 .page{position:relative;isolation:isolate;width:100%;min-height:40px;padding:11px 13px;border:0;border-radius:11px;background:transparent;color:var(--nav-muted);display:flex;align-items:center;gap:11px;text-align:left;transition:transform 150ms var(--nav-ease),color 180ms var(--nav-ease),box-shadow 180ms var(--nav-ease)}
+    #admin-original-nav-v7 .page:before{content:"";position:absolute;inset:0;background:var(--soft);border-radius:inherit;opacity:0;z-index:-1;transition:opacity 180ms var(--nav-ease)}
+    #admin-original-nav-v7 .page[aria-current=page]{color:var(--accent);font-weight:500;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 4%,transparent)}
+    #admin-original-nav-v7 .page[aria-current=page]:before{opacity:1}
+    #admin-original-nav-v7 .page-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.7;flex-shrink:0}
+    #admin-original-nav-v7 .page>.label{flex:1}
+    #admin-original-nav-v7 .page-chevron{width:13px;height:13px;visibility:hidden;flex-shrink:0}
+    #admin-original-nav-v7 .page[aria-current=page] .page-chevron{visibility:visible}
+    #admin-original-nav-v7 .footer{border-top:1px solid var(--nav-border);padding-top:18px;display:flex;align-items:center;gap:8px;color:var(--nav-muted);font-size:11px}
+    #admin-original-nav-v7 .footer-dot{width:6px;height:6px;background:#a58ae8;border-radius:50%;flex-shrink:0}
+    #admin-original-nav-v7 .footer svg{width:14px;height:14px;margin-left:auto}
+    #admin-original-nav-v7 .review-state{max-width:304px;margin:12px auto 0;font:12px/1.5 "Microsoft YaHei","PingFang SC",sans-serif;color:#777184;text-align:center}
+    #admin-original-nav-v7 .empty{font-size:12px;color:var(--nav-muted);padding:12px 5px}
+    #admin-original-nav-v7 [hidden]{display:none!important}
+    @media(hover:hover){#admin-original-nav-v7 .page:not([aria-current=page]):hover{transform:translateX(2px)}#admin-original-nav-v7 .page:not([aria-current=page]):hover:before{opacity:.55}}
+    #admin-original-nav-v7 .page:active{transform:translateX(0) scale(.995)}
+    @media(pointer:coarse){#admin-original-nav-v7 .group-label,#admin-original-nav-v7 .page{min-height:44px}#admin-original-nav-v7 .search input{font-size:16px}}
+    @media(prefers-reduced-motion:reduce){#admin-original-nav-v7 *{transition:none!important;transform:none!important}#admin-original-nav-v7 .group-label[aria-expanded=false] .chevron{transform:rotate(-90deg)!important}}
+  </style>
+  <aside class="sidebar" aria-label="原版图标与菜单层级评审">
+    <div class="brand"><span class="brand-mark"><i data-lucide="gamepad-2" aria-hidden="true"></i></span><span><span class="brand-name">大富翁</span><small>CONTROL CENTER</small></span></div>
+    <label class="search"><i data-lucide="search" aria-hidden="true"></i><input type="search" placeholder="搜索页面与参数" aria-label="搜索页面与参数" autocomplete="off"></label>
+    <nav aria-label="管理导航"></nav>
+    <p class="empty" hidden>没有匹配的菜单</p>
+    <div class="footer"><span class="footer-dot" aria-hidden="true"></span><span>让下一局更有意思</span><i data-lucide="sparkles" aria-hidden="true"></i></div>
+  </aside>
+  <p class="review-state" aria-live="polite" aria-atomic="true">菜单选中预览：土地命名</p>
+  <script>
+    (()=>{
+      const root=document.getElementById('admin-original-nav-v7');
+      const groups=[
+  {
+    "id": "overview",
+    "label": "运营总览",
+    "icon": "orbit",
+    "tone": "violet",
+    "pages": [
+      {
+        "id": "workbench",
+        "label": "我的工作台",
+        "tone": "violet"
+      },
+      {
+        "id": "dashboard",
+        "label": "数据看板",
+        "tone": "blue"
+      },
+      {
+        "id": "liveRooms",
+        "label": "实时房间",
+        "tone": "green"
+      }
+    ]
+  },
+  {
+    "id": "economy",
+    "label": "地图与经济",
+    "icon": "map",
+    "tone": "amber",
+    "pages": [
+      {
+        "id": "names",
+        "label": "土地命名",
+        "tone": "green"
+      },
+      {
+        "id": "sets",
+        "label": "同组地产",
+        "tone": "blue"
+      },
+      {
+        "id": "prices",
+        "label": "价格与租金",
+        "tone": "amber"
+      },
+      {
+        "id": "money",
+        "label": "金额与固定费用",
+        "tone": "amber"
+      },
+      {
+        "id": "rentRise",
+        "label": "租金上涨",
+        "tone": "amber"
+      }
+    ]
+  },
+  {
+    "id": "rules",
+    "label": "玩法规则",
+    "icon": "sliders-horizontal",
+    "tone": "blue",
+    "pages": [
+      {
+        "id": "room",
+        "label": "建房选项",
+        "tone": "blue"
+      },
+      {
+        "id": "events",
+        "label": "事件与道具概率",
+        "tone": "rose"
+      },
+      {
+        "id": "startPick",
+        "label": "起点三选一",
+        "tone": "violet"
+      },
+      {
+        "id": "roundReward",
+        "label": "轮次奖励",
+        "tone": "amber"
+      },
+      {
+        "id": "cityEvents",
+        "label": "城市事件",
+        "tone": "cyan"
+      },
+      {
+        "id": "funTitles",
+        "label": "结算称号",
+        "tone": "rose"
+      },
+      {
+        "id": "series",
+        "label": "好友系列赛",
+        "tone": "blue"
+      },
+      {
+        "id": "team",
+        "label": "组队合作",
+        "tone": "green"
+      },
+      {
+        "id": "experience",
+        "label": "体验与互动",
+        "tone": "cyan"
+      },
+      {
+        "id": "timing",
+        "label": "操作时限",
+        "tone": "cyan"
+      }
+    ]
+  },
+  {
+    "id": "characters",
+    "label": "人物工作室",
+    "icon": "users-round",
+    "tone": "rose",
+    "pages": [
+      {
+        "id": "characters",
+        "label": "人物素材",
+        "tone": "rose"
+      }
+    ]
+  },
+  {
+    "id": "audio",
+    "label": "声音工作室",
+    "icon": "music2",
+    "tone": "cyan",
+    "pages": [
+      {
+        "id": "audio",
+        "label": "音频管理",
+        "tone": "cyan"
+      }
+    ]
+  },
+  {
+    "id": "announcement",
+    "label": "公告管理",
+    "icon": "megaphone",
+    "tone": "amber",
+    "pages": [
+      {
+        "id": "announcement",
+        "label": "公告",
+        "tone": "amber"
+      }
+    ]
+  },
+  {
+    "id": "versions",
+    "label": "版本中心",
+    "icon": "history",
+    "tone": "green",
+    "pages": [
+      {
+        "id": "history",
+        "label": "发布记录",
+        "tone": "blue"
+      }
+    ]
+  },
+  {
+    "id": "operations",
+    "label": "运营工具",
+    "icon": "users-round",
+    "tone": "cyan",
+    "pages": [
+      {
+        "id": "players",
+        "label": "玩家查询",
+        "tone": "blue"
+      },
+      {
+        "id": "games",
+        "label": "历史对局",
+        "tone": "cyan"
+      },
+      {
+        "id": "releases",
+        "label": "发布审批",
+        "tone": "rose"
+      },
+      {
+        "id": "media",
+        "label": "素材引用与清理",
+        "tone": "amber"
+      }
+    ]
+  },
+  {
+    "id": "system",
+    "label": "系统管理",
+    "icon": "shield-check",
+    "tone": "blue",
+    "pages": [
+      {
+        "id": "accounts",
+        "label": "后台账号",
+        "tone": "blue"
+      },
+      {
+        "id": "roles",
+        "label": "角色权限",
+        "tone": "blue"
+      },
+      {
+        "id": "audit",
+        "label": "操作审计",
+        "tone": "blue"
+      }
+    ]
+  }
+];
+      const colors={violet:'#7450dc',blue:'#2463cf',cyan:'#08758b',rose:'#c42b6b',amber:'#aa550a',green:'#077550'};
+      const pages=new Map(groups.flatMap(g=>g.pages.map(p=>[p.id,p])));
+      const state={version:7,selected:'names',query:'',collapsed:{},revision:0};
+      groups.forEach(g=>state.collapsed[g.id]=!['overview','economy','characters','audio'].includes(g.id));
+      const nodes=new Map(),input=root.querySelector('input'),nav=root.querySelector('nav');
+      const icon=(name,className)=>{const el=document.createElement('i');el.dataset.lucide=name==='music2'?'music-2':name;el.setAttribute('aria-hidden','true');if(className)el.className=className;return el;};
+      const text=(value,className)=>{const el=document.createElement('span');el.textContent=value;if(className)el.className=className;return el;};
+      function restore(saved){if(!saved||saved.version!==7)return;if(pages.has(saved.selected))state.selected=saved.selected;if(typeof saved.query==='string')state.query=saved.query.slice(0,80);groups.forEach(g=>{if(typeof saved.collapsed?.[g.id]==='boolean')state.collapsed[g.id]=saved.collapsed[g.id];});if(Number.isSafeInteger(saved.revision))state.revision=Math.max(0,saved.revision);}
+      function save(){state.revision++;globalThis.openai?.setWidgetState?.({modelContent:{menuStyle:'原版彩色线性分组图标与圆点子菜单',selectedPage:pages.get(state.selected)?.label},privateContent:{...state,collapsed:{...state.collapsed}}})?.catch?.(()=>{});}
+      groups.forEach(g=>{
+        const section=document.createElement('section');section.className='group';section.style.setProperty('--accent',colors[g.tone]);
+        const heading=document.createElement('button');heading.type='button';heading.className='group-label cursor-interaction';heading.setAttribute('aria-controls','original-nav-v7-'+g.id);heading.append(icon(g.icon,'group-icon'),text(g.label,'label'),icon('chevron-down','chevron'));
+        const panel=document.createElement('div');panel.className='pages';panel.id='original-nav-v7-'+g.id;
+        const inner=document.createElement('div');inner.className='pages-inner';panel.append(inner);
+        const buttons=new Map();
+        g.pages.forEach(p=>{
+          const button=document.createElement('button');button.type='button';button.className='page cursor-interaction';button.style.setProperty('--accent',colors[p.tone]);button.style.setProperty('--soft','color-mix(in srgb,'+colors[p.tone]+' 9%,#fff)');
+          button.append(text('','page-dot'),text(p.label,'label'),icon('chevron-right','page-chevron'));button.querySelector('.page-dot').setAttribute('aria-hidden','true');
+          button.addEventListener('click',()=>{state.selected=p.id;apply();save();});inner.append(button);buttons.set(p.id,button);
+        });
+        heading.addEventListener('click',()=>{if(state.query.trim())return;state.collapsed[g.id]=!state.collapsed[g.id];apply();save();});
+        section.append(heading,panel);nav.append(section);nodes.set(g.id,{section,heading,panel,buttons});
+      });
+      function apply(){
+        const query=state.query.trim().toLowerCase();let visible=0;
+        input.value=state.query;
+        groups.forEach(g=>{
+          const node=nodes.get(g.id);let count=0;
+          g.pages.forEach(p=>{
+            const button=node.buttons.get(p.id),match=!query||(g.label+p.label).toLowerCase().includes(query);
+            button.hidden=!match;if(match)count++;
+            if(p.id===state.selected)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+          });
+          node.section.hidden=count===0;visible+=count;
+          const open=Boolean(query)||!state.collapsed[g.id];node.heading.setAttribute('aria-expanded',String(open));node.panel.dataset.open=String(open);node.panel.inert=!open;
+        });
+        root.querySelector('.empty').hidden=visible>0;
+        root.querySelector('.review-state').textContent='菜单选中预览：'+pages.get(state.selected).label;
+      }
+      restore(globalThis.openai?.widgetState?.privateContent);apply();
+      input.addEventListener('input',()=>{state.query=input.value;apply();save();});
+      window.addEventListener('openai:set_globals',e=>{const incoming=e.detail?.globals?.widgetState?.privateContent;if(incoming?.version===7&&Number.isSafeInteger(incoming.revision)&&incoming.revision>state.revision){restore(incoming);apply();}});
+      if(globalThis.lucide)lucide.createIcons({attrs:{width:16,height:16}});
+    })();
+  </script>
+</div>

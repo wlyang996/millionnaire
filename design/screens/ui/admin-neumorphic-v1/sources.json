@@ -1,0 +1,18 @@
+[
+  {
+    "file": "管理工作台-新拟物布局-v1.png",
+    "source": "exec-33a0382d-fbb6-4ac6-99f6-e969554d441f.png",
+    "sha256": "f5a3ab9513c2718a021e490e522dd9702a6072a82c59cc9b84bd933ed7cad6d7",
+    "bytes": 1645915,
+    "status": "pending user review; sample data; static image only",
+    "generator": "built-in image_gen"
+  },
+  {
+    "file": "声音工作室-新拟物旋钮-v1.png",
+    "source": "exec-8a6b8dc3-7638-4224-8591-3037318c96dd.png",
+    "sha256": "3279180cfb2fe2844d5a960c7bc00ca2eead077248f18b45c01820af1ae80aa1",
+    "bytes": 1645886,
+    "status": "pending user review; sample data; static image only",
+    "generator": "built-in image_gen"
+  }
+]
