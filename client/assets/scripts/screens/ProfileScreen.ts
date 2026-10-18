@@ -26,8 +26,32 @@ export class ProfileScreen extends Screen {
     private enter!: Button;
     private field!: EditField;
     private busy = false;
+    private identityReady = false;
+    private identityError = '';
     private characterPage = 0;
     private catalogVersion = -1;
+
+    onShow(): void {
+        if (!this.editing && ctx.store.online && isWechat() && !this.identityReady) void this.identify();
+    }
+
+    private async identify(): Promise<void> {
+        if (this.busy) return;
+        this.busy = true;
+        this.identityError = '';
+        this.rebuild();
+        try {
+            const existing = await ctx.store.online!.wechatQuickLogin();
+            if (!this.root.isValid || ctx.screens.current !== this) return;
+            if (existing) { ctx.screens.go('lobby'); return; }
+            this.identityReady = true;
+        } catch (e) {
+            this.identityError = wechatError(e as Parameters<typeof wechatError>[0]);
+        } finally {
+            this.busy = false;
+            if (this.root.isValid && ctx.screens.current === this) this.rebuild();
+        }
+    }
 
     protected build(): void {
         this.catalogVersion = characterArtRevision();
@@ -110,6 +134,14 @@ export class ProfileScreen extends Screen {
         art(this.root, 'brand_logo', 100, 112, 520, 331);
         const card = mk(this.root, 'LoginPanel', 36, 590, 648, 280);
         art(card, 'info_asset_panel', 0, 0, 648, 280, 'panel');
+        if (ctx.store.online && isWechat() && !this.identityReady) {
+            text(card, this.identityError || '正在识别微信身份…', 28, 64, 592, 160, Theme.font.md,
+                this.identityError ? Theme.c.red : Theme.c.ink, { wrap: true });
+            this.enter = new Button(this.root, this.identityError ? '重试登录' : '正在登录…', 36, 900, 648, 96,
+                'success', () => void this.identify(), Theme.font.lg);
+            this.enter.setEnabled(!!this.identityError && !this.busy);
+            return;
+        }
         text(card, '昵称', 28, 28, 592, 44, Theme.font.lg, Theme.c.ink, { bold: true, align: 'l' });
         this.field = new EditField(card, 28, 88, 592, 64, '输入昵称（最多 ' + NICK_MAX + ' 字）', 20, s => {
             this.nick = s; this.checkNow();
@@ -126,7 +158,7 @@ export class ProfileScreen extends Screen {
         const st = ctx.store;
         this.busy = true; this.checkNow();
         try {
-            if (st.online && isWechat()) {
+            if (st.online && isWechat() && !this.identityReady) {
                 const existing = await st.online.wechatQuickLogin();
                 if (existing) { ctx.screens.go('lobby'); return; }
             }
@@ -159,10 +191,11 @@ export class ProfileScreen extends Screen {
     }
 
     private checkNow(): void {
+        if (!this.editing && ctx.store.online && isWechat() && !this.identityReady) return;
         const r = checkNickname(this.nick);
-        const ok = !this.busy && (r.ok || !this.editing && !!ctx.store.online && isWechat());
+        const ok = !this.busy && r.ok;
         const good = !this.nick.trim() || r.ok;
-        setText(this.hint, this.nick.trim() ? r.reason : this.editing ? '请输入昵称' : '首次登录请填写昵称，老用户可直接登录', good ? Theme.c.greenDark : Theme.c.red);
+        setText(this.hint, this.nick.trim() ? r.reason : this.editing ? '请输入昵称' : '首次登录请填写昵称，进入后可在左上角修改资料', good ? Theme.c.greenDark : Theme.c.red);
         // 设计稿 03：提示前的圆形对勾（不合法时红色叉）
         const g = this.hintIcon;
         g.clear();
