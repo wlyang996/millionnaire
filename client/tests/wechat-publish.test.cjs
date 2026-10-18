@@ -75,11 +75,40 @@ test('pipeline only rewrites native resources images, leaving scripts, indices a
         {isNative:true,url:'assets/internal/native/ab/abcdef.png'},
         {isNative:true,url:'https://other.example/a.png'}
     ];
-    pipe({output:items});
+    const task = {input:items,output:null};
+    pipe(task);
+    assert.equal(task.output,items);
     assert.equal(items[0].url,ORIGIN+'ab/abcdef.png');
     assert.equal(items[1].url,'assets/resources/import/ab/abcdef.json');
     assert.equal(items[2].url,'assets/internal/native/ab/abcdef.png');
     assert.equal(items[3].url,'https://other.example/a.png');
+});
+
+const creator = process.env.COCOS_EDITOR || 'F:/tools/Cocos/Creator/3.8.8';
+const pipelineSource = path.join(creator,'resources/resources/3d/engine/cocos/asset/asset-manager/pipeline.ts');
+test('actual Cocos 3.8.8 transform pipeline preserves bundle requests and native image requests',
+    {skip: !fs.existsSync(pipelineSource)}, () => {
+    const ts = require(path.join(creator,'resources/app.asar.unpacked/node_modules/typescript'));
+    const compiled = ts.transpileModule(fs.readFileSync(pipelineSource,'utf8'), {
+        compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}
+    }).outputText;
+    const exports = {};
+    vm.runInNewContext(compiled,{exports,require:()=>({warnID(){}})});
+    const pipeline = new exports.Pipeline('real-transform', []);
+    pipeline.append(task => {task.output = task.input;});
+    installPipeline({transformPipeline:pipeline});
+    const requests = [
+        {isNative:false,url:'assets/internal/config.json'},
+        {isNative:false,url:'assets/resources/import/ab/abcdef.json'},
+        {isNative:true,url:'assets/resources/native/ab/abcdef.png'}
+    ];
+    const task={input:requests,output:null};
+    const result=pipeline.sync(task);
+    assert.equal(result,requests);
+    assert.equal(result.length,3);
+    assert.equal(result[0].url,'assets/internal/config.json');
+    assert.equal(result[2].url,ORIGIN+'ab/abcdef.png');
+    assert.equal(pipeline.sync({input:[],output:null}).length,0);
 });
 
 test('private images download through cloud storage, shared init, progress and Cocos cache paths', async () => {

@@ -54,7 +54,10 @@ function installFs(fsUtils, wx, config) {
 
 function installPipeline(assetManager) {
     assetManager.transformPipeline.append(task => {
-        for (const item of task.output) {
+        // Cocos moves the preceding pipe's output to input and clears output.
+        // Always pass the complete request array to the next stage, including bundles.
+        task.output = task.input;
+        for (const item of task.input) {
             if (item.isNative && typeof item.url === 'string' && item.url.startsWith('assets/resources/native/')) {
                 item.url = ORIGIN + item.url.slice('assets/resources/native/'.length);
             }

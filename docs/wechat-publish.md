@@ -52,6 +52,8 @@
 
 2026-10-19 启动修复：微信小游戏运行时不能直接 `require` JSON 配置。发布工具改为生成 `mn-cloud-assets.config.js`（`module.exports`），入口使用 JS 模块加载。现有发布目录已同步修复；云端图片摘要、路径和内容保持不变，无需重新上传图片或重新构建 Cocos。编译后确认不再出现 `mn-cloud-assets.config.json.js is not defined`；真实云图片下载仍需运行验证。
 
+同日修复资源转换管线：Cocos 在阶段间将上一阶段输出移入 `task.input` 并清空 `task.output`。图片改写阶段现在读取 input，明确透传 output，避免内置 bundle 加载收到 null。新增使用本机 Cocos 3.8.8 `Pipeline` 实现的集成检查，7 项测试通过且无跳过。当前发布目录已同步；需要重新编译验证实际启动和图片下载。
+
 验证命令：`node --test client/tests/wechat-publish.test.cjs`。覆盖分离包、原件保留、超限和模板检查、资源路由隔离、微信云下载、初始化并发、失败不回退和取消处理。本次没有实际上传对象存储、获取预览二维码或完成手机验收；这些不能由模拟测试代替。若合规包仍然出现 Timeout，需要继续检查开发者工具的上传网络链路。
 
 参考：[Cocos Creator 3.8 微信资源管理](https://docs.cocos.com/creator/3.8/manual/zh/editor/publish/publish-wechatgame.html#微信小游戏的资源管理)、[微信云存储 SDK 下载](https://docs.cloudbase.net/storage/sdk)。
