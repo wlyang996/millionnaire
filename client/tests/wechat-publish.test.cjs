@@ -111,6 +111,31 @@ test('actual Cocos 3.8.8 transform pipeline preserves bundle requests and native
     assert.equal(pipeline.sync({input:[],output:null}).length,0);
 });
 
+const cacheSource = path.join(creator,'resources/resources/3d/engine/platforms/minigame/common/engine/cache-manager.js');
+test('actual Cocos cache manager creates the local resources cache folder for cloud images',
+    {skip: !fs.existsSync(cacheSource)}, () => {
+    const directories = new Set();
+    const module = {exports:{}};
+    const manager = {};
+    const Cache = class {constructor(){this._map={};}};
+    vm.runInNewContext(fs.readFileSync(cacheSource,'utf8'),{module,
+        cc:{assetManager:manager,AssetManager:{Cache}},
+        window:{fsUtils:{getUserDataPath:()=> 'wxfile://usr',readJsonSync:()=>({}),
+            makeDirSync: name=>directories.add(name),rmdirSync(){},writeFileSync(){}}}
+    });
+    manager.cacheManager.init();
+    assert(!directories.has('wxfile://usr/gamecaches/resources'));
+    let pipe;
+    manager.transformPipeline={append: fn=>{pipe=fn;}};
+    installPipeline(manager);
+    const request=()=>({input:[{isNative:true,url:'assets/resources/native/ab/abcdef.png'}],output:null});
+    pipe(request());
+    assert(directories.has('wxfile://usr/gamecaches/resources'));
+    directories.delete('wxfile://usr/gamecaches/resources');
+    pipe(request());
+    assert(directories.has('wxfile://usr/gamecaches/resources'));
+});
+
 test('private images download through cloud storage, shared init, progress and Cocos cache paths', async () => {
     let initialized=0, progress=false, delegated=0;
     const cloud = {init: async options => {initialized++; assert.equal(options.env,'env');}, downloadFile: options => {

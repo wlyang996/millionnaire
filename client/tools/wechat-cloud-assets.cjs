@@ -40,7 +40,7 @@ function installFs(fsUtils, wx, config) {
                     finish(path ? null : new Error('云存储未返回图片路径'), path);
                 },
                 fail: error => {
-                    console.warn('[MN-ASSET] download.fail', relative, error.errCode, error.errMsg);
+                    console.warn('[MN-ASSET] download.fail', relative, error.errCode, error.errMsg, 'fileID=' + options.fileID);
                     finish(new Error('云存储图片下载失败：' + relative + '；' + (error.errMsg || '未知错误')));
                 }
             };
@@ -57,8 +57,15 @@ function installPipeline(assetManager) {
         // Cocos moves the preceding pipe's output to input and clears output.
         // Always pass the complete request array to the next stage, including bundles.
         task.output = task.input;
+        let cachePrepared = false;
         for (const item of task.input) {
             if (item.isNative && typeof item.url === 'string' && item.url.startsWith('assets/resources/native/')) {
+                // The bundle index stays local, so Cocos' remote-bundle branch never
+                // creates this directory. Native downloads still cache under resources/.
+                if (!cachePrepared && assetManager.cacheManager) {
+                    assetManager.cacheManager.makeBundleFolder('resources');
+                    cachePrepared = true;
+                }
                 item.url = ORIGIN + item.url.slice('assets/resources/native/'.length);
             }
         }
