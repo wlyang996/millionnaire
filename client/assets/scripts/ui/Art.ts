@@ -1,7 +1,7 @@
 /**
  * 美术图加载与绘制。文字与点击区域仍是实时 UI。
  * - 启动：只加载首屏（昵称 / 头像页）必需的图（BOOT_KEYS，约 5MB），加载页显示进度；
- * - 进入首屏后：其余图按"大厅 → 棋盘 → 其他"的顺序在后台慢慢加载（同时最多 4 张）；
+ * - 进入首屏后：只预热大厅、棋盘与骰子；其他界面图按需加载（同时最多 4 张）；
  * - 页面画到还没加载的图时先用代码绘制的占位，并把这张图插到队首立即加载，到达后通知界面重绘；
  * - 每张图 20 秒超时、失败重试一次，单张图卡住不会让整个游戏卡在加载页。
  */
@@ -214,7 +214,9 @@ function want(key: string): void {
     if (inflight.has(key)) return;
     const i = queue.indexOf(key);
     if (i >= 0) queue.splice(i, 1);
-    start(key);
+    queued.add(key);
+    queue.unshift(key);
+    pump();
 }
 
 /** 启动加载：只加载首屏必需的图，onProgress(已完成, 总数)。返回加载失败的图。 */
@@ -236,7 +238,11 @@ export async function bootArt(onProgress: (done: number, total: number) => void)
 export function startBackgroundArt(onArrive: () => void): void {
     onArrived = onArrive;
     backgroundStarted = true;
-    const rest = Object.keys(ART_PATHS).filter((k) => !frames.has(k) && !inflight.has(k) && !queued.has(k));
+    // Avoid decoding every popup/character texture while players are already animating.
+    // Demand requests still move to the head of this same bounded queue.
+    const warm = (key: string) => /^avatar_[a-z]+$/.test(key) || /^dice_[1-6]$/.test(key)
+        || key === 'lobby_friends' || key === 'board_town';
+    const rest = Object.keys(ART_PATHS).filter((k) => warm(k) && !frames.has(k) && !inflight.has(k) && !queued.has(k));
     rest.sort((a, b) => rank(a) - rank(b));
     for (const k of rest) {
         queued.add(k);
