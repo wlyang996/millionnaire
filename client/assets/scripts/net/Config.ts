@@ -3,10 +3,10 @@
  * - 服务地址：默认云托管 prod；H5 可用 ?server=http://localhost:8080 覆盖（本地联调），也可预先设置 globalThis.__MN_SERVER；
  * - 演示模式：H5 地址带 ?demo=1 时不联网，沿用 MockStore 的演示数据（美术评审用）。
  */
-export const DEFAULT_SERVER = 'https://springboot-ad5i-prod-d6gztvk354abc40f5-1501212143.ap-shanghai.run.wxcloudrun.com';
+export const DEFAULT_SERVER = 'https://springboot-clmg-330989-11-1509930808.sh.run.tcloudbase.com';
 
 /** Deployment identifiers (not secrets). Keep these aligned with the WeChat cloud console. */
-export const DEFAULT_WECHAT_CLOUD = { env: 'prod-d6gztvk354abc40f5', service: 'springboot-ad5i' };
+export const DEFAULT_WECHAT_CLOUD = { env: 'prod-d7gc4t98j17d3e142', service: 'springboot-clmg' };
 
 export function wechatCloudSettings(): { env: string; service: string } {
     const override = (globalThis as unknown as { __MN_WECHAT_CLOUD?: { env?: string; service?: string } }).__MN_WECHAT_CLOUD;
