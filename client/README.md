@@ -1,5 +1,7 @@
 # Cocos 客户端（默认联机；`?demo=1` 为演示模式）
 
+微信手机预览/上传请使用[对象存储拆包发布流程](../docs/wechat-publish.md)：Cocos 构建后运行 `tools/prepare-wechat-publish.cjs`，上传资源并导入生成的小包。原始 `build/wechatgame` 含全部美术，只用于本地联调，不能直接作为手机发布包。
+
 微信登录与连接诊断：Console 筛选 `[MN-NET]`，日志包含阶段、请求诊断编号、地址、状态和耗时，不打印登录凭证。更新时先更新后台，再构建客户端；收集方式见[微信连接排查](../gateway/微信连接排查.md)。
 
 2026-10-18 起微信端业务 HTTP / WebSocket 改为 `wx.cloud.callContainer` / `wx.cloud.connectContainer`，默认环境 `prod-d6gztvk354abc40f5`、服务 `springboot-ad5i`；H5 仍按 `serverUrl()` 直连。云通道初始化或能力缺失会明确报错，不自动回退公网。初始化前可用 `globalThis.__MN_WECHAT_CLOUD = { env, service }` 覆盖部署参数。详见[微信云托管专用通道](../gateway/微信云托管专用通道.md)。
