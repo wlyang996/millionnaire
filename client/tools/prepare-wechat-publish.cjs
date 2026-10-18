@@ -47,9 +47,9 @@ function prepare({source, output, staging, env, bucket}) {
     fs.mkdirSync(upload,{recursive:true});
     fs.cpSync(native,upload,{recursive:true});
     const config = {env, version, fileRoot: 'cloud://' + env + '.' + bucket + '/' + prefix};
-    fs.writeFileSync(path.join(output,'mn-cloud-assets.config.json'),JSON.stringify(config,null,2));
+    fs.writeFileSync(path.join(output,'mn-cloud-assets.config.js'),'module.exports = ' + JSON.stringify(config,null,2) + ';\n');
     fs.copyFileSync(path.join(__dirname,'wechat-cloud-assets.cjs'),path.join(output,'mn-cloud-assets.js'));
-    const patched = entry.replace(before,before + "\nrequire('./mn-cloud-assets').installFs(window.fsUtils, wx, require('./mn-cloud-assets.config.json'));")
+    const patched = entry.replace(before,before + "\nrequire('./mn-cloud-assets').installFs(window.fsUtils, wx, require('./mn-cloud-assets.config'));")
         .replace(after,after + "\nrequire('./mn-cloud-assets').installPipeline(cc.assetManager);");
     fs.writeFileSync(path.join(output,'game.js'),patched);
     const mainBytes = files(output).reduce((n,f) => n + fs.statSync(f).size,0);

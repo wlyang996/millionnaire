@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
+const vm = require('node:vm');
 const {prepare} = require('../tools/prepare-wechat-publish.cjs');
 const {ORIGIN,installFs,installPipeline} = require('../tools/wechat-cloud-assets.cjs');
 const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -31,6 +32,24 @@ test('publish keeps source intact and local indices, separates images with immut
     const entry = fs.readFileSync(path.join(options.output,'game.js'),'utf8');
     assert(entry.indexOf('installFs') < entry.indexOf("require('./engine-adapter')"));
     assert(entry.indexOf('installPipeline') > entry.indexOf("require('./engine-adapter')"));
+    // WeChat's require resolves JS modules, not Node's JSON module loader.
+    const configFile = path.join(options.output,'mn-cloud-assets.config.js');
+    const module = {exports:{}};
+    vm.runInNewContext(fs.readFileSync(configFile,'utf8'),{module});
+    assert.equal(module.exports.env,options.env);
+    assert.equal(module.exports.fileRoot,'cloud://'+options.env+'.'+options.bucket+'/'+report.prefix);
+    assert(!/require\([^)]*\.json['"]\)/.test(entry));
+    let installed;
+    const startup = entry.split("require('./engine-adapter');")[0];
+    vm.runInNewContext(startup,{window:{fsUtils:{}},wx:{},require: id => {
+        if (id === './web-adapter') return {};
+        if (id === './mn-cloud-assets') return {installFs: (fsUtils,wx,config) => {installed=config;}};
+        const filename=path.join(options.output,id+'.js');
+        const loaded={exports:{}};
+        vm.runInNewContext(fs.readFileSync(filename,'utf8'),{module:loaded});
+        return loaded.exports;
+    }});
+    assert.equal(installed.fileRoot,module.exports.fileRoot);
     assert.match(report.sampleFileID,/^cloud:\/\/test-env\.test-bucket-123\/game-assets\/[a-f0-9]{64}\/native\//);
     assert.throws(() => prepare(options),/输出目录已存在/);
 });
