@@ -11,6 +11,22 @@ function files(root) {
         return e.isDirectory() ? files(name) : [name];
     }).sort();
 }
+// Keep every browser folder traversal below 100 entries, including flat file lists.
+function uploadBatches(uploadRoot, prefix, manifest, batchRoot) {
+    if (fs.existsSync(batchRoot)) throw new Error('上传批次目录已存在，拒绝覆盖');
+    const batches = [];
+    for (let offset=0;offset<manifest.length;offset+=80) {
+        const selected=manifest.slice(offset,offset+80);
+        const root=path.join(batchRoot,'batch-'+String(batches.length+1).padStart(2,'0'));
+        for (const file of selected) {
+            const target=path.join(root,prefix,file.path);
+            fs.mkdirSync(path.dirname(target),{recursive:true});
+            fs.copyFileSync(path.join(uploadRoot,prefix,file.path),target);
+        }
+        batches.push({folder:path.join(root,'game-assets'),fileCount:selected.length});
+    }
+    return batches;
+}
 function prepare({source, output, staging, env, bucket}) {
     source = path.resolve(source); output = path.resolve(output); staging = path.resolve(staging);
     if (!/^[a-z0-9-]+$/.test(env) || !/^[a-z0-9-]+-\d+$/.test(bucket)) throw new Error('需要完整且有效的环境 ID 和存储桶名称');
@@ -54,7 +70,8 @@ function prepare({source, output, staging, env, bucket}) {
     fs.writeFileSync(path.join(output,'game.js'),patched);
     const mainBytes = files(output).reduce((n,f) => n + fs.statSync(f).size,0);
     if (mainBytes > LIMIT) throw new Error('发布包仍超过 4 MiB，请勿上传');
-    const report = {version, env, bucket, mainBytes, assetBytes, fileCount:manifest.length, prefix,
+    const batches = uploadBatches(path.join(staging,'upload'),prefix,manifest,path.join(staging,'batches'));
+    const report = {version, env, bucket, mainBytes, assetBytes, fileCount:manifest.length, prefix, batches,
         sampleFileID:config.fileRoot+'/'+manifest[0].path, output, uploadRoot:path.join(staging,'upload'), files:manifest};
     fs.writeFileSync(path.join(staging,'manifest.json'),JSON.stringify(report,null,2));
     return report;
@@ -78,4 +95,4 @@ if (require.main === module) {
         console.log(JSON.stringify({...report,files:undefined},null,2));
     } catch(error) { console.error(error.message); process.exitCode=1; }
 }
-module.exports = {prepare,files};
+module.exports = {prepare,files,uploadBatches};

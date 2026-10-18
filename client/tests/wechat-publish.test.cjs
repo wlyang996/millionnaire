@@ -66,6 +66,33 @@ test('oversized code, changed startup templates and nested outputs fail before w
     assert(!fs.existsSync(options.output));
 });
 
+test('more than 100 native directories are split into upload batches without losing files or paths', t => {
+    const options=fixture(t);
+    for(let i=0;i<156;i++) {
+        const prefix=i.toString(16).padStart(2,'0');
+        const directory=path.join(options.source,'assets/resources/native',prefix);
+        fs.mkdirSync(directory,{recursive:true});
+        fs.writeFileSync(path.join(directory,prefix+'0000.png'),Buffer.from('image-'+i));
+    }
+    const report=prepare(options),seen=[];
+    assert.equal(report.fileCount,157);
+    assert.equal(report.batches.length,2);
+    for(const batch of report.batches) {
+        assert(batch.fileCount<=80);
+        const root=path.join(batch.folder,report.version,'native');
+        const folders=fs.readdirSync(root);
+        assert(folders.length<=80);
+        for(const folder of folders)for(const name of fs.readdirSync(path.join(root,folder))) {
+            const relative=folder+'/'+name;
+            assert.deepEqual(fs.readFileSync(path.join(root,relative)),
+                fs.readFileSync(path.join(options.source,'assets/resources/native',relative)));
+            seen.push(relative);
+        }
+    }
+    assert.equal(new Set(seen).size,157);
+    assert.deepEqual(seen.sort(),report.files.map(f=>f.path).sort());
+});
+
 test('pipeline only rewrites native resources images, leaving scripts, indices and unrelated URLs alone', () => {
     let pipe;
     installPipeline({transformPipeline:{append: fn => {pipe=fn;}}});
