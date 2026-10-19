@@ -362,6 +362,24 @@
       "status": "static reference; module scene headers integrated locally; not deployed",
       "sha256": "9398528722165a0da6a46b72d2a94fcfbe4060ce9b3de6b5e0585b40895f71fd",
       "bytes": 1663150
+    },
+    {
+      "file": "42-奖励事件-拾金不昧-候选.png",
+      "source": "screens/ui/event-story-v1/奖励事件-拾金不昧-v1.png",
+      "version": 1,
+      "role": "事件情景-归还钱包-奖励金额-自动收起",
+      "status": "candidate; sample amounts; pending user review; not integrated",
+      "sha256": "13a78736978de0af2ea9f412aaee0059f6c9fb825487617cfdf53d4f4183348a",
+      "bytes": 2161688
+    },
+    {
+      "file": "43-扣款事件-违章停车-候选.png",
+      "source": "screens/ui/event-story-v1/扣款事件-违章停车-v1.png",
+      "version": 1,
+      "role": "事件情景-违停罚单-扣款金额-自动收起",
+      "status": "candidate; sample amounts; pending user review; not integrated",
+      "sha256": "7534776d048c32123a9b6beb8efe29446710659383f2615e40b1847688b4e6c8",
+      "bytes": 2171610
     }
   ]
 }
