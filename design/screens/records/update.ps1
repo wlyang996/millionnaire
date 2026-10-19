@@ -64,8 +64,8 @@ $entries = @(
     [pscustomobject]@{ File = '39-管理工作台-新拟物布局-待评审.png'; Source = (Join-Path $sourceUi 'admin-clean-console-v6/管理工作台-清爽浅色-v6.png'); Role = '管理端原版浅色-任务待办-草稿-生效版本-常用入口'; Version = 6; Status = 'task focused clean white palette candidate; sample data; pending user review; not implemented' },
     [pscustomobject]@{ File = '40-声音工作室-新拟物旋钮-待评审.png'; Source = (Join-Path $sourceUi 'admin-clean-console-v6/声音工作室-清爽浅色-v6.png'); Role = '管理端原版浅色-音量旋钮-拨动开关-场景试听'; Version = 6; Status = 'clean white palette candidate; sample data; pending user review; not implemented' },
     [pscustomobject]@{ File = '41-管理端-模块场景横幅-待评审.png'; Source = (Join-Path $sourceUi 'admin-module-heroes-v8/管理端-模块场景横幅-v8.png'); Role = '公告-地图-声音-人物-浅色微缩场景横幅'; Version = 8; Status = 'static reference; module scene headers integrated locally; not deployed' },
-    [pscustomobject]@{ File = '42-奖励事件-拾金不昧-候选.png'; Source = (Join-Path $sourceUi 'event-story-v1/奖励事件-拾金不昧-v1.png'); Role = '事件情景-归还钱包-奖励金额-自动收起'; Version = 1; Status = 'candidate; sample amounts; pending user review; not integrated' },
-    [pscustomobject]@{ File = '43-扣款事件-违章停车-候选.png'; Source = (Join-Path $sourceUi 'event-story-v1/扣款事件-违章停车-v1.png'); Role = '事件情景-违停罚单-扣款金额-自动收起'; Version = 1; Status = 'candidate; sample amounts; pending user review; not integrated' }
+    [pscustomobject]@{ File = '42-奖励事件-拾金不昧-候选.png'; Source = (Join-Path $sourceUi 'event-story-v1/奖励事件-拾金不昧-v1.png'); Role = '事件情景-归还钱包-奖励金额-自动收起'; Version = 1; Status = 'layout approved; sample amounts; individual scene assets pending review; not integrated' },
+    [pscustomobject]@{ File = '43-扣款事件-违章停车-候选.png'; Source = (Join-Path $sourceUi 'event-story-v1/扣款事件-违章停车-v1.png'); Role = '事件情景-违停罚单-扣款金额-自动收起'; Version = 1; Status = 'layout approved; sample amounts; individual scene assets pending review; not integrated' }
 )
 
 # Check every source before copying any file.
