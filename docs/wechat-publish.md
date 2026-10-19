@@ -38,6 +38,8 @@
 
 ## 下载与缓存
 
+手机加入房间超时的连接恢复修复已单独构建到 `client/build/wechatgame-join-recovery`，见 [本地验证与手机复测步骤](mobile-room-connection.md)。该新目录含修复，旧 `wechatgame-publish` 尚未更新；主包约 3.56 MiB，图片内容摘要与原包相同，不需重复上传图片。新体验版本的上传和双手机复测尚未完成。
+
 小游戏启动时在 Cocos 引擎适配层之前安装微信对象存储下载适配，在资源地址转换管线中只处理 `assets/resources/native/` 图片。逻辑地址 `https://mn-game-assets.invalid/` 是本地路由标记，始终由适配器截获，实际调用 `wx.cloud.downloadFile`，不会请求这个域名，不要将它添加到合法域名。
 
 `cloud://环境.存储桶/game-assets/内容摘要/native/...` 为实际图片 File ID。返回的微信临时文件交给 Cocos 原有文件检查、解析和缓存流程。图片本身逐字节复制，没有重新压缩或修改美术；代码与资源索引继续在主包。现有音乐、音效配置与下载地址保持原样，不在此次拆包范围内。

@@ -31,11 +31,14 @@ interface Pending {
     msg: Record<string, unknown>;
     resolve: (r: ResultMsg) => void;
     timer: ReturnType<typeof setTimeout>;
+    started: number;
+    sentCount: number;
 }
 
 const OPEN = 1;
 const REQUEST_TIMEOUT_MS = 15000;
 const PING_MS = 5000; // 心跳 5 秒（已裁决 2）：服务端 15 秒无消息判疑似断线、30 秒判掉线
+const SILENCE_MS = PING_MS * 3; // 网络检测阈值，不是玩法倒计时
 const BACKOFF_MS = [1000, 2000, 4000, 8000, 10000];
 
 export class GameClient {
@@ -59,6 +62,8 @@ export class GameClient {
     private seq = 0;
     private attempts = 0;
     private wantOpen = false;
+    private lastReceivedAt = 0;
+    private connectionTrace = '';
     private pingTimer: ReturnType<typeof setInterval> | null = null;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
     private readonly pending = new Map<string, Pending>();
@@ -276,13 +281,31 @@ export class GameClient {
         const requestId = Date.now().toString(36) + '-' + (++this.seq).toString(36) + Math.random().toString(36).slice(2, 6);
         const msg = { type, requestId, ...fields };
         return new Promise((resolve) => {
+            const started = Date.now();
             const timer = setTimeout(() => {
+                const pending = this.pending.get(requestId);
+                networkLog('ws.request.timeout', { trace: this.connectionTrace, requestId, command: type,
+                    elapsedMs: Date.now() - started, sentCount: pending?.sentCount ?? 0, linkState: this.state,
+                    silenceMs: Date.now() - this.lastReceivedAt }, true);
                 this.pending.delete(requestId);
                 resolve(local(requestId, 'TIMEOUT'));
             }, REQUEST_TIMEOUT_MS);
-            this.pending.set(requestId, { msg, resolve, timer });
-            if (this.ws && this.ws.readyState === OPEN) this.sendRaw(msg);
+            this.pending.set(requestId, { msg, resolve, timer, started, sentCount: 0 });
+            networkLog('ws.request.start', { trace: this.connectionTrace, requestId, command: type, linkState: this.state });
+            // 手机切回前台时 close 事件可能尚未到达，不能把命令送进已失联的旧连接。
+            if (this.ws?.readyState === OPEN && Date.now() - this.lastReceivedAt >= SILENCE_MS) this.checkConnection();
+            else this.sendRaw(msg);
         });
+    }
+
+    /** 心跳与回前台共用：只有收到服务端消息才算连接有效，失联后重连并沿用原 requestId 重发。 */
+    checkConnection(): void {
+        if (!this.wantOpen || !this.ws || this.ws.readyState !== OPEN) return;
+        const silenceMs = Date.now() - this.lastReceivedAt;
+        if (silenceMs >= SILENCE_MS) {
+            networkLog('ws.heartbeat.timeout', { trace: this.connectionTrace, silenceMs, pending: this.pending.size }, true);
+            this.retryConnection(this.ws, true);
+        } else this.sendRaw({ type: 'PING' });
     }
 
     // ------------------------------------------------------------ 连接
@@ -290,6 +313,7 @@ export class GameClient {
     private open(state: LinkState): void {
         this.setState(state);
         const trace = diagnosticId('ws'), started = Date.now();
+        this.connectionTrace = trace;
         const url = this.baseUrl.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(this.token!) + '&traceId=' + trace;
         const target = cloudTarget(url);
         networkLog('ws.start', { trace, endpoint: safeEndpoint(url), attempt: this.attempts + 1,
@@ -302,8 +326,9 @@ export class GameClient {
             if (this.ws !== ws) return;
             networkLog('ws.open', { trace, elapsedMs: Date.now() - started });
             this.attempts = 0;
+            this.lastReceivedAt = Date.now();
             this.setState('open');
-            this.pingTimer = setInterval(() => this.sendRaw({ type: 'PING' }), PING_MS);
+            this.pingTimer = setInterval(() => this.checkConnection(), PING_MS);
             // 断线期间未完成的请求用同一 requestId 重发（服务端幂等）
             this.pending.forEach((p) => this.sendRaw(p.msg));
         };
@@ -315,14 +340,7 @@ export class GameClient {
             const e = ev as { code?: unknown; reason?: unknown; wasClean?: unknown } | undefined;
             networkLog('ws.close', { trace, elapsedMs: Date.now() - started, closeCode: typeof e?.code === 'number' ? e.code : undefined,
                 reason: typeof e?.reason === 'string' ? e.reason : undefined, wasClean: e?.wasClean === true, reconnect: this.wantOpen }, this.wantOpen);
-            this.clearTimers();
-            this.ws = null;
-            if (!this.wantOpen) return;
-            const delay = BACKOFF_MS[Math.min(this.attempts, BACKOFF_MS.length - 1)];
-            this.attempts++;
-            networkLog('ws.retry', { trace, delayMs: delay, attempt: this.attempts });
-            this.setState('reconnecting');
-            this.retryTimer = setTimeout(() => this.open('reconnecting'), delay);
+            this.retryConnection(ws);
         };
         ws.onerror = (ev) => {
             if (this.ws === ws) networkLog('ws.error', { trace, elapsedMs: Date.now() - started, ...diagnosticError(ev) }, true);
@@ -337,6 +355,8 @@ export class GameClient {
             networkLog('ws.invalid-json', { trace, length: text.length }, true);
             return;
         }
+        if (!m || typeof m !== 'object' || typeof m.type !== 'string') return;
+        this.lastReceivedAt = Date.now();
         if (typeof m.serverTime === 'number') this.offset = m.serverTime - Date.now();
         switch (m.type) {
             case 'UPDATE': {
@@ -357,6 +377,8 @@ export class GameClient {
                     return;
                 }
                 if (p) {
+                    networkLog('ws.request.end', { trace, requestId: r.requestId!, command: String(p.msg.type),
+                        elapsedMs: Date.now() - p.started, sentCount: p.sentCount, ok: r.ok, serverCode: r.code ?? undefined });
                     clearTimeout(p.timer);
                     this.pending.delete(r.requestId!);
                     p.resolve(r);
@@ -385,7 +407,29 @@ export class GameClient {
     }
 
     private sendRaw(msg: Record<string, unknown>): void {
-        if (this.ws && this.ws.readyState === OPEN) this.ws.send(JSON.stringify(msg));
+        const ws = this.ws;
+        if (!ws || ws.readyState !== OPEN) return;
+        try {
+            const pending = typeof msg.requestId === 'string' ? this.pending.get(msg.requestId) : undefined;
+            if (pending) pending.sentCount++;
+            ws.send(JSON.stringify(msg));
+        } catch (error) {
+            networkLog('ws.send.fail', { trace: this.connectionTrace, command: String(msg.type), ...diagnosticError(error) }, true);
+            this.retryConnection(ws, true);
+        }
+    }
+
+    private retryConnection(ws: Socket, closeSocket = false): void {
+        if (this.ws !== ws) return;
+        this.clearTimers();
+        this.ws = null; // 先脱离旧连接，忽略其延迟的 close/message 回调。
+        if (closeSocket) { try { ws.close(4000, 'connection lost'); } catch { /* already closed */ } }
+        if (!this.wantOpen) return;
+        const delay = BACKOFF_MS[Math.min(this.attempts, BACKOFF_MS.length - 1)];
+        this.attempts++;
+        networkLog('ws.retry', { trace: this.connectionTrace, delayMs: delay, attempt: this.attempts });
+        this.setState('reconnecting');
+        this.retryTimer = setTimeout(() => this.open('reconnecting'), delay);
     }
 
     private setState(s: LinkState): void {

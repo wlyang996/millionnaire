@@ -38,6 +38,7 @@ import { PracticeScreen } from './screens/PracticeScreen';
 export class App {
     private readonly hide=()=>ctx.store?.online?.suspendPresentation();
     private readonly show=()=>{
+        ctx.store?.online?.client.checkConnection();
         if(['board','spectator'].includes(ctx.screens?.currentId??'')&&ctx.store?.online?.resumePresentation())ctx.popups.closeAll();
     };
     private readonly visibility=()=>document.hidden?this.hide():this.show();
